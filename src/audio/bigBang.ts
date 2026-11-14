@@ -11,11 +11,16 @@ export interface BigBangAudio {
   bang(): void;
   /** Wall seconds and the narration `ended` time, once it has fired. */
   sync(t: number, narrationEndedAt: number | null): void;
+  /** True once the one narration element has finished a real take. */
+  narrationEnded(): boolean;
+  /** Measured duration, or NaN until the file header is known. */
+  narrationDuration(): number;
   stop(): void;
 }
 
 export function createBigBangAudio(): BigBangAudio {
   const narration = track(NARRATION.file);
+  narration.loop = false;
   const bed = track(LATER_AUDIO.bed);
   const bang = track(LATER_AUDIO.bang);
   const cue2 = track(LATER_AUDIO.cue2);
@@ -58,6 +63,10 @@ export function createBigBangAudio(): BigBangAudio {
       bang.currentTime = 0;
       void bang.play().catch(() => {});
     },
+    narrationEnded() {
+      return narration.ended && !(Number.isFinite(narration.duration) && narration.duration < 2);
+    },
+    narrationDuration() { return narration.duration; },
     sync(t: number, narrationEndedAt: number | null) {
       const end = narrationEndedAt ?? CINE.b1 + NARRATION.seconds;
       const duck = voDuckDb(t);

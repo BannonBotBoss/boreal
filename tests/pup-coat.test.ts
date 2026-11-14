@@ -31,6 +31,6 @@ test('a pup coat is a lit tabby, darker under the dusk light, with only a thin m
   assert.equal(pup.emissiveIntensity, 0);
   assert.equal(pup.toneMapped, false);
   stylizedNight(pup, 1);
-  assert.equal(pup.emissiveIntensity, 0);
+  assert.ok(pup.emissiveIntensity > 0.2 && pup.emissiveIntensity < 1, `moon floor ${pup.emissiveIntensity}`);
   assert.equal(pup.toneMapped, false);
 });

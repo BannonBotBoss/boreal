@@ -10,9 +10,14 @@ test('the drop lands at the edge of a closed stand near the mama, facing the tre
   const territory = mamaTerritory();
   assert.equal(territory.x, 30);
   assert.equal(territory.z, 0);
+  const t0 = performance.now();
   const spot = forestLanding(territory);
+  const cold = performance.now() - t0;
+  const t1 = performance.now();
   const again = forestLanding(territory);
-  assert.deepEqual(again, spot);
+  const warm = performance.now() - t1;
+  assert.equal(again, spot);
+  assert.ok(warm < 50, `a repeat search took ${warm.toFixed(1)} ms after ${cold.toFixed(1)} ms`);
   const denD = Math.hypot(spot.den.x - territory.x, spot.den.z - territory.z);
   const edge = Math.hypot(spot.land.x - spot.den.x, spot.land.z - spot.den.z);
   assert.ok(denD <= FOREST_LANDING.searchM, `den is ${denD.toFixed(0)} m from her mark`);

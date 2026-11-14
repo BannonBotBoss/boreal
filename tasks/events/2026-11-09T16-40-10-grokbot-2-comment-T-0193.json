@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0193",
+  "agent": "grokbot-2",
+  "note": "Moved from T-0191 to T-0193. T-0191 is #419, prairie ground. T-0192 is #420, spruce crowns. The events on this branch now say T-0193.",
+  "at": "2026-11-09T16:40:10-08:00"
+}

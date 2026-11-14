@@ -46,33 +46,37 @@ export const AIRGLOW = (() => { const peakKm = 95, sigmaKm = 4, zenithR = 250, l
 export const ATMOS_STEPS = [[16, 6, 8, 3], [14, 5, 6, 3], [12, 4, 6, 2], [10, 4, 4, 2], [8, 3, 3, 2], [6, 2, 0, 0]];
 /** Cloud layer: a thin shell at `heightKm`, density = octaves of the shared value noise (proc/glsl) on the planet-fixed
  *  direction. Octaves per quality row (0 = no clouds). [game calibration: cell size; Blue Marble look] */
-export const CLOUDS = { heightKm: 2.5, cellKm: 700, albedo: .95, /** cumulus/cumulonimbus tops above the base at full cover (CAPE overshoot column, PRs #237-#265) [km], relief: normal tilt per density step, tauMax: optical depth of a full column */ topKm: 9, relief: 6, tauMax: 40, octaves: [8, 6, 5, 4, 2, 0],
+export const CLOUDS = { heightKm: 2.5, cellKm: 900, albedo: .95, /** cumulus/cumulonimbus tops above the base at full cover (CAPE overshoot column, PRs #237-#265) [km], relief: normal tilt per density step, tauMax: optical depth of a full column */ topKm: 9, relief: 2.6, tauMax: 28, octaves: [8, 6, 5, 4, 2, 0],
   /** synoptic swirl (cloudDensity): warp noise cell, amplitude (radians of arc, x base frequency), Coriolis twist at the poles,
-   *  east-west stretch in 25-65 deg, sim-lookup warp and blur (radians) [game calibration vs Apollo 17 Blue Marble] */
-  warpCellKm: 2600, warpAmp: .10, twistRad: 2.2, zonalStretch: .30, simWarpRad: .045, simBlurRad: .018, organise: .45, orgGain: 5.0,
+   *  east-west stretch in 25-65 deg, sim-lookup warp and blur (radians) [game calibration vs Apollo 17 Blue Marble /
+   *  ISS terminator: budget pass GCUR-3 softens flake grain and restores organised sheets + clear holes] */
+  warpCellKm: 3200, warpAmp: .18, twistRad: 2.4, zonalStretch: .42, simWarpRad: .055, simBlurRad: .028, organise: .72, orgGain: 5.4,
   /** T-0169: a second, smaller warp (iq f(p+h(p))) chops the sampling point so edges are not a straight UV stretch.
    *  Runs when the tier's octave count is at least chopFrom (Ultra through Low). Billow (iq abs(2n−1)) and one inverted
-   *  Worley F1 run only at billowFrom / worleyFrom and above (Ultra and High). Lower rows stay the base fBm. */
-  chopFrom: 4, chopFreq: 8, chopAmp: .48, billowFrom: 6, billowMix: .85, billowBias: .04, worleyFrom: 6, worleyFreq: 5.2, worleyMix: .72,
-  /** sd of the normalised field on the CPU twin (cloudCover.ts) after the Perlin-Worley mix (~0.17 at 8 octaves;
+   *  Worley F1 run only at billowFrom / worleyFrom and above (Ultra and High). Lower rows stay the base fBm.
+   *  Budget pass: dial chop/billow/Worley down so orbit distance reads soft multi-scale sheets, not embossed flakes. */
+  /** Budget pass: keep mild chop for soft edge wandering; park billow/Worley above current Ultra (8) so the orbit
+   *  shell stays soft multi-scale fBm sheets instead of embossed convective flakes (still in the GLSL for close tiers later). */
+  chopFrom: 5, chopFreq: 4.5, chopAmp: .18, billowFrom: 9, billowMix: .38, billowBias: .02, worleyFrom: 9, worleyFreq: 2.8, worleyMix: .26,
+  /** sd of the normalised field on the CPU twin (cloudCover.ts) after the Perlin-Worley mix (budget: soft fBm ~0.11;
    *  the pre-T-0169 fBm was ~0.075). P(noise > c) follows the sim fraction instead of snapping to all-or-nothing. */
   /** share of the sim cover drawn opaque from orbit (thin cirrus and sub-pixel cumulus do not read: ~0.55 global visible deck vs
    *  MODIS 0.67 total), and the softest edge half-width on the causal path (soft, fibrous margins, not cut-out blobs) */
-  opticalShare: .68, simEdgeHalf: .035,
-  noiseSd: .17,
+  opticalShare: .58, simEdgeHalf: .085,
+  noiseSd: .11,
   /** tiles: the shell counts as in front of a ground fragment up to this far behind it. Coarse orbit tiles (and the km-scaled
    *  camera-relative centre) put part of the disc a few km above the 2.5 km shell, and the clouds stopped along a straight line there */
   groundSlackKm: 30,
   /** cloud edges per quality row: fBm persistence (more fine detail than 0.5), the coverage threshold's half width
-   *  (contrast: narrower = sharper edges; Ultra 10-90 % edge ~34 km median vs ~310 km before, Medium ~79 vs ~225 km) and
-   *  its centre, calibrated per row on the CPU twin of the noise so the mean cover stays 0.16 (as before). Octaves finer
+   *  (contrast: narrower = sharper edges; budget pass widens Ultra/High so margins feather like real decks) and
+   *  its centre, calibrated per row on the CPU twin of the noise so the mean cover stays ~0.16. Octaves finer
    *  than 2 px fade out by distance (no shimmer from orbit). clearLift: on the in-page descent the threshold rises by
    *  clearLift x cloudClear while the cover fades (T-0041): the home view sits in one cell whose density spans only ~.62-.71
    *  (refs/T-0041 sweep), so a pure alpha fade left a flat translucent sheet. [game calibration: persistence, widths, lift] */
-  persistence: .6, clearLift: .08, edgeHalf: [.02, .025, .035, .045, .06, .06], edgeCentre: [.619, .621, .621, .629, .675, .675],
+  persistence: .48, clearLift: .08, edgeHalf: [.055, .06, .07, .085, .1, .1], edgeCentre: [.614, .616, .618, .622, .646, .646],
   /** shadow threshold for the same field as the visible deck (full tier octaves, capped at 6). Half-width is
-   *  sharper than the old one-octave penumbra so a glint cannot sit in a hole the eye reads as cloud. */
-  shadowCentre: .619, shadowHalf: .04,
+   *  softer on the budget pass so cloud-on-ground shadows match the feathered shell. */
+  shadowCentre: .614, shadowHalf: .07,
   /** drift from the world clock: an eastward wind (m/s) turns the field about the polar axis; the field also evolves
    *  (slides through the noise's 3rd axis) once per `evolveH` game hours [game calibration] */
   windMs: 12, evolveH: 6, /** windMs: only the fallback (equator) while the environment record is empty (no grid booted) */
@@ -83,8 +87,9 @@ export const CLOUDS = { heightKm: 2.5, cellKm: 700, albedo: .95, /** cumulus/cum
   shadow: .96, shadowMinOct: 3 };
 /** T-0169 terminator. mu = N·L. Daylight stays white only while mu is high; below whiteAt the sun keeps atmSunlight's
  *  Rayleigh colour and, as mu falls toward warmAt, an architectural orange/red (Matthew 2026-11-06). The gain is
- *  multiplied by the sun's luminance so the band does not blow out. [game calibration] */
-export const TERMINATOR = { whiteAt: .78, warmAt: .02, gain: [1.25, .36, .09] as const };
+ *  multiplied by the sun's luminance so the band does not blow out. Budget pass: earlier soft wrap + milder orange
+ *  so flakes no longer light as hard peach speckles into night. [game calibration] */
+export const TERMINATOR = { whiteAt: .52, warmAt: -.04, gain: [1.05, .34, .12] as const };
 
 /** Hygroscopic growth of the Mie (aerosol) term with humidity (T-0089, issue #111): f(RH) = (1 − RH)^−gamma (Hanel 1976,
  *  Adv. Geophys. 19:73, doi 10.1016/S0065-2687(08)60142-9; the one-parameter fit of Kasten 1969). gamma 0.3: continental
@@ -276,20 +281,20 @@ vec4 atmClouds(vec3 rd, float tEnd, int nl) {
   // thick cores white rather than grey, and the top height (base + ${CLOUDS.topKm} km x cover) adds parallax.
   vec3 wn = normalize(uViewToWorld * n), sw = normalize(uViewToWorld * uSun);
   vec3 tu = normalize(cross(wn, abs(wn.y) < 0.99 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0))), tv = cross(wn, tu);
-  float og = min(clamp(octD, 1.0, uCloudOct), 5.0), e = ${(CLOUDS.cellKm / 6371 / 24).toFixed(5)}, c0 = uCloudEdge.x + ${CLOUDS.clearLift.toFixed(3)} * uCloudClear, h0 = 0.12; // wide edge: the relief reads the noise itself, so saturated cores keep towers and valleys
+  float og = min(clamp(octD, 1.0, uCloudOct), 4.5), e = ${(CLOUDS.cellKm / 6371 / 18).toFixed(5)}, c0 = uCloudEdge.x + ${CLOUDS.clearLift.toFixed(3)} * uCloudClear, h0 = 0.16; // wider relief probe + softer threshold so normals do not emboss every flake
   float a0 = cloudDensity(wn, og, c0, h0), du = cloudDensity(normalize(wn + tu * e), og, c0, h0) - a0, dv = cloudDensity(normalize(wn + tv * e), og, c0, h0) - a0;
   vec3 st = sw - wn * dot(sw, wn); float sl = length(st);
   float aS = sl > 1e-4 ? cloudDensity(normalize(wn + st / sl * e * 1.5), og, c0, h0) : a0;
   vec3 cn = normalize(n - ${CLOUDS.relief.toFixed(2)} * (du * (transpose(uViewToWorld) * tu) + dv * (transpose(uViewToWorld) * tv)));
   float tau = ${CLOUDS.tauMax.toFixed(1)} * a * (0.3 + 0.7 * a0); // column optical depth from cover (cumulus 10-60)
-  float self = exp(-max(aS - a0, 0.0) * tau * 0.35); // up-sun neighbour thicker = this side is in its shadow
-  float powder = 1.0 - exp(-2.0 * tau * 0.1); // multiple scattering: thick cloud reflects ~all, thin edges let ground through
-  float mu = dot(n, uSun), lamC = smoothstep(-0.08, 0.25, dot(cn, uSun));
+  float self = exp(-max(aS - a0, 0.0) * tau * 0.22); // gentler self-shadow: soft valleys, not hard flake flanks
+  float powder = 1.0 - exp(-2.0 * tau * 0.12); // multiple scattering: thick cloud reflects ~all, thin edges let ground through
+  float mu = dot(n, uSun), lamC = smoothstep(-0.18, 0.35, dot(cn, uSun));
   vec3 sunT = atmWarmSun(atmSunlight(x + n * (${CLOUDS.topKm.toFixed(1)} * a), nl), mu); // top height: tops above the base see the sun later at the terminator
-  float lit = (0.35 + 0.65 * lamC) * self * smoothstep(-0.22, 0.28, mu); // soft penumbra, not a hard night cut
-  lit *= 0.55 + 0.45 * a0; // thicker towers (higher tops) catch more sun; low thin deck sits in the haze
-  vec3 col = ${CLOUDS.albedo.toFixed(2)} * (sunT * lit * 1.25 + 0.10 * atmSkyF(mu) * (0.6 + 0.4 * powder));
-  return vec4(col, clamp(a * (0.55 + 0.45 * powder), 0.0, 0.97) * (1.0 - uCloudClear));
+  float lit = (0.55 + 0.45 * lamC) * self * smoothstep(-0.32, 0.34, mu); // softer terminator wrap on the shell
+  lit *= 0.62 + 0.38 * a0; // thicker towers (higher tops) catch more sun; low thin deck sits in the haze
+  vec3 col = ${CLOUDS.albedo.toFixed(2)} * (sunT * lit * 1.15 + 0.14 * atmSkyF(mu) * (0.55 + 0.45 * powder));
+  return vec4(col, clamp(a * (0.48 + 0.52 * powder), 0.0, 0.94) * (1.0 - uCloudClear));
 }
 `;
 

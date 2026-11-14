@@ -1,6 +1,8 @@
 /** T-0109 / issue #156. The glide ground reaches the geometric horizon on the planet the globe already samples. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { STAGES } from '../src/core/stages/elevation';
+import { heightAt, WORLD_SEED } from '../src/core/world';
 import { GLOBE_LOD } from '../src/world/globe/lod';
 import { PLANET, planetFor } from '../src/world/globe/planet';
 import { XR_CAPS } from '../src/core/quality';
@@ -79,6 +81,18 @@ test('home land keeps the local height, and the disc covers the loaded square', 
   const disc = patchDiscRadius(loaded);
   assert.ok(disc < loaded, 'the dither finishes inside the loaded square');
   assert.ok(disc > loaded * 0.5, 'a circle of chunk detail remains under the camera');
+});
+
+test('a lake-bed origin keeps the surrounding land on the game height', () => {
+  STAGES.on = true;
+  const planet = planetFor(WORLD_SEED, (x, z) => heightAt(x, z), 'sward-datum');
+  const bed = heightAt(0, 0);
+  const origin = skirtOrigin(planet, bed);
+  assert.ok(origin.asl < PLANET.home.elevation, `datum ${origin.asl} is the bed`);
+  const land = skirtSample(planet, 30, 0, origin);
+  const h = heightAt(30, 0);
+  assert.ok(Math.abs(land.y - h) < 0.25, `skirt ${land.y.toFixed(2)} vs ground ${h.toFixed(2)}`);
+  assert.equal(land.water, false);
 });
 
 test('far quads behind the eye are dropped so they cannot smear across the sky', () => {

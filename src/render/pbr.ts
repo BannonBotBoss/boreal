@@ -13,6 +13,7 @@
 import * as THREE from 'three';
 import { GLSL_NOISE } from '../proc/glsl';
 import { WORLD_SEED } from '../core/world';
+import { phenology } from '../core/treeSpecies';
 import { fadeOptIn } from './fade';
 
 /** Scene illuminance (lux) and the adaptation gain derived from it (core/light). The gain is applied to
@@ -22,6 +23,23 @@ export const LIGHTING = { lux: 1e5, gain: 1, moonAge: 0, Esun: 0, Emoon: 0 };
 export const SUN_UNIFORMS = { uSunView: { value: new THREE.Vector3(0, 1, 0) }, uSunCol: { value: new THREE.Color(1, 1, 1) } };
 const SEED = (WORLD_SEED % 997) * .37;
 
+/**
+ * Prairie cure from the same day `phenology` reads. Stipa anthesis is May–July
+ * (Flora of China 22). Day 227, the game's mid-August, is past that, so the
+ * culm is straw. Aspen colour, which starts on day 255, keeps the stand cured.
+ */
+export function steppeCure(day: number) {
+  const x = ((day % 365) + 365) % 365;
+  const s = (a: number, b: number, v: number) => Math.min(1, Math.max(0, (v - a) / (b - a)));
+  return Math.max(s(182, 212, x), phenology(x).colour);
+}
+
+/** 1 = prairie thatch, 0 = boreal litter. `uCure` is `steppeCure(day)`. A cured dry stand stays straw out past a 40 m eye. */
+export const FLOOR = { uFloor: { value: 0 }, uCure: { value: 0 } };
+export function setGroundFloor(biome: string, day = 227) {
+  FLOOR.uFloor.value = biome === 'prairie' || biome === 'desert' ? 1 : 0;
+  FLOOR.uCure.value = steppeCure(day);
+}
 let terrain: THREE.MeshStandardMaterial | undefined;
 /** Extra terrain albedo layers (e.g. render/flora/moss: forest-floor mosses and lichens), applied before the noise, wet and
  * snow response. `head` is fragment GLSL after GLSL_NOISE (world xz is `vXZ`), `body` edits `diffuseColor`. No draw calls. */
@@ -37,13 +55,32 @@ export function terrainMaterial() {
     for (const l of groundLayers) Object.assign(shader.uniforms, l.uniforms);
     shader.vertexShader = 'attribute float aWet; attribute float aSnow; varying float vWet; varying float vSnow; varying vec2 vXZ;\n' +
       shader.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\n vWet = aWet; vSnow = aSnow; vXZ = (modelMatrix * vec4(position, 1.)).xz;');
-    shader.fragmentShader = `varying float vWet; varying float vSnow; varying vec2 vXZ;\n${GLSL_NOISE}\n${groundLayers.map(l => l.head).join('\n')}\n` + shader.fragmentShader
+    Object.assign(shader.uniforms, FLOOR);
+    shader.fragmentShader = `uniform float uFloor; uniform float uCure;\nvarying float vWet; varying float vSnow; varying vec2 vXZ;\n${GLSL_NOISE}\n${groundLayers.map(l => l.head).join('\n')}\n` + shader.fragmentShader
       .replace('#include <color_fragment>', `#include <color_fragment>
         ${groundLayers.map(l => l.body).join('\n')}
         float n1 = fbm(vXZ * 1.7, ${SEED.toFixed(3)}), n2 = vnoise(vXZ * 9.0, ${SEED.toFixed(3)});
         diffuseColor.rgb *= (0.85 + 0.3 * n1) * (1.0 - 0.4 * vWet);
         float snow = smoothstep(0.2, 0.8, vSnow + (n2 - 0.5) * 0.4);
-        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.8), snow);`)
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.8), snow);
+        // Cover (uFloor) picks prairie thatch or boreal litter. Season (uCure) is
+        // steppeCure(day): day 227 is cured, so live green drops out on a dry stand.
+        // The satellite grassland tint is one dark green. It stays past the 40 m view.
+        float reach = mix(30.0, 900.0, clamp(uFloor, 0.0, 1.0));
+        float floorNear = 1.0 - smoothstep(reach * 0.35, reach, length(vViewPosition.xyz));
+        vec3 soil = vec3(0.28, 0.16, 0.07);
+        vec3 thatch = vec3(0.46, 0.32, 0.11);
+        vec3 straw = vec3(0.55, 0.38, 0.12);
+        vec3 liveG = vec3(0.18, 0.24, 0.07);
+        float live = (1.0 - uCure) * mix(0.2, 0.85, clamp(vWet, 0.0, 1.0));
+        vec3 dead = mix(thatch, straw, 0.45 + 0.55 * n2);
+        vec3 prairie = mix(mix(soil, dead, smoothstep(0.22, 0.62, n2)), liveG, live * smoothstep(0.5, 0.85, n1));
+        vec3 litter = vec3(0.14, 0.08, 0.04);
+        vec3 mossC = vec3(0.045, 0.09, 0.028);
+        vec3 boreal = mix(litter, mossC, smoothstep(0.40, 0.75, n1));
+        vec3 floorC = mix(boreal, prairie, clamp(uFloor, 0.0, 1.0));
+        float cover = floorNear * (1.0 - snow) * mix(0.92, 1.0, uCure * clamp(uFloor, 0.0, 1.0));
+        diffuseColor.rgb = mix(diffuseColor.rgb, floorC, cover);`)
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
         roughnessFactor = mix(mix(0.95, 0.35, vWet) * (0.9 + 0.2 * n2), 0.6, snow);`)
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
@@ -51,7 +88,7 @@ export function terrainMaterial() {
           float gx = fbm(p + vec2(e, 0.), s) - fbm(p - vec2(e, 0.), s), gz = fbm(p + vec2(0., e), s) - fbm(p - vec2(0., e), s);
           normal = normalize(normal - (viewMatrix * vec4(gx, 0., gz, 0.)).xyz * (1.0 - snow) * 1.5); }`);
   };
-  terrain.customProgramCacheKey = () => ['boreal-terrain-pbr', ...groundLayers.map(l => l.name)].join(':');
+  terrain.customProgramCacheKey = () => ['boreal-terrain-pbr-cure', ...groundLayers.map(l => l.name)].join(':');
   fadeOptIn(terrain); // render/fade: in-page transition patch fade (uniform only, same cache key)
   return terrain;
 }

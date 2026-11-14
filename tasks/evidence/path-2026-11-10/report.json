@@ -1,0 +1,245 @@
+{
+  "sha": "7f256748",
+  "renderer": "SwiftShader",
+  "errors": [
+    "THREE.WebGLRenderer: KHR_parallel_shader_compile extension not supported."
+  ],
+  "controls": {
+    "before": "PROCEDURAL WORLD / 01\nBoreal\n\nA landscape made from instructions.\n\n08:43 \u00b7 WALK \u00b7 Snow 0.0 cm \u00b7 Stamina 100/100 \u00b7 Energy 75/100 \u00b7 Water 100% \u00b7 Rest 100%\nRT run \u00b7 LT stealth \u00b7 LB fo",
+    "after": "PROCEDURAL WORLD / 01\nBoreal\n\nA landscape made from instructions.\n\n08:45 \u00b7 WALK \u00b7 Snow 0.0 cm \u00b7 Stamina 100/100 \u00b7 Energy 75/100 \u00b7 Water 100% \u00b7 Rest 100%\nRT run \u00b7 LT stealth \u00b7 LB fo"
+  },
+  "views": [
+    {
+      "name": "02-today",
+      "rafMs": 350,
+      "maxGapMs": 1216.6,
+      "mode": "globe",
+      "height": 0,
+      "biome": "prairie",
+      "lat": 49.77016045195434,
+      "lon": 65.53578798233676,
+      "veg": 0.3305415430996305,
+      "water": false,
+      "audio": [
+        {
+          "state": "suspended",
+          "t": 116.4
+        }
+      ]
+    },
+    {
+      "name": "03-handoff",
+      "rafMs": 583.3,
+      "maxGapMs": 600,
+      "mode": "globe",
+      "height": 0,
+      "biome": "prairie",
+      "lat": 49.77016045195434,
+      "lon": 65.53578798233676,
+      "veg": 0.3305415430996305,
+      "water": false,
+      "audio": [
+        {
+          "state": "suspended",
+          "t": 116.4
+        }
+      ]
+    },
+    {
+      "name": "04-overhead-2000",
+      "rafMs": 766.7,
+      "maxGapMs": 1466.6,
+      "mode": null,
+      "height": null,
+      "biome": null,
+      "lat": null,
+      "lon": null,
+      "veg": null,
+      "water": null,
+      "audio": []
+    },
+    {
+      "name": "04-overhead-800",
+      "rafMs": 816.6,
+      "maxGapMs": 2316.5,
+      "mode": null,
+      "height": null,
+      "biome": null,
+      "lat": null,
+      "lon": null,
+      "veg": null,
+      "water": null,
+      "audio": []
+    },
+    {
+      "name": "04-overhead-400",
+      "rafMs": 766.5,
+      "maxGapMs": 950,
+      "mode": null,
+      "height": null,
+      "biome": null,
+      "lat": null,
+      "lon": null,
+      "veg": null,
+      "water": null,
+      "audio": []
+    },
+    {
+      "name": "05-orbit",
+      "rafMs": 416.7,
+      "maxGapMs": 833.3,
+      "mode": "globe",
+      "height": 0,
+      "biome": "prairie",
+      "lat": 49.7701672700205,
+      "lon": 65.5357734437185,
+      "veg": 0.3456268055410995,
+      "water": false,
+      "audio": []
+    },
+    {
+      "name": "06-descent-2000",
+      "rafMs": 816.7,
+      "maxGapMs": 899.9,
+      "mode": "band",
+      "height": 400,
+      "biome": "prairie",
+      "lat": 49.7701672700205,
+      "lon": 65.5357734437185,
+      "veg": 0.3456268055410995,
+      "water": false,
+      "audio": [
+        {
+          "state": "suspended",
+          "t": 1.02
+        }
+      ]
+    },
+    {
+      "name": "06-descent-800",
+      "rafMs": 149.9,
+      "maxGapMs": 3166.6,
+      "mode": "band",
+      "height": 400,
+      "biome": "prairie",
+      "lat": 49.769999999999996,
+      "lon": 65.54,
+      "veg": 0.31671409306629517,
+      "water": false,
+      "audio": [
+        {
+          "state": "running",
+          "t": 12.65
+        }
+      ]
+    },
+    {
+      "name": "06-descent-400",
+      "rafMs": 1183.3,
+      "maxGapMs": 1216.6,
+      "mode": "band",
+      "height": 400,
+      "biome": "prairie",
+      "lat": 49.76993007462521,
+      "lon": 65.54020643791114,
+      "veg": 0.31419401764468147,
+      "water": false,
+      "audio": [
+        {
+          "state": "running",
+          "t": 28.35
+        }
+      ]
+    },
+    {
+      "name": "07-landed",
+      "rafMs": 433.3,
+      "maxGapMs": 850,
+      "mode": "game",
+      "height": 400,
+      "biome": "prairie",
+      "lat": 49.769920049931876,
+      "lon": 65.54023603327822,
+      "veg": 0.3136885732460158,
+      "water": false,
+      "audio": [
+        {
+          "state": "running",
+          "t": 43.78
+        }
+      ]
+    },
+    {
+      "name": "08-eye-40",
+      "rafMs": 666.6,
+      "maxGapMs": 1616.6,
+      "mode": "game",
+      "height": 0,
+      "biome": "prairie",
+      "lat": 49.77016727002208,
+      "lon": 65.53577344371382,
+      "veg": 0.33035281975350034,
+      "water": false,
+      "audio": [
+        {
+          "state": "running",
+          "t": 8.62
+        }
+      ]
+    },
+    {
+      "name": "09-treetop",
+      "rafMs": 666.6,
+      "maxGapMs": 716.6,
+      "mode": "game",
+      "height": 0,
+      "biome": "prairie",
+      "lat": 49.77016270295627,
+      "lon": 65.53579082906731,
+      "veg": 0.330485275388253,
+      "water": false,
+      "audio": [
+        {
+          "state": "running",
+          "t": 8.62
+        }
+      ]
+    },
+    {
+      "name": "10-floor",
+      "rafMs": 466.6,
+      "maxGapMs": 1150,
+      "mode": "game",
+      "height": 0,
+      "biome": "prairie",
+      "lat": 49.77016727002167,
+      "lon": 65.53577344371504,
+      "veg": 0.33035281976530423,
+      "water": false,
+      "audio": [
+        {
+          "state": "running",
+          "t": 5.94
+        }
+      ]
+    },
+    {
+      "name": "11-floor-walk",
+      "rafMs": 483.3,
+      "maxGapMs": 950,
+      "mode": "game",
+      "height": 0,
+      "biome": "prairie",
+      "lat": 49.77013958666192,
+      "lon": 65.53593953567685,
+      "veg": 0.3269996568746985,
+      "water": false,
+      "audio": [
+        {
+          "state": "running",
+          "t": 19.79
+        }
+      ]
+    }
+  ]
+}

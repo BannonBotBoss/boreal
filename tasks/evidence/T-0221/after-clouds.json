@@ -1,0 +1,34 @@
+{
+  "ready": true,
+  "info": {
+    "stats": {
+      "drawn": 18,
+      "inView": 18,
+      "cached": 24,
+      "queued": 0,
+      "deepest": 1,
+      "splitDepth": 0,
+      "splitK": 1,
+      "lodSplit": 0.55,
+      "nearK": 0,
+      "hold": {
+        "lv": 1,
+        "dd": 23895345,
+        "edge": 4999884,
+        "reach": 94290932,
+        "minDeep": 23895345
+      },
+      "tier": 4,
+      "segments": 64
+    },
+    "alt": 23572733.00000001,
+    "times": [
+      1633.199999999255,
+      1043.3999999985099,
+      1056.9000000022352,
+      1067.0999999977648
+    ],
+    "href": "http://127.0.0.1:5191/?view=globe&alt=23572733&shot=1&stages=1&trees=v2&workers=0&nomenu=1&hour=8"
+  },
+  "errors": []
+}

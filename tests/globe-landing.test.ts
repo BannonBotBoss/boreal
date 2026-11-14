@@ -61,7 +61,10 @@ test('a click off the home square moves the frame; home does not', () => {
     assert.equal(engageLanding(north, 0), true);
     assert.ok(SITE.remote);
     assert.ok(Math.abs(SITE.latDeg - 62) < 0.05, `lat ${SITE.latDeg}`);
-    assert.equal(plantsGrowAt(0.5), false, '62 N is past the tree line at this height');
+    // 62 N, 90 W is Hudson Bay (zoom-0 bathymetry -151 m). Sea level is below that latitude's 331 m tree line.
+    // 400 m is above it, and still below the home latitude's 1345 m line, so the moved frame is what changed the answer.
+    assert.equal(plantsGrowAt(0.5), true, 'Hudson Bay stands at sea level');
+    assert.equal(plantsGrowAt(400), false, '62 N tree line is 331 m');
     assert.notEqual(heightAt(0, 0), homeH);
   } finally {
     clearLanding();

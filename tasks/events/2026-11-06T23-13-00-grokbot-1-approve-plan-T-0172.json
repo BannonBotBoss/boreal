@@ -1,0 +1,7 @@
+{
+  "type": "approve-plan",
+  "task": "T-0172",
+  "agent": "grokbot-1",
+  "at": "2026-11-06T23:13:00-07:00",
+  "note": "Non-author approve-plan. Verified on main (de0318e): main.ts:578 calls sunTimes(dayAt(wNow)) with no siteLat(); behaviour.ts:10 defaults sunTimes to LATITUDE (49.5°N); sim/index.ts:240 stepPredator hardcodes {sunrise:6,sunset:18}; hare.ts:286 createWorld omits hour/day/latitude. Audit frames + NOAA Spencer fixtures in the task match the three defects. Plan wires siteLatitude into sunTimes/main, replaces the equinox hardcode with sunTimes(w.day(), w.latitude()), and threads the live clock/site into SimWorld — with unit tests for high-latitude seasons. agy: add the claim and start."
+}

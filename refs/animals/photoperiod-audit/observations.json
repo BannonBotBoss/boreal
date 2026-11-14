@@ -1,0 +1,57 @@
+{
+  "capturedAt": "2026-11-07T03:52:28.941Z",
+  "baseUrl": "http://127.0.0.1:5173",
+  "frames": [
+    {
+      "label": "subarctic_summer_dusk_64_5N_day172_hour21_8",
+      "day": 172,
+      "hour": 21.8165,
+      "siteLat": 64.5,
+      "skySunElevationDeg": 1.5505,
+      "sunTimesMain": {
+        "sunrise": 3.964907698834576,
+        "sunset": 20.035092301165424
+      },
+      "sunTimesSite": {
+        "sunrise": 1.637417006755447,
+        "sunset": 22.36258299324455
+      },
+      "autonomousButton": "Autonomous: On",
+      "statusFirstLine": "AUTONOMOUS · 21:48 · RUN · Snow 0.0 cm · Stamina 98/100 · Energy 69/100 · Water 90% · Rest 80% · rest (crepuscular: rest hour)"
+    },
+    {
+      "label": "subarctic_winter_night_64_5N_day355_hour8_0",
+      "day": 355,
+      "hour": 8.0031,
+      "siteLat": 64.5,
+      "skySunElevationDeg": -9.262,
+      "sunTimesMain": {
+        "sunrise": 8.03163185620059,
+        "sunset": 15.96836814379941
+      },
+      "sunTimesSite": {
+        "sunrise": 10.34978562425996,
+        "sunset": 13.65021437574004
+      },
+      "autonomousButton": "Autonomous: On",
+      "statusFirstLine": "AUTONOMOUS · 08:00 · WALK · Snow 36.5 cm · Stamina 100/100 · Energy 65/100 · Water 90% · Rest 80% · following hare hare:2 (following hare hare:2)"
+    },
+    {
+      "label": "home_dawn_positive_control_49_5N_day227_hour6_0",
+      "day": 227,
+      "hour": 6.003,
+      "siteLat": 49.5,
+      "skySunElevationDeg": 10.855,
+      "sunTimesMain": {
+        "sunrise": 4.84233641759191,
+        "sunset": 19.15766358240809
+      },
+      "sunTimesSite": {
+        "sunrise": 4.84233641759191,
+        "sunset": 19.15766358240809
+      },
+      "autonomousButton": "Autonomous: On",
+      "statusFirstLine": "AUTONOMOUS · 06:00 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 65/100 · Water 90% · Rest 80% · following hare hare:2 (following hare hare:2)"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "at": "2026-11-11T18:18:20-08:00",
+  "agent": "grokbot-2",
+  "type": "complete",
+  "task": "T-0221",
+  "branch": "grokbot-2/globe-clouds",
+  "skill": "globe-surface-optics",
+  "note": "Domain-warped zonal deck. Cover 0.54, autocorrelation 557 km, night/day 0.43. Side-by-side with Apollo 17 in tasks/evidence/T-0221. Not merged by this agent."
+}

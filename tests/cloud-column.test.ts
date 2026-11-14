@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cloudColumn, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, snowShareAtGround } from '../src/core/atmo/cloudColumn';
-import { bakeLocal, columnAt, LOCAL_CLOUDS, localCloudFade } from '../src/world/globe/localClouds';
+import { cloudAlbedo, cloudBaseLongwave, cloudColumn, cloudOutgoingLongwave, cloudShortwave, cloudTopLongwave, cloudTransmittance, dewPointC, esatPa, iceFraction, iceOpacity, moistLapse, partlyCloudyShortwave, pressureAt, qsat, snowShareAtGround, virtualTempK, cloudRadiativeEffect, surfaceCloudRadiativeEffect, atmosphericCloudRadiativeEffect, liftedIndex, kIndex, totalTotals, showalterIndex, convectiveCondensationLevel, wetBulbC, wetBulbZeroM } from '../src/core/atmo/cloudColumn';
+import { K } from '../src/core/constants';
+import { anvilDepthGate, coreStrength, bakeLocal, columnAt, dewPointBaseM, LOCAL_CLOUDS, localCloudFade, softBlurBas } from '../src/world/globe/localClouds';
 import CC from '../data/earth/cloud-column.json';
 
 const qOf = (t: number, rh: number) => .622 * rh * esatPa(t) / 101325;
@@ -82,6 +83,34 @@ test('layered bake: dew-point bases undulate per cell around the column LCL (not
   assert.ok(Math.max(...bases) - Math.min(...bases) >= 1, `base voxels should vary by cell: ${Math.min(...bases)}..${Math.max(...bases)}`);
   for (const j of bases) assert.ok((j + 1) * dz >= col.lcl - L.baseUndulM - dz && j * dz <= col.lcl + L.baseUndulM + dz, `base near LCL ${col.lcl}`);
 });
+test('layered bake: dew-point base undulation soft-blurs across neighbors (no knife wall)', () => {
+  const nx = 16, bas = new Float32Array(nx * nx);
+  // Left/right LCL step of ±undul around 1200 m — a knife wall at the mid-column before blur.
+  // (A checkerboard collapses under a 3×3 blur; a low-frequency step keeps interior undulation.)
+  for (let k = 0; k < nx; k++) for (let i = 0; i < nx; i++)
+    bas[k * nx + i] = 1200 + (i < nx / 2 ? -300 : 300);
+  const soft = softBlurBas(bas, nx);
+  let rawJump = 0, softJump = 0, n = 0, softSpan = 0;
+  const mid = nx / 2 - 1;
+  for (let k = 0; k < nx; k++) {
+    rawJump += Math.abs(bas[k * nx + mid] - bas[k * nx + mid + 1]);
+    softJump += Math.abs(soft[k * nx + mid] - soft[k * nx + mid + 1]);
+    n++;
+  }
+  for (let c = 0; c < soft.length; c++) softSpan = Math.max(softSpan, Math.abs(soft[c] - 1200));
+  assert.ok(n > 0);
+  assert.ok(softJump < rawJump * .75, `mid-wall |Δbas| drops after blur (${softJump} < ${rawJump * .75})`);
+  assert.ok(softSpan > 200, `far-field undulation still present after blur (span ${softSpan})`);
+});
+test('layered bake: dew-point bases follow Espy — wetter air sits lower', () => {
+  assert.equal(dewPointBaseM(1200, .5, 300), 1200);
+  assert.equal(dewPointBaseM(1200, 1, 300), 900);  // wetter → higher dew point → lower LCL
+  assert.equal(dewPointBaseM(1200, 0, 300), 1500); // drier → lower dew point → higher LCL
+  assert.ok(dewPointBaseM(1200, .8, 300) < dewPointBaseM(1200, .2, 300));
+  assert.equal(dewPointBaseM(-1, .8, 300), -1); // no column LCL
+  assert.equal(dewPointBaseM(100, 1, 300), 0);  // don't go underground
+  assert.equal(dewPointBaseM(1200, .5, 300, CC.espy_m_per_K), 1200);
+});
 test('layered bake: dew-point bases soft-feather over a thin condensation zone (not a knife-edge)', () => {
   // Real LCL bases build condensate over O(100 m); finer nz so baseFeatherM spans >1 bake level.
   const col = cloudColumn(28, qOf(28, .75), .6, LOCAL_CLOUDS.topM), L = { ...LOCAL_CLOUDS, nx: 16, nz: 96 }, dz = L.topM / L.nz;
@@ -104,6 +133,26 @@ test('layered bake: dew-point bases soft-feather over a thin condensation zone (
   assert.ok(n > 3, `mature cells ${n}`);
   assert.ok(softNear < mid, `density just above LCL softer than mid-tower (${softNear} < ${mid})`);
   assert.ok(softNear < hardNear, `feather lowers near-base density vs knife-edge (${softNear} < ${hardNear})`);
+});
+test('layered bake: stratiform decks soft-feather at vertical edges (not a knife-edge sheet)', () => {
+  // Cold saturated column → high strat sheet. Finer nz so baseFeatherM spans >1 bake level.
+  const col = cloudColumn(0, qOf(0, .9), 1, LOCAL_CLOUDS.topM), L = { ...LOCAL_CLOUDS, nx: 16, nz: 96 }, dz = L.topM / L.nz;
+  assert.ok((L.baseFeatherM ?? 0) >= 150 && L.baseFeatherM > dz, 'feather spans >1 bake voxel');
+  const step = col.layers[1]?.z || 250;
+  // Meaningful strat only (tiny residual layers near zero confuse a min>0 scan)
+  const hasStrat = (j: number) => (col.layers[Math.min(col.layers.length - 1, Math.round((j + .5) * dz / step))]?.strat ?? 0) > 1e-4;
+  let lo = -1, hi = -1;
+  for (let j = 0; j < L.nz; j++) if (hasStrat(j)) { if (lo < 0) lo = j; hi = j; }
+  assert.ok(lo >= 0 && hi > lo + 2, `strat band spans bake levels ${lo}..${hi}`);
+  const soft = bakeLocal(col, 1, 0, 0, L), hard = bakeLocal(col, 1, 0, 0, { ...L, baseFeatherM: 0 });
+  const on = (b: Uint8Array, j: number) => {
+    let s = 0; for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) s += b[i + L.nx * (j + L.nz * k)];
+    return s;
+  };
+  const edgeSoft = on(soft, hi), edgeHard = on(hard, hi), mid = Math.floor((lo + hi) / 2), midSoft = on(soft, mid);
+  assert.ok(midSoft > 100, `mid-deck lit (${midSoft})`);
+  assert.ok(edgeSoft < midSoft, `strat top edge softer than mid-deck (${edgeSoft} < ${midSoft})`);
+  assert.ok(edgeSoft < edgeHard, `feather lowers top edge vs knife-edge (${edgeSoft} < ${edgeHard})`);
 });
 test('overshoot bake: a strong tower paints a tapered plume above the buoyant top; a weak one barely does', () => {
   const L = LOCAL_CLOUDS, dz = L.topM / L.nz;
@@ -130,6 +179,8 @@ test('overshoot bake: cell strength scales tip height — mid cells stop short o
   const hot = cloudColumn(30, qOf(30, .8), 1, L.topM);
   assert.ok(hot.overshootM > 800 && hot.top > 0, `column overshoot ${hot.overshootM} top ${hot.top}`);
   const b = bakeLocal(hot, 1, 0, 0, L), tipFull = Math.min(L.topM, hot.top + hot.overshootM);
+  // The bake feathers the vertical lid over ~2 cells; a tip that hits the ceiling cannot paint tipFull itself.
+  const tipReach = tipFull - (tipFull >= L.topM - 1e-6 ? 2 * dz : dz);
   let midShort = 0, coreHigh = 0;
   for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) {
     let maxZ = -1;
@@ -138,8 +189,8 @@ test('overshoot bake: cell strength scales tip height — mid cells stop short o
       if (z > hot.top + dz && v > 0 && z > maxZ) maxZ = z;
     }
     if (maxZ < 0) continue;
-    if (maxZ >= tipFull - dz) coreHigh++;
-    else if (maxZ > hot.top + hot.overshootM * .15 && maxZ < tipFull - 2 * dz) midShort++;
+    if (maxZ >= tipReach) coreHigh++;
+    else if (maxZ > hot.top + hot.overshootM * .15 && maxZ < tipReach - dz) midShort++;
   }
   assert.ok(coreHigh > 0, `at least one mature core reaches the full tip (${coreHigh})`);
   assert.ok(midShort > 0, `some weaker cells stop short in the overshoot band (${midShort})`);
@@ -174,6 +225,7 @@ test('overshoot bake: plume soft-narrows into a turret — mid cells thinner nea
   const b = bakeLocal(hot, 1, 0, 0, L);
   const step = hot.layers[1]?.z || 250, bakeTop = hot.top + step / 2; // bakeLocal buoyant top
   const tipFull = Math.min(L.topM, bakeTop + hot.overshootM), overIn = tipFull - bakeTop;
+  const tipReach = tipFull - (tipFull >= L.topM - 1e-6 ? 2 * dz : dz); // lid feather when the tip hits the box ceiling
   // low band (near EL) vs upper overshoot: turret should shrink the lit footprint with height
   const lo0 = bakeTop + overIn * .05, lo1 = bakeTop + overIn * .25;
   const hi0 = bakeTop + overIn * .6, hi1 = bakeTop + overIn * .85;
@@ -189,8 +241,8 @@ test('overshoot bake: plume soft-narrows into a turret — mid cells thinner nea
     if (maxZ < 0) continue;
     if (densLo > 0) litLo++;
     if (densHi > 0) litHi++;
-    const mature = maxZ >= tipFull - dz;
-    const mid = !mature && maxZ > bakeTop + overIn * .15 && maxZ < tipFull - 3 * dz;
+    const mature = maxZ >= tipReach;
+    const mid = !mature && maxZ > bakeTop + overIn * .15 && maxZ < tipReach - dz;
     if (mature) { coreSeen++; maxCoreHi = Math.max(maxCoreHi, densHi); }
     if (mid) { midSeen++; maxMidHi = Math.max(maxMidHi, densHi); if (densHi === 0) midZeroHi++; }
   }
@@ -307,6 +359,165 @@ test('anvil bake: lateral density falls as anv^1.5 — outer fringe much thinner
   assert.ok(near > outer * 2.5, `near-core anvil denser than outer fringe (${near} vs ${outer})`);
 });
 
+test('anvil bake: underside soft-feathers over baseFeatherM (not a knife-edge floor)', () => {
+  // Deep glaciated tower; finer nz so baseFeatherM spans >1 bake level.
+  const col = cloudColumn(30, qOf(30, .85), 1, LOCAL_CLOUDS.topM), L = { ...LOCAL_CLOUDS, nx: 16, nz: 96 }, dz = L.topM / L.nz;
+  assert.ok(col.top - col.lcl >= 6000, 'deep glaciated tower for anvil');
+  assert.ok((L.baseFeatherM ?? 0) >= 150 && L.baseFeatherM > dz, 'feather spans >1 bake voxel');
+  const soft = bakeLocal(col, 1, 0, 0, L), hard = bakeLocal(col, 1, 0, 0, { ...L, baseFeatherM: 0 });
+  const step = col.layers[1]?.z || 250;
+  let softBot = 0, hardBot = 0, softTop = 0, n = 0;
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) {
+    // fringe columns: anvil present near top, little mid-tower convective fill
+    const jTop = Math.min(L.nz - 1, Math.floor((col.top - dz * .5) / dz));
+    const jDeep = Math.min(L.nz - 1, Math.floor((col.top - CC.anvil_depth_m * .85) / dz));
+    const midZ = col.lcl + .4 * (col.top - col.lcl);
+    const jMid = Math.min(L.nz - 1, Math.floor(midZ / dz));
+    const st = soft[i + L.nx * (jTop + L.nz * k)], sd = soft[i + L.nx * (jDeep + L.nz * k)];
+    const ht = hard[i + L.nx * (jTop + L.nz * k)], hd = hard[i + L.nx * (jDeep + L.nz * k)];
+    const mid = soft[i + L.nx * (jMid + L.nz * k)];
+    if (st > 20 && mid < 10 && hd > 5) { softBot += sd; hardBot += hd; softTop += st; n++; }
+  }
+  assert.ok(n > 2, `anvil fringe cells (${n})`);
+  assert.ok(softTop > softBot, `top denser than feathered underside (${softTop} > ${softBot})`);
+  assert.ok(softBot < hardBot, `feather lowers underside vs knife-edge (${softBot} < ${hardBot})`);
+});
+
+test('layered bake: cells without overshoot soft-feather their top at the EL over baseFeatherM', () => {
+  // Deep glaciated tower; finer nz so baseFeatherM spans >1 bake level. Fringe cells (anvil, h<=0.5) stop at the EL.
+  const col = cloudColumn(30, qOf(30, .85), 1, LOCAL_CLOUDS.topM), L = { ...LOCAL_CLOUDS, nx: 16, nz: 96 }, dz = L.topM / L.nz;
+  assert.ok(col.top - col.lcl >= 6000 && col.overshootM > 0, 'deep tower with overshoot for contrast');
+  assert.ok((L.baseFeatherM ?? 0) >= 150 && L.baseFeatherM > dz, 'feather spans >1 bake voxel');
+  const soft = bakeLocal(col, 1, 0, 0, L), hard = bakeLocal(col, 1, 0, 0, { ...L, baseFeatherM: 0 });
+  const step = col.layers[1]?.z || 250, bakeTop = col.top + step / 2;
+  const jNear = Math.min(L.nz - 1, Math.floor((bakeTop - dz * .5) / dz));
+  const jDeep = Math.min(L.nz - 1, Math.floor((bakeTop - L.baseFeatherM * .85) / dz));
+  const midZ = col.lcl + .4 * (col.top - col.lcl);
+  const jMid = Math.min(L.nz - 1, Math.floor(midZ / dz));
+  let softNear = 0, hardNear = 0, softDeep = 0, n = 0;
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) {
+    const sn = soft[i + L.nx * (jNear + L.nz * k)], hn = hard[i + L.nx * (jNear + L.nz * k)];
+    const sd = soft[i + L.nx * (jDeep + L.nz * k)], mid = soft[i + L.nx * (jMid + L.nz * k)];
+    // fringe: anvil near EL, little mid-tower fill (weak / no overshoot turret)
+    if (hn > 15 && mid < 10) { softNear += sn; hardNear += hn; softDeep += sd; n++; }
+  }
+  assert.ok(n > 2, `EL-stopping fringe cells (${n})`);
+  assert.ok(softDeep > softNear, `below-feather denser than feathered EL top (${softDeep} > ${softNear})`);
+  assert.ok(softNear < hardNear, `feather lowers EL top vs knife-edge (${softNear} < ${hardNear})`);
+});
+
+test('overshoot bake: tip inside the box soft-feathers the cap; plume body stays denser than (1-u)^2', () => {
+  // Raise topM so the physical tip sits inside the volume (default 12 km clamps hot overshoots).
+  const col = cloudColumn(30, qOf(30, .85), 1, 14000), L = { ...LOCAL_CLOUDS, nx: 16, nz: 112, topM: 14000 }, dz = L.topM / L.nz;
+  const tipFull = col.top + col.overshootM;
+  assert.ok(col.overshootM > 800 && tipFull < L.topM - L.baseFeatherM, `tip inside box (${tipFull})`);
+  assert.ok((L.baseFeatherM ?? 0) > dz, 'feather spans >1 bake voxel');
+  const soft = bakeLocal(col, 1, 0, 0, L), hard = bakeLocal(col, 1, 0, 0, { ...L, baseFeatherM: 0 });
+  // near tip (inside feather) vs deeper in the plume body
+  const jNear = Math.min(L.nz - 1, Math.floor((tipFull - L.baseFeatherM * .3) / dz));
+  const jDeep = Math.min(L.nz - 1, Math.floor((tipFull - L.baseFeatherM * .95) / dz));
+  const jBody = Math.min(L.nz - 1, Math.floor((col.top + (tipFull - col.top) * .35) / dz));
+  assert.ok(jBody < jDeep && jDeep < jNear, 'body < deep-feather < near-tip');
+  let softNear = 0, softDeep = 0, softBody = 0, hardBody = 0, n = 0;
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) {
+    const sb = soft[i + L.nx * (jBody + L.nz * k)], hb = hard[i + L.nx * (jBody + L.nz * k)];
+    if (hb < 8 && sb < 8) continue; // mature / lit plume column
+    softNear += soft[i + L.nx * (jNear + L.nz * k)];
+    softDeep += soft[i + L.nx * (jDeep + L.nz * k)];
+    softBody += sb; hardBody += hb; n++;
+  }
+  assert.ok(n > 0, `plume columns (${n})`);
+  assert.ok(softDeep > softNear, `cap feathers: deeper denser than near tip (${softDeep} > ${softNear})`);
+  assert.ok(softBody > hardBody, `feathered body denser than (1-u)^2 taper (${softBody} > ${hardBody})`);
+});
+
+test('overshoot bake: soft-feathers tower→plume at the EL over baseFeatherM (not a knife handoff)', () => {
+  // Deep overshooting tower; finer nz so baseFeatherM spans >1 bake level.
+  const col = cloudColumn(30, qOf(30, .85), 1, LOCAL_CLOUDS.topM), L = { ...LOCAL_CLOUDS, nx: 16, nz: 96 }, dz = L.topM / L.nz;
+  assert.ok(col.overshootM > 800 && col.top > col.lcl, `overshooting tower (${col.overshootM})`);
+  assert.ok((L.baseFeatherM ?? 0) > dz, 'feather spans >1 bake voxel');
+  const soft = bakeLocal(col, 1, 0, 0, L), hard = bakeLocal(col, 1, 0, 0, { ...L, baseFeatherM: 0 });
+  const jNear = Math.min(L.nz - 1, Math.floor((col.top - L.baseFeatherM * .3) / dz)); // inside feather, below EL
+  assert.ok(jNear * dz < col.top, 'near-EL sample is below the buoyant top');
+  let softNear = 0, hardNear = 0, softPlume = 0, n = 0;
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) {
+    // mature overshooting cores: lit plume just above the EL
+    const jPlume = Math.min(L.nz - 1, Math.floor((col.top + dz) / dz));
+    const pl = soft[i + L.nx * (jPlume + L.nz * k)];
+    const sn = soft[i + L.nx * (jNear + L.nz * k)], hn = hard[i + L.nx * (jNear + L.nz * k)];
+    if (pl > 8 && hn > 40) { softNear += sn; hardNear += hn; softPlume += pl; n++; }
+  }
+  assert.ok(n > 0, `overshooting core columns (${n})`);
+  assert.ok(softNear < hardNear, `feather lowers near-EL vs knife handoff (${softNear} < ${hardNear})`);
+  // Soft attach moves the near-EL sample toward the ice-plume density (not the full knife tower).
+  assert.ok(Math.abs(softNear - softPlume) < Math.abs(hardNear - softPlume),
+    `soft near-EL closer to plume than knife (${softNear} vs plume ${softPlume}, knife ${hardNear})`);
+});
+
+test('anvil bake: ice-share gate smoothsteps mixed phase (0.25→0.75), full at ice≥0.75', () => {
+  // Mirrors the iceOk ramp in bakeLocal (ECMWF IFS Cy47r1 ice_phase band).
+  const gate = (ice: number) => { const u = Math.min(1, Math.max(0, (ice - .25) / .5)); return u * u * (3 - 2 * u); };
+  assert.equal(gate(0), 0);
+  assert.equal(gate(.25), 0);
+  assert.equal(gate(.5), .5);
+  assert.equal(gate(.75), 1);
+  assert.equal(gate(1), 1);
+  assert.ok(gate(.4) > 0 && gate(.4) < gate(.6) && gate(.6) < 1, 'strictly rising through mixed phase');
+});
+
+test('layered bake: soft-feathers toward the horizontal box rim (not a knife wall)', () => {
+  const col = cloudColumn(30, qOf(30, .85), 1, LOCAL_CLOUDS.topM), L = { ...LOCAL_CLOUDS, nx: 16, nz: 48 };
+  assert.ok((L.baseFeatherM ?? 0) > 0, 'feathering on');
+  const soft = bakeLocal(col, 1, 0, 0, L), hard = bakeLocal(col, 1, 0, 0, { ...L, baseFeatherM: 0 });
+  // Outer ring (edge=0) vs one cell in (edge=1) near the buoyant top / anvil band
+  const jTop = Math.min(L.nz - 1, Math.floor((col.top - L.topM / L.nz * .5) / (L.topM / L.nz)));
+  let softRim = 0, softIn = 0, hardRim = 0, hardIn = 0, n = 0;
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) {
+    const edge = Math.min(i, k, L.nx - 1 - i, L.nx - 1 - k);
+    const s = soft[i + L.nx * (jTop + L.nz * k)], h = hard[i + L.nx * (jTop + L.nz * k)];
+    if (edge === 0) { softRim += s; hardRim += h; n++; }
+    else if (edge === 1) { softIn += s; hardIn += h; }
+  }
+  assert.ok(n > 0, `rim cells (${n})`);
+  assert.ok(hardRim > 0, `knife wall has cloud on the rim (${hardRim})`);
+  assert.ok(softRim < hardRim, `feather lowers rim vs knife (${softRim} < ${hardRim})`);
+  assert.ok(softIn > softRim, `inboard denser than rim (${softIn} > ${softRim})`);
+});
+
+test('layered bake: soft-feathers toward the vertical box lid (not a knife ceiling)', () => {
+  // Clamp the box below the buoyant top so the main write truncates at the lid (not the overshoot path).
+  const col = cloudColumn(30, qOf(30, .85), 1, LOCAL_CLOUDS.topM), L = { ...LOCAL_CLOUDS, nx: 16, nz: 48, topM: 6000 };
+  assert.ok((L.baseFeatherM ?? 0) > 0, 'feathering on');
+  assert.ok(col.top > L.topM, `EL above lid (${col.top} > ${L.topM})`);
+  const soft = bakeLocal(col, 1, 0, 0, L), hard = bakeLocal(col, 1, 0, 0, { ...L, baseFeatherM: 0 });
+  const jLid = L.nz - 1, jIn = L.nz - 2, mid = (L.nx / 2) | 0;
+  let softLid = 0, softIn = 0, hardLid = 0, n = 0;
+  for (let k = mid - 2; k <= mid + 2; k++) for (let i = mid - 2; i <= mid + 2; i++) {
+    softLid += soft[i + L.nx * (jLid + L.nz * k)];
+    hardLid += hard[i + L.nx * (jLid + L.nz * k)];
+    softIn += soft[i + L.nx * (jIn + L.nz * k)];
+    n++;
+  }
+  assert.ok(n > 0, `lid cells (${n})`);
+  assert.ok(hardLid > 0, `knife ceiling has cloud on the lid (${hardLid})`);
+  assert.ok(softLid < hardLid, `feather lowers lid vs knife (${softLid} < ${hardLid})`);
+  assert.ok(softIn > softLid, `below-lid denser than lid (${softIn} > ${softLid})`);
+});
+
+test('layered bake: ground fog is not feathered away at the box floor (the floor is the ground)', () => {
+  // Synthetic fog deck: stratiform water in the lowest ~1 km only, no convective parcel.
+  const L = { ...LOCAL_CLOUDS, nx: 16 }, base = cloudColumn(5, qOf(5, .5), 1, L.topM);
+  const layers = base.layers.map(l => ({ ...l, strat: l.z <= 1000 ? L.waterFull : 0, water: l.z <= 1000 ? L.waterFull : 0, ice: 0 }));
+  const col = { ...base, layers, lcl: -1, top: -1, overshootM: 0 };
+  const soft = bakeLocal(col, 1, 0, 0, L), hard = bakeLocal(col, 1, 0, 0, { ...L, baseFeatherM: 0 });
+  let s0 = 0, h0 = 0, sTop = 0, hTop = 0; const jTop = Math.floor(1000 / (L.topM / L.nz)) - 1; // last voxel of the deck
+  for (let k = 0; k < L.nx; k++) for (let i = 0; i < L.nx; i++) { if (Math.min(i, k, L.nx - 1 - i, L.nx - 1 - k) < 3) continue;
+    s0 += soft[i + L.nx * L.nz * k]; h0 += hard[i + L.nx * L.nz * k]; sTop += soft[i + L.nx * (jTop + L.nz * k)]; hTop += hard[i + L.nx * (jTop + L.nz * k)]; }
+  assert.ok(h0 > 0, `deck has cloud at the ground (${h0})`);
+  assert.ok(s0 >= h0 * .9, `floor keeps fog (${s0} vs knife ${h0})`);
+  assert.ok(sTop < hTop, `deck top still feathers (${sTop} < ${hTop})`);
+});
+
 test('layered bake: a stratiform layer is a broad deck, not broken into convective cells', () => {
   const col = cloudColumn(5, qOf(5, .99), 1, LOCAL_CLOUDS.topM), L = LOCAL_CLOUDS;
   let j = -1; col.layers.forEach((l, i) => { if (l.strat > (col.layers[j]?.strat ?? 0)) j = i; }); assert.ok(j >= 0, 'a saturated cold column has a sheet');
@@ -367,6 +578,22 @@ test('CAPE: a hot humid column carries strong convective energy, a cool one litt
   assert.ok(drier.cape < hot.cape, `${drier.cape} vs ${hot.cape}`);
   assert.ok(Math.abs(hot.wMax - Math.sqrt(2 * hot.cape)) < 1e-9 && hot.wMax > 40 && cool.wMax < 25, `wMax ${hot.wMax} / ${cool.wMax}`);
   try { C.entrain_per_m = 0; const pure = cloudColumn(30, qOf(30, .8), 1); assert.ok(pure.cape >= hot.cape, `${pure.cape} vs ${hot.cape}`); } finally { C.entrain_per_m = keep; }
+});
+test('CAPE: virtual temperature adds vapour buoyancy and subtracts condensate loading (Emanuel 1994)', () => {
+  assert.equal(virtualTempK(20, 0), 293.15);
+  assert.ok(virtualTempK(20, .01) > virtualTempK(20, 0), 'vapour lightens the air');
+  assert.ok(virtualTempK(20, .01, .001) < virtualTempK(20, .01), 'condensate loads the air');
+  const T = 293.15, q = .01, qc = .001;
+  assert.ok(Math.abs(virtualTempK(20, q, qc) - T * (1 + (1 / CC.eps - 1) * q - qc)) < 1e-12);
+  const hot = cloudColumn(30, qOf(30, .8), 1), dz = hot.layers[1].z, qp = hot.layers[0].q;
+  let sum = 0;
+  for (const l of hot.layers) {
+    if (l.z < hot.lcl || l.z > hot.top) continue;
+    const p = pressureAt(l.z), qcL = Math.min(CC.qc_auto_kg_kg, Math.max(0, qp - qsat(l.tParcel, p)));
+    const tvP = virtualTempK(l.tParcel, qsat(l.tParcel, p), qcL), tvE = virtualTempK(l.tEnv, l.q);
+    if (tvP >= tvE - 1e-9) sum += CC.g * (tvP - tvE) / tvE * dz;
+  }
+  assert.ok(Math.abs(sum - hot.cape) < 1e-4, `cape ${hot.cape} vs recomputed Tv integral ${sum}`);
 });
 test('overshooting top: a strong tower punches 1-2 km above its anvil level, a weak one barely, clear air not at all', () => {
   const hot = cloudColumn(30, qOf(30, .8), 1), cool = cloudColumn(10, qOf(10, .5), 1), dry = cloudColumn(30, .001, 1);
@@ -487,4 +714,234 @@ test('layered clouds: ground bounce lights bases from below, brighter over snow,
   assert.ok(groundBounce(ALB_SNOW, .5, 1) > 3 * groundBounce(ALB_FOREST, .5, 1));
   assert.ok(groundBounce(ALB_SNOW, .5, 10) < groundBounce(ALB_SNOW, .5, 1));
   assert.equal(groundBounce(ALB_SNOW, -.1, 0), 0);
+});
+
+test('anvil bake: tower-depth gate smoothsteps 0.8x→1x anvil_min_tower_m (no on/off pop)', () => {
+  const m = CC.anvil_min_tower_m;
+  assert.equal(anvilDepthGate(0), 0);
+  assert.equal(anvilDepthGate(.8 * m), 0);
+  assert.ok(Math.abs(anvilDepthGate(.9 * m) - .5) < 1e-9);
+  assert.equal(anvilDepthGate(m), 1);
+  assert.equal(anvilDepthGate(2 * m), 1);
+  assert.ok(anvilDepthGate(.85 * m) < anvilDepthGate(.95 * m), 'rising through the band');
+});
+
+test('layered clouds: core-strength ramp is smooth at both ends (no crease at h=0.5 or 0.85)', () => {
+  assert.equal(coreStrength(.4), 0); assert.equal(coreStrength(.5), 0); assert.equal(coreStrength(.85), 1); assert.equal(coreStrength(1), 1);
+  assert.ok(Math.abs(coreStrength(.675) - .5) < 1e-9);
+  const e = 1e-4, slope = (x: number) => (coreStrength(x + e) - coreStrength(x - e)) / (2 * e);
+  assert.ok(slope(.5 + e) < .01 && slope(.85 - e) < .01); // zero slope at the ends
+  for (let x = .5; x < .85; x += .01) assert.ok(coreStrength(x + .01) >= coreStrength(x)); // monotone
+});
+
+test('layered clouds: EL tower→plume attach shares coreStrength (no leftover linear mid-ramp)', () => {
+  // bakeLocal plumeAtEl uses coreStrength(h), same 0.5→0.85 band as the overshoot plume (#368).
+  // Near the low knee, smoothstep stays well below a linear (h-0.5)/0.35 — pin that so a revert can't sneak back.
+  assert.equal(coreStrength(.5), 0);
+  assert.ok(coreStrength(.55) < ((.55 - .5) / .35) * .5);
+  assert.ok(Math.abs(coreStrength(.675) - .5) < 1e-9);
+  assert.equal(coreStrength(.85), 1);
+});
+
+test('layered clouds: precipitable water is the column vapour path and sits in the observed range', () => {
+  // Analytic check: q = q0 exp(-z/Hq) and rho ~ rho0 exp(-z/Hp) give PW ~ rho0 q0 / (1/Hq + 1/Hp) (cooler air aloft is denser by a few %, and the 250 m layer sum from z=0 reads ~dz/(2H) = 7% high, same convention as waterPath).
+  const t = 25, q0 = qOf(t, .8), c = cloudColumn(t, q0), rho0 = 101325 / (287.04 * (t + 273.15));
+  const analytic = rho0 * q0 / (1 / CC.vapour_scale_m + 1 / CC.pressure_scale_m);
+  assert.ok(Math.abs(c.pw - analytic) / analytic < .15, `pw ${c.pw} vs ${analytic}`);
+  assert.ok(c.pw > 20 && c.pw < 60, `humid summer column ${c.pw} mm`); // tropical/summer columns 30-60 mm
+  const cold = cloudColumn(-20, qOf(-20, .7));
+  assert.ok(cold.pw > 0 && cold.pw < 5, `polar winter ${cold.pw} mm`);
+  const plateau = cloudColumn(t, q0, 1, CC.tropopause_m, CC.layer_m, 3000);
+  assert.ok(plateau.pw < c.pw, 'thinner air on a plateau holds less vapour mass for the same q0');
+});
+
+test('layered clouds: albedo comes from optical depth (two-stream) and spans cirrus to cumulonimbus', () => {
+  assert.equal(cloudAlbedo(0), 0);
+  assert.ok(Math.abs(cloudAlbedo(10) - .4286) < .01, 'stratocumulus deck ~0.4');
+  assert.ok(cloudAlbedo(1) < .1 && cloudAlbedo(100) > .85 && cloudAlbedo(100) < 1);
+  const deep = cloudColumn(28, qOf(28, .85)), thin = cloudColumn(5, qOf(5, .6));
+  assert.ok(cloudAlbedo(deep.tau) >= cloudAlbedo(thin.tau), 'a deeper, wetter column is at least as bright');
+});
+
+test('layered clouds: two-stream transmittance is 1 minus albedo and lets light under a thick deck', () => {
+  assert.equal(cloudTransmittance(0), 1);
+  assert.ok(Math.abs(cloudTransmittance(10) + cloudAlbedo(10) - 1) < 1e-12, 'non-absorbing: A + T = 1');
+  assert.ok(Math.abs(cloudTransmittance(10) - .5714) < .01, 'stratocumulus deck ~57% through');
+  assert.ok(cloudTransmittance(10) > 1000 * Math.exp(-10), 'far above the direct-beam exp(-tau)');
+  assert.ok(cloudTransmittance(1) > cloudTransmittance(10) && cloudTransmittance(10) > cloudTransmittance(100));
+  const deep = cloudColumn(28, qOf(28, .85)), thin = cloudColumn(5, qOf(5, .6));
+  assert.ok(cloudTransmittance(deep.tau) <= cloudTransmittance(thin.tau), 'a deeper, wetter column lets less through');
+});
+
+test('layered clouds: shortwave uses TSI times two-stream albedo and transmittance', () => {
+  const clear = cloudShortwave(0), deck = cloudShortwave(10), slant = cloudShortwave(10, .5), night = cloudShortwave(10, 0);
+  assert.equal(clear.transmitted, K.TSI);
+  assert.equal(clear.reflected, 0);
+  assert.ok(Math.abs(deck.reflected + deck.transmitted - K.TSI) < 1e-9, 'conservative: R + T = S0');
+  assert.ok(Math.abs(deck.transmitted - K.TSI * cloudTransmittance(10)) < 1e-12);
+  assert.ok(Math.abs(deck.reflected - K.TSI * cloudAlbedo(10)) < 1e-12);
+  assert.ok(Math.abs(deck.transmitted - K.TSI * .5714) < 15, 'stratocumulus ~57% of 1361 W/m2');
+  assert.ok(Math.abs(slant.incident - .5 * K.TSI) < 1e-12);
+  assert.ok(slant.albedo > deck.albedo, 'low sun lengthens the path, so the same deck is brighter');
+  assert.ok(Math.abs(slant.albedo - .6) < .01, 'stratocumulus at mu=0.5 reflects ~60%');
+  assert.ok(slant.transmitted < .5 * deck.transmitted, 'less reaches the ground than the cosine law alone');
+  assert.ok(Math.abs(slant.reflected + slant.transmitted - slant.incident) < 1e-9, 'conservative at a slant too');
+  assert.equal(night.transmitted, 0);
+  assert.equal(night.reflected, 0);
+  const deep = cloudColumn(28, qOf(28, .85)), thin = cloudColumn(5, qOf(5, .6));
+  assert.ok(cloudShortwave(deep.tau).transmitted <= cloudShortwave(thin.tau).transmitted);
+});
+
+test('layered clouds: two-stream albedo rises as the sun lowers (Coakley and Chylek path)', () => {
+  assert.equal(cloudAlbedo(0, .5), 0);
+  assert.ok(Math.abs(cloudAlbedo(10) - .4286) < .01, 'overhead stratocumulus still ~43%');
+  assert.ok(cloudAlbedo(10, .5) > cloudAlbedo(10), 'mu=0.5 is brighter than overhead');
+  assert.ok(Math.abs(cloudAlbedo(10, .5) - .6) < .01);
+  assert.ok(Math.abs(cloudTransmittance(10, .5) + cloudAlbedo(10, .5) - 1) < 1e-12);
+  assert.ok(cloudTransmittance(10, .5) < cloudTransmittance(10), 'low sun lets less through the same deck');
+});
+
+test('layered clouds: partly cloudy sky mixes clear and cloudy columns by cover fraction', () => {
+  const half = partlyCloudyShortwave(10, 1, .5), full = cloudShortwave(10), clear = partlyCloudyShortwave(10, 1, 0);
+  assert.equal(clear.transmitted, K.TSI);
+  assert.equal(clear.reflected, 0);
+  assert.ok(Math.abs(partlyCloudyShortwave(10, 1, 1).transmitted - full.transmitted) < 1e-9, 'overcast equals the cloudy column');
+  assert.ok(Math.abs(half.albedo - full.albedo / 2) < 1e-12, 'half cover reflects half as much');
+  assert.ok(Math.abs(half.reflected + half.transmitted - K.TSI) < 1e-9, 'conservative');
+  assert.ok(Math.abs(half.transmitted / K.TSI - .7857) < .01, 'half-covered stratocumulus sky lets ~79% through');
+  assert.equal(partlyCloudyShortwave(10, 1, 2).cover, 1);
+  assert.equal(partlyCloudyShortwave(10, 0, .5).transmitted, 0, 'no sun at the horizon');
+});
+
+test('layered clouds: cloud base radiates longwave down with Stephens emissivity', () => {
+  const dry = cloudBaseLongwave({ ...cloudColumn(20, qOf(20, .5)), waterPath: 0 });
+  assert.equal(dry.down, 0);
+  const col = cloudColumn(20, qOf(20, .9)), lw = cloudBaseLongwave(col);
+  assert.ok(col.lcl >= 0 && col.waterPath > 0);
+  assert.ok(lw.emissivity > 0 && lw.emissivity <= 1);
+  assert.ok(Math.abs(lw.emissivity - (1 - Math.exp(-CC.lw_a0_down_m2_g * col.waterPath * 1000))) < 1e-12);
+  assert.ok(lw.baseK < 20 + 273.15, 'the base is colder than the surface air');
+  assert.ok(lw.down <= K.sigma * (20 + 273.15) ** 4, 'never more than a blackbody at surface temperature');
+  const deck = cloudBaseLongwave({ ...col, waterPath: .05 });
+  assert.ok(Math.abs(deck.emissivity - (1 - Math.exp(-6.5))) < 1e-9, '50 g/m2 deck is nearly black');
+});
+
+test('layered clouds: cloud top radiates longwave up with Stephens emissivity', () => {
+  const dry = cloudTopLongwave({ ...cloudColumn(20, qOf(20, .5)), waterPath: 0 });
+  assert.equal(dry.up, 0);
+  const col = cloudColumn(20, qOf(20, .9)), up = cloudTopLongwave(col), down = cloudBaseLongwave(col);
+  assert.ok(col.waterPath > 0 && col.top > col.lcl);
+  assert.ok(up.emissivity > 0 && up.emissivity <= 1);
+  assert.ok(Math.abs(up.emissivity - (1 - Math.exp(-CC.lw_a0_down_m2_g * col.waterPath * 1000))) < 1e-12);
+  assert.ok(up.topK < down.baseK, 'the top is colder than the base');
+  assert.ok(up.up < down.down, 'a colder top sends less up than the base sends down');
+  assert.ok(up.up <= K.sigma * (20 + 273.15) ** 4, 'never more than a blackbody at surface temperature');
+  const deck = cloudTopLongwave({ ...col, waterPath: .05 });
+  assert.ok(Math.abs(deck.emissivity - (1 - Math.exp(-6.5))) < 1e-9, '50 g/m2 deck is nearly black');
+});
+
+test('layered clouds: outgoing longwave is the top emission plus transmitted surface upwelling', () => {
+  const sfc = K.sigma * (20 + 273.15) ** 4;
+  const dry = cloudOutgoingLongwave({ ...cloudColumn(20, qOf(20, .5)), waterPath: 0 });
+  assert.equal(dry.emissivity, 0);
+  assert.ok(Math.abs(dry.up - sfc) < 1e-6, 'no cloud: OLR is the surface');
+  const col = cloudColumn(20, qOf(20, .9)), olr = cloudOutgoingLongwave(col), top = cloudTopLongwave(col);
+  assert.ok(col.waterPath > 0);
+  assert.ok(Math.abs(olr.up - (top.up + (1 - top.emissivity) * olr.surfaceUp)) < 1e-9);
+  assert.ok(olr.up >= top.up, 'transmitted surface upwelling cannot reduce the top emission');
+  assert.ok(olr.up < olr.surfaceUp, 'a colder top reduces OLR (the longwave greenhouse)');
+  const deck = cloudOutgoingLongwave({ ...col, waterPath: .05 });
+  const deckTop = cloudTopLongwave({ ...col, waterPath: .05 });
+  assert.ok(Math.abs(deck.up - deckTop.up) < 1, 'a 50 g/m2 deck is nearly black, so little surface leaks through');
+  assert.ok(deck.up < sfc, 'a blacker deck hides more of the warm ground');
+});
+
+test('layered clouds: cloud radiative effect warms at night and cools a bright deck at high sun', () => {
+  const dry = cloudRadiativeEffect({ ...cloudColumn(20, qOf(20, .5)), waterPath: 0, tau: 0 }, 1, 1);
+  assert.ok(Math.abs(dry.net) < 1e-9, 'no cloud, no effect');
+  const col = cloudColumn(20, qOf(20, .9));
+  const night = cloudRadiativeEffect(col, 0, 1);
+  assert.equal(night.sw, 0);
+  assert.ok(night.lw > 0 && night.net === night.lw, 'at night only the longwave greenhouse is left');
+  const noon = cloudRadiativeEffect({ ...col, waterPath: .05, tau: 10 }, 1, 1);
+  assert.ok(noon.sw < 0 && noon.net < 0, 'a stratocumulus deck at overhead sun cools');
+  const half = cloudRadiativeEffect(col, .5, .5), full = cloudRadiativeEffect(col, .5, 1);
+  assert.ok(Math.abs(half.net - full.net / 2) < 1e-9, 'scales linearly with cover');
+  assert.ok(Math.abs(cloudRadiativeEffect(col, .5, 2).net - full.net) < 1e-12, 'cover clamps to 1');
+});
+
+test('layered clouds: surface cloud radiative effect warms the ground at night and shades it by day', () => {
+  const dry = surfaceCloudRadiativeEffect({ ...cloudColumn(20, qOf(20, .5)), waterPath: 0, tau: 0 }, 1, 1);
+  assert.ok(Math.abs(dry.net) < 1e-9, 'no cloud, no effect');
+  assert.ok(dry.clearEps > .7 && dry.clearEps < .9, 'Brutsaert clear sky ~0.8 on a mild humid day');
+  const col = cloudColumn(20, qOf(20, .9));
+  const night = surfaceCloudRadiativeEffect(col, 0, 1);
+  assert.equal(night.sw, 0);
+  assert.ok(night.lw > 0 && night.cloudyDown > night.clearDown, 'a cloudy night sends more longwave down');
+  const deck = { ...col, waterPath: .05, tau: 10 };
+  const noon = surfaceCloudRadiativeEffect(deck, 1, 1, .15);
+  assert.ok(noon.sw < 0 && noon.net < 0, 'a stratocumulus deck at overhead sun shades the ground');
+  const snow = surfaceCloudRadiativeEffect(deck, 1, 1, .8);
+  assert.ok(snow.sw > noon.sw, 'over bright snow the ground loses less shortwave to the cloud');
+  const half = surfaceCloudRadiativeEffect(col, .5, .5), full = surfaceCloudRadiativeEffect(col, .5, 1);
+  assert.ok(Math.abs(half.net - full.net / 2) < 1e-9, 'scales linearly with cover');
+});
+
+test('layered clouds: atmospheric cloud radiative effect is TOA minus surface, longwave only', () => {
+  const col = cloudColumn(20, qOf(20, .9)), deck = { ...col, waterPath: .05, tau: 10 };
+  const at = atmosphericCloudRadiativeEffect(deck, 1, 1, .15);
+  const toa = cloudRadiativeEffect(deck, 1, 1), sfc = surfaceCloudRadiativeEffect(deck, 1, 1, .15);
+  assert.ok(Math.abs(at.lw - (toa.lw - sfc.lw)) < 1e-9, 'longwave part is TOA minus surface');
+  assert.ok(Math.abs(at.sw) < 1e-9, 'a conservative-scattering cloud absorbs no shortwave');
+  assert.ok(Math.abs(at.heatingKPerDay) < 5, 'column heating stays within a few K/day');
+  const half = atmosphericCloudRadiativeEffect(col, .5, .5), full = atmosphericCloudRadiativeEffect(col, .5, 1);
+  assert.ok(Math.abs(half.net - full.net / 2) < 1e-9, 'scales linearly with cover');
+  const none = atmosphericCloudRadiativeEffect({ ...col, waterPath: 0, tau: 0 }, 1, 1);
+  assert.ok(Math.abs(none.net) < 1e-6, 'no cloud, no effect');
+});
+
+test('layered clouds: lifted index is negative for a warm humid column, positive for a cold dry one', () => {
+  const moist = liftedIndex(cloudColumn(30, qOf(30, .85))), dry = liftedIndex(cloudColumn(5, qOf(5, .3)));
+  assert.ok(Number.isFinite(moist) && Number.isFinite(dry));
+  assert.ok(moist < 0, `warm humid air is unstable (LI ${moist})`);
+  assert.ok(dry > 0, `cold dry air is stable (LI ${dry})`);
+  assert.ok(Number.isNaN(liftedIndex(cloudColumn(20, qOf(20, .8), 1, 3000))), 'a column topping out below 500 hPa has no index');
+});
+test('Layered clouds: K-index rises with warm humid air and is undefined on a high plateau', () => {
+  const humid = kIndex(cloudColumn(30, qOf(30, .85))), dry = kIndex(cloudColumn(5, qOf(5, .3)));
+  assert.ok(Number.isFinite(humid) && Number.isFinite(dry));
+  assert.ok(humid > 30, `warm humid air gives thunderstorm-likely K (${humid})`);
+  assert.ok(dry < 20, `cold dry air gives few storms (${dry})`);
+  assert.ok(Number.isNaN(kIndex(cloudColumn(10, qOf(10, .6), 1, undefined, undefined, 3000), 3000)), 'ground above 850 hPa has no K-index');
+});
+test('Layered clouds: Total Totals (Miller 1972) is vertical plus cross totals and ranks storm potential', () => {
+  const humidCol = cloudColumn(30, qOf(30, .85)), dryCol = cloudColumn(5, qOf(5, .3));
+  const humid = totalTotals(humidCol), dry = totalTotals(dryCol);
+  assert.ok(Number.isFinite(humid) && Number.isFinite(dry));
+  assert.ok(humid > dry, `warm humid air ranks above cold dry air (${humid} vs ${dry})`);
+  const l850 = humidCol.layers.reduce((a, l) => Math.abs(pressureAt(l.z) - 85000) < Math.abs(pressureAt(a.z) - 85000) ? l : a);
+  const l500 = humidCol.layers.reduce((a, l) => Math.abs(pressureAt(l.z) - 50000) < Math.abs(pressureAt(a.z) - 50000) ? l : a);
+  assert.ok(Math.abs(humid - ((l850.tEnv - l500.tEnv) + (l850.dew - l500.tEnv))) < 1e-9, 'TT = VT + CT');
+  assert.ok(Number.isNaN(totalTotals(cloudColumn(10, qOf(10, .6), 1, undefined, undefined, 3000), 3000)), 'ground above 850 hPa has no Total Totals');
+});
+test('Showalter index: 850 hPa parcel lifted to 500 hPa', () => {
+  const humid = cloudColumn(30, qOf(30, .8)), dry = cloudColumn(5, qOf(5, .3));
+  const si = showalterIndex(humid), sd = showalterIndex(dry);
+  assert.ok(Number.isFinite(si) && Number.isFinite(sd));
+  assert.ok(si < sd, `warm humid air is less stable than cold dry air (${si} vs ${sd})`);
+  assert.ok(sd > 0, `cold dry air is stable (${sd})`);
+  assert.ok(Number.isNaN(showalterIndex(cloudColumn(10, qOf(10, .6), 1, undefined, undefined, 3000), 3000)), 'ground above 850 hPa has no Showalter index');
+});
+test('Convective condensation level: surface dew point line meets the profile, convective temperature at or above surface', () => {
+  const col = cloudColumn(25, qOf(25, .6)); const r = convectiveCondensationLevel(col);
+  assert.ok(r.cclM > 0, `CCL found aloft (${r.cclM})`);
+  assert.ok(r.convT >= col.layers[0].tEnv - 0.5, `convective temperature ${r.convT} is not below the surface temperature`);
+  const moist = convectiveCondensationLevel(cloudColumn(25, qOf(25, .9)));
+  assert.ok(moist.cclM >= 0 && moist.cclM < r.cclM, `moister air gives a lower CCL (${moist.cclM} vs ${r.cclM})`);
+});
+test('Wet-bulb zero: Stull wet bulb checks out and sits at or below the dry freezing level', () => {
+  assert.ok(Math.abs(wetBulbC(20, .5) - 13.7) < 0.2, `Stull (2011) example 20 C, 50 % gives 13.7 C (${wetBulbC(20, .5)})`);
+  const col = cloudColumn(15, qOf(15, .5)); const wbz = wetBulbZeroM(col);
+  assert.ok(wbz > 0 && col.freezeM > 0 && wbz <= col.freezeM, `wet-bulb zero ${wbz} at or below freezing level ${col.freezeM}`);
+  assert.equal(wetBulbZeroM(cloudColumn(-5, qOf(-5, .8))), 0, 'a freezing surface has wet-bulb zero at the ground');
 });

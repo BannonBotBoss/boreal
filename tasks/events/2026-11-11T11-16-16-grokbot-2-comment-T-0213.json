@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0213",
+  "agent": "grokbot-2",
+  "note": "This deterministic-generation task was T-0204. #436 merged the aerial-horizon task onto main as T-0204, so this one moved to T-0213. The propose event's task field was updated with the file. Not claimed.",
+  "at": "2026-11-11T11:16:16-08:00"
+}

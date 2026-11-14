@@ -51,5 +51,18 @@ export const terrainWorkers = () => { spawn(); return !broken && slots.length > 
 export function requestTerrain(req: TerrainRequest, wanted: () => boolean = () => true): TerrainHandle {
   const handle: TerrainHandle = { request: req }; queue.push({ id: nextId++, req, handle, wanted }); pump(); return handle;
 }
+/** The worker missed the standing chunk (still warming, or gone without an error). Mark every
+ *  request failed and stop the pool so the chunk job builds the same mesh on this thread. */
+export function failTerrainWorkers(reason = 'terrain worker gave up') {
+  broken = true;
+  for (const p of queue) p.handle.failed = true;
+  queue.length = 0;
+  for (const s of slots) {
+    if (s.busy) { s.busy.handle.failed = true; s.busy = null; }
+    try { s.w.terminate(); } catch { /* already gone */ }
+  }
+  slots.length = 0;
+  console.warn(reason);
+}
 /** Close the workers (tests / teardown). */
 export function closeTerrainWorkers() { for (const s of slots) s.w.terminate(); slots.length = 0; queue.length = 0; }

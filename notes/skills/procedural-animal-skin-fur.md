@@ -45,6 +45,16 @@ wolf IK, ...). First written by grok for the snowshoe hare (T-0028, 2026-10-21, 
 - Refactor check: hash of the skin positions / colours / skin indices identical before and after moving code to generators.
 - npm test + npx tsc --noEmit on the PC (the box lacks vendor/detect-gpu, so box tsc shows one unrelated error).
 
+## A pup that reads as wool
+
+720 cards and a skin shade of 0.92 leave a four-week wolf as a smooth tan tube at the
+distance the litter is drawn. Use enough cards to cover the smaller skin (4200, XR 480),
+a skin shade near the fur root (0.58), and wider longer cards. The coat shader then
+breaks the fragment with coarse sine bands along the body (`furBand`, `furStrand`) so
+the wool still reads when a card is smaller than a pixel. Do not add a new hash
+function or the constant 43758.5453 (tests/rules.test.ts). Mech and Boitani 2003:
+pups leave the den woolly, not sleek.
+
 ## Mistakes to avoid
 - Species-named files, private hashes, copying wolfBody instead of feeding it data.
 - Calling a summer hair length "measured" when the source sampled the early-autumn coat: mark it [estimate].

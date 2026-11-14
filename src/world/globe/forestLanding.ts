@@ -12,9 +12,9 @@ import { plantsGrowAt } from '../../core/altitudeZones';
 import { livingRoster } from '../../core/enterLiving';
 import { treesAround } from '../../core/ground';
 import { standAt } from '../../core/stand';
-import { isDry } from '../../core/stages/surfaceAt';
+import { clearOfWater, isDry } from '../../core/stages/surfaceAt';
 import { heightAt } from '../../core/world';
-import { viewBlocked } from './handoff';
+import { landSpawn, viewBlocked } from './handoff';
 
 export const FOREST_LANDING = {
   searchM: 220,
@@ -71,7 +71,15 @@ export function standEitherSide(x: number, z: number, yaw: number) {
  * The den maximises drawn stems on a closed canopy, preferring a nearer stand.
  * The edge is 16–36 m out, still in the stand, facing the den, with the camera line clear.
  */
+let landingMemo: { key: string; value: ForestLanding } | null = null;
 export function forestLanding(around: { x: number; z: number } = mamaTerritory()): ForestLanding {
+  const key = `${around.x},${around.z}`;
+  if (landingMemo?.key === key) return landingMemo.value;
+  const value = findForestLanding(around);
+  landingMemo = { key, value };
+  return value;
+}
+function findForestLanding(around: { x: number; z: number }): ForestLanding {
   const { searchM, stepM, closedCanopy, minStems, edgeMinM, edgeMaxM } = FOREST_LANDING;
   let den: { x: number; z: number; stems: number; canopy: number; score: number } | null = null;
   for (let r = 0; r <= searchM; r += stepM) {
@@ -123,4 +131,14 @@ export function forestLanding(around: { x: number; z: number } = mamaTerritory()
     den: { x: round(denX), z: round(denZ), yaw, canopy: denCanopy, stems: denStems },
     land: { x: round(landX), z: round(landZ), yaw, canopy: standAt(landX, landZ).canopy, stems: edge?.stems ?? denStems },
   };
+}
+
+/** Where a drop or a cold start puts the animal. landSpawn's nearest dry cell off the home lake is the
+ *  waterline (the territory mark). Standing there, the camera looks across the flat water plane.
+ *  A point already clear of that water stays. Otherwise this is the stand edge, facing the trees. */
+export function dropStand(at: { x: number; z: number }, yaw = 0): { x: number; z: number; yaw: number } {
+  const spot = landSpawn(at, undefined, yaw);
+  if (clearOfWater(spot.x, spot.z)) return { x: spot.x, z: spot.z, yaw };
+  const bank = forestLanding().land;
+  return { x: bank.x, z: bank.z, yaw: bank.yaw };
 }

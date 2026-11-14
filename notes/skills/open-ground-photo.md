@@ -28,4 +28,4 @@ Use when the skirt should take its colour from an open satellite mosaic, and sti
 - Do not treat a zoom-8 ring of one tile as enough. The horizon at drone height is about 70 km and a tile edge leaves the next tile black.
 - Do not reject a globe-texture fallback because its luma is under 0.04. Boreal canopy in that buffer is darker than that, and the hole stays black.
 - Do not multiply the finished colour by a large gain. Coarse triangles become neon facets.
-- The seeded longitude is not geographic Kenora. The photograph is the real Earth at the lat/lon the globe uses.
+- The seeded longitude is not geographic Kenora. The photograph is the real Earth at the lat/lon the globe uses. The trees, the skirt canopy and the open-water plane have to read that same sample (`coverSampleAt`). Leaving them on the Kenora stand draws a spruce forest and a lake on a prairie photograph.

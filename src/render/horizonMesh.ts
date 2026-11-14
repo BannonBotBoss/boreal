@@ -12,6 +12,8 @@ import { PLANET, type Planet } from '../world/globe/planet';
 import { HORIZON_SKIRT, buildSkirtMesh, skirtLatLon, skirtOrigin, skirtSample, type SkirtOrigin } from '../world/globe/horizonSkirt';
 import { PATCH_FAR } from './fade';
 import { biomeGrade, blendDem, blendPhoto, demSlope, elevationWins, globeMatch, openTileGeneration, sampleDem, samplePhoto, warmDemTiles, warmPhotoTiles } from '../world/globe/openTiles';
+import { coverSampleAt } from '../world/globe/coverSample';
+import { GLSL_NOISE } from '../proc/glsl';
 import { canopyTile } from './trees/billboardAtlas';
 
 /** Daylight horizon the ground fades toward. Brighter than the old grey so aerial perspective
@@ -43,7 +45,7 @@ function skirtMaterial() {
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvSkirtFade = aFade;\nvSkirtWater = aWater;\nvSkirtPhoto = aPhoto;\nvSkirtDist = distance(position.xz, uSkirtCam);\nvSkirtWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;')
       .replace('#include <project_vertex>', '#include <project_vertex>\nvSkirtClip = gl_Position;');
     shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform vec3 uSkirtHaze;\nuniform vec3 uSkirtHazeColor;\nuniform sampler2D uFarColor;\nuniform sampler2D uFarDepth;\nuniform sampler2D uCanopy;\nuniform float uForest;\nuniform vec4 uFarMix;\nvarying float vSkirtFade;\nvarying float vSkirtDist;\nvarying float vSkirtWater;\nvarying float vSkirtPhoto;\nvarying vec3 vSkirtWorld;\nvarying vec4 vSkirtClip;')
+      .replace('#include <common>', '#include <common>\n' + GLSL_NOISE + '\nuniform vec3 uSkirtHaze;\nuniform vec3 uSkirtHazeColor;\nuniform sampler2D uFarColor;\nuniform sampler2D uFarDepth;\nuniform sampler2D uCanopy;\nuniform float uForest;\nuniform vec4 uFarMix;\nvarying float vSkirtFade;\nvarying float vSkirtDist;\nvarying float vSkirtWater;\nvarying float vSkirtPhoto;\nvarying vec3 vSkirtWorld;\nvarying vec4 vSkirtClip;')
       .replace('#include <dithering_fragment>', `
         if (vSkirtPhoto < 0.5 && uFarMix.w > 0.5) {
           vec2 fuv = clamp(vSkirtClip.xy / vSkirtClip.w * 0.5 + 0.5, 0.0, 1.0);
@@ -55,14 +57,38 @@ function skirtMaterial() {
           // black. Take the globe texel whenever the far layer actually drew something.
           if (fd < 0.999 && luma > 0.008) gl_FragColor.rgb = globe;
         }
-        float detail = 0.5 + 0.5 * sin(vSkirtWorld.x * 1.9 + vSkirtWorld.z * 0.7) * sin(vSkirtWorld.x * 0.45 - vSkirtWorld.z * 1.6);
-        float near = 1.0 - smoothstep(40.0, 380.0, vSkirtDist);
-        gl_FragColor.rgb *= mix(1.0, 0.72 + 0.5 * detail, near);
-        float canopy = smoothstep(80.0, 280.0, vSkirtDist) * (1.0 - vSkirtWater) * (1.0 - smoothstep(6000.0, 14000.0, vSkirtDist));
+        // A continuous sward, not a striped shelf. The old 22 m crown repeat and the 1.4 green
+        // gain turned coarse triangles into neon facets (open-ground-photo). Tillers are a few
+        // centimetres to a few metres (FNA grass leaves, already the blade lengths in render/grass).
+        // 2.5 m cells are that clump scale. Crowns start only once a tree reads as a tree.
+        if (vSkirtWater < 0.5) {
+          float clump = vnoiseU(vSkirtWorld.xz * 0.4, 4.0);
+          gl_FragColor.rgb *= 0.9 + 0.2 * clump;
+        }
+        float canopy = smoothstep(400.0, 900.0, vSkirtDist) * (1.0 - vSkirtWater) * (1.0 - smoothstep(6000.0, 14000.0, vSkirtDist));
         if (canopy > 0.001) {
           vec4 crowns = texture2D(uCanopy, fract(vSkirtWorld.xz * 0.045));
-          gl_FragColor.rgb = mix(gl_FragColor.rgb, crowns.rgb, canopy * crowns.a * 0.82);
-          gl_FragColor.rgb *= mix(vec3(1.0), vec3(1.08, 1.4, 0.96), uForest);
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, crowns.rgb, canopy * crowns.a * 0.45);
+        }
+        // Stand mosaic, the same waves and the same dark-canopy stretches as the globe tiles.
+        // A coarse triangle is one colour without it. The 1.4 green gain is not applied.
+        // A bright grassland pixel keeps its colour; a dark canopy (a few percent albedo) does not stay one fill.
+        if (vSkirtWater < 0.5) {
+          vec2 xz = vSkirtWorld.xz;
+          float s0 = vnoiseU(xz / 40.0, 7.0);
+          float s1 = vnoiseU(xz / 160.0, 8.0);
+          float s2 = vnoiseU(xz / 640.0, 9.0);
+          float stand = s0 * 0.5 + s1 * 0.3 + s2 * 0.2;
+          float dark = 1.0 - smoothstep(0.07, 0.16, max(gl_FragColor.r, gl_FragColor.g));
+          vec3 fen = vec3(gl_FragColor.r * 1.2, gl_FragColor.g * 0.88, gl_FragColor.b * 0.65);
+          vec3 leaf = vec3(gl_FragColor.r * 0.95, gl_FragColor.g * 1.28, gl_FragColor.b * 0.75);
+          vec3 mosaic = stand < 0.5 ? mix(fen, gl_FragColor.rgb, stand * 2.0) : mix(gl_FragColor.rgb, leaf, (stand - 0.5) * 2.0);
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, mosaic, mix(0.45, 1.0, dark));
+          // 12 m clumps, the same crown scale as the globe tiles. A smooth 0.82–1.18 grain
+          // stayed one green at 400 m. The step is a crown against a gap, and the mean stays near 1.
+          float grain = vnoiseU(xz / 12.0, 4.0);
+          float crown = smoothstep(0.32, 0.68, grain);
+          gl_FragColor.rgb *= mix(0.62, 1.28, crown);
         }
         float hf = smoothstep(uSkirtHaze.x, uSkirtHaze.y, vSkirtDist);
         gl_FragColor.rgb = mix(gl_FragColor.rgb, uSkirtHazeColor, hf);
@@ -119,8 +145,9 @@ export function createHorizonSkirt(): HorizonSkirt {
     const snap = HORIZON_SKIRT.snapM;
     const next = `${originKey}:${Math.round(cx / snap)}:${Math.round(cz / snap)}:${Math.round(Math.log2(Math.max(1, eyeM)) * 8)}:${Math.round(Math.atan2(forwardZ, forwardX) * 4)}:${openTileGeneration()}`;
     made.cam.value.set(cx, cz);
-    const latAbs = Math.abs(hereLL.latDeg);
-    made.forest.value = latAbs >= 48 && latAbs < 70 ? 1 : latAbs >= 32 && latAbs < 48 ? 0.45 : 0;
+    const cover = coverSampleAt(cx, cz);
+    // Closed canopy only where the same sample the HUD reads is forest. A prairie photograph does not grow one.
+    made.forest.value = cover.biome === 'boreal' || cover.biome === 'tropical' ? 1 : cover.biome === 'wetland' ? 0.45 : 0;
     if (next === key) return false;
     key = next;
     const here = origin;

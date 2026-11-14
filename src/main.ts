@@ -61,24 +61,27 @@ import { accelLimit, approach, gravity } from './proc/physics';
 import { GROUND, SAVE_KEY_GROUND, addDeposit, column, footing, loadGround, saveGround, tickGround } from './core/ground';
 import { tryMark } from './core/traces';
 import { appearancePanel, restoreLooks } from './ui/appearancePanel';
-import { runJobs } from './core/interest';
+import { JOB_FIRST, runJobs } from './core/interest';
 import { SAVE_KEY_WEATHER, drag as airDrag, loadWeather, saveWeather, updateWeather, weatherAt, windAt } from './core/weather';
 import { openForestPlanet } from './core/planetWeather';
 import { SAVE_KEY_DELTAS, loadDeltas, prune, record, saveDeltas } from './core/deltas';
 import { createLoading } from './ui/loading';
-import { settle, startup } from './render/startup';
+import { settle, splashChunkBudget, standChunkIndex, startup } from './render/startup';
 import { createMenu } from './ui/menu';
 import { globeUrl } from './world/globe/handoff';
 import { toLatLon } from './world/globe/planet';
 import { createPadRouter } from './input/padRouter'; // Grok Bot: pad menu, help, camera mode, filter wheel, globe pad
-import { startView } from './world/globe/startView';
+import { SPHERE_START, startView } from './world/globe/startView';
+import { mintUniverseSeed, normalizeUniverseSeed, readUniverseSeed, worldSeedFromUniverse, writeUniverseSeed } from './core/universeSeed';
 import { createOpening, type Opening } from './world/cosmos/opening';
+import { cineTrace } from './world/cosmos/cineReady';
 import { createInPage } from './world/globe/inpage';
 import { streamAltitude } from './world/globe/landingStream';
 import { ageYears, lifespanWarning } from './core/lifespan';
 import { CLOCK, DIAL_HOLD_PER_SEC, DIAL_NOTCH, aggregateWorldSec, gameSecondsPerWorldSecond, groundWorldSec, holdClock, isPaused, loadClock, nudgeDial, observation, pauseClock, releaseClock, resumeClock, saveClock, setClockRate, toggleHudPause, worldSec, simWorldSec } from './core/worldClock';
 import { STAGES } from './core/stages/elevation';
 import { dryStart, isDry } from './core/stages/surfaceAt';
+import { dropStand } from './world/globe/forestLanding';
 import { WITNESS_ALTITUDE_SCALE } from './core/enterLiving';
 import { DAY, dayAt, hourAt, initDay } from './core/timeOfDay';
 import { createChronometer } from './ui/chronometer';
@@ -92,7 +95,9 @@ const SAVE_KEY = 'boreal.events.v1', NEEDS_KEY = 'boreal.needs.v1'; // T-0036: t
 let context = createContext(), saveBlocked = false;
 let noticeTimer: ReturnType<typeof setTimeout>;
 const padRouter = createPadRouter({ act: id => act(id), notice: m => notice(m), globe: () => inpage?.mode === 'globe', flight: () => inpage?.mode === 'band', reloadBindings: () => { try { bindings = loadBindings(localStorage.getItem(BINDINGS_KEY)); bindingTexts(); } catch { /* blocked */ } } });
+let graphicsLost = false;
 function notice(message: string) {
+  if (graphicsLost) return; // the context-loss card stays until reload; a later tip must not hide it
   const node = element('notice'); node.textContent = message; node.style.display = 'block';
   clearTimeout(noticeTimer); noticeTimer = setTimeout(() => node.style.display = 'none', 6000);
 }
@@ -199,13 +204,25 @@ function togglePause() { if (menu.open) { if (menu.mode === 'pause') menu.close(
 let captureResume = () => {};
 function commitContext() { if (!saveBlocked) try { localStorage.setItem(SAVE_KEY, JSON.stringify(context)); } catch { /* storage blocked */ } }
 function saveAll() { try { captureResume(); localStorage.setItem(CLOCK.key, saveClock()); localStorage.setItem(SAVE_KEY_GROUND, saveGround()); localStorage.setItem(SAVE_KEY_WEATHER, saveWeather()); localStorage.setItem(SAVE_KEY_DELTAS, saveDeltas()); saveNeeds(); commitContext(); } catch { /* storage blocked */ } }
+function clearWorldSaves(keepBigBangSeen: boolean) {
+  const seen = keepBigBangSeen && hasSeenBigBang(context);
+  for (const k of [SAVE_KEY, SAVE_KEY_DELTAS, SAVE_KEY_GROUND, SAVE_KEY_WEATHER, NEEDS_KEY, 'boreal.player.born']) try { localStorage.removeItem(k); } catch { /* blocked */ }
+  if (seen) try { localStorage.setItem(SAVE_KEY, JSON.stringify(markBigBangSeen(createContext()))); } catch { /* blocked */ }
+}
 const menu = createMenu({
   hasSave: () => [SAVE_KEY, SAVE_KEY_DELTAS, SAVE_KEY_GROUND].some(k => { try { return !!localStorage.getItem(k); } catch { return false; } }),
-  seed: () => STAGES.seed, staged: () => STAGES.on, music: () => musicPanel(), controls: () => controls(), graphics: () => renderPanel() as HTMLElement, save: saveAll,
-  newWorld: o => { // fresh world: forget the per-world saves (settings, music and the probe stay). A watched intro stays watched.
-    const seen = hasSeenBigBang(context);
-    for (const k of [SAVE_KEY, SAVE_KEY_DELTAS, SAVE_KEY_GROUND, SAVE_KEY_WEATHER, NEEDS_KEY, 'boreal.player.born']) try { localStorage.removeItem(k); } catch { /* blocked */ }
-    if (seen) try { localStorage.setItem(SAVE_KEY, JSON.stringify(markBigBangSeen(createContext()))); } catch { /* blocked */ }
+  seed: () => STAGES.seed, staged: () => STAGES.on, universeSeed: () => readUniverseSeed(),
+  music: () => musicPanel(), controls: () => controls(), graphics: () => renderPanel() as HTMLElement, save: saveAll,
+  generateUniverse: o => {
+    // Fresh universe: mint (or replay) seed, clear per-world saves, boot the sphere → cosmos journey.
+    const u = normalizeUniverseSeed(o?.seed ?? 0) || mintUniverseSeed();
+    clearWorldSaves(true);
+    writeUniverseSeed(u);
+    renderStore.set('world.stagedTerrain.v2', o?.staged ?? STAGES.on);
+    location.assign(`?${SPHERE_START}`);
+  },
+  newWorld: o => { // legacy forest-only new world (Generate universe → Advanced)
+    clearWorldSaves(true);
     try { localStorage.setItem('boreal.seed.v1', String(o.seed)); } catch { /* blocked */ } renderStore.set('world.stagedTerrain.v2', o.staged); location.reload(); },
   warning: () => { const born = Number(localStorage.getItem('boreal.player.born') ?? worldSec()); const p = view.playable;
     return lifespanWarning(p.id, ageYears(p.id, born, worldSec()), p.label); },
@@ -230,10 +247,15 @@ const drawFrame = (pv?: PhotoView) => {
 };
 const photo = createPhotoMode({ view, hub, simTime: () => simTime, notice, draw: pv => drawFrame(pv), onExit: () => { clearInput(); accumulator = 0; document.body.classList.remove('photo-mode'); } });
 // Pause-menu panels. Anything that rebuilds the world or swaps the body waits until resume.
-{ const sd = Number(localStorage.getItem('boreal.seed.v1')); if (sd > 0) STAGES.seed = sd; } // seed chosen in the start menu
+{ // Universe seed (Generate universe) owns the derived world/stages seed when present.
+  const u = readUniverseSeed();
+  const sd = u > 0 ? worldSeedFromUniverse(u) : Number(localStorage.getItem('boreal.seed.v1'));
+  if (sd > 0) STAGES.seed = sd;
+}
 const renderStore = createSettingsStore(RENDER_SETTINGS);
 { const st = new URLSearchParams(location.search).get('stages'); if (st !== null) renderStore.set('world.stagedTerrain.v2', st !== '0' && st !== 'off'); } // staged terrain is the default; ?stages=0 turns it off (persisted, like the setting), ?stages=1 back on
 { const at = new URLSearchParams(location.search).get('at')?.split(',').map(Number); if (at && at.length >= 2 && at.every(Number.isFinite)) { player.x = at[0]; player.z = at[1]; if (at.length > 2) { yaw = at[2]; player.heading = yaw; } } } // dev/screenshots: ?at=x,z[,yaw]
+{ const eye = Number(new URLSearchParams(location.search).get('eye')); if (eye > 1) altitude = eye; } // dev/screenshots: ?eye=40 holds the camera 40 m up
 { const qPlace = new URLSearchParams(location.search); if (qPlace.has('noprobe') || qPlace.has('bench')) {
   const hook = window as unknown as { borealPlace?: (x: number, z: number, face?: number, look?: number) => void; borealRate?: (r: number) => void; borealHold?: (on: boolean) => void };
   hook.borealPlace = (x, z, face, look) => { player.x = x; player.z = z; if (face !== undefined) { yaw = face; player.heading = face; } if (look !== undefined) pitch = look; };
@@ -242,9 +264,14 @@ const renderStore = createSettingsStore(RENDER_SETTINGS);
 } }
 const watchLife = new URLSearchParams(location.search).has('watch');
 if (!new URLSearchParams(location.search).has('at')) {
-  // The animal already stands on its store point. dryStart only if that point is open water.
+  // The store mark faces the shore, so the picture is the flat lake. Step up the bank before
+  // the first frame. The splash waits on this same point (landReady below), not the store mark.
   const here = view.livingHere(); player.x = here.x; player.z = here.z;
   if (STAGES.on && !isDry(player.x, player.z)) [player.x, player.z] = dryStart(player.x, player.z);
+  if (STAGES.on) {
+    const bank = dropStand({ x: player.x, z: player.z }, yaw);
+    player.x = bank.x; player.z = bank.z; yaw = bank.yaw; player.heading = yaw;
+  }
 }
 let resumedAtSave = false;
 function applyGameResume() {
@@ -327,7 +354,11 @@ void import('./vr/session').then(m => m.mountEnterVr(notice, {
   resume: () => { xrDriven = false; requestAnimationFrame(frame); },
 })).catch(e => console.warn('vr', e));
 element('photo-btn').onclick = () => enterPhoto();
-element('home').onclick = () => { setAutonomous(false); player.x = 0; player.z = 0; altitude = view.playable.cameraHeight; yaw = -.35; player.heading = yaw; lookYaw = 0; pitch = DEFAULT_PITCH; };
+element('home').onclick = () => {
+  setAutonomous(false);
+  const bank = STAGES.on ? dropStand({ x: 0, z: 0 }, -.35) : { x: 0, z: 0, yaw: -.35 };
+  player.x = bank.x; player.z = bank.z; altitude = view.playable.cameraHeight; yaw = bank.yaw; player.heading = yaw; lookYaw = 0; pitch = DEFAULT_PITCH;
+};
 element('help').onclick = () => { if (!menu.open) togglePause(); menu.openControls(); }; // Controls screen (the Library text is a button there)
 element('close').onclick = () => dialog.close();
 const soundLabel = () => { element('sound').textContent = sfx.muted ? 'Sound off' : 'Sound on'; };
@@ -423,7 +454,13 @@ canvas.addEventListener('pointermove', event => {
 canvas.addEventListener('pointerup', clearInput);
 canvas.addEventListener('pointercancel', clearInput);
 canvas.addEventListener('lostpointercapture', () => { drag = undefined; canvas.style.cursor = 'grab'; });
-canvas.addEventListener('webglcontextlost', event => { event.preventDefault(); inpage?.dispose(); paused = true; notice('Graphics context lost. Your committed events are saved; reload to restore the view.'); });
+canvas.addEventListener('webglcontextlost', event => {
+  event.preventDefault(); inpage?.dispose(); paused = true; pauseClock();
+  graphicsLost = true; document.body.classList.add('gl-lost');
+  const node = element('notice');
+  node.textContent = 'Graphics stopped. Your committed events are saved. Reload the page to bring the forest back.';
+  node.style.display = 'block'; clearTimeout(noticeTimer);
+});
 canvas.addEventListener('webglcontextrestored', () => location.reload());
 let lastPhotoView: PhotoView | undefined;
 let litterNudge = false;
@@ -476,11 +513,26 @@ function markIntroFlag() {
 }
 /** The opening that is on main today ended, or the player dismissed it. The planet entry is the one that opening already uses. */
 function finishIntro() {
+  const t0 = performance.now();
+  opening?.stop();
   opening = null;
-  if (!inpage?.enter()) toGlobe();
+  const tRel = performance.now();
+  const released = inpage?.releaseFilm() ?? false;
+  const releaseMs = performance.now() - tRel;
+  const tEnter = performance.now();
+  const entered = inpage?.enter() ?? false;
+  const enterMs = performance.now() - tEnter;
+  if (!entered) toGlobe();
+  const tMark = performance.now();
   markIntroFlag();
+  const markMs = performance.now() - tMark;
+  const tCap = performance.now();
   captureResume();
+  const captureMs = performance.now() - tCap;
+  const tCommit = performance.now();
   commitContext();
+  const commitMs = performance.now() - tCommit;
+  cineTrace(`CINE TRACE finishIntro ${JSON.stringify({ released, releaseMs: +releaseMs.toFixed(1), entered, enterMs: +enterMs.toFixed(1), markMs: +markMs.toFixed(1), captureMs: +captureMs.toFixed(1), commitMs: +commitMs.toFixed(1), totalMs: +(performance.now() - t0).toFixed(1) })}`);
 }
 for (const type of INTRO_DONE_EVENTS) {
   const mark = () => markIntroFlag();
@@ -493,7 +545,7 @@ function openAfterLoad(q: URLSearchParams) {
   const seen = hasSeenBigBang(context);
   const choice = bootChoice(opened, seen, seen ? loadResume(context) : null);
   if (choice === 'globe' || choice === 'resume-globe') { if (!inpage?.enter()) toGlobe(); return; }
-  if (opened === 'sphere' && choice === 'sphere') { opening = createOpening(finishIntro, () => { void inpage?.prewarm(); }, { show: () => { inpage?.enter(); }, ready: () => inpage?.whenBooted() ?? Promise.resolve() }); return; }
+  if (opened === 'sphere' && choice === 'sphere') { opening = createOpening(finishIntro, () => { void inpage?.prewarm().catch(e => console.warn('inpage prewarm', e)); }, { show: () => { inpage?.enter(); }, ready: () => inpage?.whenBooted() ?? Promise.resolve() }); return; }
   if (choice === 'resume-game') return;
   openStart();
 }
@@ -649,7 +701,10 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
     hub.sample(simTime);
   } else { accumulator = 0; drawFrom = undefined; }
   view.sync(player.x, player.z, streamAltitude(altitude, inpage?.height ?? 0, !!inpage?.blocksGame()), context, revision, pv && { x: pv.cam.x, z: pv.cam.z });
-  runJobs(inpage?.jobBudgetMs()); // chunk instantiation etc., time-budgeted (core/interest); more while the in-page descent waits for the patch
+  const pageJobs = inpage?.jobBudgetMs(); // chunk instantiation, time-budgeted; more while a descent waits for the patch
+  const splashJobs = splashChunkBudget(); // cold card: chunks before grass, same landing budget (inpage clears JOB_FIRST above)
+  if (splashJobs !== undefined) JOB_FIRST.test = (k) => k.startsWith('chunk:');
+  runJobs(splashJobs ?? pageJobs);
   view.worldTime = wNow; // one clock. The sky reads this signed second, so rewind moves the sun backward.
   tickGround(gameSecondsPerWorldSecond * groundWorldSec(wDt)); // forward only, every scale: ground years are elapsed time, not a rewind of decay. Snow on that ground follows obs through the weather read.
   updateWeather(simDt > 0 ? Math.min(simDt, .25) : 0, gameSecondsPerWorldSecond, dayAt(wNow), hourAt(wNow), aggDt); // fine step on the individual share; the cell catches the date on the aggregate share
@@ -719,7 +774,20 @@ void openForestPlanet(dayAt(clock0.worldSec), hourAt(clock0.worldSec)).finally((
 { const q = new URLSearchParams(location.search), loading = createLoading(); // startup: warm-up + resource probe behind the loading screen
   armBootAim(q); // return visit only: aim the globe before prewarm. A first visit leaves this empty and still plays the intro.
   const cine = startView(location.search) === 'sphere' && !q.has('bench') && !q.has('nomenu') && !hasSeenBigBang(context);
-  void startup(view, loading, { reprobe: q.has('reprobe'), skipProbe: q.has('bench') || q.has('noprobe') }).catch(e => console.warn('startup', e)).then(() => q.has('noprobe') || cine ? undefined : inpage?.prewarm().then(r => console.log('INPAGE prewarm ' + JSON.stringify(r)))).catch(e => console.warn('inpage prewarm', e)).finally(() => { void loading.finish(); openAfterLoad(q); }); } // first load: hot sphere, then the planet. A completed intro skips that sphere next time. ?start=globe skips to the planet. ?noprobe: ground capture skips the Ultra bench and the globe prewarm
+  void startup(view, loading, {
+    reprobe: q.has('reprobe'), skipProbe: q.has('bench') || q.has('noprobe'),
+    landReady: () => {
+      const built = view.chunkBuilt;
+      if (typeof built !== 'function') return false;
+      const cell = standChunkIndex(player.x, player.z);
+      return built(cell.a, cell.b);
+    },
+  }).then(async result => {
+    if (result && result.ground === false) return false; // the loading card stays, with the reload line, instead of a black void
+    try { if (!(q.has('noprobe') || cine)) { const r = await inpage?.prewarm(); console.log('INPAGE prewarm ' + JSON.stringify(r)); } }
+    catch (e) { console.warn('inpage prewarm', e); }
+    return true;
+  }).catch(e => { console.warn('startup', e); return true; }).then(show => { if (show === false) return; void loading.finish(); openAfterLoad(q); }); } // first load: hot sphere, then the planet. A completed intro skips that sphere next time. ?start=globe skips to the planet. ?noprobe: ground capture skips the Ultra bench and the globe prewarm
 
 // ?bench=1: per-tier and per-feature cost after streaming settles (logs `BENCH ...` lines to the console).
 if (new URLSearchParams(location.search).has('bench')) void (async () => {

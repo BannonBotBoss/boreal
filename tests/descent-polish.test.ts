@@ -23,7 +23,7 @@ test('descent polish: cloud cover fades smoothly over log altitude (no switch be
   // the shader fades the cover (alpha) and the shadows; it no longer raises the coverage threshold (the T-0034 switch)
   const src = readFileSync('src/world/globe/atmosphere.ts', 'utf8');
   assert.ok(!src.includes('mix(uCloudEdge.x, 1.1, uCloudClear)'), 'no threshold switch');
-  assert.ok(src.includes('* (0.55 + 0.45 * powder), 0.0, 0.97) * (1.0 - uCloudClear)'), 'cover alpha fades');
+  assert.ok(/clamp\(a \* \(0\.\d+ \+ 0\.\d+ \* powder\), 0\.0, 0\.\d+\) \* \(1\.0 - uCloudClear\)/.test(src), 'cover alpha fades');
   assert.ok(src.includes('* (1.0 - uCloudClear) * cloudDensity('), 'shadows fade with it');
   assert.ok(src.includes('uCloudEdge.x + ${CLOUDS.clearLift.toFixed(3)} * uCloudClear') && src.includes('${CLOUDS.shadowCentre.toFixed(3)} + ${CLOUDS.clearLift.toFixed(3)} * uCloudClear'), 'cover and shadows share the threshold lift');
 });

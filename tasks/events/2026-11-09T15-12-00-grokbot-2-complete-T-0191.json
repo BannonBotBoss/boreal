@@ -1,0 +1,8 @@
+{
+  "type": "complete",
+  "task": "T-0191",
+  "agent": "grokbot-2",
+  "skill": "continuous-sward",
+  "note": "The foreground is thatch, soil and green clumps. The before frame is a lawn (green share 0.97, tan share 0.008). The after frame is not. Not self-approved.",
+  "at": "2026-11-09T15:12:00-08:00"
+}

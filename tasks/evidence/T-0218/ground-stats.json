@@ -1,0 +1,28 @@
+{
+  "reference": "tasks/evidence/T-0218/ref-ground.png",
+  "note": "Mean HSV of the ground crop. Day 227, dry prairie, hour 8.6. Within 15% of the Akmola photograph.",
+  "referenceStats": {
+    "h": 43.3,
+    "s": 0.558,
+    "v": 0.535,
+    "relH": 0,
+    "relS": 0,
+    "relV": 0
+  },
+  "eye1_7": {
+    "h": 45.15,
+    "s": 0.57,
+    "v": 0.544,
+    "relH": 0.043,
+    "relS": 0.02,
+    "relV": 0.016
+  },
+  "eye40": {
+    "h": 43.43,
+    "s": 0.531,
+    "v": 0.601,
+    "relH": 0.003,
+    "relS": 0.048,
+    "relV": 0.122
+  }
+}

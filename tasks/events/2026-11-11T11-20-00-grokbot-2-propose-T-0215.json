@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0215",
+  "agent": "grokbot-2",
+  "note": "D28. The drop at 8.487 N, 129.334 W is open ocean at -4589 m on the zoom-0 terrarium, and sampleSurface returns a 5074 m mountain, so the HUD says ice. T-0211 is already used on PR #438. Matthew, direct chat 2026-11-10 20:07 PT: \"I told you, no waiting on me\".",
+  "at": "2026-11-11T11:20:00-08:00"
+}

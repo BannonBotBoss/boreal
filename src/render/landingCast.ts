@@ -13,17 +13,16 @@ import {
   pickLandingSlots, placeLandingAnimals, setLandingClear, setLandingSight,
   type CensusRow, type PlacedAnimal,
 } from '../core/landingRoster';
-import { liveCoastM, sharedPlanetSim } from '../core/planetWeather';
+import { sharedPlanetSim } from '../core/planetWeather';
 import { SITE, siteDirection, siteLatitude } from '../core/sitePhase';
 import { SITE as SUN_HOME } from '../core/weather';
 import { dayAt, hourAt, lighting, sunPosition } from '../core/timeOfDay';
 import { worldSec } from '../core/worldClock';
 import { isDryLand, WORLD_SEED, heightAt } from '../core/world';
 import { solidsAround, treesAround } from '../core/ground';
-import { PLANET, fromLatLon, planetFor, toLatLon, vegetationWeight } from '../world/globe/planet';
+import { PLANET, fromLatLon, planetFor, toLatLon } from '../world/globe/planet';
 import { nearestShore } from '../core/landingShore';
-import { coverKind } from '../world/globe/coverKind';
-import { groundForCover, sampleDem, samplePhotoVegetation } from '../world/globe/openTiles';
+import { coverSampleLatLon } from '../world/globe/coverSample';
 import { createProceduralAnimal, type ProceduralAnimal } from './proceduralAnimal';
 import { foxPlace } from '../core/drives';
 import type { PictureBody } from './animalPicture';
@@ -117,7 +116,7 @@ const EMPTY: LandingReport = {
 
 /** Where the player is standing, in the same frame the landing bridge uses. */
 export function landingContext(x: number, z: number) {
-  const planet = planetFor(WORLD_SEED);
+  const planet = planetFor(WORLD_SEED, undefined, '', true);
   const remote = Number.isFinite(SITE.latDeg);
   const dir = remote ? siteDirection(x, z, PLANET.radius) : planet.fromLocal(x, z);
   const ll = toLatLon(dir);
@@ -128,15 +127,10 @@ export function landingContext(x: number, z: number) {
   return { ...census, lat: at.lat, lon: at.lon, censusLat: census.lat, censusLon: census.lon, shore: shore != null, remote };
 }
 
-/** Cover inputs at one geographic point: DEM height and land win over the seeded planet, a cached photo's vegetation wins. */
+/** Cover inputs at one geographic point: the same sample the picture draws (coverSample.ts). */
 function groundAt(planet: ReturnType<typeof planetFor>, lat: number, lon: number, dir = fromLatLon(lat * Math.PI / 180, lon * Math.PI / 180)) {
-  const s = planet.sampleSurface(dir);
-  const { water, elevM } = groundForCover(s, sampleDem(lat, lon));
-  // A cached satellite photo wins over the seeded planet's vegetation (#192 desert finding).
-  const coastM = liveCoastM(lat, lon); // live coast distance (#235): continental interiors lift the tree line
-  const vegetation = samplePhotoVegetation(lat, lon) ?? vegetationWeight(s, dir, coastM);
-  const biome = coverKind(lat, elevM, vegetation, water, coastM);
-  return { lat, lon, elevM, vegetation, water, biome, coastM: coastM ?? NaN };
+  const s = coverSampleLatLon(lat, lon, dir, planet);
+  return { lat: s.lat, lon: s.lon, elevM: s.elevM, vegetation: s.vegetation, water: s.water, biome: s.biome, coastM: s.coastM };
 }
 
 function clickFromSearch() {

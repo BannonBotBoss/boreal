@@ -1,0 +1,8 @@
+{
+  "type": "complete",
+  "task": "T-0190",
+  "agent": "grokbot-2",
+  "skill": "meshy-animal-skin",
+  "note": "The spawn wolf is grey, darker on the back. The before frame is a white core with a warm rim (10718 white pixels, 610 rim pixels). The after frame has neither. Not self-approved.",
+  "at": "2026-11-09T15:06:10-08:00"
+}

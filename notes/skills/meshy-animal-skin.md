@@ -22,6 +22,20 @@ Use when a species gets a file in `public/models/animals` and that file should w
 - `tests/hare-mesh.test.ts` still refuses a loader inside the procedural hare. The one stored hare is `public/models/animals/snowshoe-hare.glb`.
 - `npx tsc --noEmit` and `npm test`.
 
+## A stored wolf that clips to white
+
+`applyStylizedFill` lights a mapped albedo from the emissive slot at intensity 14, colour (1, 0.94, 0.82), with tone mapping off. On the spawn wolf that adds to the morning key light and the body clips to white, with a warm fringe where the map is darker. `dressWolfCoat` in `src/render/coatFinish.ts` clears that fill, keeps tone mapping, and writes a saddle/belly coat capped at 0.46. Do not put the 14× fill back on a wolf.
+
+The frame check is `tests/wolf-coat.test.ts`. It looks at the middle of the ground frame. A blown wolf is a near-white core (luma above 220) with a warm rim (red above green above blue). The T-0190 before frame has thousands of those pixels. A timber coat has none.
+
+## A cervid that clips to white, and a rack that leaves the skull
+
+`spawnSkin` used to call `applyStylizedFill` for every species that was not the wolf or the red fox. Deer, elk, moose and caribou took the same intensity-14 emissive. `dressCervidCoat` clears it and writes the species colour from `coatOf`, capped at 0.62. Do not put the 14× fill back on a cervid.
+
+Antler vertices sit above the head segment. Proximity weights were sharing them with the leg bones, so a pose pulled the rack into a scribble that is not attached to the skull. `lockRaisedHead` pins those vertices to the head bone. It does not change `quadrupedPose`. A gait that is still wrong after the rack stays on the head is Gait Builder's, and it needs footage.
+
+The procedural deer in `createDeerRig` used a stretched icosahedron for each antler. Flat shading turned that into a white scribble. The rack is two cylinders (beam and tine) in bone colour `0x6e5a40`. `tests/cervid-coat.test.ts` and the head-lock case in `tests/meshy-animals.test.ts` are the checks.
+
 ## Mistakes to avoid
 
 - Do not apply the fit back into a normalized Int16 position. The wolf then stands in a 2 m box with its feet at −1.

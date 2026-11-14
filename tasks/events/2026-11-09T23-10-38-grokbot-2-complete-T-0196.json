@@ -1,0 +1,9 @@
+{
+  "type": "complete",
+  "task": "T-0196",
+  "agent": "grokbot-2",
+  "at": "2026-11-09T23:10:38-08:00",
+  "note": "The card uses the landing chunk budget while it waits, and leaves once the standing chunk is in. Poll: 47 s on main, gone at 24 s here. after-28s.png is the spawn. Skill warm-startup. Not self-approved.",
+  "skill": "warm-startup",
+  "branch": "grokbot-2/cold-splash"
+}

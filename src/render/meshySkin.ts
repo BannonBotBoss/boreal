@@ -13,7 +13,8 @@ import { BEAR_LEGS } from '../core/bearBody';
 import { MAMMALS, MAMMAL_PLANS, BIRD_GROUPS } from '../core/species';
 import type { MammalPlan } from '../core/skeleton';
 import { applyStylizedFill } from './stylizedPalette';
-import { finishAnimalCoat, finishFoxCoat } from './coatFinish';
+import { dressCervidCoat, dressWolfCoat, finishFoxCoat } from './coatFinish';
+import { coatOf } from './stylizedPalette';
 
 /** WOLF_LEGS is the 0.82 m shoulder wolf in animalBehavior.ts. Bone lengths scale onto the species row. */
 const WOLF_LEG_SHOULDER = 0.82;
@@ -176,6 +177,45 @@ export function proximityWeights(positions: ArrayLike<number>, segs: readonly Se
     skinWeight[o] = w[0] / sum; skinWeight[o + 1] = w[1] / sum; skinWeight[o + 2] = w[2] / sum; skinWeight[o + 3] = w[3] / sum;
   }
   return { skinIndex, skinWeight };
+}
+
+/**
+ * Antler and ear vertices sit above the head bone. Proximity weights were
+ * sharing them with the legs, so a pose pulled the rack into a white scribble.
+ * Anything clearly above the head segment stays on that bone. This is a bind,
+ * not a change to the gait angles.
+ */
+export function lockRaisedHead(positions: ArrayLike<number>, skinIndex: Uint16Array, skinWeight: Float32Array, segs: readonly Segment[]) {
+  const head = segs.find(s => s.index === 1);
+  if (!head) return 0;
+  const top = Math.max(head.ay, head.by);
+  const cx = (head.ax + head.bx) / 2;
+  const cz = (head.az + head.bz) / 2;
+  const reach = Math.max(0.25, head.radius * 3.5);
+  const floor = top + head.radius * 0.15;
+  let locked = 0;
+  const count = positions.length / 3;
+  for (let v = 0; v < count; v++) {
+    const px = positions[v * 3], py = positions[v * 3 + 1], pz = positions[v * 3 + 2];
+    if (py < floor) continue;
+    if (Math.hypot(px - cx, pz - cz) > reach) continue;
+    const o = v * 4;
+    skinIndex[o] = head.index;
+    skinIndex[o + 1] = 0;
+    skinIndex[o + 2] = 0;
+    skinIndex[o + 3] = 0;
+    skinWeight[o] = 1;
+    skinWeight[o + 1] = 0;
+    skinWeight[o + 2] = 0;
+    skinWeight[o + 3] = 0;
+    locked++;
+  }
+  return locked;
+}
+
+function cervidName(name: string) {
+  const row = MAMMALS.find(r => r[0] === name);
+  return row?.[1] === 'cervid';
 }
 
 interface Built {
@@ -405,6 +445,7 @@ export function createSkinTemplate(fitted: THREE.Object3D, species: string): Ski
   for (const part of parts) {
     const pos = part.geometry.getAttribute('position');
     const skin = proximityWeights(pos.array as Float32Array, segs);
+    if (cervidName(species)) lockRaisedHead(pos.array as Float32Array, skin.skinIndex, skin.skinWeight, segs);
     part.geometry.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skin.skinIndex, 4));
     part.geometry.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skin.skinWeight, 4));
     tris += triangles(part.geometry);
@@ -426,10 +467,9 @@ export function spawnSkin(template: SkinTemplate): SkinSpawn {
     const material = template.materials[i].clone();
     material.transparent = true;
     if (template.species === 'Red Fox') finishFoxCoat(material);
-    else {
-      applyStylizedFill(material);
-      if (/wolf/i.test(template.species)) finishAnimalCoat(material);
-    }
+    else if (/wolf/i.test(template.species)) dressWolfCoat(material);
+    else if (cervidName(template.species)) dressCervidCoat(material, coatOf(template.species));
+    else applyStylizedFill(material);
     const mesh = new THREE.SkinnedMesh(geometry, material);
     mesh.frustumCulled = false;
     mesh.name = 'meshy-skin';
@@ -441,7 +481,16 @@ export function spawnSkin(template: SkinTemplate): SkinSpawn {
   root.updateMatrixWorld(true);
   const skeleton = new THREE.Skeleton(built.bones);
   for (const mesh of meshes) mesh.bind(skeleton);
+  // The stored mesh is centred on the body. Sitting the root on the terrain then buried her to the shoulders.
+  const box = new THREE.Box3().setFromObject(root);
+  const lift = footLiftMetres(box.min.y);
+  if (lift > 0) { built.pivot.position.y += lift; for (const mesh of meshes) mesh.position.y += lift; }
   return { root, meshes, pose: built.pose };
+}
+
+/** Metres to raise a body so its lowest point sits on the ground the caller already set. */
+export function footLiftMetres(minY: number) {
+  return Number.isFinite(minY) && minY < -0.02 ? -minY : 0;
 }
 
 /** A deformed vertex, in the mesh's local space (the shader's skinning, without the camera). */

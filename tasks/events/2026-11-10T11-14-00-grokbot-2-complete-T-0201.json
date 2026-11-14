@@ -1,0 +1,8 @@
+{
+  "type": "complete",
+  "task": "T-0201",
+  "agent": "grokbot-2",
+  "skill": "cover-sample-picture",
+  "note": "The 40 m eye no longer shows the closed spruce stand or the teal open-water plane. The HUD at that frame was prairie, vegetation 0.33, water false, 49.77 N 65.54 E, 216 m. A few short stems remain; that is the prairie share. Floating plates remain and are not this task. Not self-approved.",
+  "at": "2026-11-10T11:14:00-08:00"
+}

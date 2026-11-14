@@ -1,0 +1,8 @@
+{
+  "type": "complete",
+  "task": "T-0205",
+  "agent": "agy",
+  "branch": "agy/habitat-from-geology",
+  "at": "2026-11-14T10:14:32-08:00",
+  "note": "Completed T-0205 (#98) under the Rule 12 documentary/audit evidence gate on branch agy/habitat-from-geology: mapped all seven #98 geology outputs (mountain, valley, floodplain, plateau, basin, wetland, coast) at both local (src/core/stages/) and global (src/world/globe/, rust/boreal-sim/src/) scales to exact file:line builders or 'not built', audited all seven places where habitat/cover/fauna/substrate is still a latitude-band test (including the planet.ts:236 smoothstep(60,66,lat) vs treeLineAtM subarctic continental taiga -> 'desert' bug), added executable pinning tests in tests/habitat-from-geology.test.ts, reusable skill notes/skills/habitat-from-geology.md (skill: habitat-from-geology), AGENT-NOTES.md entry, and tasks/handoffs/T-0205-agy.md. npx tsc --noEmit and tests/habitat-from-geology.test.ts + rules/tasks tests pass."
+}

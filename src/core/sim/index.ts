@@ -22,7 +22,9 @@ import { addFeces, bestAvoid, traceHits } from '../traces';
 import { boltDistance, captured, dietOf, evadeStep, gameSpeed, HUNT, startEvade, type EvadeState } from '../needs/diet';
 import { consumeHold, emptyBag, engageHold, friendLive, preyOf, releaseHold, carryPlace, type HoldBag } from '../huntHold';
 import { scatterBend, vigilance } from '../needs/social';
-import { chooseGoal } from '../needs/behaviour';
+import { chooseGoal, sunTimes } from '../needs/behaviour';
+import { DAY_OF_YEAR, LATITUDE } from '../timeOfDay';
+import { siteLatitude } from '../sitePhase';
 import { stream } from '../../proc/rng';
 import { stepForward } from '../../proc/math';
 import { SYSTEM_PROPERTIES } from '../../config/systemProperties';
@@ -45,14 +47,15 @@ export interface SimWorld {
   time: number; step: number; seed: number;
   animals: SimAnimal[]; food: Food[]; events: SimEvent[]; nextId: number; acc: number;
   passable: (x: number, z: number) => boolean; water: (x: number, z: number) => boolean;
-  daylight: () => number; wind: () => { x: number; z: number }; hour: () => number;
+  daylight: () => number; wind: () => { x: number; z: number }; hour: () => number; day: () => number; latitude: () => number;
   /** Player captures pin instead of deleting the prey. NPC captures still remove and eat. */ handling: boolean;
   /** The player's pin/bite/hold bag. One set of jaws. */ hold: HoldBag;
 }
-export interface WorldOptions { seed?: number; step?: number; passable?: SimWorld['passable']; water?: SimWorld['water']; daylight?: SimWorld['daylight']; wind?: SimWorld['wind']; hour?: SimWorld['hour']; handling?: boolean }
+export interface WorldOptions { seed?: number; step?: number; passable?: SimWorld['passable']; water?: SimWorld['water']; daylight?: SimWorld['daylight']; wind?: SimWorld['wind']; hour?: SimWorld['hour']; day?: SimWorld['day']; latitude?: SimWorld['latitude']; handling?: boolean }
 export function createWorld(o: WorldOptions = {}): SimWorld {
   return { time: 0, step: o.step ?? SIM.step, seed: o.seed ?? 1, animals: [], food: [], events: [], nextId: 1, acc: 0,
-    passable: o.passable ?? (() => true), water: o.water ?? (() => false), daylight: o.daylight ?? (() => 1), wind: o.wind ?? (() => ({ x: 0, z: 0 })), hour: o.hour ?? (() => 12),
+    passable: o.passable ?? (() => true), water: o.water ?? (() => false), daylight: o.daylight ?? (() => 1), wind: o.wind ?? (() => ({ x: 0, z: 0 })),
+    hour: o.hour ?? (() => 12), day: o.day ?? (() => DAY_OF_YEAR), latitude: o.latitude ?? (() => siteLatitude(LATITUDE)),
     handling: !!o.handling, hold: emptyBag() };
 }
 export function createAnimal(w: SimWorld, species: string, pos: { x: number; z: number; heading?: number }, init: Partial<Pick<SimAnimal, 'controlled' | 'energy' | 'needs'>> = {}): SimAnimal {
@@ -237,7 +240,7 @@ function stepPredator(w: SimWorld, a: SimAnimal, dt: number, g: Grid, env: { day
   a.timer -= dt; a.pounceCool = Math.max(0, a.pounceCool - dt); a.crouched = false; a.pouncing = a.pounce > 0;
   if (a.pounce > 0) { a.pounce = Math.max(0, a.pounce - dt); move(w, a, dt); return; }
   if (a.state === 'eat' || a.state === 'rest') { a.speed = 0; if (a.timer > 0) return; a.state = 'move'; }
-  const hour = w.hour(), choice = chooseGoal(a.sp, levelsOf(a.needs, a.energy), { hour, sunrise: 6, sunset: 18 });
+  const hour = w.hour(), choice = chooseGoal(a.sp, levelsOf(a.needs, a.energy), { hour, ...sunTimes(w.day(), w.latitude()) });
   let prey = a.targetId !== undefined ? w.animals.find(b => b.id === a.targetId) : undefined;
   if (choice.goal === 'hunt' || a.state === 'stalk' || a.state === 'chase') {
     if (!prey) { let best = 0; for (const b of around(g, a.x, a.z, senseRange(a.sp))) if (eatsAnimal(a, b)) { const p = perceive(a.sp, a, body(b), env).level; if (p > best) { best = p; prey = b; } } if (prey && best < SENSE_RULES.notice) prey = undefined; }

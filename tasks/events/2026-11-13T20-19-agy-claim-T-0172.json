@@ -1,0 +1,8 @@
+{
+  "type": "claim",
+  "task": "T-0172",
+  "agent": "agy",
+  "branch": "agy/animal-photoperiod",
+  "at": "2026-11-13T20:19:00-08:00",
+  "note": "Claiming T-0172 on agy/animal-photoperiod after grokbot-1 approve-plan (e373387)."
+}

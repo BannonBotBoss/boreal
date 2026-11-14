@@ -1,0 +1,62 @@
+{
+  "audit": "animal-circadian-photoperiod-post-fix",
+  "sources": [
+    "NOAA General Solar Position Calculations (Spencer 1971 Fourier series for solar declination and geometric-horizon sunrise/sunset hour angle)",
+    "Theuerkauf et al. (2003), J. Mammal. 84(1):243-253, doi:10.1644/1545-1542(2003)084<0243:DPADOW>2.0.CO;2"
+  ],
+  "calibration": {
+    "metric": "Absolute sunrise/sunset time error |game - noaaFixture| in solar hours (threshold <= 0.10 h = 6 min), and schedule inclination mismatch |gameActivity - expectedSiteActivity| (threshold <= 0.05)",
+    "knownMatchErrorHours": 0,
+    "knownMatchActivityError": 0,
+    "knownMismatchPreFixMainErrorHours": 2.3275,
+    "knownMismatchPreFixSimErrorHours": 4.3626,
+    "knownMismatchPreFixActivityError": 0.65
+  },
+  "cases": {
+    "case0_subarcticSummerDusk_64_5N_day172_hour21_8": {
+      "latitudeDeg": 64.5,
+      "dayOfYear": 172,
+      "hour": 21.8,
+      "skySunElevationDeg": 1.6034,
+      "noaaFixtureSunriseHour": 1.6374,
+      "noaaFixtureSunsetHour": 22.3626,
+      "postFixSunriseHour": 1.6374,
+      "postFixSunsetHour": 22.3626,
+      "sunsetErrorHours": 0,
+      "expectedSiteModelActivity": 1,
+      "postFixModelActivity": 1,
+      "activityError": 0,
+      "postFixGoal": "explore",
+      "resemblesNature": true
+    },
+    "case1_subarcticWinterNight_64_5N_day355_hour8_0": {
+      "latitudeDeg": 64.5,
+      "dayOfYear": 355,
+      "hour": 8,
+      "skySunElevationDeg": -9.278,
+      "noaaFixtureSunriseHour": 10.3498,
+      "noaaFixtureSunsetHour": 13.6502,
+      "postFixSunriseHour": 10.3498,
+      "postFixSunsetHour": 13.6502,
+      "sunriseErrorHours": 0,
+      "expectedSiteModelActivity": 0.35,
+      "postFixModelActivity": 0.35,
+      "activityError": 0,
+      "postFixGoal": "rest",
+      "resemblesNature": true
+    },
+    "case2_simPredatorSummerDawn_49_5N_day172_hour4_2": {
+      "latitudeDeg": 49.5,
+      "dayOfYear": 172,
+      "hour": 4.2,
+      "noaaFixtureSunriseHour": 3.9649,
+      "noaaFixtureSunsetHour": 20.0351,
+      "postFixSimSunriseHour": 3.9649,
+      "postFixSimSunsetHour": 20.0351,
+      "sunriseErrorHours": 0,
+      "simWolfStateAfterTick": "move",
+      "simWolfSpeedAfterTick": 2,
+      "resemblesNature": true
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "type": "claim",
+  "task": "T-0205",
+  "agent": "agy",
+  "at": "2026-11-14T09:58:50-08:00",
+  "note": "Claiming T-0205 (plan authored by grokbot-2, approved-plan 2026-11-13T19:59:00-08:00) on branch agy/habitat-from-geology to map every Issue #98 landform output (mountain, valley, floodplain, plateau, basin, wetland, coast) and audit all remaining latitude-band habitat tests across src/ and rust/boreal-sim/ under Rule 12."
+}

@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0225",
+  "agent": "agy",
+  "at": "2026-11-14T09:56:15-08:00",
+  "note": "Live screen recording (refs/water/surface-water-physics-audit/recording.webm, frame-0..2.png), runtime telemetry (observations.json), and calibrated numeric check (numeric-check.mjs -> numbers.json) found four surface-water decoupling defects: (1) needs/water.ts offers 'E / click · drink' on bone-dry prairie soil at (25.28, -24.83) where drawOpenWater === false (frame-1.png) and directs nearestWater lures to 0 m dry swales; (2) waterWake.ts spawns wake:player|water contacts and Kelvin wakes on dry swales; (3) ground.ts inserts 0.396 m liquid water on dry swales while reporting 0.000 m water and 34.14 cm submerged snowpack 2.364 m underwater on the 3.06 ha perched lake bed at (-1230, -920) (frame-2.png, depthScore = 0.000); and (4) autonomy.ts, hare.ts, and buildScene.ts treat 2.364 m deep perched lake beds as walkable dry land while blocking dry 0.54 m swales (agreementScore = 0.00-0.20 << 0.95)."
+}

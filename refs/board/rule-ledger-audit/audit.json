@@ -1,0 +1,263 @@
+{
+  "auditedHead": "20cbd95a588513cce9477a526534e1b593c5343b",
+  "totalTasks": 182,
+  "finding1_rule4SkillHeaderMismatch": {
+    "ruleRef": "tasks/RULES.md:6 (Rule 4: header says `skill: <skill-name>`) vs tools/tasks.ts:80 (`skill: get(\"skill\") === \"true\"`)",
+    "namedSkillTaskCount": 154,
+    "namedSkillTaskSample": [
+      "T-0004 (surface-bands)",
+      "T-0006 (solid-contact-why)",
+      "T-0008 (transactional-audit)",
+      "T-0009 (agent-pipeline-species)",
+      "T-0010 (agent-pipeline-species)",
+      "T-0011 (agent-pipeline-species)",
+      "T-0012 (agent-pipeline-species)",
+      "T-0013 (hunt-lock-leap)",
+      "T-0014 (hunt-pin-carry)",
+      "T-0015 (forage-sun-field)",
+      "T-0016 (why-chain-placement)",
+      "T-0017 (ambient-call-field)",
+      "T-0018 (log-arena-decay)",
+      "T-0019 (trace-deltas)",
+      "T-0020 (behaviour-animation-gate)"
+    ],
+    "booleanSkillTrueCount": 0,
+    "skillApprovePassRateForNamedSkills": 0
+  },
+  "finding2_rule14CreditsHeaderIgnored": {
+    "ruleRef": "tasks/RULES.md:20 (Rule 14: `tools/tasks.ts must read the header once the ledger lands on main`) vs tools/tasks.ts:81 (`t.award = award(t)`)",
+    "mismatchCount": 17,
+    "mismatches": [
+      {
+        "id": "T-0035",
+        "file": "T-0035-target-outline-glow.md",
+        "headerCredits": 20,
+        "computedAward": 40
+      },
+      {
+        "id": "T-0064",
+        "file": "T-0064-playable-hare.md",
+        "headerCredits": 40,
+        "computedAward": 30
+      },
+      {
+        "id": "T-0065",
+        "file": "T-0065-deep-time-causes.md",
+        "headerCredits": 39,
+        "computedAward": 54
+      },
+      {
+        "id": "T-0066",
+        "file": "T-0066-conditioned-timelines-chemistry.md",
+        "headerCredits": 39,
+        "computedAward": 72
+      },
+      {
+        "id": "T-0067",
+        "file": "T-0067-order-chaos-mercury-venus.md",
+        "headerCredits": 39,
+        "computedAward": 0
+      },
+      {
+        "id": "T-0068",
+        "file": "T-0068-earth-from-orbit-realism.md",
+        "headerCredits": 130,
+        "computedAward": 91
+      },
+      {
+        "id": "T-0070",
+        "file": "T-0070-bodies-from-density-fields.md",
+        "headerCredits": 60,
+        "computedAward": 70
+      },
+      {
+        "id": "T-0072",
+        "file": "T-0072-altitude-zones.md",
+        "headerCredits": 10,
+        "computedAward": 40
+      },
+      {
+        "id": "T-0073",
+        "file": "T-0073-local-cloud-column.md",
+        "headerCredits": 20,
+        "computedAward": 70
+      },
+      {
+        "id": "T-0084",
+        "file": "T-0084-empty-entity-store.md",
+        "headerCredits": 72,
+        "computedAward": 108
+      },
+      {
+        "id": "T-0203",
+        "file": "T-0203-ecosystem-object.md",
+        "headerCredits": 26,
+        "computedAward": 36
+      },
+      {
+        "id": "T-0206",
+        "file": "T-0206-discovery-axis.md",
+        "headerCredits": 20,
+        "computedAward": 30
+      },
+      {
+        "id": "T-0207",
+        "file": "T-0207-observation-instrument.md",
+        "headerCredits": 20,
+        "computedAward": 30
+      },
+      {
+        "id": "T-0208",
+        "file": "T-0208-whale-swim.md",
+        "headerCredits": 26,
+        "computedAward": 36
+      },
+      {
+        "id": "T-0209",
+        "file": "T-0209-whale-reality.md",
+        "headerCredits": 26,
+        "computedAward": 36
+      },
+      {
+        "id": "T-0210",
+        "file": "T-0210-event-log.md",
+        "headerCredits": 20,
+        "computedAward": 30
+      },
+      {
+        "id": "T-0217",
+        "file": "T-0217-crown-shadows.md",
+        "headerCredits": 39,
+        "computedAward": 0
+      }
+    ]
+  },
+  "finding3_rule17MergedPrBoardDrift": {
+    "ruleRef": "tasks/RULES.md:4,21,27 (Rules 2, 15, 17: GitHub PR reviews/merges land code on `main` without recording `approve-plan`/`claim`/`complete`/`approve` JSON events)",
+    "completedTotal": 69,
+    "completedAlreadyMergedOnMainCount": 61,
+    "completedAlreadyMergedOnMain": [
+      "T-0006",
+      "T-0009",
+      "T-0010",
+      "T-0012",
+      "T-0013",
+      "T-0015",
+      "T-0016",
+      "T-0017",
+      "T-0018",
+      "T-0019",
+      "T-0020",
+      "T-0024",
+      "T-0029",
+      "T-0031",
+      "T-0045",
+      "T-0055",
+      "T-0058",
+      "T-0062",
+      "T-0063",
+      "T-0069",
+      "T-0071",
+      "T-0075",
+      "T-0076",
+      "T-0083",
+      "T-0085",
+      "T-0089",
+      "T-0092",
+      "T-0103",
+      "T-0106",
+      "T-0107",
+      "T-0109",
+      "T-0110",
+      "T-0111",
+      "T-0112",
+      "T-0113",
+      "T-0114",
+      "T-0115",
+      "T-0116",
+      "T-0117",
+      "T-0118",
+      "T-0119",
+      "T-0120",
+      "T-0121",
+      "T-0122",
+      "T-0124",
+      "T-0131",
+      "T-0170",
+      "T-0171",
+      "T-0172",
+      "T-0175",
+      "T-0178",
+      "T-0183",
+      "T-0184",
+      "T-0185",
+      "T-0186",
+      "T-0187",
+      "T-0189",
+      "T-0192",
+      "T-0193",
+      "T-0197",
+      "T-0205"
+    ],
+    "completedActuallyAwaitingMerge": [
+      "T-0021",
+      "T-0025",
+      "T-0028",
+      "T-0032",
+      "T-0084",
+      "T-0090",
+      "T-0091",
+      "T-0108"
+    ],
+    "approvedTotal": 28,
+    "approvedAlreadyMergedOnMainCount": 16,
+    "approvedAlreadyMergedOnMain": [
+      "T-0038",
+      "T-0060",
+      "T-0061",
+      "T-0064",
+      "T-0065",
+      "T-0066",
+      "T-0087",
+      "T-0097",
+      "T-0098",
+      "T-0101",
+      "T-0102",
+      "T-0104",
+      "T-0105",
+      "T-0125",
+      "T-0202",
+      "T-0218"
+    ],
+    "approvedRemainingUnmerged": [
+      "T-0022",
+      "T-0040",
+      "T-0047",
+      "T-0048",
+      "T-0049",
+      "T-0050",
+      "T-0051",
+      "T-0052",
+      "T-0053",
+      "T-0054",
+      "T-0173",
+      "T-0213"
+    ],
+    "proposedTotal": 24,
+    "proposedAlreadyMergedOnMainCount": 11,
+    "proposedAlreadyMergedOnMainSample": [
+      "T-0067",
+      "T-0072",
+      "T-0073",
+      "T-0093",
+      "T-0094",
+      "T-0095",
+      "T-0096",
+      "T-0099",
+      "T-0100",
+      "T-0123",
+      "T-0217"
+    ],
+    "branchlessCompleteRuleBreaksCount": 14
+  }
+}

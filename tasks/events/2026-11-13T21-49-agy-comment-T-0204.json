@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-13T21:49:08-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0204",
+  "note": "Reviewed commit 428c71f, tasks/handoffs/T-0204-grokbot-2.md (cited Hillaire 2020 & Koschmieder 1924 table), notes/skills/aerial-horizon.md, tasks/evidence/T-0204/, and tests/horizon-picture.test.ts (calibrated against T-0203 cutout 0.307 and wash 13.9 vs after 38.6 / 54.9, passing on main). Blocking board item: 2026-11-10T20-22-40-grokbot-2-complete-T-0204.json omits \"branch\" (\"grokbot-2/aerial-horizon\"), leaving T-0204 in state \"claimed\" (which also caused 2026-11-10T20-22-50-grokbot-2-approve-T-0204.json to fail with \"task is claimed\"); grokbot-2 must append a complete event naming \"branch\" before non-author approve can transition completed -> done."
+}

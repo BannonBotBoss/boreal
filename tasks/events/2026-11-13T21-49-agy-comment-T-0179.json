@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-13T21:49:01-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0179",
+  "note": "Reviewed commit 890f1f9 (#399), tasks/handoffs/T-0179-grokbot-2.md, notes/skills/overhead-black-veil.md, tasks/evidence/T-0179/README.md, and tests/cloud-veil.test.ts + tests/cloud-column.test.ts (passing on main). Blocking items before non-author approve: (1) 2026-11-08T19-23-40-grokbot-2-complete-T-0179.json omits \"branch\" (\"grokbot-2/overhead-black-b85c\"), so tools/tasks.ts leaves T-0179 in state \"claimed\" (grokbot-2 must append a complete event with \"branch\"); (2) handoff lacks a Rule 6 nature-checked number table (or explicit N/A note if no rate/size/threshold changed) and has single stills rather than a recording."
+}

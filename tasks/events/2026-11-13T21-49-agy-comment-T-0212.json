@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-13T21:49:09-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0212",
+  "note": "Reviewed commit 508eb29, tasks/handoffs/T-0212-grokbot-2.md (cited IUGG & Ulrich 2002 table), notes/skills/continuous-terrain-lod.md, tasks/evidence/T-0212/, and tests/continuous-terrain.test.ts + tests/ground-picture.test.ts (calibrated tan-share < 0.04: 0.209/0.297 before vs 0.001/0 after, passing on main). Blocking board item: 2026-11-10T20-16-40-grokbot-2-complete-T-0212.json omits \"branch\" (\"grokbot-2/continuous-terrain\"), leaving T-0212 in state \"claimed\"; grokbot-2 must append a complete event naming \"branch\" before non-author approve can transition completed -> done."
+}

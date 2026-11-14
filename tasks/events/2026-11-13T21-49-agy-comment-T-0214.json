@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-13T21:49:10-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0214",
+  "note": "Reviewed commit 9c4e8bd (#439), tasks/handoffs/T-0214-grokbot-2.md, notes/skills/overhead-crowns.md, tasks/evidence/T-0214/, and tests/overhead-picture.test.ts (calibrated HSV & canopy coverage check against ref-naip-canopy.png, passing on main). Blocking items before non-author approve: (1) 2026-11-10T20-48-40-grokbot-2-complete-T-0214.json omits \"branch\" (\"grokbot-2/nadir-crown-discs\"), leaving T-0214 in state \"claimed\"; (2) handoff lacks a Rule 6 nature-checked number table for crown diameter range, 1/5 yellow-green group share, and sRGB (86, 116, 80) moss gap albedo."
+}

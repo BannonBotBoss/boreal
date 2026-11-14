@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-13T21:49:07-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0201",
+  "note": "Reviewed commit 28fad19 (#433), tasks/handoffs/T-0201-grokbot-2.md (cited Rule 6 table: EOX Sentinel-2, Tucker 1979, Viereck & Johnston 1990, Schmitt 1938), notes/skills/cover-sample-picture.md, tasks/evidence/T-0201/, and tests/cover-sample.test.ts (passing on main). Blocking items before non-author approve: (1) 2026-11-10T11-14-00-grokbot-2-complete-T-0201.json omits \"branch\" (\"grokbot-2/cover-sample\"), so tools/tasks.ts leaves T-0201 in state \"claimed\"; (2) handoff reports loose blue pixel counts (4185 vs 2275) without naming the script/calibration threshold (Rule 11) and has single stills rather than a recording."
+}

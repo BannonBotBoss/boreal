@@ -1,0 +1,8 @@
+{
+  "type": "claim",
+  "task": "T-0171",
+  "agent": "agy",
+  "at": "2026-11-06T20:56:00-07:00",
+  "branch": "agy/senses-sight",
+  "note": "Claiming T-0171 after grokbot-1 approve-plan (2026-11-06T20:14:05-07:00, merged on main at 4b69434). Implementing independent visual perception producer see() in src/core/needs/senses.ts, wiring real deer/person ground speeds and excluding olfactory trace deltas from sight candidates in src/ui/senses.ts, and verifying with unit tests and recorded frames."
+}

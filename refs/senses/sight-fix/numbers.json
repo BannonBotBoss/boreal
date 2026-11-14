@@ -1,0 +1,64 @@
+{
+  "source": "Miller & Murphy 1995, JAVMA 207:1623 (Vision in dogs, cited in WOLF_NEEDS.senses.sight) and EPA ISC Gaussian plume model (src/core/senses.ts)",
+  "wolfSightSpec": {
+    "rangeM": 60,
+    "fovDeg": 250,
+    "nightFloor": 0.5,
+    "motionRampMps": [
+      0.3,
+      1.5
+    ],
+    "presenceM": 6,
+    "hudThreshold": 0.025
+  },
+  "control_closeHareAt3_5m": {
+    "distanceM": 3.5,
+    "speedMps": 2.91,
+    "analyticalSightStrength": 0.9417,
+    "postFixHudSightStrength": 0.9417,
+    "error": 0
+  },
+  "case1_upwindMovingHareAt20m": {
+    "distanceM": 20,
+    "speedMps": 2.91,
+    "wind": {
+      "x": 0,
+      "z": -3
+    },
+    "scentLevel": 0.0000013,
+    "inSmellLastHits": false,
+    "analyticalSightStrength": 0.6667,
+    "preFixHudSightStrength": 0,
+    "postFixHudSightStrength": 0.6667,
+    "postFixError": 0
+  },
+  "case2_movingDeerAndPersonAt20m": {
+    "distanceM": 20,
+    "deerSpeedMps": 2,
+    "deerAnalyticalSightStrength": 0.6667,
+    "deerPreFixHudSightStrength": 0,
+    "deerPostFixHudSightStrength": 0.6667,
+    "deerPostFixError": 0,
+    "personSpeedMps": 1.2,
+    "personAnalyticalSightStrength": 0.5,
+    "personPreFixHudSightStrength": 0,
+    "personPostFixHudSightStrength": 0.5,
+    "personPostFixError": 0
+  },
+  "case3_invisibleScentMarkAt2m": {
+    "distanceM": 2,
+    "kind": "scent",
+    "inSmellLastHits": true,
+    "analyticalSightStrength": 0,
+    "preFixHudSightStrength": 0.6667,
+    "postFixHudSightStrength": 0,
+    "postFixError": 0
+  },
+  "calibration": {
+    "metric": "Absolute difference between HUD visual producer see() sight strength and analytical Miller & Murphy (1995) sight formula",
+    "knownMatchError": 0,
+    "knownMismatchPreFixCase1Error": 0.6667,
+    "knownMismatchPreFixCase2DeerError": 0.6667,
+    "knownMismatchPreFixCase3FalseSightError": 0.6667
+  }
+}

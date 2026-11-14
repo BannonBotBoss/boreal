@@ -3,12 +3,14 @@
  * footfalls, smell through core/senses scentLevel) and says how strongly it perceives another body. Drives the NPC
  * notice/flight (animals/hare) and the embodied player's predator-awareness cue. Pure: no world records.
  */
-import { bearingTo, scentLevel, type SensePoint } from '../senses';
+import { bearingTo, scentLevel, SENSES, type SensePoint } from '../senses';
 import { SYSTEM_PROPERTIES } from '../../config/systemProperties';
 import type { SpeciesTemplate } from './template';
 export const SENSE_RULES = SYSTEM_PROPERTIES.perception;
 export interface Observer extends SensePoint { heading: number }
 export interface Body extends SensePoint { kind?: string; speed: number; crouched?: boolean; potency?: number }
+export interface SightBody extends Body { key: string }
+export interface SightHit { key: string; sight: number; bearing: number; distance: number }
 export interface SenseEnv { daylight: number; wind: SensePoint }
 export interface Percept { sight: number; hearing: number; scent: number; level: number; bearing: number; distance: number }
 const ramp = (a: number, b: number, v: number) => Math.max(0, Math.min(1, (v - a) / Math.max(1e-6, b - a)));
@@ -24,6 +26,24 @@ export function perceive(sp: SpeciesTemplate, o: Observer, b: Body, env: SenseEn
   const hearing = ramp(he.loud.v[0], he.loud.v[1], b.speed) * clamp01(1 - distance / he.rangeM.v);
   const scent = scentLevel(o, { key: b.kind ?? 'body', kind: b.kind ?? 'body', potency: sm.potency.v * (b.potency ?? 1), x: b.x, z: b.z }, env.wind);
   return { sight, hearing, scent, level: Math.max(sight, hearing, scent), bearing, distance };
+}
+/** Top visual hits in the observer's field of view, independent of olfactory hits (T-0171). */
+export function see(
+  sp: SpeciesTemplate,
+  o: Observer,
+  bodies: readonly SightBody[],
+  env: SenseEnv,
+  threshold = SENSES.threshold,
+  cap = SENSES.thoughtCap,
+): SightHit[] {
+  return bodies
+    .map(b => {
+      const p = perceive(sp, o, b, env);
+      return { key: b.key, sight: p.sight, bearing: p.bearing, distance: p.distance };
+    })
+    .filter(s => s.sight >= threshold)
+    .sort((a, b) => b.sight - a.sight || a.key.localeCompare(b.key))
+    .slice(0, cap);
 }
 /** The strongest perceived feared animal (behaviour.flight.fears), for the embodied player's predator cue and NPC flight. */
 export function strongestThreat(sp: SpeciesTemplate, o: Observer, bodies: readonly Body[], env: SenseEnv) {

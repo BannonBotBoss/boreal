@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0227",
+  "agent": "agy",
+  "at": "2026-11-14T12:05:25-08:00",
+  "note": "Live screen recording (refs/ground/footing-inspector-audit/recording.webm, frame-0..2.png), runtime telemetry (observations.json), and calibrated numeric check (numeric-check.mjs -> numbers.json) found four ground/footing/Inspector bugs: (1) main.ts:312 hardcodes 'canid' paws on all playable species (deer 15.42 kPa vs cervid 50.66 kPa, pressureScore=0.3043; bear 51.00 kPa vs ursid 14.08 kPa, pressureScore=0.0000), ground.ts:238 integrates snow compaction resistance with wetLoam32 (n=0.5) instead of BEKKER.snow (n=1.6, Wong 2001 eq. 2.28), inflating hare snow movement cost to 2.93x vs 1.07x (27.9x excess drag, snowCostScore=0.0000), and sinkage() jumps +8.22 cm across thin snow punch-through; (2) ground.ts columnRaw() hardcodes 2.5 C Q10 decay (9.88x too slow at 26 C, 7.37x too fast at -18 C) and builds 3.87 cm boreal Sphagnum/feathermoss + 11.4 cm duff on Sahara Desert landings (frame-2.png); (3) gameCamera.ts:97 hides #inspector on KeyI without backtick debug mode and buildScene.ts pick()/distanceAt() omit createContinuousTerrain terrain.mesh so 4/4 bare-ground clicks return null; and (4) inspector.ts labels non-wolf playable rigs 'Gray wolf', omits footing() trace factors, and reads stale WEATHER.day/hour and hardcoded 96 kPa."
+}

@@ -9,7 +9,7 @@
  *   npx tsx tools/ocean-scorecard.ts
  *
  * Screenshots and the report are written to the artifact folder, and a copy
- * of the report is written to tasks/evidence/T-0222/.
+ * of the report is written to tasks/evidence/T-0223/.
  */
 import { spawn, type ChildProcess } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -22,7 +22,7 @@ import { PNG } from 'pngjs';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const REF = join(ROOT, 'tests/ocean-scorecard/references');
 const ART = process.env.OCEAN_SCORECARD_OUT ?? '/opt/cursor/artifacts/ocean-scorecard';
-const EVIDENCE = join(ROOT, 'tasks/evidence/T-0222');
+const EVIDENCE = join(ROOT, 'tasks/evidence/T-0223');
 const PORT = Number(process.env.OCEAN_SCORECARD_PORT ?? 5173);
 const BASE = `http://127.0.0.1:${PORT}`;
 

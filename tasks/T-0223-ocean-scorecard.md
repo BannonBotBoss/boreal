@@ -1,5 +1,5 @@
 ---
-id: T-0222
+id: T-0223
 title: Rough ocean scorecard
 author: cursor
 scratch: true
@@ -8,9 +8,9 @@ skill: ocean-scorecard
 tags: [visual, ocean, test]
 credits: 30
 ---
-# T-0222 Rough ocean scorecard
+# T-0223 Rough ocean scorecard
 
-Note for the owner. The request called this T-0170. That number is already the chronometer and Venus-sky task, so this note uses the next free id, T-0222. This is a first slice, not a finished gate. The ocean drawing code was not changed.
+Note for the owner. The request called this T-0170. That number is already the chronometer and Venus-sky task. It was first filed as T-0222, which is the prairie-aerial note on another branch, so this note is T-0223. This is a first slice, not a finished gate. The ocean drawing code was not changed.
 
 ## Objectives
 
@@ -37,7 +37,7 @@ The scorecard does not pass. The average of the measured elements was 45.7, and 
 | Sunglint | 22.7 | no |
 | Open-water surface colour | not measured | no |
 
-The 12 km picture did not finish drawing. The orbital picture and the 700 km ocean picture did. Report: `tasks/evidence/T-0222/scorecard.txt`.
+The 12 km picture did not finish drawing. The orbital picture and the 700 km ocean picture did. Report: `tasks/evidence/T-0223/scorecard.txt`.
 
 ## What is left
 

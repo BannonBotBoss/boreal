@@ -83,7 +83,8 @@ import { STAGES } from './core/stages/elevation';
 import { dryStart, isDry } from './core/stages/surfaceAt';
 import { dropStand } from './world/globe/forestLanding';
 import { WITNESS_ALTITUDE_SCALE } from './core/enterLiving';
-import { DAY, dayAt, hourAt, initDay } from './core/timeOfDay';
+import { DAY, dayAt, hourAt, initDay, LATITUDE } from './core/timeOfDay';
+import { siteLatitude } from './core/sitePhase';
 import { createChronometer } from './ui/chronometer';
 import { controlsScreen } from './ui/controls';
 import { ACTION, ACTIVE, BINDINGS_KEY, atomValues, bindingLabel, comboLabel, groupLabel, loadBindings, resolveInput, saveBindings, type Bindings } from './core/bindings';
@@ -627,7 +628,7 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
         const fx = -Math.sin(yaw), fz = -Math.cos(yaw), F = airDrag({ x: fx * brain.speed, z: fz * brain.speed }, windAt(player.x, .6, player.z), .15 * (playerMass / 40) ** (2 / 3));
         brain.speed += (F.x * fx + F.z * fz) / playerMass / 30; }
       // T-0036: the autonomous wolf runs its species behaviour model (thirst -> water, tired -> bed down); otherwise the old step.
-      const sp = needsSpecies(), wNow = worldSec(), sun = sunTimes(dayAt(wNow));
+      const sp = needsSpecies(), wNow = worldSec(), sun = sunTimes(dayAt(wNow), siteLatitude(LATITUDE));
       const choice = autonomous && !playerAction ? chooseGoal(sp, levelsOf(needs, brain.energy), { hour: hourAt(wNow), ...sun }) : undefined;
       if (choice?.goal === 'drink' && !drinking) {
         if (waterAhead(player.x, player.z, yaw)) { drinking = true; waterGoal = undefined; }

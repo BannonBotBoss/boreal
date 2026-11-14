@@ -1,0 +1,165 @@
+{
+  "capturedAt": "2026-11-14T21:55:06.888Z",
+  "baseUrl": "http://127.0.0.1:5259",
+  "observations": [
+    {
+      "frame": 0,
+      "label": "midwinter_clear_noon_lake_and_forest_bank_day15",
+      "player": {
+        "x": -1230.000000000004,
+        "z": -966.0000025646342,
+        "yaw": 15.707970614359173,
+        "energy": 74.90283282810466,
+        "water": 99.96163921026113,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      },
+      "statusBar": "12:07 · WALK · Snow 34.2 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%",
+      "weatherHere": {
+        "tC": -19.031558406652447,
+        "rh": 0.9999969930195347,
+        "cloud": 0.9999923867607237,
+        "rainMmH": 1.1852702866164107,
+        "snow": true,
+        "soil": 0.4996465555826823,
+        "sweMm": 85.60266876220703,
+        "fog": 0.004684375198849011,
+        "wind": {
+          "x": -6.050415610458529,
+          "y": 0.2613688894101278,
+          "z": -9.60262583386857
+        },
+        "depthCm": 34.241067504882814
+      },
+      "planetWeatherHome": {
+        "latDeg": 49.79,
+        "lonDeg": -94.36000000000001,
+        "tC": 5.636898205741074,
+        "q": 0.004085390090322746,
+        "rh": 0.7238403605789555,
+        "u": 4.401808723842574,
+        "v": 0,
+        "precipMmDay": 0.3018083009506208,
+        "precipMmH": 0.012575345872942532,
+        "snow": false,
+        "sweMm": 0,
+        "snowFrac": 0,
+        "cloud": 0.5859759099481292,
+        "pressurePa": 101325,
+        "soilMm": 0,
+        "ice": 8.159072670598871e-34
+      },
+      "groundColumnShoreTopLayer": {
+        "id": "snow",
+        "label": "snowpack",
+        "thickness": 0.34241067504882816,
+        "kg": 85.60266876220705,
+        "bulk": 250,
+        "moisture": 1,
+        "source": "core/weather Kessler + degree-day melt; Sturm et al. 2010",
+        "top": 0
+      },
+      "continuousTerrainStats": {
+        "vertexCount": 40833,
+        "leaves": 349,
+        "maxASnow": 0,
+        "meanASnow": 0,
+        "maxAWet": 0,
+        "meanAWet": 0
+      },
+      "waterMaterialStats": {
+        "colorHex": "#578d91",
+        "roughness": 0.32,
+        "metalness": 0.1,
+        "cacheKey": "boreal-water-wake"
+      },
+      "pixelSamples": {
+        "lakeSurfaceCenter": {
+          "r": 0,
+          "g": 0,
+          "b": 0,
+          "luma": 0
+        },
+        "shoreGroundForeground": {
+          "r": 0,
+          "g": 0,
+          "b": 0,
+          "luma": 0
+        }
+      },
+      "clearWinterTrackDecay": {
+        "precipMmH": 1.1852702866164107,
+        "sweMm": 85.60266876220703,
+        "snowFlagOnClearDay": true,
+        "gridSnowfallCol0": 1,
+        "halfDayFootprintStrengthGame": 0.263597,
+        "halfDayFootprintStrengthExpected": 0.716531
+      }
+    },
+    {
+      "frame": 1,
+      "label": "active_midwinter_snowfall_wind_and_camera_lock",
+      "playerStart": {
+        "x": -1230,
+        "z": -966
+      },
+      "playerEnd": {
+        "x": -1230,
+        "z": -957.503
+      },
+      "distanceMovedM": 8.497,
+      "activeSnowWeather": {
+        "tC": -19.022397895378628,
+        "rh": 0.9999024275628279,
+        "cloud": 0.9999923853115595,
+        "rainMmH": 1.1853717309722807,
+        "snow": true,
+        "soil": 0.4996465555826823,
+        "sweMm": 85,
+        "fog": 0,
+        "wind": {
+          "x": 2.2998561622401867,
+          "y": -0.09078788991741726,
+          "z": -0.06822188601680583
+        },
+        "depthCm": 34
+      },
+      "obsAt15x": {
+        "scale": "immediate",
+        "lower": "immediate",
+        "higher": "immediate",
+        "blend": 1
+      },
+      "bareGroundSubzeroSnowMixed": {
+        "tC": -19.02,
+        "rainMmH": 1.19,
+        "sweMm": 0,
+        "snowFlag": true
+      }
+    },
+    {
+      "frame": 2,
+      "label": "summer_wind_driven_rain_and_zero_terrain_wetness_day227",
+      "rainWeather": {
+        "tC": 23.916401538518745,
+        "rh": 0.31102301613078237,
+        "cloud": 0.648902677844729,
+        "rainMmH": 0.20489750913046076,
+        "snow": false,
+        "soil": 0.4934186299641927,
+        "sweMm": 0,
+        "fog": 0,
+        "wind": {
+          "x": 7.700886590397772,
+          "y": -0.8682568450131255,
+          "z": 9.271351317207472
+        },
+        "depthCm": 0
+      },
+      "continuousTerrainMaxAWetInDownpour": 0
+    }
+  ],
+  "pageErrors": []
+}

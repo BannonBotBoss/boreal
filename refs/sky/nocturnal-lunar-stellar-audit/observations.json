@@ -1,0 +1,126 @@
+{
+  "capturedAt": "2026-11-14T22:52:48.955Z",
+  "pageErrors": [],
+  "observations": [
+    {
+      "frame": 0,
+      "label": "winter_solstice_full_moon_midnight_2026_12_24",
+      "doy": 358,
+      "year": 2026,
+      "hour": 0.138,
+      "sunElevationDeg": -63.5751,
+      "moonAgeDays": 15.0541,
+      "gameMoonPos": {
+        "elevationDeg": 16.7837,
+        "azimuthDeg": 178.6089
+      },
+      "lightingGlobal": {
+        "lux": 0.07266042412805192,
+        "gain": 351819.5866188879,
+        "moonAge": 15.054140777777313,
+        "Esun": 0,
+        "Emoon": 0.07166042412805192
+      },
+      "fillFullMoon": {
+        "eta": 1,
+        "hemi": 1.6,
+        "key": 1.05,
+        "keep": 1,
+        "hemiKept": 1.6,
+        "ground": 0.1527,
+        "wolf": 0.53445
+      },
+      "hareNightSightFloorOnly": 0.45,
+      "pixelSamples": {
+        "upperSkyDome": {
+          "r": 0,
+          "g": 0,
+          "b": 0,
+          "luma": 0,
+          "maxLuma": 0
+        },
+        "midSkyGameMoonBand": {
+          "r": 0,
+          "g": 0,
+          "b": 0,
+          "luma": 0,
+          "maxLuma": 0
+        },
+        "lakeAndShoreLower": {
+          "r": 0,
+          "g": 0,
+          "b": 0,
+          "luma": 0,
+          "maxLuma": 0
+        }
+      },
+      "brightSkyPixelCountHour0": 0,
+      "pitchProbe": {
+        "topBefore": 0
+      }
+    },
+    {
+      "frame": 1,
+      "label": "moonless_new_moon_with_clouds_and_4h_star_rotation_check",
+      "doy": 343,
+      "hour": 0.0496,
+      "moonAgeDays": 0.0541,
+      "EmoonNew": 0,
+      "lightingGlobal": {
+        "lux": 0.001,
+        "gain": 24000000,
+        "moonAge": 0.054140777777313076,
+        "Esun": 0,
+        "Emoon": 0
+      },
+      "fillNewMoon": {
+        "eta": 1,
+        "hemi": 1.7999999999999998,
+        "key": 1.05,
+        "keep": 1,
+        "hemiKept": 1.7999999999999998,
+        "ground": 0.1647,
+        "wolf": 0.57645
+      },
+      "starRotationCheck4Hours": {
+        "brightPixelsAt00h": 0,
+        "brightPixelsAt04h": 151,
+        "exactSamePixelOverlap": 0,
+        "stationaryFraction": 0
+      },
+      "pixelSamples": {
+        "moonlessCloudSkyDome": {
+          "r": 0.1111,
+          "g": 0.1221,
+          "b": 0.1485,
+          "luma": 0.1217
+        },
+        "lakeAndShoreLower": {
+          "r": 0.0563,
+          "g": 0.1272,
+          "b": 0.1748,
+          "luma": 0.1156
+        }
+      }
+    },
+    {
+      "frame": 2,
+      "label": "year_2025_full_moon_mismatch_and_civil_twilight_star_leak",
+      "year2025Jan14Check": {
+        "clockYear": 2025,
+        "doy": 14,
+        "gameReportedMoonAge": 25.4212,
+        "expectedMoonAge2025": 14.7883,
+        "gameEmoonLux": 0
+      },
+      "civilTwilightCheck": {
+        "hour": 19.9524,
+        "sunElevationDeg": -6.7412,
+        "uDay": 0,
+        "shaderStarNightFactor": 1,
+        "lux": 2.157,
+        "civilTwilightStarSpikes": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+{
+  "title": "Boreal ocean scorecard (rough first metric)",
+  "roughFirstMetric": true,
+  "visionModel": "TODO",
+  "passMark": 75,
+  "passRule": "Each element passes on its own at 75% or higher. The average never passes anything.",
+  "passed": false,
+  "composite": 45.7,
+  "compositeNote": "The average is for information only. It cannot pass the scorecard. Every element has to reach 75 on its own.",
+  "elements": [
+    {
+      "id": "ocean-color-orbit",
+      "name": "Ocean colour from orbit",
+      "score": 37.8,
+      "pass": false,
+      "rule": "Each element passes on its own at 75% or higher. The average never passes anything.",
+      "summary": "Compared with the Apollo 17 Blue Marble and the Pacific Blue Marble. The average ocean colour in the game is RGB 61, 71, 83. The colour distance (CIEDE2000) is 12.5. A distance of 0 would score 100. A distance of 20 scores 0. This is a rough first metric.",
+      "detail": {
+        "deltaE": 12.5,
+        "gameR": 61,
+        "gameG": 70.6,
+        "gameB": 83.2,
+        "comparisons": "Apollo 17 ΔE 20.4; Blue Marble Pacific ΔE 4.5",
+        "roughFirstMetric": true
+      }
+    },
+    {
+      "id": "ocean-fraction",
+      "name": "Ocean share of the full disc",
+      "score": 76.5,
+      "pass": true,
+      "rule": "Each element passes on its own at 75% or higher. The average never passes anything.",
+      "summary": "In the game picture, 51.3% of the disc reads as ocean. In the Apollo 17 photo, 67% does. Clouds count as part of the disc, so this is lower than the whole-Earth ocean share of about 71%. Earth's land is about 29.2% (ETOPO1). This is a rough first metric.",
+      "detail": {
+        "gameShare": 0.5,
+        "apolloShare": 0.7,
+        "pacificShare": 0.5,
+        "earthOceanShare": 0.708,
+        "gameOceanPixels": 69626,
+        "gameDiscPixels": 135739,
+        "roughFirstMetric": true
+      }
+    },
+    {
+      "id": "sunglint",
+      "name": "Sunglint",
+      "score": 22.7,
+      "pass": false,
+      "rule": "Each element passes on its own at 75% or higher. The average never passes anything.",
+      "summary": "Sunglint strength in the game view is 3.8. In the Aegean NASA photo it is 2.1. Strength is the bright end of the water divided by the typical water brightness. About 1 means flat water. Higher means a bright streak. Clouds and the printed labels on the NASA photo can raise the same number. This is a rough first metric.",
+      "detail": {
+        "gameStrength": 3.8,
+        "referenceStrength": 2.1,
+        "roughFirstMetric": true,
+        "labelsCanInflateReference": true
+      }
+    },
+    {
+      "id": "open-water-color",
+      "name": "Open-water surface colour",
+      "score": null,
+      "pass": false,
+      "rule": "Each element passes on its own at 75% or higher. The average never passes anything.",
+      "summary": "Not measured. A picture was missing.",
+      "detail": {
+        "measured": false
+      }
+    }
+  ],
+  "calibration": {
+    "knownMatch": 100,
+    "knownMismatch": 0,
+    "note": "Calibration uses made-up pictures, not the game. The same blue disc scores 100 against itself. A brown disc against that blue scores low. A real photo is not a perfect score by itself."
+  },
+  "renderer": "SwiftShader software rendering (ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver))",
+  "notes": [
+    "The 12 km picture did not finish drawing (tiles were still loading, or no blue water was found). It is saved so you can see that, and it is not used for the open-water colour score."
+  ],
+  "screenshots": {
+    "orbit": "/opt/cursor/artifacts/ocean-scorecard/orbit.png",
+    "sunglintView": "/opt/cursor/artifacts/ocean-scorecard/sunglint-view.png",
+    "oceanClose": "/opt/cursor/artifacts/ocean-scorecard/ocean-close.png"
+  },
+  "capture": {
+    "orbitReady": true,
+    "glintReady": false,
+    "closeReady": false,
+    "closeOceanPixels": 0,
+    "oceanPoint": {
+      "lat": 29.94,
+      "lon": 147.67,
+      "h": -6287
+    }
+  }
+}

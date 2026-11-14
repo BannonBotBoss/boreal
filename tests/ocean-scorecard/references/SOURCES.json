@@ -1,0 +1,31 @@
+[
+  {
+    "file": "apollo17-blue-marble.png",
+    "usedFor": ["ocean colour from orbit", "ocean share of the full disc"],
+    "title": "Apollo 17 Blue Marble, AS17-148-22727",
+    "page": "https://images.nasa.gov/details/as17-148-22727",
+    "license": "Public domain (NASA)",
+    "note": "Downscaled copy of the photo supplied with this task. Original is not committed."
+  },
+  {
+    "file": "blue-marble-pacific.png",
+    "usedFor": ["ocean colour from orbit"],
+    "title": "Blue Marble, western hemisphere and the Pacific",
+    "license": "Public domain (NASA)",
+    "note": "Downscaled copy of the photo supplied with this task. Shows the Americas, the Pacific, and a night side."
+  },
+  {
+    "file": "sunglint-aegean.png",
+    "usedFor": ["sunglint"],
+    "title": "Sunglint on the Aegean and Mediterranean, NASA Earth Observatory",
+    "license": "Public domain (NASA)",
+    "note": "Downscaled copy of the photo supplied with this task. Place names are printed on the picture and can affect the rough glint number."
+  },
+  {
+    "file": "caribbean-deep-blue.png",
+    "usedFor": ["open-water surface colour"],
+    "title": "Caribbean deep blue open water",
+    "license": "Public domain or Creative Commons, as supplied with this task (NASA / NOAA / Wikimedia)",
+    "note": "Downscaled copy of the long-exposure open-water photo supplied with this task."
+  }
+]

@@ -1,0 +1,33 @@
+Boreal ocean scorecard (rough first metric)
+
+This is a rough first check. A person, or a vision model later, still has to look at the pictures.
+Each element passes on its own at 75% or higher. The average never passes anything.
+Result: the scorecard does not pass. At least one element is under 75, or a picture was missing.
+Average of the measured elements (does not pass anything by itself): 45.7.
+
+Pictures were taken with SwiftShader software rendering (ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)).
+
+Ocean colour from orbit: 37.8 out of 100 — does not pass
+Compared with the Apollo 17 Blue Marble and the Pacific Blue Marble. The average ocean colour in the game is RGB 61, 71, 83. The colour distance (CIEDE2000) is 12.5. A distance of 0 would score 100. A distance of 20 scores 0. This is a rough first metric.
+
+Ocean share of the full disc: 76.5 out of 100 — passes
+In the game picture, 51.3% of the disc reads as ocean. In the Apollo 17 photo, 67% does. Clouds count as part of the disc, so this is lower than the whole-Earth ocean share of about 71%. Earth's land is about 29.2% (ETOPO1). This is a rough first metric.
+
+Sunglint: 22.7 out of 100 — does not pass
+Sunglint strength in the game view is 3.8. In the Aegean NASA photo it is 2.1. Strength is the bright end of the water divided by the typical water brightness. About 1 means flat water. Higher means a bright streak. Clouds and the printed labels on the NASA photo can raise the same number. This is a rough first metric.
+
+Open-water surface colour: not measured — does not pass
+The low 12 km picture did not finish drawing, so it was not compared with the Caribbean photo.
+
+Calibration of the colour score: Calibration uses made-up pictures, not the game. The same blue disc scores 100 against itself. A brown disc against that blue scores low. A real photo is not a perfect score by itself.
+Same picture against itself: 100. Brown against blue: 0.
+
+Screenshots:
+/opt/cursor/artifacts/ocean-scorecard/orbit.png
+/opt/cursor/artifacts/ocean-scorecard/sunglint-view.png
+/opt/cursor/artifacts/ocean-scorecard/ocean-close.png
+
+Notes:
+The 12 km picture did not finish drawing (tiles were still loading, or no blue water was found). It is saved so you can see that, and it is not used for the open-water colour score.
+
+Still to do: a vision model should judge visual likeness. The numbers above are only the rough metric.

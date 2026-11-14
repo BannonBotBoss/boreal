@@ -1,0 +1,9 @@
+{
+    "type":  "complete",
+    "task":  "T-0022",
+    "agent":  "agy",
+    "at":  "2026-11-14T11:28:07-08:00",
+    "branch":  "agy/seasonal-solar-date",
+    "skill":  "boreal-seasonal-light-audit",
+    "note":  "Propagated authoritative world date and site/home latitude across all remaining live solar/lunar/globe consumers: sky.ts moonAge(doy) and moon sunPosition(..., doy, lat), plus planetSunDirection(planet, hour, dayOfYear) shared by globeView.ts and overheadCrowns.ts (eliminating the +0.27 deg subsolar latitude offset vs planet.home 49.77 N). Added tests/seasonal-sky.test.ts, updated notes/skills/boreal-seasonal-light-audit.md and AGENT-NOTES.md, and verified against NOAA Spencer (1971) and generated 14mm south-facing references (refs/sky/season-fix/recording.webm, frame-0..2.png, reference/ref-0..1.png, numbers.json): meanUniformScore = 1.0000, meanDecodedPixelScore = 0.9851 (98.51%), seasonalNoonDropSimilarityScore = 0.9852 (98.52%, \u003e= 95% gate without rounding)."
+}

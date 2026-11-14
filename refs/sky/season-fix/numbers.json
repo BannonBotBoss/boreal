@@ -1,0 +1,103 @@
+{
+  "source": "NOAA General Solar Position Calculations (Spencer 1971 Fourier series), https://gml.noaa.gov/grad/solcalc/solareqns.PDF",
+  "calibration": {
+    "metric": "angleScore = max(0, 1 - |measuredDeg - noaaDeg| / 37.7204 deg seasonal noon excursion)",
+    "seasonalNoonSpan49_79NDeg": 37.7204,
+    "knownMatch_Day355PostFixScore": 1,
+    "knownMismatch_PreFixPinnedDay227AtDay355Score": 0
+  },
+  "auxiliaryChecks": {
+    "skyLunarAgeDay355WithStaleWeatherDay227": {
+      "measuredDays": 12.054141,
+      "expectedDays": 12.054141,
+      "staleDay227Days": 2.176497,
+      "absErrorDays": 0
+    },
+    "planetGlobeSubsolarLatDay355Noon": {
+      "postFixSubsolarLatDeg": -23.41989,
+      "expectedDeclinationDeg": -23.41989,
+      "postFixAbsErrorDeg": 0,
+      "preFixSubsolarLatDeg": -23.14989,
+      "preFixAbsErrorDeg": 0.27
+    }
+  },
+  "recordedFramesVsNoaa": [
+    {
+      "label": "scene0_day227_aug15_noon",
+      "frameFile": "frame-0.png",
+      "videoTimeSec": 1.121,
+      "doy": 227,
+      "hour": 12.0601,
+      "observerLatDeg": 49.79,
+      "noaaElevationDeg": 54.5029,
+      "skyUniformElevationDeg": 54.5029,
+      "uniformAbsErrorDeg": 0.000007,
+      "uniformScore": 1,
+      "decodedWebmPixelCentroid": {
+        "x": 651.65,
+        "y": 126.73
+      },
+      "decodedWebmPixelElevationDeg": 55.0241,
+      "pixelAbsErrorDeg": 0.5212,
+      "pixelScore": 0.9862,
+      "lightingMoonAgeDays": 2.176497,
+      "expectedMoonAgeDays": 2.176497,
+      "planetNoonSubsolarLatDeg": 14.300517,
+      "expectedDeclinationDeg": 14.300517
+    },
+    {
+      "label": "scene1_day355_dec21_noon",
+      "frameFile": "frame-1.png",
+      "videoTimeSec": 20.799,
+      "doy": 355,
+      "hour": 12.0593,
+      "observerLatDeg": 49.79,
+      "noaaElevationDeg": 16.7858,
+      "skyUniformElevationDeg": 16.7858,
+      "uniformAbsErrorDeg": 0.000004,
+      "uniformScore": 1,
+      "decodedWebmPixelCentroid": {
+        "x": 646.61,
+        "y": 428.39
+      },
+      "decodedWebmPixelElevationDeg": 16.7497,
+      "pixelAbsErrorDeg": 0.0361,
+      "pixelScore": 0.999,
+      "lightingMoonAgeDays": 12.054141,
+      "expectedMoonAgeDays": 12.054141,
+      "planetNoonSubsolarLatDeg": -23.41989,
+      "expectedDeclinationDeg": -23.41989
+    },
+    {
+      "label": "scene2_day592_year2_aug15_rollover_noon",
+      "frameFile": "frame-2.png",
+      "videoTimeSec": 39.373,
+      "doy": 592,
+      "hour": 12.0561,
+      "observerLatDeg": 49.79,
+      "noaaElevationDeg": 54.5039,
+      "skyUniformElevationDeg": 54.5039,
+      "uniformAbsErrorDeg": 0.000006,
+      "uniformScore": 1,
+      "decodedWebmPixelCentroid": {
+        "x": 651.24,
+        "y": 120.82
+      },
+      "decodedWebmPixelElevationDeg": 55.6373,
+      "pixelAbsErrorDeg": 1.1334,
+      "pixelScore": 0.97,
+      "lightingMoonAgeDays": 12.809429,
+      "expectedMoonAgeDays": 12.809429,
+      "planetNoonSubsolarLatDeg": 14.300517,
+      "expectedDeclinationDeg": 14.300517
+    }
+  ],
+  "summaryScores": {
+    "meanUniformScore": 1,
+    "meanDecodedPixelScore": 0.9851,
+    "seasonalNoonDropNoaaDeg": 37.7171,
+    "seasonalNoonDropDecodedPixelDeg": 38.2744,
+    "seasonalNoonDropSimilarityScore": 0.9852,
+    "passes95PercentGate": true
+  }
+}

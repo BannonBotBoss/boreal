@@ -19,12 +19,12 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { FAR_TREES, farTreesInTile } from '../../core/flora/stands';
 import { standAt } from '../../core/stand';
 import { worldSec } from '../../core/worldClock';
-import { dayAt, hourAt, sunPosition } from '../../core/timeOfDay';
+import { dayAt, hourAt } from '../../core/timeOfDay';
 import { GLSL_HASH, GLSL_NOISE } from '../../proc/glsl';
 import { hash } from '../../proc/rng';
 import { smoothstep } from '../../proc/math';
 import { coverSampleLatLon } from '../../world/globe/coverSample';
-import { PLANET, coverWeights, toLatLon, type Planet } from '../../world/globe/planet';
+import { PLANET, coverWeights, planetSunDirection, toLatLon, type Planet } from '../../world/globe/planet';
 import { tangentFrame } from '../../world/globe/landingSite';
 import { AERIAL } from '../../world/globe/aerialExemplar';
 
@@ -113,12 +113,9 @@ function coverField(planet: Planet, east: THREE.Vector3, north: THREE.Vector3, u
   };
 }
 
-function shadowAway(planet: Planet, east: THREE.Vector3, north: THREE.Vector3) {
-  const d = sunPosition(hourAt(worldSec()), dayAt(worldSec())).direction;
-  const sun = new THREE.Vector3(...planet.east).multiplyScalar(d.x)
-    .addScaledVector(new THREE.Vector3(...planet.home), d.y)
-    .addScaledVector(new THREE.Vector3(...planet.north), -d.z);
-  let se = sun.dot(east), sn = sun.dot(north);
+export function shadowAway(planet: Planet, east: THREE.Vector3, north: THREE.Vector3, sec = worldSec()) {
+  const sun = new THREE.Vector3(...planetSunDirection(planet, hourAt(sec), dayAt(sec)));
+  const se = sun.dot(east), sn = sun.dot(north);
   const len = Math.hypot(se, sn);
   if (len < 1e-4) return { e: -1, n: 0 };
   return { e: -se / len, n: -sn / len };

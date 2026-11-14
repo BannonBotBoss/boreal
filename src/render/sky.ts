@@ -133,12 +133,12 @@ export function createSky(scene: THREE.Scene) {
     /** Moves the sun and recolours sky, light and fog for the hour; the sky follows the camera. */
     update(hour: number, time: number, camera: THREE.Camera, focus: THREE.Vector3) {
       const doy = dayAt(time), date = clockDate(time);
-      const sun = sunPosition(hour, doy, siteLatitude(VENUS_SITE.lat)), light = lighting(sun.elevation), dir = new THREE.Vector3(sun.direction.x, sun.direction.y, sun.direction.z);
+      const lat = siteLatitude(VENUS_SITE.lat), sun = sunPosition(hour, doy, lat), light = lighting(sun.elevation), dir = new THREE.Vector3(sun.direction.x, sun.direction.y, sun.direction.z);
       sky.position.copy(camera.position); clouds.position.copy(camera.position);
       u.sunPosition.value.copy(dir);
       // Physical light (core/light): sun colour from spectral transmittance, illuminance in lux, adaptive exposure.
       const cosZ = Math.sin(sun.elevation * Math.PI / 180), wq = weatherAt(focus.x, focus.z), haze = (u.turbidity.value as number) / 2.5;
-      const sc = sunColour(cosZ, haze), age = moonAge(WEATHER.day), moon = sunPosition(hour - age / SYNODIC * 24, doy); // moon transits ~0.8 h later per day of age; same day as the sun
+      const sc = sunColour(cosZ, haze), age = moonAge(doy), moon = sunPosition(hour - age / SYNODIC * 24, doy, lat); // moon transits ~0.8 h later per day of age; same day and site as the sun
       const Esun = shortwave(cosZ, WEATHER.on ? wq.cloud : 0) * LUX.efficacy, Emoon = moonLux(age, Math.sin(moon.elevation * Math.PI / 180)) * (1 - .75 * (WEATHER.on ? wq.cloud : 0));
       const Etw = sun.elevation < 0 ? twilightIlluminance(sun.elevation) : 0; // diffuse sky after sunset (core/skyVisibility), so the eye adapts to it
       LIGHTING.lux = Esun + Emoon + Etw + LUX.nightSky; LIGHTING.gain = exposureFor(LIGHTING.lux) * wolfEyes(LIGHTING.lux); LIGHTING.moonAge = age; LIGHTING.Esun = Esun; LIGHTING.Emoon = Emoon;

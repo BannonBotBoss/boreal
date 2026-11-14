@@ -1419,3 +1419,7 @@ The prairie tuft was three 28 cm triangles. It is now nine bent blades, 12 mm wi
 ## 2026-11-13 21:55 PT - agy: T-0170 chronometer and Venus sky seasonal and landed-site coordinates
 
 Added `siteLongitude` in `src/core/sitePhase.ts`, threaded `dayAt(now())` and `siteLatitude(SITE.lat)` into `src/ui/chronometer.ts` (`chronoSunState` readout + `(day, lat)`-cached `dialGradient` conic gradient), and threaded `siteLatitude(SITE.lat)` + `siteLongitude(SITE.lon)` into `src/render/venusSky.ts` (`siteVenusSky` / `createVenus.update`). Added `tests/chronometer-venus-site.test.ts` and `notes/skills/boreal-seasonal-light-audit.md`.
+
+## 2026-11-14 11:20 PT - agy: T-0022 seasonal solar date propagation across sky, globe and overhead crowns
+
+Threaded `doy = dayAt(time)` into `moonAge(doy)` and `siteLatitude(VENUS_SITE.lat)` into `moon = sunPosition(...)` in `src/render/sky.ts` so lunar age and topocentric elevation follow the world date and landed site rather than `WEATHER.day` / `49.5°N`. Added `planetSunDirection` in `src/world/globe/planet.ts` using `toLatLon(planet.home).lat` (`49.77°N`) and wired `src/world/globe/globeView.ts` (`sunNow`) and `src/render/trees/overheadCrowns.ts` (`shadowAway`) through it so geocentric subsolar latitude equals solar declination to `< 1e-9°`. Added `tests/seasonal-sky.test.ts` and updated `notes/skills/boreal-seasonal-light-audit.md`.

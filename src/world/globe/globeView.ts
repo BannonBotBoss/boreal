@@ -34,14 +34,14 @@ import { CLOCK, loadClock, setClockRate, worldSec } from '../../core/worldClock'
 import { timescaleFrom } from '../../core/timescale';
 import { createChronometer } from '../../ui/chronometer';
 import { bindTimeInputs } from '../../ui/timeHud';
-import { DAY, dayAt, hourAt, initDay, sunPosition } from '../../core/timeOfDay';
+import { DAY, dayAt, hourAt, initDay } from '../../core/timeOfDay';
 import { gameUrl, landSpawn, handoffTarget, HANDOFF } from './handoff';
 import { GLOBE_COAST, cloudClear, coastLambda, orbitClip, forestFromPlanet, globeCameraFrom } from './transition';
 import { DESCENT, NADIR, descentBegin, descentPitchEase, fallPitch, stepDescent, type DescentMode } from './flight';
 import { descentFrameDt } from './landingStream';
 import { body, step as stepBody } from '../../proc/physics';
 import { globePlanet } from './home';
-import { fromLatLon, toLatLon, PLANET, type Vec3 } from './planet';
+import { fromLatLon, planetSunDirection, toLatLon, PLANET, type Vec3 } from './planet';
 import { createOverheadCrowns } from '../../render/trees/overheadCrowns';
 import { setLogDepthFar, withLogDepth } from './logDepth';
 import { LAYER_TIERS, SPINUP, globeLandSample, setLayerCamera, setSnowIceShown, spinAndBake, startPlanetLayers } from './planetLayers';
@@ -150,8 +150,8 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   let pageChrono: ReturnType<typeof createChronometer> | undefined;
   if (own.pageDom) { pageChrono = createChronometer(worldSec); bindTimeInputs({ padRate: false }); listen(document, 'keydown', (e: KeyboardEvent) => { if ((e.key === 't' || e.key === 'T') && !e.repeat && !(e.target instanceof HTMLElement && (e.target.isContentEditable || e.target.matches('input,textarea,select')))) pageChrono?.toggle(); }); }
   const shotSec = worldSec();
-  const E = new THREE.Vector3(...planet.east), N = new THREE.Vector3(...planet.north), U = new THREE.Vector3(...planet.home);
-  const sunDir = new THREE.Vector3(), sunNow = () => { const sec = q.has('shot') ? shotSec : worldSec(); const d = sunPosition(hourAt(sec), dayAt(sec)).direction; /* screenshots: clock pinned so ?hour= is exact */ return sunDir.copy(E).multiplyScalar(d.x).addScaledVector(U, d.y).addScaledVector(N, -d.z).normalize(); };
+  const E = new THREE.Vector3(...planet.east), N = new THREE.Vector3(...planet.north);
+  const sunDir = new THREE.Vector3(), sunNow = () => { const sec = q.has('shot') ? shotSec : worldSec(); /* screenshots: clock pinned so ?hour= is exact */ return sunDir.set(...planetSunDirection(planet, hourAt(sec), dayAt(sec))); };
   const sun = new THREE.DirectionalLight(0xffffff, 3.2), hemi = new THREE.HemisphereLight(0x9fb8d8, 0x202018, .35);
   sun.position.copy(sunNow()); scene.add(sun, hemi);
   const seamsDebug = q.get('seams') === '1'; // ?seams=1: skirts red, tile borders yellow (tile.ts globeMaterial)

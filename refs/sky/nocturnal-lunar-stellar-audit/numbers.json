@@ -1,0 +1,133 @@
+{
+  "task": "T-0231",
+  "evaluatedAt": "2026-11-14T22:58:23.801Z",
+  "threshold": 0.95,
+  "passingChecks": 0,
+  "totalChecks": 11,
+  "meanScore": 0.2408,
+  "allPass": false,
+  "renderedFrameDiagnostics": {
+    "frame0StarSpikesInClearStrip": 66,
+    "frame2StarSpikesInClearStrip": 87,
+    "exactSamePixelOverlapBetweenDec24AndAug15": 47,
+    "stationaryStarFractionRendered": 0.7121,
+    "renderedMoonlessCloudSkyLumaFrame1": 0.2104,
+    "renderedWolfBackLumaFullMoonFrame0": 0.1678,
+    "renderedWolfBackLumaNewMoonFrame1": 0.1698,
+    "renderedShoreHillLumaFullMoonFrame0": 0.1473,
+    "renderedShoreHillLumaNewMoonFrame1": 0.1536
+  },
+  "calibration": {
+    "lunarElevationMetric": {
+      "metric": "unitScore(elevDeg, meeusElevDeg, 90)",
+      "knownMatch": 0.9856,
+      "knownMismatch": 0.4333
+    },
+    "ratioMetric": {
+      "metric": "ratioScore(measured, target) = min(a,b)/max(a,b)",
+      "knownMatch": 0.9825,
+      "knownMismatch": 0.4066
+    }
+  },
+  "checks": [
+    {
+      "id": "winter_full_moon_elevation_kenora_deg",
+      "description": "Winter Full Moon (2026-12-24 00:00) meridian elevation at Kenora (49.79 N)",
+      "game": 16.7282,
+      "target": 67.1319,
+      "source": "Meeus (1998) Astronomical Algorithms Ch. 47 & eq. 12.4 (+27.6 deg standstill decl vs game -23.4 deg solar decl)",
+      "metric": "unitScore(game, target, 90)",
+      "score": 0.44
+    },
+    {
+      "id": "arctic_polar_night_full_moon_lux",
+      "description": "Arctic polar-night (68.0 N, 2026-12-24 00:00) Full Moon horizontal illuminance (lx)",
+      "game": 0,
+      "target": 0.1873,
+      "source": "Meeus (1998) Ch. 47 & Krisciunas & Schaefer (1991) PASP 103:1033 (circumpolar +49.6 deg winter Full Moon vs game -4.6 deg below horizon)",
+      "metric": "unitScore(game, target, target)",
+      "score": 0
+    },
+    {
+      "id": "summer_full_moon_elevation_kenora_deg",
+      "description": "Summer Full Moon (2026-06-29 23:50) meridian elevation at Kenora (49.79 N)",
+      "game": 63.3184,
+      "target": 13.1406,
+      "source": "Meeus (1998) Ch. 47 (low summer Full Moon at -27.5 deg decl vs game +23.2 deg overhead)",
+      "metric": "unitScore(game, target, 90)",
+      "score": 0.4425
+    },
+    {
+      "id": "non_2026_year_lunar_age_days",
+      "description": "Lunar phase age (days) on 2025-01-14 Wolf Full Moon (DAY.year = 2025, doy = 14)",
+      "game": 25.4212,
+      "target": 14.7883,
+      "source": "Meeus (1998) Ch. 49 synodic epoch 2000-01-06 18:14 UT (sky.ts omits DAY.year -> 25.42 d crescent instead of 14.79 d Full Moon)",
+      "metric": "unitScore(phaseDaysDiff, 0, SYNODIC/2)",
+      "score": 0.2799
+    },
+    {
+      "id": "rendered_moon_disc_angular_diameter_deg",
+      "description": "Rendered Moon disc angular diameter in clear night sky (deg)",
+      "game": 0,
+      "target": 0.5181,
+      "source": "Meeus (1998) Ch. 55 & Kieffer & Stone (2005) AJ 129:2887 (mean lunar disc 0.5181 deg; sky.ts draws 0 Moon geometry/shader)",
+      "metric": "ratioScore(game, target)",
+      "score": 0
+    },
+    {
+      "id": "moonless_night_cloud_linear_luma",
+      "description": "Moonless midnight (age = 0.05 d, sun -63.6 deg) cloud linear luminance in natural dark sky",
+      "game": 0.1715,
+      "target": 0.0025,
+      "source": "Kyba et al. (2015) Sci. Rep. 5:8409 (unpolluted moonless clouds silhouette dark ~0.0025 vs sky.ts fixed 0.1715 grey-white glow; frame-1 sRGB luma=0.2104)",
+      "metric": "ratioScore(game, target)",
+      "score": 0.0146
+    },
+    {
+      "id": "sidereal_star_rotation_rate_deg_h",
+      "description": "Sidereal starfield angular rotation rate around celestial pole (deg/h)",
+      "game": 0,
+      "target": 15.0411,
+      "source": "IAU 1982 GMST / Meeus (1998) eq. 12.4 (15.0411 deg/h vs sky.ts:77 alt-az hash 0.0000 deg/h; 47/66 star pixels unmoved vs 1.9% chance across 169.8 deg ΔLST)",
+      "metric": "unitScore(game, target, target)",
+      "score": 0
+    },
+    {
+      "id": "daylight_low_sun_star_alpha_leak",
+      "description": "Faint-star shader visibility factor when Sun is +2.0 deg above horizon",
+      "game": 0.3936,
+      "target": 0,
+      "source": "Schaefer (1993) Vistas Astron. 36:311 (daytime sky >1000 cd/m^2 has V_lim < -2.5 mag -> 0% starfield vs sky.ts 39.39% leak)",
+      "metric": "unitScore(game, target, 1.0)",
+      "score": 0.6064
+    },
+    {
+      "id": "star_scintillation_60x_dial_rad_s",
+      "description": "Real-time star twinkle angular rate (rad/s) under 60x clock dial",
+      "game": 180,
+      "target": 3,
+      "source": "Dravins et al. (1997) PASP 109:173 (observer real-time atmospheric scintillation ~3 rad/s vs sky.ts worldSec 180 rad/s strobe)",
+      "metric": "ratioScore(game, target)",
+      "score": 0.0167
+    },
+    {
+      "id": "full_moon_to_new_moon_ground_luminance_ratio",
+      "description": "Adapted ground luminance ratio between Clear Full Moon (0.245 lx) and Moonless New Moon (0.001 lx)",
+      "game": 0.9271,
+      "target": 2.2823,
+      "source": "Krisciunas & Schaefer (1991) & core/light.ts (E_ref/E)^0.85 law (245^0.15 = 2.2827x brighter Full Moon vs game 0.9271x inverted floor; wolf sRGB 0.1678 vs 0.1698)",
+      "metric": "ratioScore(game, target)",
+      "score": 0.4062
+    },
+    {
+      "id": "full_moon_animal_visual_range_gain",
+      "description": "Cervid/prey nocturnal visual range multiplier under Clear Full Moon (0.25 lx) vs Moonless Starlight (0.001 lx)",
+      "game": 1,
+      "target": 2.261,
+      "source": "Prugh et al. (2019) J. Anim. Ecol. 88:1158 & Kemp & Jacobs (1992) (~2.26x mesopic lunar sight gain vs game 1.0000x solar-only daylight=0)",
+      "metric": "ratioScore(game, target)",
+      "score": 0.4423
+    }
+  ]
+}

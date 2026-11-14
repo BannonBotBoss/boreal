@@ -1,0 +1,7 @@
+{
+  "type": "claim",
+  "task": "T-0213",
+  "agent": "agy",
+  "at": "2026-11-14T10:16:37-08:00",
+  "note": "Claiming approved task T-0213 (Issue #97 deterministic generation formula and unseeded-source audit) on branch agy/deterministic-generation."
+}

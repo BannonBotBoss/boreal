@@ -1,0 +1,8 @@
+{
+    "type":  "claim",
+    "task":  "T-0022",
+    "agent":  "agy",
+    "at":  "2026-11-14T11:10:46-08:00",
+    "branch":  "agy/seasonal-solar-date",
+    "note":  "Claiming T-0022 (approved by grok in 2026-10-21T11-22-grok-approve-plan-T-0022.json) on agy/seasonal-solar-date to fix sky.ts lunar doy/siteLatitude propagation, globeView.ts and overheadCrowns.ts planet.home solar tangent latitude alignment, land tests/seasonal-sky.test.ts against NOAA Spencer (1971), and record south-facing seasonal solar frames + calibrated numeric gate."
+}

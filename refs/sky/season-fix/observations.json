@@ -1,0 +1,131 @@
+{
+  "capturedAt": "2026-11-14T19:22:13.761Z",
+  "sourceBranch": "agy/seasonal-solar-date",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "videoDurationSec": 39.909,
+  "pageErrors": [
+    "Uncaught",
+    "Uncaught",
+    "Uncaught"
+  ],
+  "tripod": {
+    "x": -1230,
+    "z": -966
+  },
+  "observations": [
+    {
+      "label": "scene0_day227_aug15_noon",
+      "videoOffsetSec": 1.121,
+      "doy": 227,
+      "dateLabel": "15 Aug",
+      "hour": 12.0601,
+      "observerLatDeg": 49.79,
+      "sunElevationDeg": 54.502882,
+      "sunAzimuthDeg": 181.503815,
+      "skyUniformElevationDeg": 54.502882,
+      "skyUniformAzimuthDeg": 181.503815,
+      "lightingEsunLux": 84949,
+      "lightingMoonAgeDays": 2.176497,
+      "expectedMoonAgeDays": 2.176497,
+      "planetNoonSubsolarLatDeg": 14.300517,
+      "expectedDeclinationDeg": 14.300517,
+      "cameraPose": {
+        "tripodX": -1230,
+        "tripodZ": -966,
+        "yawDeg": 180,
+        "pitchUpDeg": 26,
+        "focalMm": 14,
+        "fovDeg": 81.2026
+      },
+      "decodedFrame": {
+        "file": "frame-0.png",
+        "requestedSec": 1.121,
+        "decodedCurrentTimeSec": 1.121,
+        "solarDiskPixel": {
+          "centroidX": 651.65,
+          "centroidY": 126.73,
+          "corePixelCount": 21356,
+          "peakLuma8Bit": 255,
+          "recoveredElevationDeg": 55.0241
+        }
+      }
+    },
+    {
+      "label": "scene1_day355_dec21_noon",
+      "videoOffsetSec": 20.799,
+      "doy": 355,
+      "dateLabel": "21 Dec",
+      "hour": 12.0593,
+      "observerLatDeg": 49.79,
+      "sunElevationDeg": 16.785833,
+      "sunAzimuthDeg": 180.853013,
+      "skyUniformElevationDeg": 16.785833,
+      "skyUniformAzimuthDeg": 180.853013,
+      "lightingEsunLux": 19952.2,
+      "lightingMoonAgeDays": 12.054141,
+      "expectedMoonAgeDays": 12.054141,
+      "planetNoonSubsolarLatDeg": -23.41989,
+      "expectedDeclinationDeg": -23.41989,
+      "cameraPose": {
+        "tripodX": -1230,
+        "tripodZ": -966,
+        "yawDeg": 180,
+        "pitchUpDeg": 26,
+        "focalMm": 14,
+        "fovDeg": 81.2026
+      },
+      "decodedFrame": {
+        "file": "frame-1.png",
+        "requestedSec": 20.799,
+        "decodedCurrentTimeSec": 20.799,
+        "solarDiskPixel": {
+          "centroidX": 646.61,
+          "centroidY": 428.39,
+          "corePixelCount": 25836,
+          "peakLuma8Bit": 255,
+          "recoveredElevationDeg": 16.7497
+        }
+      }
+    },
+    {
+      "label": "scene2_day592_year2_aug15_rollover_noon",
+      "videoOffsetSec": 39.373,
+      "doy": 592,
+      "dateLabel": "15 Aug",
+      "hour": 12.0561,
+      "observerLatDeg": 49.79,
+      "sunElevationDeg": 54.503852,
+      "sunAzimuthDeg": 181.405127,
+      "skyUniformElevationDeg": 54.503852,
+      "skyUniformAzimuthDeg": 181.405127,
+      "lightingEsunLux": 84950.3,
+      "lightingMoonAgeDays": 12.809429,
+      "expectedMoonAgeDays": 12.809429,
+      "planetNoonSubsolarLatDeg": 14.300517,
+      "expectedDeclinationDeg": 14.300517,
+      "cameraPose": {
+        "tripodX": -1230,
+        "tripodZ": -966,
+        "yawDeg": 180,
+        "pitchUpDeg": 26,
+        "focalMm": 14,
+        "fovDeg": 81.2026
+      },
+      "decodedFrame": {
+        "file": "frame-2.png",
+        "requestedSec": 39.373,
+        "decodedCurrentTimeSec": 39.373,
+        "solarDiskPixel": {
+          "centroidX": 651.24,
+          "centroidY": 120.82,
+          "corePixelCount": 21764,
+          "peakLuma8Bit": 255,
+          "recoveredElevationDeg": 55.6373
+        }
+      }
+    }
+  ]
+}

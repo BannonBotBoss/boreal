@@ -16,6 +16,7 @@
 import { hash, random } from '../../proc/rng';
 import { smoothstep } from '../../proc/math';
 import { LEVEL, PHYS } from '../../core/tuning';
+import { sunPosition } from '../../core/timeOfDay';
 import { treeIceLinesM } from '../../core/altitudeZones';
 import { coarseMetres, coarseReliefOn } from './coarseRelief';
 
@@ -120,6 +121,17 @@ export function toLatLon([x, y, z]: Vec3) { return { lat: Math.asin(Math.max(-1,
 const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 const norm = (a: Vec3): Vec3 => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
 const cross = (a: Vec3, b: Vec3): Vec3 => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+
+/** Planet-frame unit sun direction for local solar `hour` and `dayOfYear` at `planet.home` (game +x = east, +y = up, −z = north). */
+export function planetSunDirection(planet: Pick<Planet, 'home' | 'east' | 'north'>, hour: number, dayOfYear: number): Vec3 {
+  const homeLatDeg = toLatLon(planet.home).lat * 180 / Math.PI;
+  const d = sunPosition(hour, dayOfYear, homeLatDeg).direction;
+  return norm([
+    planet.east[0] * d.x + planet.home[0] * d.y - planet.north[0] * d.z,
+    planet.east[1] * d.x + planet.home[1] * d.y - planet.north[1] * d.z,
+    planet.east[2] * d.x + planet.home[2] * d.y - planet.north[2] * d.z,
+  ]);
+}
 
 export type Planet = ReturnType<typeof createPlanet>;
 const planets = new Map<string, Planet>();

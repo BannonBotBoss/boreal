@@ -1,0 +1,73 @@
+{
+  "sources": [
+    "Gart, Socha, Vlachos & Jung (2015), PNAS 112(52):15798-15802, doi:10.1073/pnas.1514842112 (canid lapping requires free liquid water surface; dry soil/snow supplies 0 mL/s)",
+    "Kelvin (1887), Proc. R. Soc. Lond. 42:80-83 & Rabaud & Moisy (2013), Phys. Rev. Lett. 110:214503 (gravity-capillary surface wakes require free liquid water depth > 0)",
+    "CRC Handbook of Chemistry and Physics (97th ed., 2016) & Sturm et al. (2010), J. Hydrometeorol. 11:1380-1394 (liquid water column 998 kg/m^3 occupies submerged beds; 250 kg/m^3 snowpack forms only on subaerial surfaces, not lake bottoms)",
+    "Mech (1970), The Wolf, pp. 11-12 (adult wolf shoulder height 0.66-0.81 m) & Telfer & Kelsall (1984), Can. J. Zool. 62:1822-1826 (ungulate/lagomorph chest height sets wading depth limit relative to water surface, not sea level)"
+  ],
+  "calibration": {
+    "metric": "depthScore = max(0, 1 - |gameWaterM - refWaterM| / max(0.25, refWaterM)); agreementScore = matchingPhysicalChecks / 5 (>= 0.95 pass)",
+    "knownMatchOpenWaterBasin": {
+      "depthScore": 1,
+      "agreementScore": 1
+    },
+    "knownMismatchUncoupledBasin": {
+      "depthScore": 0,
+      "agreementScore": 0
+    }
+  },
+  "caseA_dryPrairieDepression": {
+    "basinPos": {
+      "x": 21,
+      "z": -27
+    },
+    "bankDrinkPos": {
+      "x": 21,
+      "z": -15.5,
+      "yaw": 0
+    },
+    "coverBiome": "boreal",
+    "coverWater": false,
+    "drawOpenWater": false,
+    "bedHeightM": -0.646,
+    "renderedWaterSurfaceM": null,
+    "refWaterDepthM": 0,
+    "gameWaterAtDrinkable": true,
+    "gameBankWaterAheadCanDrink": true,
+    "gameNearestWaterFromSpawn_30_0": {
+      "x": 11.98062264195162,
+      "z": 8.677674782351165
+    },
+    "nearestWaterTrueDepthM": 0,
+    "gameWakeWaterSurfaceM": -0.25,
+    "gameGroundWaterThicknessM": 0.396,
+    "gameGroundSnowThicknessM": 0,
+    "gameAnimalsCanWalkDrySwale": {
+      "wolf": false,
+      "deer": false,
+      "hare": false
+    },
+    "depthScore": 0,
+    "agreementScore": 0
+  },
+  "caseB_perchedBorealLakeSubmergedBed": {
+    "pos": {
+      "x": -1230,
+      "z": -920
+    },
+    "lakeAreaHa": 3.06,
+    "renderedLakeSurfaceM": 17.631,
+    "bedHeightM": 15.268,
+    "refWaterDepthM": 2.364,
+    "gameGroundWaterThicknessM": 0,
+    "gameGroundSubmergedSnowCm": 0,
+    "gameFootingMovementCostMul": 1.1574,
+    "gameAnimalsWalkUnderwater1m": {
+      "wolf": true,
+      "deer": true,
+      "hare": true
+    },
+    "depthScore": 0,
+    "agreementScore": 0.2
+  }
+}

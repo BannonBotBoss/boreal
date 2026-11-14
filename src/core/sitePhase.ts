@@ -30,6 +30,9 @@ export const SITE = {
 export function siteLatitude(homeLat: number) {
   return Number.isFinite(SITE.latDeg) ? SITE.latDeg : homeLat;
 }
+export function siteLongitude(homeLon: number) {
+  return Number.isFinite(SITE.lonDeg) ? SITE.lonDeg : homeLon;
+}
 export function siteDatum(homeDatum: number) {
   return Number.isFinite(SITE.datumM) ? SITE.datumM : homeDatum;
 }

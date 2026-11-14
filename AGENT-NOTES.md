@@ -1415,3 +1415,7 @@ The skirt datum is the bed (`s.h`), matching `heightAt`, so the far ground meets
 ## 2026-11-11 16:10 PT - grokbot-2: T-0218 steppe blades
 
 The prairie tuft was three 28 cm triangles. It is now nine bent blades, 12 mm wide, culm still 30–60 cm. `tuftBladeCensus` fails a ground edge wider than 4 cm. Files: `src/render/flora/steppeTuft.ts`, `tests/steppe-tuft.test.ts`, `notes/skills/steppe-tuft.md`. Not claimed. Gait was not touched.
+
+## 2026-11-13 21:55 PT - agy: T-0170 chronometer and Venus sky seasonal and landed-site coordinates
+
+Added `siteLongitude` in `src/core/sitePhase.ts`, threaded `dayAt(now())` and `siteLatitude(SITE.lat)` into `src/ui/chronometer.ts` (`chronoSunState` readout + `(day, lat)`-cached `dialGradient` conic gradient), and threaded `siteLatitude(SITE.lat)` + `siteLongitude(SITE.lon)` into `src/render/venusSky.ts` (`siteVenusSky` / `createVenus.update`). Added `tests/chronometer-venus-site.test.ts` and `notes/skills/boreal-seasonal-light-audit.md`.

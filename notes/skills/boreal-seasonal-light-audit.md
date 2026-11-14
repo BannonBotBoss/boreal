@@ -7,7 +7,8 @@ Use when inspecting or fixing solar elevation, day-length arcs, twilight thresho
 - `src/core/timeOfDay.ts`: `dayAt(sec)`, `hourAt(sec)`, `clockDate(sec)`, `sunPosition(hour, dayOfYear, latitude)`, `lighting(elevation)`.
 - `src/core/sitePhase.ts`: landed globe site state (`SITE`, `siteLatitude(homeLat)`, `siteLongitude(homeLon)`, `setSite`, `clearSite`).
 - `src/core/weather.ts`: home station coordinates (`SITE.lat = 49.79`, `SITE.lon = -94.36`, `SITE.tz = -6`) and `solar()`.
-- `src/render/sky.ts`: ground-view sky consumer (`sunPosition(hour, dayAt(time), siteLatitude(VENUS_SITE.lat))`).
+- `src/render/sky.ts`: ground-view sky consumer (`sunPosition(hour, doy, lat)` and `moonAge(doy)` + `moon = sunPosition(hour - age / SYNODIC * 24, doy, lat)` where `doy = dayAt(time)` and `lat = siteLatitude(VENUS_SITE.lat)`).
+- `src/world/globe/planet.ts`, `src/world/globe/globeView.ts`, `src/render/trees/overheadCrowns.ts`: `planetSunDirection(planet, hour, dayOfYear)` evaluates `sunPosition` at `toLatLon(planet.home).lat * 180 / Math.PI` (`49.77°N`) before rotating through `(planet.east, planet.home, -planet.north)`, keeping geocentric subsolar latitude equal to `declination(dayOfYear)` (`< 1e-9°` error).
 - `src/render/venusSky.ts`: ground-view Venus point light (`utOf(date, hour, lon)`, `venusSky(t, lat, lon)`, `siteVenusSky(date, hour)`).
 - `src/ui/chronometer.ts`: interactive 24-hour Chronometer dialog (`chronoSunState`, `dialGradient`, `createChronometer`).
 
@@ -23,13 +24,15 @@ Use when inspecting or fixing solar elevation, day-length arcs, twilight thresho
    - Planetary topocentric altitude: compare `siteVenusSky(date, hour)` against Standish (1992) JPL Keplerian elements + Meeus (1998) *Astronomical Algorithms* eq. 12.4 GMST/LST at both home (`clearSite()`) and a remote southern-hemisphere landing (`setSite({ latDeg: -23.44, lonDeg: 15.0, ... })`).
 4. **Capture live browser frames and canvas recording**:
    - Launch headless Edge on an isolated `--user-data-dir` inside the worktree against an agent preview port (`5250–5269`), never killing port `5173`. Always terminate only the spawned Edge PID in `finally`.
+   - To include BOTH the southern boreal horizon AND the noon solar disk on both August 15 (`54.51°`) and December 21 (`16.79°`) in one fixed tripod shot, set `localStorage.setItem('boreal.photo.v1', JSON.stringify({ focalLength: 14 }))` (`81.20°` vertical FOV), face due south (`yaw = Math.PI`), enter Photo Mode pitched up `+26°`, and back-project the decoded `.webm` solar disk pixel centroid `(cx, cy)` through `(fov, pitch)` to verify rendered pixel solar altitude directly against NOAA Spencer (1971).
    - Note that `canvas.captureStream` records WebGL sky/ground while `Page.captureScreenshot` captures both WebGL and HTML HUD dialogs (`.chronometer`). Archive `recording.webm`, `frame-*.png`, `observations.json`, and `numbers.json`.
 
 ## Checks that proved it worked
-- `npx tsc --noEmit` and `npx tsx --test tests/chronometer.test.ts tests/planets.test.ts tests/chronometer-venus-site.test.ts tests/rules.test.ts`.
-- Calibrated numeric check (`refs/sky/chrono-season-fix/numeric-check.mjs`): `<= 0.03°` solar error vs independent NOAA Spencer (1971) across winter solstice noon (`16.79°`), winter post-sunset `16:30` (`-4.40°`, `☾`), remote `-23.44°S` noon (`89.96°`), and Aug 15 baseline (`54.51°`), and `0.0000°` Venus/Sun topocentric error at `-23.44°S, 15.0°E`.
+- `npx tsc --noEmit` and `npx tsx --test tests/seasonal-sky.test.ts tests/chronometer.test.ts tests/planets.test.ts tests/chronometer-venus-site.test.ts tests/rules.test.ts`.
+- Calibrated numeric + pixel-space check (`refs/sky/season-fix/numeric-check.mjs` & `refs/sky/chrono-season-fix/numeric-check.mjs`): `<= 0.03°` CPU solar/globe error and `< 1.0°` `.webm`-decoded pixel solar disk altitude error vs independent NOAA Spencer (1971) across Aug 15 (`54.51°`), Dec 21 winter solstice (`16.79°`), and Year-2 Aug 15 rollover (`day 592`, `54.51°`).
 
 ## Mistakes to avoid
-- Calling `sunPosition(h)` with 1 argument in UI or lighting code (silently pins to Aug 15, `49.5°N`).
+- Calling `sunPosition(h)` with 1 argument in UI or lighting code (silently pins to Aug 15, `49.5°N`), or calling `sunPosition(h, day)` with 2 arguments before rotating through `planet.east / planet.home / planet.north` (`49.5°N` default vs `planet.home = 49.77°N` shifts geocentric subsolar latitude by `+0.27°`).
+- Reading `WEATHER.day` inside `sky.ts` `moonAge(...)` instead of `doy = dayAt(time)` (`WEATHER.day` lags when `WEATHER.on = false` or when `sky.update` is evaluated at an explicit `time`).
 - Passing `siteLatitude(SITE.lat)` to `venusSky` while forgetting `siteLongitude(SITE.lon)` in `utOf(date, hour, lon)` (shifts UT by `(lon - (-94.36)) / 15` hours, corrupting both GMST and twilight sun altitude).
-- Mutating `SITE` in unit tests without calling `clearSite()` in `try / finally`.
+- Mutating `SITE` or `DAY` in unit tests without restoring them in `afterEach` / `try / finally`.

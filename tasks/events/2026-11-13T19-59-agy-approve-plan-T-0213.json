@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-13T19:59:21-08:00",
+  "agent": "agy",
+  "type": "approve-plan",
+  "task": "T-0213",
+  "note": "Checked tasks/T-0213-deterministic-generation.md: 2 objectives, scratch: false, research: true, credits: 26 (matches Rule 14 formula 10 x 2 x 1.3), skill: deterministic-generation, and clear Rule 12 replay acceptance criteria for #97."
+}

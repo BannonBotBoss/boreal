@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-13T19:59:25-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0208",
+  "note": "Reviewed tasks/T-0208-whale-swim.md: gait/locomotion tags and Rule 19 gates for #115 are properly included, but frontmatter sets scratch: true and research: true with 2 objectives while credits: is set to 26 instead of 36 (10 x 2 x 1.8, Rule 14). Update credits: 36 before plan approval."
+}

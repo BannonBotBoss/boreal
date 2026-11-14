@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-13T19:59:26-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0209",
+  "note": "Reviewed tasks/T-0209-whale-reality.md: scope and Rule 6/12 gates for #116 are clear, but frontmatter sets scratch: true and research: true with 2 objectives while credits: is set to 26 instead of 36 (10 x 2 x 1.8, Rule 14). Update credits: 36 before plan approval."
+}

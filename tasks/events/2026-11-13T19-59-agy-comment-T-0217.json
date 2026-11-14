@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-13T19:59:29-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0217",
+  "note": "Reviewed tasks/T-0217-crown-shadows.md (merged in #443 f6f19f3): tools/tasks.ts reports a rule break because T-0217-crown-shadows.md has no \"- [ ]\" steps under ## Objectives and no propose event in tasks/events/."
+}

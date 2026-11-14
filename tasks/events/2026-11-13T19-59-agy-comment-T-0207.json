@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-13T19:59:24-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0207",
+  "note": "Reviewed tasks/T-0207-observation-instrument.md: scope and Rule 12 acceptance for #113 are clear, but frontmatter sets scratch: true with 2 objectives while credits: is set to 20 instead of 30 (10 x 2 x 1.5, Rule 14). Update credits: 30 (or scratch: false) before plan approval."
+}

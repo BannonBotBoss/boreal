@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-13T19:59:04-08:00",
+  "agent": "agy",
+  "type": "approve",
+  "task": "T-0176",
+  "note": "Checked notes/skills/enter-living-animal.md, commit 2199c8a (zero new biological numbers), freshly executed tests/picture-species.test.ts (passes), and visually verified tasks/evidence/T-0176/before-hare.png vs after-hare.png (senses panel reads Snowshoe hare senses and wolf body/litter no longer draw when embodied as ?play=hare)."
+}

@@ -1,28 +1,21 @@
 /**
  * ONE menu screen for start and pause (Grok Bot; replaces ui/pauseMenu). Mode 'start' (after the loading screen):
- * Continue, Generate universe (one click), Universe options…, Controls, Music, Graphics, Board, Quit.
- * Mode 'pause' (Esc / gamepad Menu): Resume, Save, Music, Graphics, More, Quit to menu.
- * While either mode is open the world clock is frozen (core/worldClock.pauseClock) and the renderer holds its last frame.
- * Generate universe mints a universe seed and boots the cosmic sim; each Generate is a little different.
+ * Continue, New world, Controls, Music, Graphics, Board (the GitHub task board, new tab), Quit. Mode 'pause' (Esc / gamepad Menu): Resume, Save, Music, Graphics, More
+ * (registered panels: player, appearance, inspector, photo), Quit to menu (autosaves first). While either mode is open the
+ * world clock is frozen (core/worldClock.pauseClock) and the renderer holds its last frame.
  * Keyboard: ↑/↓ (or Tab) move, Enter/Space choose, Escape back. Gamepad (standard mapping): d-pad / left stick move,
  * A choose, B back. Sub-pages reuse the shared settings panels (ui/settingsPanel) passed in by main.
  */
 import { GOVERNOR, LADDER, resetGovernor } from '../core/quality';
 import { SYSTEM_PROPERTIES } from '../config/systemProperties';
-import { mintUniverseSeed, normalizeUniverseSeed } from '../core/universeSeed';
 export type MenuMode = 'start' | 'pause';
 export interface MenuPanel { id: string; title: string; build(): HTMLElement }
 export interface MenuHooks {
   hasSave(): boolean;
-  /** Fresh universe: cosmic journey from the sphere. `seed` omitted or 0 → mint a new one. */
-  generateUniverse(o?: { seed?: number; staged?: boolean }): void;
-  /** Legacy forest-only new world (still available under Generate universe → Advanced). */
   newWorld(o: { seed: number; source: 'seed' | 'dem'; staged: boolean }): void;
   music(): HTMLElement; graphics?(): HTMLElement; // shared settings panels from main
   controls?(): HTMLElement;     // the controller / key settings screen (ui/controls)
   seed(): number; staged(): boolean;
-  /** Last universe seed (0 if none yet). */
-  universeSeed(): number;
   save(): void;                 // write every save now
   close(mode: MenuMode): void;  // menu dismissed (Continue / Resume)
   quitToMenu?(): void;          // after the autosave, before the start page shows
@@ -52,34 +45,13 @@ export function createMenu(hooks: MenuHooks) {
   const controls = () => page('Controls', hooks.controls!(), backBtn()), controlsBtn = () => hooks.controls ? [btn('Controls', () => sub(controls))] : [];
   function main() { stack = [];
     if (mode === 'start') {
-      // Generate universe is one click on the main menu; Advanced is for seed replay / legacy forest.
-      page('Boreal',
-        btn('Continue', close, !hooks.hasSave()),
-        btn('Generate universe', () => { hooks.generateUniverse({ staged: hooks.staged() }); close(); }),
-        btn('Universe options…', () => sub(generateAdvanced)),
-        ...controlsBtn(), music(), btn('Graphics', () => sub(graphics)), board(), btn('Quit', quit));
+      page('Boreal', btn('Continue', close, !hooks.hasSave()), btn('New world', () => sub(newWorld)), ...controlsBtn(), music(), btn('Graphics', () => sub(graphics)), board(), btn('Quit', quit));
       if (!hooks.hasSave()) (panel.querySelectorAll('button')[1] as HTMLElement).focus();
     } else page('Paused', ...(hooks.warning?.() ? [Object.assign(document.createElement('p'), { className: 'note', textContent: hooks.warning!() })] : []), btn('Resume', close), ...controlsBtn(), btn('Save', () => { hooks.save(); saved.textContent = `Saved ${new Date().toLocaleTimeString()}`; }), music(), btn('Graphics', () => sub(graphics)),
       ...(panels.length ? [btn('More', () => sub(more))] : []), btn('Quit to menu', () => { hooks.save(); hooks.quitToMenu?.(); show('start'); }), saved);
   }
   const saved = Object.assign(document.createElement('p'), { className: 'note' });
   function more() { page('More', ...panels.map(p => btn(p.title, () => sub(() => page(p.title, p.build(), backBtn())))), backBtn()); }
-  function generateAdvanced() {
-    const seed = Object.assign(document.createElement('input'), { type: 'number', value: String(hooks.universeSeed() || mintUniverseSeed()), min: '1', step: '1' });
-    seed.setAttribute('aria-label', 'Universe seed');
-    const staged = Object.assign(document.createElement('input'), { type: 'checkbox', checked: hooks.staged() });
-    const lab = (t: string, el: HTMLElement) => { const l = document.createElement('label'); l.append(t + ' ', el); return l; };
-    const note = document.createElement('p'); note.className = 'note';
-    note.textContent = 'Same seed → same universe. Leave blank mint by pressing New seed.';
-    page('Universe seed', note, lab('Universe seed', seed), lab('Staged terrain (erosion, lakes)', staged),
-      btn('New seed', () => { seed.value = String(mintUniverseSeed()); }),
-      btn('Generate', () => {
-        const u = normalizeUniverseSeed(Number(seed.value)) || mintUniverseSeed();
-        hooks.generateUniverse({ seed: u, staged: staged.checked });
-        close();
-      }),
-      btn('Forest only (legacy)…', () => sub(newWorld)), backBtn());
-  }
   function newWorld() {
     const seed = Object.assign(document.createElement('input'), { type: 'number', value: String(hooks.seed()), min: '0', step: '1' }); seed.setAttribute('aria-label', 'Seed');
     const src = document.createElement('select'); src.setAttribute('aria-label', 'Terrain source');

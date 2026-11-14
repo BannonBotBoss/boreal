@@ -1,5 +1,10 @@
 @echo off
-REM Silent launcher: no console stays open. Double-click "Play Boreal.vbs" or this file.
+title Boreal (close this window to stop the game)
 cd /d "%~dp0"
-wscript //nologo "%~dp0Play Boreal.vbs"
-exit /b 0
+if not exist node_modules (
+  echo First run: installing packages...
+  call pnpm install || call npm install
+)
+echo Starting Boreal. Your browser will open in a moment.
+call pnpm dev --open || call npm run dev -- --open
+pause

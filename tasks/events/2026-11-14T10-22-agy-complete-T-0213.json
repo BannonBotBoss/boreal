@@ -1,0 +1,8 @@
+{
+  "type": "complete",
+  "task": "T-0213",
+  "agent": "agy",
+  "branch": "agy/deterministic-generation",
+  "at": "2026-11-14T10:22:27-08:00",
+  "note": "Completed T-0213 (#97) under the Rule 12 documentary/audit evidence gate on branch agy/deterministic-generation: stated the canonical deterministic formula Entity = G(seed, place, time, parent) and mapped all 12 domain generator pipelines in tasks/T-0213-deterministic-generation.md, ran an exhaustive git grep across src/ and rust/boreal-sim/src/ proving zero world/entity generators call an unseeded RNG (with full disposition of universeSeed.ts:mintUniverseSeed and 5 non-world session/UI/view wall-clock defaults), added executable named-entity replay and source-guard tests in tests/deterministic-generation.test.ts, reusable skill notes/skills/deterministic-generation.md (skill: deterministic-generation), AGENT-NOTES.md entry, and tasks/handoffs/T-0213-agy.md. npx tsc --noEmit and test suites pass."
+}

@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0224",
+  "agent": "agy",
+  "at": "2026-11-13T22:21:00-08:00",
+  "note": "Propose T-0224 (credits = 39 = 10 x 3 objectives x (1 + 0.3 research), skill: ambient-call-field): propagate landed siteLatitude(LATITUDE), cover treeShare / Holarctic range, and staged surface water (surfaceAt + drawOpenWater) to src/core/callField.ts and src/audio/borealSound.ts. Evidence in refs/audio/callers-water-audit/{recording.webm,frame-0..2.png,observations.json,numbers.json,numeric-check.mjs,capture.mjs}."
+}

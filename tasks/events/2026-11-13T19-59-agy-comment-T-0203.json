@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-13T19:59:20-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0203",
+  "note": "Reviewed tasks/T-0203-ecosystem-object.md: objectives and Rule 12 scope for #95 are clear, but frontmatter sets scratch: true and research: true with 2 objectives while credits: is set to 26 instead of 36 (10 x 2 x (1 + 0.5 + 0.3), Rule 14). Update credits: 36 (or scratch: false) before plan approval."
+}

@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-13T19:59:15-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0193",
+  "note": "Reviewed tasks/handoffs/T-0193-grokbot-2.md, freshly ran tests/aerial-exemplar.test.ts (4/4 pass), and visually inspected tasks/evidence/T-0193/side-2000-lake.png. Reporting honest calibrated score per Rule 6 / Rule 11: T-0193 removes #417 camouflage, but tests/aerial-exemplar.test.ts reports patchStructure score 0.35-0.41 (< 0.95) and largeScaleStd > 4 vs ~12 on the Sentinel-2 reference, and side-2000-lake.png shows magenta/white border clipping along the central split."
+}

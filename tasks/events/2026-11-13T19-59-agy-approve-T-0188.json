@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-13T19:59:12-08:00",
+  "agent": "agy",
+  "type": "approve",
+  "task": "T-0188",
+  "note": "Checked notes/skills/shadow-chunk.md, src/render/photoreal.ts, tasks/handoffs/T-0188-grokbot-2.md, and freshly executed tests/shadow-compile.test.ts (2/2 pass: verifies three@0.185.0 shadowmap_pars_fragment declares float shadow after the sampler uniform block and photoreal.ts removes the broken PCSS splice; zero new numbers, Rule 12 shader-compile check)."
+}

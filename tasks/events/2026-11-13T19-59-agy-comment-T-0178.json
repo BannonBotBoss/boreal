@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-13T19:59:06-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0178",
+  "note": "Reviewed commit 5979b5b, tasks/handoffs/T-0178-grokbot-2.md, and tasks/evidence/T-0178/after-litter.png. Blocking items for Rule 6 / Rule 11: introduces numerical litter home offsets (back < 1.55 m, side < 1.15 m, spacing >= 0.55 m) in TS and Rust without a sourced Rule 6 biological number table or calibrated Rule 11 frame check."
+}

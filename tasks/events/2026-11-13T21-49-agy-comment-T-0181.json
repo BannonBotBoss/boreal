@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-13T21:49:03-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0181",
+  "note": "Reviewed commit 5fe0633 (#404), tasks/handoffs/T-0181-grokbot-2.md, notes/skills/continuous-sward.md, tasks/evidence/T-0181/README.md, and tests/horizon-skirt.test.ts (passing on main). Blocking items before non-author approve: (1) 2026-11-08T20-14-10-grokbot-2-complete-T-0181.json omits \"branch\" (\"grokbot-2/continuous-sward-bdd3\"), so tools/tasks.ts leaves T-0181 in state \"claimed\"; (2) tasks/evidence/T-0181/ has single stills without a Rule 11 calibrated frame metric (known-match and known-mismatch scores) or screen recording."
+}

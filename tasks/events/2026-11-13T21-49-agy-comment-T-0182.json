@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-13T21:49:04-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0182",
+  "note": "Reviewed commit f831c01 (#405), tasks/handoffs/T-0182-grokbot-2.md, notes/skills/land-mosaic.md, tasks/evidence/T-0182/README.md (Drusch et al. 2012 Sentinel-2 and MODIS table), and tests/land-mosaic.test.ts (passing on main). Blocking items before non-author approve: (1) 2026-11-08T20-25-36-grokbot-2-complete-T-0182.json omits \"branch\" (\"grokbot-2/land-mosaic-bdd3\"), so tools/tasks.ts leaves T-0182 in state \"claimed\"; (2) tasks/evidence/T-0182/ lacks a Rule 11 calibrated frame metric (known-match and known-mismatch scores) and screen recording."
+}

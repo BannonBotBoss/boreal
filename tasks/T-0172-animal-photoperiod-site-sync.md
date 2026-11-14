@@ -51,6 +51,6 @@ Calibration (`refs/animals/photoperiod-audit/numbers.json`):
 3. In `src/animals/hare.ts`, wire `world.hour = () => hourAt(worldSec())`, `world.day = () => dayAt(worldSec())`, and `world.latitude = () => siteLatitude(LATITUDE)` so the live `SimWorld` tracks the game clock, season, and landed latitude.
 
 ## Objectives
-- [ ] Default `sunTimes(dayOfYear, latitude)` in `src/core/needs/behaviour.ts` to `siteLatitude(LATITUDE)` and pass `siteLat()` in `src/main.ts` so circadian activity windows (`activityAt`, `chooseGoal`) match the local solar sunrise and sunset at any landed globe latitude.
-- [ ] Replace the hardcoded `{ sunrise: 6, sunset: 18 }` in `src/core/sim/index.ts` (`stepPredator`) with `sunTimes(w.day(), w.latitude())` and wire `world.hour`, `world.day`, and `world.latitude` in `src/animals/hare.ts` to `hourAt(worldSec())`, `dayAt(worldSec())`, and `siteLatitude(LATITUDE)`.
-- [ ] Add unit tests in `tests/` covering seasonal and high-latitude `sunTimes` / `stepPredator` photoperiod behaviour and verify with `npm test` and `npx tsc --noEmit`.
+- [x] Default `sunTimes(dayOfYear, latitude)` in `src/core/needs/behaviour.ts` to `siteLatitude(LATITUDE)` and pass `siteLat()` in `src/main.ts` so circadian activity windows (`activityAt`, `chooseGoal`) match the local solar sunrise and sunset at any landed globe latitude.
+- [x] Replace the hardcoded `{ sunrise: 6, sunset: 18 }` in `src/core/sim/index.ts` (`stepPredator`) with `sunTimes(w.day(), w.latitude())` and wire `world.hour`, `world.day`, and `world.latitude` in `src/animals/hare.ts` to `hourAt(worldSec())`, `dayAt(worldSec())`, and `siteLatitude(LATITUDE)`.
+- [x] Add unit tests in `tests/` covering seasonal and high-latitude `sunTimes` / `stepPredator` photoperiod behaviour and verify with `npm test` and `npx tsc --noEmit`.

@@ -1,0 +1,57 @@
+{
+  "capturedAt": "2026-11-14T04:24:55.077Z",
+  "baseUrl": "http://127.0.0.1:5252",
+  "frames": [
+    {
+      "label": "post_fix_subarctic_summer_dusk_64_5N_day172_hour21_8",
+      "day": 172,
+      "hour": 21.8031,
+      "siteLat": 64.5,
+      "skySunElevationDeg": 1.5933,
+      "sunTimesDefault": {
+        "sunrise": 1.637417006755447,
+        "sunset": 22.36258299324455
+      },
+      "sunTimesSite": {
+        "sunrise": 1.637417006755447,
+        "sunset": 22.36258299324455
+      },
+      "autonomousButton": "Autonomous: On",
+      "statusFirstLine": "AUTONOMOUS · 21:48 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 65/100 · Water 90% · Rest 80% · trotting to sensed forage forage:1:-1:15 (trotting to sensed forage forage:1:-1:15)"
+    },
+    {
+      "label": "post_fix_subarctic_winter_night_64_5N_day355_hour8_0",
+      "day": 355,
+      "hour": 8.0031,
+      "siteLat": 64.5,
+      "skySunElevationDeg": -9.262,
+      "sunTimesDefault": {
+        "sunrise": 10.34978562425996,
+        "sunset": 13.65021437574004
+      },
+      "sunTimesSite": {
+        "sunrise": 10.34978562425996,
+        "sunset": 13.65021437574004
+      },
+      "autonomousButton": "Autonomous: On",
+      "statusFirstLine": "AUTONOMOUS · 08:00 · WALK · Snow 36.5 cm · Stamina 100/100 · Energy 66/100 · Water 90% · Rest 80% · rest (crepuscular: rest hour)"
+    },
+    {
+      "label": "post_fix_home_dawn_positive_control_49_5N_day227_hour6_0",
+      "day": 227,
+      "hour": 6.0036,
+      "siteLat": 49.5,
+      "skySunElevationDeg": 10.8607,
+      "sunTimesDefault": {
+        "sunrise": 4.84233641759191,
+        "sunset": 19.15766358240809
+      },
+      "sunTimesSite": {
+        "sunrise": 4.84233641759191,
+        "sunset": 19.15766358240809
+      },
+      "autonomousButton": "Autonomous: On",
+      "statusFirstLine": "AUTONOMOUS · 06:00 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 65/100 · Water 90% · Rest 80% · following hare hare:2 (following hare hare:2)"
+    }
+  ]
+}

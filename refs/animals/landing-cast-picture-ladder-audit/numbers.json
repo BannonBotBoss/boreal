@@ -1,0 +1,383 @@
+{
+  "generatedAt": "2026-11-15T06:05:21.270Z",
+  "metric": {
+    "name": "Rule 11 Calibrated Home Census Geography, Zoological Allometry, No-Slip Gait Persistence, LOD Impostor/Depth Fidelity & Krebs Cycle Score",
+    "passThreshold": 0.95,
+    "calibration": {
+      "knownMatchGrayWolfForwardAxis": 1,
+      "knownMatchSimKrebsCycleSwing": 0.9516,
+      "knownMismatchSidewaysWhiteTailedDeer": 0.1368,
+      "knownMismatchZeroVelocityWalkTreadmill": 0
+    }
+  },
+  "glbMeasurements": [
+    {
+      "species": "Gray Wolf",
+      "file": "gray-wolf.glb",
+      "kind": "mammal",
+      "targetMetres": 0.74,
+      "fittedHeightM": 1.194,
+      "fittedWidthM": 0.719,
+      "fittedLengthM": 1.276,
+      "lengthToWidthRatio": 1.774,
+      "orientedForwardAlongZ": true,
+      "tris": 26033
+    },
+    {
+      "species": "Coyote",
+      "file": "coyote.glb",
+      "kind": "mammal",
+      "targetMetres": 0.55,
+      "fittedHeightM": 0.887,
+      "fittedWidthM": 0.471,
+      "fittedLengthM": 0.917,
+      "lengthToWidthRatio": 1.945,
+      "orientedForwardAlongZ": true,
+      "tris": 26022
+    },
+    {
+      "species": "Red Fox",
+      "file": "red-fox.glb",
+      "kind": "mammal",
+      "targetMetres": 0.38,
+      "fittedHeightM": 0.613,
+      "fittedWidthM": 0.867,
+      "fittedLengthM": 0.24,
+      "lengthToWidthRatio": 0.277,
+      "orientedForwardAlongZ": false,
+      "tris": 25952
+    },
+    {
+      "species": "Gray Fox",
+      "file": "gray-fox.glb",
+      "kind": "mammal",
+      "targetMetres": 0.36,
+      "fittedHeightM": 0.581,
+      "fittedWidthM": 0.788,
+      "fittedLengthM": 0.245,
+      "lengthToWidthRatio": 0.311,
+      "orientedForwardAlongZ": false,
+      "tris": 26035
+    },
+    {
+      "species": "Cougar",
+      "file": "cougar.glb",
+      "kind": "mammal",
+      "targetMetres": 0.7,
+      "fittedHeightM": 1.129,
+      "fittedWidthM": 1.903,
+      "fittedLengthM": 0.581,
+      "lengthToWidthRatio": 0.305,
+      "orientedForwardAlongZ": false,
+      "tris": 25965
+    },
+    {
+      "species": "Striped Skunk",
+      "file": "striped-skunk.glb",
+      "kind": "mammal",
+      "targetMetres": 0.18,
+      "fittedHeightM": 0.29,
+      "fittedWidthM": 0.422,
+      "fittedLengthM": 0.149,
+      "lengthToWidthRatio": 0.352,
+      "orientedForwardAlongZ": false,
+      "tris": 25646
+    },
+    {
+      "species": "Northern Raccoon",
+      "file": "northern-raccoon.glb",
+      "kind": "mammal",
+      "targetMetres": 0.3,
+      "fittedHeightM": 0.484,
+      "fittedWidthM": 0.81,
+      "fittedLengthM": 0.317,
+      "lengthToWidthRatio": 0.392,
+      "orientedForwardAlongZ": false,
+      "tris": 25338
+    },
+    {
+      "species": "Wolverine",
+      "file": "wolverine.glb",
+      "kind": "mammal",
+      "targetMetres": 0.4,
+      "fittedHeightM": 0.645,
+      "fittedWidthM": 1.296,
+      "fittedLengthM": 0.33,
+      "lengthToWidthRatio": 0.254,
+      "orientedForwardAlongZ": false,
+      "tris": 25768
+    },
+    {
+      "species": "North American River Otter",
+      "file": "north-american-river-otter.glb",
+      "kind": "mammal",
+      "targetMetres": 0.25,
+      "fittedHeightM": 0.403,
+      "fittedWidthM": 0.598,
+      "fittedLengthM": 0.3,
+      "lengthToWidthRatio": 0.502,
+      "orientedForwardAlongZ": false,
+      "tris": 25873
+    },
+    {
+      "species": "Ermine",
+      "file": "ermine.glb",
+      "kind": "mammal",
+      "targetMetres": 0.06,
+      "fittedHeightM": 0.097,
+      "fittedWidthM": 0.18,
+      "fittedLengthM": 0.056,
+      "lengthToWidthRatio": 0.31,
+      "orientedForwardAlongZ": false,
+      "tris": 26004
+    },
+    {
+      "species": "American Mink",
+      "file": "american-mink.glb",
+      "kind": "mammal",
+      "targetMetres": 0.1,
+      "fittedHeightM": 0.161,
+      "fittedWidthM": 0.265,
+      "fittedLengthM": 0.092,
+      "lengthToWidthRatio": 0.348,
+      "orientedForwardAlongZ": false,
+      "tris": 26001
+    },
+    {
+      "species": "American Black Bear",
+      "file": "american-black-bear.glb",
+      "kind": "mammal",
+      "targetMetres": 0.9,
+      "fittedHeightM": 1.452,
+      "fittedWidthM": 2.251,
+      "fittedLengthM": 1.436,
+      "lengthToWidthRatio": 0.638,
+      "orientedForwardAlongZ": false,
+      "tris": 25064
+    },
+    {
+      "species": "Grizzly Bear",
+      "file": "grizzly-bear.glb",
+      "kind": "mammal",
+      "targetMetres": 1.05,
+      "fittedHeightM": 1.694,
+      "fittedWidthM": 2.883,
+      "fittedLengthM": 1.079,
+      "lengthToWidthRatio": 0.374,
+      "orientedForwardAlongZ": false,
+      "tris": 25634
+    },
+    {
+      "species": "Moose",
+      "file": "moose.glb",
+      "kind": "mammal",
+      "targetMetres": 1.9,
+      "fittedHeightM": 3.065,
+      "fittedWidthM": 3.087,
+      "fittedLengthM": 2.381,
+      "lengthToWidthRatio": 0.771,
+      "orientedForwardAlongZ": false,
+      "tris": 26006
+    },
+    {
+      "species": "Elk",
+      "file": "elk.glb",
+      "kind": "mammal",
+      "targetMetres": 1.45,
+      "fittedHeightM": 2.339,
+      "fittedWidthM": 2.349,
+      "fittedLengthM": 1.644,
+      "lengthToWidthRatio": 0.7,
+      "orientedForwardAlongZ": false,
+      "tris": 26036
+    },
+    {
+      "species": "White-tailed Deer",
+      "file": "white-tailed-deer.glb",
+      "kind": "mammal",
+      "targetMetres": 1,
+      "fittedHeightM": 1.613,
+      "fittedWidthM": 1.569,
+      "fittedLengthM": 0.536,
+      "lengthToWidthRatio": 0.342,
+      "orientedForwardAlongZ": false,
+      "tris": 25975
+    },
+    {
+      "species": "Woodland Caribou",
+      "file": "woodland-caribou.glb",
+      "kind": "mammal",
+      "targetMetres": 1.15,
+      "fittedHeightM": 1.855,
+      "fittedWidthM": 2.046,
+      "fittedLengthM": 1.168,
+      "lengthToWidthRatio": 0.571,
+      "orientedForwardAlongZ": false,
+      "tris": 25830
+    },
+    {
+      "species": "Snowshoe Hare",
+      "file": "snowshoe-hare.glb",
+      "kind": "mammal",
+      "targetMetres": 0.22,
+      "fittedHeightM": 0.355,
+      "fittedWidthM": 0.425,
+      "fittedLengthM": 0.187,
+      "lengthToWidthRatio": 0.441,
+      "orientedForwardAlongZ": false,
+      "tris": 25958
+    },
+    {
+      "species": "Beaver",
+      "file": "beaver.glb",
+      "kind": "mammal",
+      "targetMetres": 0.3,
+      "fittedHeightM": 0.484,
+      "fittedWidthM": 0.835,
+      "fittedLengthM": 0.455,
+      "lengthToWidthRatio": 0.545,
+      "orientedForwardAlongZ": false,
+      "tris": 24836
+    },
+    {
+      "species": "Bald Eagle",
+      "file": "bald-eagle.glb",
+      "kind": "bird",
+      "targetMetres": 0.85,
+      "fittedHeightM": 2.224,
+      "fittedWidthM": 1.646,
+      "fittedLengthM": 0.85,
+      "lengthToWidthRatio": 0.516,
+      "orientedForwardAlongZ": false,
+      "tris": 25460
+    },
+    {
+      "species": "Common Raven",
+      "file": "common-raven.glb",
+      "kind": "bird",
+      "targetMetres": 0.6,
+      "fittedHeightM": 1.569,
+      "fittedWidthM": 1.482,
+      "fittedLengthM": 0.6,
+      "lengthToWidthRatio": 0.405,
+      "orientedForwardAlongZ": false,
+      "tris": 25404
+    }
+  ],
+  "summary": {
+    "passingChecks": 0,
+    "totalChecks": 12,
+    "meanScore": 0.1306,
+    "passesGate": false
+  },
+  "checks": [
+    {
+      "id": "home_launch_kenora_longitude_and_boreal_census",
+      "label": "Default home launch (Kenora, Ontario 49.77 N, -94.49 W) census longitude & boreal species richness",
+      "gameValue": "lon +65.54 deg E (Kazakhstan! 159.9 deg off, coastM = NaN) -> 1 species (Red Fox only; 0 Moose/Bear/Beaver/Eagle/Hare)",
+      "natureTarget": "lon -94.36 deg W (Kenora, ON, finite coastM) -> 9 North American boreal species",
+      "source": "Boreal weather.ts SITE (Kenora 49.77 N, -94.49 W) & Nowak (1999) North American boreal range (-52 W to -168 W)",
+      "score": 0.1114,
+      "passes95": false
+    },
+    {
+      "id": "mammal_glb_forward_orientation_length_gt_width",
+      "label": "Mammalian GLB models oriented cranio-caudally along forward Z axis (fittedLengthZ > fittedWidthX)",
+      "gameValue": "2 / 19 (17 rigged 90 deg sideways: Red Fox 0.24m L x 0.867m W; Gray Fox 0.245m L x 0.788m W; Cougar 0.581m L x 1.903m W; Striped Skunk 0.149m L x 0.422m W; Northern Raccoon 0.317m L x 0.81m W; Wolverine 0.33m L x 1.296m W; North American River Otter 0.3m L x 0.598m W; Ermine 0.056m L x 0.18m W; American Mink 0.092m L x 0.265m W; American Black Bear 1.436m L x 2.251m W; Grizzly Bear 1.079m L x 2.883m W; Moose 2.381m L x 3.087m W; Elk 1.644m L x 2.349m W; White-tailed Deer 0.536m L x 1.569m W; Woodland Caribou 1.168m L x 2.046m W; Snowshoe Hare 0.187m L x 0.425m W; Beaver 0.455m L x 0.835m W)",
+      "natureTarget": "19 / 19 (100% quadrupeds with head-body length L = 2.2x-4.0x shoulder width W)",
+      "source": "Nowak (1999), Walker's Mammals of the World, 6th ed., Johns Hopkins Univ. Press",
+      "score": 0.1053,
+      "passes95": false
+    },
+    {
+      "id": "bald_eagle_standing_body_height",
+      "label": "Bald Eagle (Haliaeetus leucocephalus) fitted standing mesh height",
+      "gameValue": "2.224 m tall x 1.646 m wide (taller than 1.90 m Moose!)",
+      "natureTarget": "0.75 m perched height (0.71-0.96 m total length)",
+      "source": "Buehler (2000), Bald Eagle (Haliaeetus leucocephalus), The Birds of North America, Cornell Lab of Ornithology",
+      "score": 0.3372,
+      "passes95": false
+    },
+    {
+      "id": "raven_and_beaver_allometric_heights",
+      "label": "Common Raven (Corvus corax) & Beaver (Castor canadensis) fitted standing/crouching heights",
+      "gameValue": "Raven 1.569 m (2.5x); Beaver 0.484 m tall x 0.835 m wide (WITHERS_SHARE = 0.62 + sideways)",
+      "natureTarget": "Raven ~0.62 m; Beaver ~0.28 m crouching back height",
+      "source": "Boarman & Heinrich (1999) Birds of North America; Baker & Hill (2003) Wild Mammals of North America pp. 288-310",
+      "score": 0.4868,
+      "passes95": false
+    },
+    {
+      "id": "landing_cast_no_slip_world_vs_gait_speed",
+      "label": "Landing wildlife cast world translation speed vs posed 1.20 m/s walk gait (0.65 Hz lockstep)",
+      "gameValue": "0.000 m/s world translation vs 1.20 m/s walk gait (100% foot-slip treadmilling in 1.65 m chorus line)",
+      "natureTarget": "1.20 m/s world translation when walking (or 0.00 m/s idle/browse agent posture)",
+      "source": "Alexander (1984), The Gaits of Bipedal and Quadrupedal Animals, Int. J. Robotics Research 3(2):49-59 & PROJECT-RULES Rule 3",
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "landing_cast_angular_persistence_on_player_turn",
+      "label": "Observer yaw rotation before landing wildlife cast teleports to a new 7.2 m line",
+      "gameValue": "0.35 rad (20.05 deg; Frame 1 jumped ~13.08 m on 180 deg turn)",
+      "natureTarget": "3.1416 rad (180 deg half-turn / full 360 deg world-coordinate invariance)",
+      "source": "Newtonian spatial persistence & Boreal agent world-coordinate continuity (src/core/agent/)",
+      "score": 0.1114,
+      "passes95": false
+    },
+    {
+      "id": "bald_eagle_vertical_habitat_stratum_agl",
+      "label": "Bald Eagle height above ground level (AGL) in boreal forest habitat",
+      "gameValue": "0.00 m AGL (standing on forest dirt flapping & walking in place)",
+      "natureTarget": ">= 15.0 m AGL (~20 m supercanopy snag perch or 30-100 m soaring flight)",
+      "source": "Buehler (2000), Bald Eagle, The Birds of North America (perch & foraging stratum)",
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "mid_tier_48m_impostor_silhouette_and_night_lighting",
+      "label": "Mid-tier (16-140 m, peak 48 m) non-wolf animal impostor silhouette cutout & midnight shading",
+      "gameValue": "1.00 rectangular fill (PlaneGeometry(1,1) + unlit MeshBasicMaterial; ignores coatNight & scene lights in frame-3.png)",
+      "natureTarget": "~0.38 alpha-tested/3D animal silhouette fill; <= 0.02 sRGB luma at 00:00 astronomical midnight",
+      "source": "Akenine-Moller, Haines & Hoffman (2018), Real-Time Rendering 4th ed. Sec. 13.6 & Lagarde & de Rousiers (2014) PBR night illuminance",
+      "score": 0.19,
+      "passes95": false
+    },
+    {
+      "id": "per_instance_mid_tier_crossfade_opacity",
+      "label": "Near-distance (18 m) impostor crossfade opacity when another conspecific stands at 48 m",
+      "gameValue": "opacity = 1.0000 (shared per-species impostorMat Math.max leaks 1.00 opacity onto 18 m animal!)",
+      "natureTarget": "opacity = 0.0112 (per-instance crossfade weight detailShares(18).low)",
+      "source": "Boreal animalLadder.ts detailShares() contract & Akenine-Moller et al. (2018) LOD crossfade continuity",
+      "score": 0.0112,
+      "passes95": false
+    },
+    {
+      "id": "near_tier_opaque_depth_pass_participation",
+      "label": "Near-tier (d <= 16 m, opacity = 1.0) SkinnedMesh opaque z-buffer participation (material.transparent === false)",
+      "gameValue": "0 (meshySkin.ts:468 forces material.transparent = true permanently)",
+      "natureTarget": "1 (opaque depth write & GTAO participation when fully opaque at d <= 16 m)",
+      "source": "Akenine-Moller, Haines & Hoffman (2018), Real-Time Rendering 4th ed. Sec. 5.5 (Opaque Depth Buffering)",
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "procedural_fallback_non_icosphere_and_cast_shadow",
+      "label": "Procedural fallback (Canada Lynx, Arctic Fox) smooth non-blob geometry & sun shadow casting",
+      "gameValue": "0 (proceduralAnimal.ts uses 20-tri icosphere(0) blobs with mesh.castShadow = false)",
+      "natureTarget": "1 (shared smooth tube/skinned anatomy with castShadow = true; zero icosphere(0) primitives)",
+      "source": "PROJECT-RULES.md Rule 2 (no geometric primitives for organic wildlife) & direct solar shadow continuity",
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "krebs_population_cycle_and_ecosystem_wiring",
+      "label": "Multi-year Krebs hare-lynx cycle in landingCast (2020..2030, LANDING_YEAR = 2026) & Senses/Inspector/Rewind wiring",
+      "gameValue": "cycle swing = 1.00x (frozen at LANDING_YEAR = 2026); 0/3 systems (Senses, Inspector, SnapshotHub) wired",
+      "natureTarget": ">= 2.34x sim cycle (8-35x empirical 10-yr cycle) driven by clockDate.year; 3/3 systems wired",
+      "source": "Krebs, Boutin & Boonstra (2001), BioScience 51(1):25-35 & rust/boreal-sim/src/species.rs:67-76",
+      "score": 0.2141,
+      "passes95": false
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+[
+  {
+    "file": "ref-0.jpg",
+    "commonsTitle": "File:SDO 20130714 000007 4096 4500 (AIA).jpg",
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:SDO_20130714_000007_4096_4500_(AIA).jpg",
+    "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/af/SDO_20130714_000007_4096_4500_%28AIA%29.jpg/1280px-SDO_20130714_000007_4096_4500_%28AIA%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "license": "Public domain",
+    "artist": "Courtesy of NASA/SDO and the AIA, EVE, and HMI science teams."
+  },
+  {
+    "file": "ref-1.jpg",
+    "commonsTitle": "File:Sun Emits X6 3 Flare on February 22, 2024 (SVS14535 - SDO 02222024 X6 HMI-Continuum 4k).webm",
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Sun_Emits_X6_3_Flare_on_February_22,_2024_(SVS14535_-_SDO_02222024_X6_HMI-Continuum_4k).webm",
+    "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3d/Sun_Emits_X6_3_Flare_on_February_22%2C_2024_%28SVS14535_-_SDO_02222024_X6_HMI-Continuum_4k%29.webm/1280px--Sun_Emits_X6_3_Flare_on_February_22%2C_2024_%28SVS14535_-_SDO_02222024_X6_HMI-Continuum_4k%29.webm.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo",
+    "license": "Public domain",
+    "artist": "NASA's Scientific Visualization Studio - Scott Wiessinger"
+  },
+  {
+    "file": "ref-2.png",
+    "commonsTitle": "File:Sun Releases X3 3 Flare on February 9, 2024 (SVS14479 - SDO 2-14-2024 1302UTC 171).png",
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Sun_Releases_X3_3_Flare_on_February_9,_2024_(SVS14479_-_SDO_2-14-2024_1302UTC_171).png",
+    "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f5/Sun_Releases_X3_3_Flare_on_February_9%2C_2024_%28SVS14479_-_SDO_2-14-2024_1302UTC_171%29.png/1280px-Sun_Releases_X3_3_Flare_on_February_9%2C_2024_%28SVS14479_-_SDO_2-14-2024_1302UTC_171%29.png?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "license": "Public domain",
+    "artist": "NASA's Scientific Visualization Studio - Scott Wiessinger"
+  },
+  {
+    "file": "ref-3.jpg",
+    "commonsTitle": "File:Aurora Australis From ISS edit1.JPG",
+    "pageUrl": "https://commons.wikimedia.org/wiki/File:Aurora_Australis_From_ISS_edit1.JPG",
+    "downloadUrl": "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3c/Aurora_Australis_From_ISS_edit1.JPG/1280px-Aurora_Australis_From_ISS_edit1.JPG?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "license": "Public domain",
+    "artist": "ISS Expedition 23 crew"
+  }
+]

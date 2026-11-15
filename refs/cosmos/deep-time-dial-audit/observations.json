@@ -1,0 +1,559 @@
+{
+  "capturedAt": "2026-11-15T08:17:29.122Z",
+  "baseUrl": "http://127.0.0.1:5260",
+  "observations": [
+    {
+      "frame": 0,
+      "label": "hadean_molten_earth_minus_4_50_gyr",
+      "probe": {
+        "offsetYr": -4500000000,
+        "deepTimeState": {
+          "offsetYr": -4500000000,
+          "label": "4.50 Gyr ago",
+          "stage": "hadean",
+          "title": "Hadean",
+          "sees": "A molten, bombarded young world; nothing alive yet.",
+          "embody": "none",
+          "luminosity": 0.7174254317111459,
+          "extrapolated": false,
+          "solarConstant": 976.4160125588696,
+          "equilibriumK": 233.79254514223334
+        },
+        "layerExistence": {
+          "atmosphere": {
+            "e": "present",
+            "why": "composition N2-CO2 (anoxic)"
+          },
+          "ocean": {
+            "e": "not-yet-formed",
+            "why": "magma ocean: surface above boiling"
+          },
+          "clouds": {
+            "e": "not-yet-formed",
+            "why": "hydrological cycle needs liquid water"
+          },
+          "snowIce": {
+            "e": "not-yet-formed",
+            "why": "where the energy budget allows"
+          },
+          "ozone": {
+            "e": "not-yet-formed",
+            "why": "O2 1.0e-6 PAL (shield >= 0.1 PAL)"
+          },
+          "aurora": {
+            "e": "not-yet-formed",
+            "why": "needs the geodynamo field"
+          },
+          "vegetation": {
+            "e": "not-yet-formed",
+            "why": "land plants ~470 Ma [evidenceDate]",
+            "evidenceDate": true
+          },
+          "forests": {
+            "e": "not-yet-formed",
+            "why": "forests ~385 Ma [evidenceDate]",
+            "evidenceDate": true
+          },
+          "plates": {
+            "e": "not-yet-formed",
+            "why": "modern plate tectonics ~3.0-3.2 Ga [DISPUTED, evidenceDate]",
+            "evidenceDate": true
+          },
+          "state": {
+            "formed": true,
+            "moltenSurface": true,
+            "liquidWater": false,
+            "waterLost": false,
+            "o2PAL": 0.000001,
+            "ozoneShield": false,
+            "dynamo": false,
+            "snowball": false,
+            "sunRatio": 0.7174254317111459,
+            "seed": 1,
+            "moon": {
+              "aKm": null,
+              "dayLengthH": null,
+              "stabilisesObliquity": true
+            },
+            "composition": "N2-CO2 (anoxic)"
+          }
+        },
+        "panelLabels": [
+          "Auto exposure 🔒",
+          "Comp EV 🔒0.0",
+          "Aperture f/ 🔒8.0",
+          "Shutter 🔒1/125",
+          "ISO 🔒100",
+          "ND stops 🔒0.0",
+          "Focal mm50",
+          "Adapt speed x1",
+          "Filter 🔒Visible (no filter)Red channelGreen channelBlue channelLuminance (photopic)H-alpha 656.3 nmUV 160-170 nm (absorbed by O2/O3 above ~50 km)EUV 17-30 nm (absorbed in the thermosphere)X-ray 0.1-0.8 nm (absorbed above ~70 km)",
+          "Clouds (not yet formed)",
+          "Sunlight",
+          "Atmosphere",
+          "Aurora (not yet formed)",
+          "Snow / ice (not yet formed)",
+          "Vegetation (not yet formed)",
+          "Ocean (not yet formed)",
+          "Field lines (not yet formed)",
+          "Plates (not yet formed)",
+          "Venus",
+          "Airglow (OI 557.7)"
+        ],
+        "globeEraUniform": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "globeCrackUniform": 1,
+        "drawnTiles": 29,
+        "discSample": {
+          "litDiscSamples": 0,
+          "blueOceanFrac": 0,
+          "greenVegFrac": 0,
+          "whiteIceOrCloudFrac": 0,
+          "magmaGlowFrac": 0,
+          "aridTanRockFrac": 0
+        }
+      }
+    },
+    {
+      "frame": 1,
+      "label": "cryogenian_snowball_earth_minus_700_myr",
+      "probe": {
+        "offsetYr": -700000000,
+        "deepTimeState": {
+          "offsetYr": -700000000,
+          "label": "700 Myr ago",
+          "stage": "microbial",
+          "title": "The microbial world",
+          "sees": "Living seas only: you are a microscopic cell chasing chemical nutrients and avoiding harsh water.",
+          "embody": "microbe",
+          "luminosity": 0.9422680412371134,
+          "extrapolated": false,
+          "solarConstant": 1282.4268041237112,
+          "equilibriumK": 250.28226828263354
+        },
+        "layerExistence": {
+          "atmosphere": {
+            "e": "present",
+            "why": "composition N2-CO2 with trace O2"
+          },
+          "ocean": {
+            "e": "present",
+            "why": "liquid water"
+          },
+          "clouds": {
+            "e": "present",
+            "why": "hydrological cycle needs liquid water"
+          },
+          "snowIce": {
+            "e": "present",
+            "why": "snowball episode: global ice"
+          },
+          "ozone": {
+            "e": "not-yet-formed",
+            "why": "O2 3.2e-2 PAL (shield >= 0.1 PAL)"
+          },
+          "aurora": {
+            "e": "present",
+            "why": "needs the geodynamo field"
+          },
+          "vegetation": {
+            "e": "not-yet-formed",
+            "why": "land plants ~470 Ma [evidenceDate]",
+            "evidenceDate": true
+          },
+          "forests": {
+            "e": "not-yet-formed",
+            "why": "forests ~385 Ma [evidenceDate]",
+            "evidenceDate": true
+          },
+          "plates": {
+            "e": "present",
+            "why": "modern plate tectonics ~3.0-3.2 Ga [DISPUTED, evidenceDate]",
+            "evidenceDate": true
+          },
+          "state": {
+            "formed": true,
+            "moltenSurface": false,
+            "liquidWater": true,
+            "waterLost": false,
+            "o2PAL": 0.03162277660168379,
+            "ozoneShield": false,
+            "dynamo": true,
+            "snowball": true,
+            "sunRatio": 0.9422680412371134,
+            "seed": 1,
+            "moon": {
+              "aKm": null,
+              "dayLengthH": null,
+              "stabilisesObliquity": true
+            },
+            "composition": "N2-CO2 with trace O2"
+          }
+        },
+        "panelLabels": [
+          "Auto exposure 🔒",
+          "Comp EV 🔒0.0",
+          "Aperture f/ 🔒8.0",
+          "Shutter 🔒1/125",
+          "ISO 🔒100",
+          "ND stops 🔒0.0",
+          "Focal mm50",
+          "Adapt speed x1",
+          "Filter 🔒Visible (no filter)Red channelGreen channelBlue channelLuminance (photopic)H-alpha 656.3 nmUV 160-170 nm (absorbed by O2/O3 above ~50 km)EUV 17-30 nm (absorbed in the thermosphere)X-ray 0.1-0.8 nm (absorbed above ~70 km)",
+          "Clouds",
+          "Sunlight",
+          "Atmosphere",
+          "Aurora",
+          "Snow / ice",
+          "Vegetation (not yet formed)",
+          "Ocean",
+          "Field lines",
+          "Plates",
+          "Venus",
+          "Airglow (OI 557.7)"
+        ],
+        "discSample": {
+          "litDiscSamples": 0,
+          "blueOceanFrac": 0,
+          "greenVegFrac": 0,
+          "whiteIceOrCloudFrac": 0,
+          "magmaGlowFrac": 0,
+          "aridTanRockFrac": 0
+        }
+      },
+      "noPlanetProbe": {
+        "offsetYr": -4560000000,
+        "deepTimeState": {
+          "offsetYr": -4560000000,
+          "label": "4.56 Gyr ago",
+          "stage": "no-planet",
+          "title": "Before the Earth",
+          "sees": "No globe: the Sun is alone with a disc of dust and rock still falling together.",
+          "embody": "none",
+          "luminosity": 0.7147325617766656,
+          "extrapolated": false,
+          "solarConstant": 972.7510165780418,
+          "equilibriumK": null
+        },
+        "layerExistence": {
+          "atmosphere": {
+            "e": "not-yet-formed",
+            "why": "composition N2-CO2 (anoxic)"
+          },
+          "ocean": {
+            "e": "not-yet-formed",
+            "why": "liquid water"
+          },
+          "clouds": {
+            "e": "not-yet-formed",
+            "why": "hydrological cycle needs liquid water"
+          },
+          "snowIce": {
+            "e": "not-yet-formed",
+            "why": "where the energy budget allows"
+          },
+          "ozone": {
+            "e": "not-yet-formed",
+            "why": "O2 1.0e-6 PAL (shield >= 0.1 PAL)"
+          },
+          "aurora": {
+            "e": "not-yet-formed",
+            "why": "needs the geodynamo field"
+          },
+          "vegetation": {
+            "e": "not-yet-formed",
+            "why": "land plants ~470 Ma [evidenceDate]",
+            "evidenceDate": true
+          },
+          "forests": {
+            "e": "not-yet-formed",
+            "why": "forests ~385 Ma [evidenceDate]",
+            "evidenceDate": true
+          },
+          "plates": {
+            "e": "not-yet-formed",
+            "why": "modern plate tectonics ~3.0-3.2 Ga [DISPUTED, evidenceDate]",
+            "evidenceDate": true
+          },
+          "state": {
+            "formed": false,
+            "moltenSurface": false,
+            "liquidWater": false,
+            "waterLost": false,
+            "o2PAL": 0.000001,
+            "ozoneShield": false,
+            "dynamo": false,
+            "snowball": false,
+            "sunRatio": 0.7147325617766656,
+            "seed": 1,
+            "moon": null,
+            "composition": "N2-CO2 (anoxic)"
+          }
+        },
+        "drawnTilesWhenNoPlanet": 8,
+        "discSample": {
+          "litDiscSamples": 0,
+          "blueOceanFrac": 0,
+          "greenVegFrac": 0,
+          "whiteIceOrCloudFrac": 0,
+          "magmaGlowFrac": 0,
+          "aridTanRockFrac": 0
+        }
+      }
+    },
+    {
+      "frame": 2,
+      "label": "future_oceans_lost_plus_2_00_gyr_and_orbit_time_dial_audit",
+      "probe": {
+        "offsetYr": 2000000000,
+        "deepTimeState": {
+          "offsetYr": 2000000000,
+          "label": "2.00 Gyr from now",
+          "stage": "oceans-lost",
+          "title": "Oceans lost",
+          "sees": "Water is escaping fast; the surface is bare, hot rock under a thick steam atmosphere.",
+          "embody": "none",
+          "luminosity": 1.2122015915119364,
+          "extrapolated": false,
+          "solarConstant": 1649.8063660477455,
+          "equilibriumK": 266.5509160466793
+        },
+        "layerExistence": {
+          "atmosphere": {
+            "e": "present",
+            "why": "composition N2-O2 (modern)"
+          },
+          "ocean": {
+            "e": "gone",
+            "why": "water lost (Sun flux > waterLoss)"
+          },
+          "clouds": {
+            "e": "gone",
+            "why": "hydrological cycle needs liquid water"
+          },
+          "snowIce": {
+            "e": "gone",
+            "why": "where the energy budget allows"
+          },
+          "ozone": {
+            "e": "present",
+            "why": "O2 1.0e+0 PAL (shield >= 0.1 PAL)"
+          },
+          "aurora": {
+            "e": "present",
+            "why": "needs the geodynamo field"
+          },
+          "vegetation": {
+            "e": "gone",
+            "why": "land plants ~470 Ma [evidenceDate]",
+            "evidenceDate": true
+          },
+          "forests": {
+            "e": "gone",
+            "why": "forests ~385 Ma [evidenceDate]",
+            "evidenceDate": true
+          },
+          "plates": {
+            "e": "present",
+            "why": "modern plate tectonics ~3.0-3.2 Ga [DISPUTED, evidenceDate]",
+            "evidenceDate": true
+          },
+          "state": {
+            "formed": true,
+            "moltenSurface": false,
+            "liquidWater": false,
+            "waterLost": true,
+            "o2PAL": 1,
+            "ozoneShield": true,
+            "dynamo": true,
+            "snowball": false,
+            "sunRatio": 1.2122015915119364,
+            "seed": 1,
+            "moon": {
+              "aKm": null,
+              "dayLengthH": null,
+              "stabilisesObliquity": true
+            },
+            "composition": "N2-O2 (modern)"
+          }
+        },
+        "panelLabels": [
+          "Auto exposure 🔒",
+          "Comp EV 🔒0.0",
+          "Aperture f/ 🔒8.0",
+          "Shutter 🔒1/125",
+          "ISO 🔒100",
+          "ND stops 🔒0.0",
+          "Focal mm50",
+          "Adapt speed x1",
+          "Filter 🔒Visible (no filter)Red channelGreen channelBlue channelLuminance (photopic)H-alpha 656.3 nmUV 160-170 nm (absorbed by O2/O3 above ~50 km)EUV 17-30 nm (absorbed in the thermosphere)X-ray 0.1-0.8 nm (absorbed above ~70 km)",
+          "Clouds (gone)",
+          "Sunlight",
+          "Atmosphere",
+          "Aurora",
+          "Snow / ice (gone)",
+          "Vegetation (gone)",
+          "Ocean (gone)",
+          "Field lines",
+          "Plates",
+          "Venus",
+          "Airglow (OI 557.7)"
+        ],
+        "drawnTiles": 23,
+        "discSample": {
+          "litDiscSamples": 0,
+          "blueOceanFrac": 0,
+          "greenVegFrac": 0,
+          "whiteIceOrCloudFrac": 0,
+          "magmaGlowFrac": 0,
+          "aridTanRockFrac": 0
+        }
+      },
+      "engulfedProbe": {
+        "offsetYr": 7600000000,
+        "drawnTilesWhenEngulfed": 5
+      },
+      "sunViewProbe": {
+        "deepParamYr": 7500000000
+      },
+      "inpageDialProbe": {
+        "inpageMode": "globe",
+        "dialBeforePeriodKeys": 0.01,
+        "dialAfter12PeriodKeys": 0.01,
+        "dialDeltaInOrbit": 0,
+        "rateBefore": 1,
+        "rateAfter": 1
+      }
+    },
+    {
+      "frame": 3,
+      "label": "big_bang_opening_chronology_and_particle_energy_desync",
+      "cineAt35_8": {
+        "t": 35.8,
+        "countText": "3.0 × 10⁻⁷ s",
+        "figText": "Energy ≈ 100 GeV per particle",
+        "figOpacity": "1"
+      },
+      "cineTimelineAudit": {
+        "sunKeyframeCheck": {
+          "age": 9200000000,
+          "fromNow": -4600000000,
+          "sunGapYr": 32700000,
+          "earthGapYr": 60000000,
+          "now": {
+            "offsetYr": 0,
+            "label": "now",
+            "stage": "living-earth",
+            "title": "Living Earth",
+            "sees": "Oceans, forests and animals: any creature can be embodied.",
+            "embody": "animal",
+            "luminosity": 1,
+            "extrapolated": false,
+            "solarConstant": 1361,
+            "equilibriumK": 254.0308532372999
+          },
+          "milestones": [
+            "earth",
+            "life",
+            "dynamo",
+            "oxygen",
+            "innercore",
+            "animals",
+            "kpg",
+            "brunhes",
+            "sapiens",
+            "now"
+          ]
+        },
+        "timelineSamples": [
+          {
+            "t": 26,
+            "formatClock": "10⁻³² s",
+            "panelFigure": "Temperature 10²⁷ K",
+            "domCount": "10⁻³² s",
+            "domFig": "Temperature 10²⁷ K",
+            "domFigOpacity": 1,
+            "earthShown": false
+          },
+          {
+            "t": 35.8,
+            "formatClock": "3.0 × 10⁻⁷ s",
+            "panelFigure": "Energy ≈ 100 GeV per particle",
+            "domCount": "3.0 × 10⁻⁷ s",
+            "domFig": "Energy ≈ 100 GeV per particle",
+            "domFigOpacity": 1,
+            "earthShown": false
+          },
+          {
+            "t": 82,
+            "formatClock": "4.60 billion years ago",
+            "panelFigure": "",
+            "domCount": "4.60 billion years ago",
+            "domFig": "",
+            "domFigOpacity": 1,
+            "earthShown": false
+          },
+          {
+            "t": 83.5,
+            "formatClock": "4.57 billion years ago",
+            "panelFigure": "",
+            "domCount": "4.57 billion years ago",
+            "domFig": "",
+            "domFigOpacity": 1,
+            "earthShown": false
+          },
+          {
+            "t": 89.5,
+            "formatClock": "4.45 billion years ago",
+            "panelFigure": "",
+            "domCount": "4.45 billion years ago",
+            "domFig": "",
+            "domFigOpacity": 1,
+            "earthShown": false
+          },
+          {
+            "t": 102.55,
+            "formatClock": "2.06 billion years ago",
+            "panelFigure": "2.4 Gya",
+            "domCount": "2.06 billion years ago",
+            "domFig": "2.4 Gya",
+            "domFigOpacity": 1,
+            "earthShown": false
+          },
+          {
+            "t": 104.5,
+            "formatClock": "700 million years ago",
+            "panelFigure": "2.4 Gya",
+            "domCount": "700 million years ago",
+            "domFig": "2.4 Gya",
+            "domFigOpacity": 0,
+            "earthShown": false
+          },
+          {
+            "t": 105.8,
+            "formatClock": "501 million years ago",
+            "panelFigure": "2.4 Gya",
+            "domCount": "501 million years ago",
+            "domFig": "2.4 Gya",
+            "domFigOpacity": 0,
+            "earthShown": false
+          },
+          {
+            "t": 106,
+            "formatClock": "470 million years ago",
+            "panelFigure": "470 Mya plants",
+            "domCount": "470 million years ago",
+            "domFig": "470 Mya plants",
+            "domFigOpacity": 1,
+            "earthShown": false
+          }
+        ]
+      }
+    }
+  ],
+  "pageErrors": []
+}

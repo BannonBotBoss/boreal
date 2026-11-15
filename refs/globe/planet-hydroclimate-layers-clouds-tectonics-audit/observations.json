@@ -1,0 +1,114 @@
+{
+  "capturedAt": "2026-11-15T21:42:53.692Z",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "recordingBytes": 2808320,
+  "pageErrors": [],
+  "observations": [
+    {
+      "frame": 0,
+      "label": "through_planet_axis_cutaway_view_locked_frontal_disc_unclipped_shells_missing_key_R",
+      "altitudeM": 11500000,
+      "axisUiVisibleBeforeKeyR": true,
+      "axisUiVisibleAfterKeyR": true,
+      "keyboardRToggledAxis": false,
+      "axisReadout": "û  lat 90.00°  lon 0.00°\nr  6371.0 km   altitude 14.17 km\n   above sea 14.17 km, above mean R -0.01 km\nlayer atmosphere · stratosphere\nρ 0.221 kg/m³   T 216.6500 K\nP 13773.250 Pa   g 9.788 m/s² (figure)\ngas  n 4.60e+24 m⁻³  N2 78.08% O2 20.94% Ar 9339.2ppm CO2 422.8ppm\nabove: 1409.690 kg/m²  O₃ 286.3 DU  H₂O 0.00 mm",
+      "centerCorePixelRgba": [
+        255,
+        245,
+        223,
+        255
+      ],
+      "cutOuterCorePixelRgba": [
+        255,
+        140,
+        38,
+        255
+      ]
+    },
+    {
+      "frame": 1,
+      "label": "globe_hydrolayer_shadows_planetlayers_and_snow_ice_checkbox_ignored",
+      "altitudeM": 2356472,
+      "snowIceCheckboxChecked": false,
+      "cloudsCheckboxChecked": false,
+      "hydroLayerState": {
+        "on": true,
+        "key": "1400:45",
+        "nlat": 48
+      },
+      "uHydroLayerValue": 1,
+      "uLayersBeforeUncheck": [
+        1,
+        1,
+        0,
+        1
+      ],
+      "uLayersAfterUncheck": [
+        0,
+        0,
+        0,
+        1
+      ],
+      "changedPixelsFractionOnSnowIceUncheck": 0,
+      "whiteSnowSeaIcePixelsWithSnowIceOff": 77133,
+      "whiteSnowSeaIceFractionWithSnowIceOff": 0.1722,
+      "kenoraLiveSim": {
+        "tC": -18.05,
+        "sweMm": 30.1,
+        "precipMmDay": 0.04
+      },
+      "saharaLiveSim": {
+        "tC": 7.24,
+        "rh": 0.761,
+        "precipMmDay": 1.68,
+        "soilMm": 76.7
+      }
+    },
+    {
+      "frame": 2,
+      "label": "morvel_plate_kinematics_100pct_sign_inversion_divergent_convergent_swapped",
+      "seed": 1400,
+      "altitudeM": 9800000,
+      "platesCheckboxChecked": true,
+      "boundaryPointTotal": 5238,
+      "divergentCountGame": 1411,
+      "convergentCountGame": 1456,
+      "transformCountGame": 2371
+    },
+    {
+      "frame": 3,
+      "label": "local_clouds_civil_twilight_20_8x_skylight_jump_and_frozen_keptclouds",
+      "setup": {
+        "seed": 1400,
+        "best": {
+          "lat": 5,
+          "lon": 45,
+          "tC": 23.59066998672327,
+          "q": 0.014599550007779547,
+          "cloud": 0.9746236759879016,
+          "lcl": 500,
+          "gnd": 213
+        },
+        "bestHour": 16.69,
+        "chosenElev": -0.89,
+        "groundM": 213,
+        "alt": 320
+      },
+      "localCloudsMeshVisible": true,
+      "columnLclM": 2250,
+      "columnTopM": 3750,
+      "uSunMu": -0.02148,
+      "sunElevDeg": -1.23,
+      "uSkyFGame": 0.32185,
+      "atmSkyFExpected": 0.01545,
+      "skyLevelOverbrightRatio": 20.833,
+      "uExt": 0.05731,
+      "skyCloudMeanSrgbLuma": 0.3901,
+      "skyCloudPeakSrgbLuma": 0.9997,
+      "brightTwilightCloudPixelsGt025": 170023
+    }
+  ]
+}

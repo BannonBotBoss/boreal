@@ -1,0 +1,191 @@
+{
+  "task": "T-0238",
+  "generatedAt": "2026-11-15T10:18:42.161Z",
+  "runtimeObservationsLoaded": true,
+  "passThreshold": 0.95,
+  "summary": {
+    "totalChecks": 12,
+    "passed": 0,
+    "failed": 12,
+    "meanScore": 0.0241
+  },
+  "calibration": {
+    "metricDefinitions": {
+      "ratioScore": "min(a, b) / max(a, b) on positive physical/biological rates, durations, and fractions (>= 0.95 pass)",
+      "unitScore": "max(0, 1 - |measured - target| / fullScale) on zero-target or bounded invariants (>= 0.95 pass)"
+    },
+    "knownMatches": [
+      {
+        "name": "Cursorial wolf terrestrial acceleration cap accelLimit(40 kg, 40 kg) = 30.0 m/s^2 vs published peak ground-reaction bound 30.0 m/s^2",
+        "score": 1
+      },
+      {
+        "name": "Snowshoe hare wet gut-contents allometry gutContentsKg(1.5 kg)/1.5 = 0.0972 vs Belovsky (1984) 0.0973",
+        "score": 1
+      }
+    ],
+    "knownMismatches": [
+      {
+        "name": "Standstill pounce single-tick horizontal acceleration (240.0 m/s^2 = 24.5 g) vs 30.0 m/s^2 biomechanical ceiling",
+        "score": 0.125
+      },
+      {
+        "name": "Frozen deer active simulation disc area fraction (40^2 / 100^2 = 0.1600) vs 1.0000 full visible 3D deer disc",
+        "score": 0.16
+      }
+    ]
+  },
+  "checks": [
+    {
+      "id": "standstill_pounce_launch_accel",
+      "label": "Standstill pounce horizontal launch acceleration (m/s^2, main.ts:624,626)",
+      "measured": 240,
+      "target": 30,
+      "unit": "m/s^2",
+      "score": 0.125,
+      "source": "Williams et al. (2009) Biol. Lett. 5:610; Wilson et al. (2013) Nature 498:185; Boreal accelLimit = 30 m/s^2"
+    },
+    {
+      "id": "midair_ballistic_lateral_accel",
+      "label": "Mid-air horizontal lateral turn acceleration during free flight (t = 0.153..0.706 s, main.ts:641-644)",
+      "measured": 13,
+      "target": 0,
+      "unit": "m/s^2",
+      "score": 0,
+      "source": "Alexander (2003) Principles of Animal Locomotion: 0 m/s^2 ground lateral impulse while airborne"
+    },
+    {
+      "id": "forepaw_pin_phase_duration",
+      "label": "Observable forepaw pin phase duration before jaw carry (huntHold.ts:123-124)",
+      "measured": 0,
+      "target": 0.5,
+      "unit": "s",
+      "score": 0,
+      "source": "Mech (2014) Can. Field-Nat. 128:193; Mech & Boitani (2003): distinct forepaw pin before nape carry"
+    },
+    {
+      "id": "running_carry_forelimb_bias",
+      "label": "Wolf forelimb reach lock bias while running with prey in jaws (playerWolf.ts:235, hold.fore)",
+      "measured": 0.9,
+      "target": 0,
+      "unit": "rad",
+      "score": 0,
+      "source": "Denali NPS ref-1 field photo; Mech & Boitani (2003): normal alternating forelimb stride while carrying prey"
+    },
+    {
+      "id": "hare_consumption_handling_time",
+      "label": "Whole 1.5 kg hare consumption handling duration & chew count (main.ts:398-403; 1 chew in 0.00 s)",
+      "measured": 0,
+      "target": 120,
+      "unit": "s",
+      "extra": {
+        "chewsPlayedOnEatPrey": 1,
+        "expectedChewsForCarcass": 1
+      },
+      "score": 0,
+      "source": "Mech (1970) The Wolf; Van Valkenburgh (1996) J. Zool. 239:179: >= 2-6 min carnassial shearing/feeding bout"
+    },
+    {
+      "id": "released_bond_reload_persistence",
+      "label": "Released-prey bond save commit & SimWorld restoration across reload (main.ts:408, hare.ts:287)",
+      "measured": 0,
+      "target": 1,
+      "unit": "fraction",
+      "extra": {
+        "releaseCommitsSave": false,
+        "hareReadsSavedBonds": false,
+        "strengthAfterReloadAtClock0": 1.149
+      },
+      "score": 0,
+      "source": "Whishaw et al. (1979) Dev. Psychobiol. 12:595; T-0014 spec: exp(-(now-at)/180) persisted & restored on reload"
+    },
+    {
+      "id": "live_hare_clover_daily_intake",
+      "label": "Live snowshoe hare daily clover/herbage intake (createCloverField unmounted, SimWorld.food = [])",
+      "measured": 0,
+      "target": 556.7,
+      "unit": "g fresh/day",
+      "extra": {
+        "cloverMountedInRuntime": false,
+        "hareSimFoodEmpty": false,
+        "runtimeCloverStateSize": 0
+      },
+      "score": 0,
+      "source": "Belovsky (1984) Theor. Popul. Biol. 25:235; Hodges (2000): ~167 g DM/day (~557 g fresh/day) & ~576 pellets/day"
+    },
+    {
+      "id": "hare_recruitment_vs_wall_timer",
+      "label": "Snowshoe hare recruitment interval vs 25-45 s bare wall-timer ring respawn (hare.ts:37)",
+      "measured": 35,
+      "target": 51840,
+      "unit": "world s",
+      "extra": {
+        "ringMinM": 18,
+        "ringMaxM": 45,
+        "count": 5
+      },
+      "score": 0.0007,
+      "source": "Keith (1990) Wildl. Monogr. 108; Krebs et al. (2001) BioScience 51:25; Rule 5 (no bare respawn timers)"
+    },
+    {
+      "id": "autonomous_wolf_hare_capture_rate",
+      "label": "Autonomous wolf hare capture rate across 20 close encounters (stalls in scan at ~1.18 m > 0.90 m catch)",
+      "measured": 0,
+      "target": 0.25,
+      "unit": "captures/encounter",
+      "extra": {
+        "minAutoHareDistanceM": 9.714,
+        "catchContactM": 0.9
+      },
+      "score": 0,
+      "source": "Mech (1970); Mech & Boitani (2003): solitary wolf snowshoe-hare pursuit capture rate ~15-35%"
+    },
+    {
+      "id": "autonomous_wolf_idle_energy_conservation",
+      "label": "Autonomous wolf spontaneous free-energy synthesis while idle in recover (animalBehavior.ts:113, main.ts:664)",
+      "measured": 149.89,
+      "target": 0,
+      "unit": "kJ/s",
+      "extra": {
+        "freeEnergyPctPerSec": 0.997,
+        "wolfDailyFmrKJ": 15034
+      },
+      "score": 0.003,
+      "source": "First Law of Thermodynamics; Nagy et al. (1999) Annu. Rev. Nutr. 19:247: <= 0 kJ/s without food intake"
+    },
+    {
+      "id": "deer_active_vs_visible_disc_fraction",
+      "label": "Active simulated/animated deer disc area vs visible 3D deer disc (withinEarshot 40 m vs INTEREST.mid 100 m)",
+      "measured": 0.16,
+      "target": 1,
+      "unit": "area fraction",
+      "extra": {
+        "playerHearingRadiusM": 40,
+        "interestNearM": 60,
+        "interestMidM": 100,
+        "deerSightM": 80,
+        "deerHearingM": 60,
+        "deerScentM": 2,
+        "bodyShareAt41_5m": 1
+      },
+      "score": 0.16,
+      "source": "Lingle & Wilson (2001) Am. Nat. 158:514; Stankowich & Coss (2006): alert/flight & animation active across 60-150 m"
+    },
+    {
+      "id": "cervid_hunt_lock_and_forage_delta_retention",
+      "label": "Cervid huntable share (0% in preyList) & stripped-forage depletion retained after 25 min of footprints (0%)",
+      "measured": 0,
+      "target": 1,
+      "unit": "fraction",
+      "extra": {
+        "cervidHuntableShare": 0,
+        "gramsRightAfterStrip": 0,
+        "gramsAfter25MinFootprints": 55.445,
+        "fullBerryG": 55.445,
+        "grazedRowSurvived": false
+      },
+      "score": 0,
+      "source": "Forbes & Theberge (1996) Can. J. Zool. 74:1511 (75-95% cervid wolf diet); Vander Kloet (1988) 60-day berry refill"
+    }
+  ]
+}

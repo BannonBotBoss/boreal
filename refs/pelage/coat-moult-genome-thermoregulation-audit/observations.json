@@ -1,0 +1,240 @@
+{
+  "capturedAt": "2026-11-15T15:09:58.837Z",
+  "baseUrl": "http://127.0.0.1:5267",
+  "spot": {
+    "hx": 21.49869244649287,
+    "hz": 5.861367742784163,
+    "wx": 21.49869244649287,
+    "wz": 9.061367742784164,
+    "yaw": 0,
+    "waterX": 40,
+    "waterZ": -4
+  },
+  "observations": [
+    {
+      "frame": 0,
+      "label": "midwinter_jan15_snowshoe_hare_and_ermine_brown_glb_override_and_14x_emissive",
+      "gameDayOfYear": 15,
+      "airTempC": -18.94,
+      "snowDepthCm": 34.41,
+      "proceduralHareSeasonalWhiteness": 1,
+      "proceduralHareWinterBackLinearRGB": [
+        0.9,
+        0.9,
+        0.88
+      ],
+      "proceduralHareSummerBackLinearRGB": [
+        0.4,
+        0.29,
+        0.16
+      ],
+      "nearbyHares": [
+        {
+          "id": 2,
+          "distM": 22.76,
+          "state": "nibble"
+        },
+        {
+          "id": 5,
+          "distM": 26.07,
+          "state": "nibble"
+        },
+        {
+          "id": 4,
+          "distM": 26.35,
+          "state": "nibble"
+        },
+        {
+          "id": 3,
+          "distM": 28.65,
+          "state": "nibble"
+        }
+      ],
+      "pictureStats": {
+        "specks": 0,
+        "fulls": 2,
+        "lows": 1,
+        "bodies": 0,
+        "wolves": {
+          "near": 1,
+          "mid": 0,
+          "far": 0
+        }
+      },
+      "hareMeshyMaterial": {
+        "toneMapped": false,
+        "emissiveRGB": [
+          1,
+          0.94,
+          0.82
+        ],
+        "emissiveIntensity": 14,
+        "hasEmissiveMap": true,
+        "hasSeasonalMoultUniform": false
+      },
+      "ermineMeshyMaterial": {
+        "toneMapped": false,
+        "emissiveIntensity": 14,
+        "hasSeasonalMoultUniform": false
+      },
+      "manifestSpeciesCount": 21,
+      "unmapped14xEmissiveSpeciesCount": 15,
+      "unmapped14xEmissiveSpecies": [
+        "Coyote",
+        "Gray Fox",
+        "Cougar",
+        "Striped Skunk",
+        "Northern Raccoon",
+        "Wolverine",
+        "North American River Otter",
+        "Ermine",
+        "American Mink",
+        "American Black Bear",
+        "Grizzly Bear",
+        "Snowshoe Hare",
+        "Beaver",
+        "Bald Eagle",
+        "Common Raven"
+      ],
+      "statusText": "12:06 · WALK · Snow 34.4 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs"
+    },
+    {
+      "frame": 1,
+      "label": "appearance_genome_blank_profile_and_meshy_wolf_ignores_scale_and_coat",
+      "appearancePanelFound": true,
+      "appearanceHeading": "Appearance: player:wolf",
+      "profileCanvasFound": true,
+      "silhouetteGreenDotPixelsInProfileCanvas": 109,
+      "appliedGenome": {
+        "size": 1.3,
+        "length": 1.15,
+        "height": 1.15,
+        "width": 1.15,
+        "hue": 60,
+        "saturation": 0.5,
+        "brightness": 1.4,
+        "fur": true,
+        "coat": "{\"mode\":\"length\",\"stops\":[],\"marks\":[]}"
+      },
+      "historyItemCount": 1,
+      "proceduralWolfCoatSeedDistribution200": {
+        "timber grey": 107,
+        "golden tan": 62,
+        "black": 31
+      },
+      "proceduralWolfUsesSinHashInsteadOfSharedRng": true
+    },
+    {
+      "frame": 2,
+      "label": "midnight_unlit_red_fox_and_cervid_coat_shaders_and_stuck_cyan_handles",
+      "hour": 0.05,
+      "midnightSkyMeanSrgbLuma": 0,
+      "foxShaderUsesOutgoingLight": false,
+      "cervidShaderUsesOutgoingLight": false,
+      "cervidHasSeasonalWinterCoatShift": false,
+      "appearanceInjectChainsOnBeforeCompile": false,
+      "appearanceHandlesStuckAliveAfterMenuClose": false,
+      "brightUnlitOrangeFoxPixelsAtMidnight": 0,
+      "maxFoxRedChannelAtMidnight": 0,
+      "landingAnimalsNearby": [
+        {
+          "species": "deer",
+          "x": 1.8849649280309677,
+          "z": 72.64815030619502,
+          "body": 0.928447382506923,
+          "ink": 0.65,
+          "kind": "herd"
+        },
+        {
+          "species": "deer",
+          "x": 17.544077020138502,
+          "z": 78.49093024618924,
+          "body": 0.8563896891030968,
+          "ink": 0.65,
+          "kind": "herd"
+        },
+        {
+          "species": "deer",
+          "x": 41.72286806628108,
+          "z": 58.720677103847265,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "hare",
+          "x": 21.906607698455062,
+          "z": -14.986941281990575,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "hare",
+          "x": 28.265385145230454,
+          "z": -22.065143207037238,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "hare",
+          "x": 15.711456856380542,
+          "z": -19.05509298305921,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "hare",
+          "x": 41.994056050941246,
+          "z": 19.191247870753298,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        },
+        {
+          "species": "hare",
+          "x": -8.188560966606051,
+          "z": 1.9568011534649505,
+          "body": 1,
+          "ink": 0,
+          "kind": "individual"
+        }
+      ]
+    },
+    {
+      "frame": 3,
+      "label": "midwinter_cold_and_water_zero_wet_snow_coat_optics_and_zero_cold_thermoregulation",
+      "playerTerrainHeightM": 2.632,
+      "inOpenWater": false,
+      "liveJanuaryAirTempC": -18.94,
+      "liveJanuarySnowDepthCm": 34.76,
+      "wolfHeatFactorAtMinus30C": 1,
+      "hareHeatFactorAtMinus30C": 1,
+      "wolfStandingEnergyRatePctPerSecAtPlus20C": -0.0005246607553751177,
+      "wolfStandingEnergyRatePctPerSecAtMinus30C": -0.0005246607553751177,
+      "hareStandingEnergyRatePctPerSecAtPlus20C": -0.0007187167317541108,
+      "hareStandingEnergyRatePctPerSecAtMinus30C": -0.0007187167317541108,
+      "wolfColdMetabolicIncreasePctAtMinus30C": 0,
+      "hareColdMetabolicIncreasePctAtMinus30C": 0,
+      "wolfTemperatureStressAtMinus30C": 0,
+      "coatHasWetnessUniform": false,
+      "coatHasSnowDustingUniform": false,
+      "furCardsSampleWind": false,
+      "playerState": {
+        "x": 33.48861956796585,
+        "z": 1.2548947224389093,
+        "yaw": 17.968029467659523,
+        "energy": 74.60737028309055,
+        "water": 99.84258869443019,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      },
+      "statusText": "13:04 · WALK · Snow 34.8 cm · Stamina 94/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs"
+    }
+  ],
+  "pageErrors": []
+}

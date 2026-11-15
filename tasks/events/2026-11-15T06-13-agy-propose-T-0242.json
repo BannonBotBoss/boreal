@@ -1,0 +1,8 @@
+{
+  "type": "propose",
+  "task": "T-0242",
+  "agent": "agy",
+  "at": "2026-11-15T06:13:18-08:00",
+  "branch": "agy/t0242-propose",
+  "note": "Propose T-0242 (52 credits = 4 objectives x 10 x 1.3 research; skill: solar-astrophysics-magnetosphere-audit) from live browser screen recording (refs/sun/solar-sunspots-corona-aurora-audit/recording.webm), sampled 1280x720 PNG frames (frame-0.png..frame-3.png vs NASA SDO & ISS Public Domain references ref-0.jpg, ref-1.jpg, ref-2.png, ref-3.jpg), runtime telemetry (observations.json), and calibrated Rule 11 numeric audit (numbers.json: 0/12 checks pass 0.95, meanScore = 0.2405): (1) unwired ?view=sun route in entry.ts and commented-out UnrealBloomPass + OutputPass on sunView.ts:62 clipping 65.84% of the white-light solar disc to RGB=255 and zeroing off-limb Spencer (1995) glare; (2) 0 Cycle-25 sunspots past SN_d_tot_V2.0.csv end 2026-09-30 (SILSO R=- groups=0 on 2026-11-15 vs 5.34 Hathaway 2015 groups), hardcoded B_0=0 deg Carrington axial tilt, frozen non-scrubbable groups, unwired uAim pan, and private xorshift PRNG in sunspots.ts:35; (3) scalar 550 nm grey sunspot contrast (1.00 vs 1.8247 Planck 610/465 nm), 2.313e9 cd/m^2 disc-centre luminance + scalar limbMean(550) bias, 7/8 solar passbands & manual exposure locked behind quiz:'todo' in normal play, pitch-dark raw-linear RGB(15,12,4) EUV 171 A disc, and 2D co-planar loop chords; (4) 100 km sky-dome mesh razor-clipping off-limb 110-400 km green/red aurora, 0.16x ATM_AERIAL disk step drop, static omniPeak & 0 deg Feldstein-Starkov midnight shift, and symmetric L=8 R_E dayside dipole lines ignoring 5.059 R_E Gannon shueR0 magnetopause compression."
+}

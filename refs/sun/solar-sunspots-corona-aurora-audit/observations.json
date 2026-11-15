@@ -1,0 +1,149 @@
+{
+  "capturedAt": "2026-11-15T14:07:36.423Z",
+  "port": 5266,
+  "recordingBytes": 357480,
+  "pageErrors": [],
+  "observations": [
+    {
+      "stage": "frame-0-2026-11-15-photosphere",
+      "viewSunRoutedInEntry": false,
+      "sunMeta": {
+        "ev": 30.259095581140134,
+        "target": 30.259095581140134,
+        "Lavg": 9.272972157596614,
+        "Lpeak": 2312958905.450399,
+        "groups": 0,
+        "spotPx": 0,
+        "discPx": 613.869978975235
+      },
+      "readoutText": "",
+      "radialProfileRGB": {
+        "rho0_00": [
+          255,
+          255,
+          255
+        ],
+        "rho0_50": [
+          255,
+          255,
+          255
+        ],
+        "rho0_70": [
+          255,
+          255,
+          255
+        ],
+        "rho0_85": [
+          255,
+          255,
+          236
+        ],
+        "rho0_95": [
+          246,
+          204,
+          169
+        ],
+        "rho1_03_offLimbGlare": [
+          0,
+          0,
+          0
+        ]
+      },
+      "clippedDiscFraction": 0.6584
+    },
+    {
+      "stage": "frame-1-2024-05-10-band-locked-and-grey-sunspots",
+      "requestedBand": "euv171",
+      "activeBandSelectValue": "visible",
+      "disabledControlCount": 7,
+      "lockBadges": [],
+      "sunMeta": {
+        "ev": 30.259095581140134,
+        "target": 30.259095581140134,
+        "Lavg": 9.272972157596614,
+        "Lpeak": 2312958905.450399,
+        "groups": 18,
+        "R": 172,
+        "spotPx": 9.695875265741186,
+        "discPx": 613.869978975235
+      },
+      "darkestUmbraPixelRGB": [
+        39,
+        33,
+        30
+      ],
+      "umbraRedToBlueRatio": 1.3
+    },
+    {
+      "stage": "frame-2-2024-05-10-euv171-corona",
+      "sunMeta": {
+        "ev": 33.18991294698022,
+        "target": 33.18991294698022,
+        "Lavg": 62967218.69044788,
+        "Lpeak": 17637289991.64613,
+        "groups": 18,
+        "R": 172,
+        "spotPx": 6.170192351919811,
+        "discPx": 390.65022450622723
+      },
+      "euv171ProfileRGB": {
+        "rho0_00_centre": [
+          15,
+          12,
+          4
+        ],
+        "rho0_98_innerLimb": [
+          77,
+          60,
+          19
+        ],
+        "rho1_00_limb": [
+          243,
+          189,
+          61
+        ],
+        "rho1_04_corona": [
+          40,
+          31,
+          10
+        ],
+        "rho1_10_corona": [
+          3,
+          2,
+          1
+        ]
+      },
+      "brightPixelsCount": 906,
+      "clippedWhiteActiveRegionPixels": 62
+    },
+    {
+      "stage": "frame-3-globe-gannon-aurora-and-magnetosphere",
+      "globeStats": {
+        "drawn": 37,
+        "inView": 37,
+        "cached": 59,
+        "queued": 8,
+        "deepest": 2,
+        "splitDepth": 1,
+        "splitK": 1,
+        "lodSplit": 1.7,
+        "nearK": 0,
+        "hold": {
+          "lv": 2,
+          "dd": 9686527,
+          "edge": 2498256,
+          "reach": 38000000,
+          "minDeep": 9686527
+        },
+        "tier": 1,
+        "segments": 64
+      },
+      "layerCount": 11,
+      "auroraChecked": true,
+      "fieldLinesChecked": true,
+      "nonBlackPixels": 712572,
+      "greenAuroraPixels": 168,
+      "fieldLineBluePixels": 22833
+    }
+  ]
+}

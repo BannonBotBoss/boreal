@@ -1,0 +1,183 @@
+{
+  "task": "T-0245",
+  "generatedAt": "2026-11-15T17:21:47.430Z",
+  "threshold": 0.95,
+  "checkCount": 12,
+  "passingChecks": 0,
+  "failingChecks": 12,
+  "meanScore": 0.1556,
+  "calibration": {
+    "metrics": {
+      "ratioScore": "min(measured, target) / max(measured, target) for strictly positive physical quantities (>= 0.95 pass)",
+      "unitScore": "max(0, 1 - |measured - target| / fullScale) for bounded [0, fullScale] shares/luminances (>= 0.95 pass)"
+    },
+    "knownMatches": [
+      {
+        "name": "planet.ts PLANET.radius vs IUGG GRS80 mean Earth radius (Moritz 2000, J. Geodesy 74:128: 6,371,008.8 m)",
+        "measured": 6371008.8,
+        "target": 6371008.8,
+        "score": 1
+      },
+      {
+        "name": "horizonSkirt.ts horizonMetres(400) vs spherical geometric horizon sqrt(2*R*h + h^2) (Bowditch 2019, Ch. 22)",
+        "measured": 71393.05,
+        "target": 71393.05,
+        "score": 1
+      },
+      {
+        "name": "openTiles.ts srgbByteToLinear(128) vs IEC 61966-2-1:1999 electro-optical transfer function ((128/255+0.055)/1.055)^2.4",
+        "measured": 0.215861,
+        "target": 0.215861,
+        "score": 1
+      }
+    ],
+    "knownMismatches": [
+      {
+        "name": "Unjittered square orchard lattice Clark-Evans index (R = 2.000) vs natural boreal fire-origin spruce stand (R = 0.92, Kenkel 1988)",
+        "measured": 2,
+        "target": 0.92,
+        "score": 0.46
+      },
+      {
+        "name": "Post-tonemap floorD display luma (0.348) at 00:03 astronomical midnight vs natural starlit canopy display luma (0.004, Schaefer 1993)",
+        "measured": 0.348,
+        "target": 0.004,
+        "score": 0.0115
+      }
+    ]
+  },
+  "checks": [
+    {
+      "id": 1,
+      "name": "Mid-distance canopy Clark-Evans spatial aggregation index R (coverSpots 6 m x 6 m unjittered lattice vs natural boreal stand)",
+      "metric": "ratioScore",
+      "measured": 2,
+      "target": 0.92,
+      "unit": "dimensionless R",
+      "score": 0.46,
+      "source": "Clark & Evans (1954, Ecology 35:445-453); Kenkel (1988, J. Ecology 76:248-258: boreal Pinus/Picea stands R = 0.78-1.02, CSR = 1.00, regular square lattice = 2.00)",
+      "evidence": "src/world/globe/coverKind.ts:96-111 places stems at exact multiples (k*6, m*6) with zero jitter or Poisson-disc/cluster inhibition"
+    },
+    {
+      "id": 2,
+      "name": "Mid-distance 36-900 m canopy transition annulus area coverage before 900 m far-skirt crossfade",
+      "metric": "ratioScore",
+      "measured": 0.0581,
+      "target": 1,
+      "unit": "fraction of 36-900 m annulus",
+      "score": 0.0581,
+      "source": "Continuous boreal crown cover across 36-900 m viewing range (Superior NF aerial ref-1.jpg; horizonMesh.ts:68 far crowns reach full weight only at 900 m)",
+      "evidence": "coverSpots('boreal', 36, 900, 4096) keeps 4,096 of 70564 grid points, truncating abruptly at r = 219.7 m (5.81% of annulus area) and leaving 220-900 m bare"
+    },
+    {
+      "id": 3,
+      "name": "Open-lake water exclusion for mid-distance tree billboards (horizonCover) and overhead moss floor (FLOOR_FRAG)",
+      "metric": "unitScore",
+      "measured": 0,
+      "target": 1,
+      "unit": "share [0..1]",
+      "score": 0,
+      "source": "Viereck & Johnston (1990, Silvics of North America Vol. 1: Picea mariana / P. glauca obligate terrestrial rooting above permanent open-water level)",
+      "evidence": "horizonCover.ts:114 places stems at raw heightAt(s.x, s.z) with zero water check (live frame-1 planted 2154 stems below waterSurface); overheadCrowns.ts:226-235,311-330 draws opaque FLOOR_FRAG plane (depthTest: false) directly over open lakes (frame-0.png)"
+    },
+    {
+      "id": 4,
+      "name": "Arid-desert & prairie conifer-canopy / mesic-oak exclusion (horizonMesh uForest shader gating & horizonCover desert slots)",
+      "metric": "unitScore",
+      "measured": 0,
+      "target": 1,
+      "unit": "share [0..1]",
+      "score": 0,
+      "source": "Olson et al. (2001, BioScience 51:933-938: Deserts & Xeric Shrublands and Temperate Grasslands lack closed boreal conifer canopy and mesic Quercus/broadleaf forest)",
+      "evidence": "horizonMesh.ts:40,48,68-92,150 sets made.forest.value = 0 on prairie/desert/tundra/ice/rock but uForest has 0 shader reads; horizonCover.ts:30-33,109 spawns slots [4, 4, 4] (broadleaf.glb, oak.glb) across desert and coverTreeShare('desert') = 0.0073 > 0"
+    },
+    {
+      "id": 5,
+      "name": "Mid-distance impostor linear radiometric fidelity (cc0Impostors.ts linear RT tagged SRGBColorSpace -> x^2.2 crush + stored .glb violation)",
+      "metric": "ratioScore",
+      "measured": 0.0177,
+      "target": 0.16,
+      "unit": "linear reflectance",
+      "score": 0.1109,
+      "source": "IEC 61966-2-1:1999 sRGB transfer function; Betts & Ball (1997, JGR 102:28901); PROJECT-RULES.md Rule 1 (no stored .glb meshes outside animal manifest)",
+      "evidence": "cc0Impostors.ts:12-18,70,91-95 loads 5 stored /models/trees/*.glb files (true), bakes DirectionalLight+HemisphereLight into linear WebGLRenderTarget tagged SRGBColorSpace (crushing 0.16 -> 0.0177), and feeds baked lighting into MeshStandardMaterial with unrotated bake-camera view-space normals"
+    },
+    {
+      "id": 6,
+      "name": "Nocturnal 450 m nadir globe & overhead floor display luminance at 00:03 astronomical midnight (sun -26.8 deg)",
+      "metric": "ratioScore",
+      "measured": 0.264,
+      "target": 0.004,
+      "unit": "sRGB relative luma",
+      "score": 0.0152,
+      "source": "Schaefer (1993, Vistas in Astronomy 36:311-361); Falchi et al. (2016, Science Advances 2:e1600377); NASA Suomi NPP VIIRS DNB ref-0.jpg",
+      "evidence": "tile.ts:569-580 overwrites gl_FragColor.rgb = floorD (~0.35) AFTER lighting and tone-mapping whenever AERIAL.uCrownFloor = 1 (180-2200 m), while overheadCrowns.ts:228 FLOOR_FRAG (toneMapped: false) emits unlit green moss (~0.28) at 00:03 midnight (frame-0.png measured mean luma = 0.264)"
+    },
+    {
+      "id": 7,
+      "name": "Nocturnal drone-band horizon skirt & grazing-water luminance at 00:03 astronomical midnight",
+      "metric": "ratioScore",
+      "measured": 0.7873,
+      "target": 0.008,
+      "unit": "sRGB relative luma",
+      "score": 0.0102,
+      "source": "Schaefer (1993, Vistas in Astronomy 36:311); Roach & Gordon (1973, The Light of the Night Sky, Ch. 2-4)",
+      "evidence": "horizonMesh.ts:21,93-100 mixes constant uSkirtHazeColor = RGB(0.78, 0.86, 0.98) (luma 0.8517; setHaze called 0 times) AFTER tone-mapping across distant land and 85% grazing water; inpage.ts:476 forces scene.fog.color = RGB(0.45, 0.62, 0.90) at midnight (frame-2.png peak row luma = 0.7873)"
+    },
+    {
+      "id": 8,
+      "name": "Nocturnal vascular tree foliage bioluminescence / self-emission (horizonCover & overheadCrowns emissive)",
+      "metric": "unitScore",
+      "measured": 0.0373,
+      "target": 0,
+      "unit": "linear emissive radiance (fullScale = 0.075)",
+      "score": 0.5028,
+      "source": "Gates (1980, Biophysical Ecology, Ch. 8: terrestrial conifer/angiosperm leaves have zero visible bioluminescence; nocturnal radiance is strictly reflected starlight/airglow)",
+      "evidence": "horizonCover.ts:50 sets unconditional mat.emissive = STYLIZED.foliageLift = [0.028, 0.042, 0.018] (linear luma 0.0373) and overheadCrowns.ts:253-254 sets unconditional green emissive [0.016, 0.028, 0.018] / [0.028, 0.036, 0.020] without solar-irradiance gating"
+    },
+    {
+      "id": 9,
+      "name": "Overhead conifer crown height allometry (spruceGeometry 0.70 * 1.6 * d vs mature boreal Picea mariana / P. glauca)",
+      "metric": "ratioScore",
+      "measured": 4.7,
+      "target": 13.5,
+      "unit": "m",
+      "score": 0.3484,
+      "source": "Viereck & Johnston (1990, USDA Silvics of North America Vol. 1: Picea mariana mature height 9-15 m, crown diameter 1.5-4 m, H/W ~ 3.5-4.5); Sullivan et al. (2017, Global Ecol. Biogeogr. 26:1249)",
+      "evidence": "overheadCrowns.ts:62,345 builds cones of local apex z = 0.70 scaled by z = d * 1.6 for d = 3.0-5.4 m -> H = 3.36-6.05 m (mean 4.70 m, H/W = 1.12 squat domes vs 12-15 m slender boreal spires)"
+    },
+    {
+      "id": 10,
+      "name": "Overhead crown direct-sun shadow nocturnal suppression (shadow presence at -26.8 deg midnight sun)",
+      "metric": "unitScore",
+      "measured": 1,
+      "target": 0,
+      "unit": "active direct shadow share at h_sun < 0 [0..1]",
+      "score": 0,
+      "source": "Reda & Andreas (2004, Solar Energy 76:577-589: direct solar beam irradiance = 0 W/m^2 below horizon; daytime shadow length L = H / tan(h_sun))",
+      "evidence": "overheadCrowns.ts:144-156,331-358 projects sun onto horizontal plane without checking sun elevation > 0 and stamps fixed 0.62*d shadows (336 dark shadow quads rendered at 00:03 midnight in frame-0.png)"
+    },
+    {
+      "id": 11,
+      "name": "Aerial exemplar NAIP PNG linear reflectance decoding (THREE.NoColorSpace 110/255 vs IEC 61966-2-1 sRGB linear)",
+      "metric": "ratioScore",
+      "measured": 0.4314,
+      "target": 0.1559,
+      "unit": "linear reflectance",
+      "score": 0.3615,
+      "source": "IEC 61966-2-1:1999 sRGB specification; USGS NAIP 8-bit sRGB orthoimagery specification (aerialExemplar.ts:19 explicitly notes sRGB ~110 is linear ~0.16)",
+      "evidence": "aerialExemplar.ts:29,55 leaves tex.colorSpace = THREE.NoColorSpace on sRGB PNGs (canopy.png, fen.png, shore.png, water.png), feeding gamma-encoded 0.4314 directly into linear PBR shading (2.77x gamma distortion) and blending boreal spruce/fen crops globally across all non-ice biomes in tile.ts:455"
+    },
+    {
+      "id": 12,
+      "name": "Home Kenora boreal forest geographic coordinate & EOX Sentinel-2 biome coherence (49.77 N seeded lon vs -94.49 W boreal Shield)",
+      "metric": "unitScore",
+      "measured": 0,
+      "target": 1,
+      "unit": "biome match [0..1]",
+      "score": 0,
+      "source": "Rowe (1972, Forest Regions of Canada, Can. For. Serv. Publ. 1300: Kenora / Lake of the Woods 49.77 N, 94.49 W is Boreal Shield closed conifer-mixedwood forest, not Eurasian steppe)",
+      "evidence": "planet.ts:31,146 fixes home latDeg = 49.77 N (Kenora) but hashes longitude from WORLD_SEED (65.5283 deg E), so openTiles.ts fetches Eurasian steppe EOX imagery and coverSampleAt classifies the wolf's home forest as 'prairie' (wiping out horizonCover trees at home)"
+    }
+  ]
+}

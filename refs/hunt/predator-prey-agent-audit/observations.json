@@ -1,0 +1,408 @@
+{
+  "capturedAt": "2026-11-15T10:12:54.098Z",
+  "url": "http://127.0.0.1:5262/?nomenu&noprobe&view=ground&stages=1&date=2026-07-15&hour=13&needs=water:75,energy:55&contacts=1&rec",
+  "pageErrors": [],
+  "scenes": {
+    "frame0_standstillPounceAndCloverGap": {
+      "hareSetup": {
+        "targetId": 6,
+        "hx": 87.0009822450694,
+        "hz": -13.289210161045093,
+        "wx": 82.33979175839202,
+        "wz": -14.435204596855504,
+        "yaw": -1.8118735548181102,
+        "count": 5,
+        "spawnRingDistancesM": [
+          24.05,
+          24.48,
+          28.57,
+          29.48,
+          22.24
+        ]
+      },
+      "prePounce": {
+        "player": {
+          "x": 82.33979218190137,
+          "z": -14.435204492732023,
+          "yaw": -1.8118735548181102,
+          "energy": 54.88058721207679,
+          "water": 74.93871996055324,
+          "mode": "walk",
+          "handle": "4294967296",
+          "embodied": "4294967296",
+          "species": "wolf"
+        },
+        "statusText": "13:08 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 55/100 · Water 75% · Rest 100%\nLock on\n0 remembered · 0 friends · 0 herbs",
+        "lockedInHud": true,
+        "cloverStateSize": 0,
+        "droppingsDeltas": 0
+      },
+      "midPounce": {
+        "player": {
+          "x": 93.98754619155531,
+          "z": -14.089887652637783,
+          "yaw": -1.571844762532532,
+          "energy": 51.74586524953285,
+          "water": 74.86957155365128,
+          "mode": "walk",
+          "handle": "4294967296",
+          "embodied": "4294967296",
+          "species": "wolf"
+        },
+        "statusText": "13:09 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 52/100 · Water 75% · Rest 100%\nLock on\n0 remembered · 0 friends · 0 herbs"
+      },
+      "dtPounceS": 1.904,
+      "measuredLeapDistM": 11.653
+    },
+    "frame1_holdCarryEatAndBond": {
+      "caughtHoldInfo": {
+        "holding": true,
+        "statusText": "13:09 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 52/100 · Water 75% · Rest 100% · HOLDING\nHolding a hare · X eat · B release\n0 remembered · 0 friends · 0 herbs",
+        "noticeText": "Pinned. X eats, B releases."
+      },
+      "runningWhileHolding": {
+        "player": {
+          "x": 70.37398104985292,
+          "z": -45.33941112461143,
+          "yaw": -2.328158191075915,
+          "energy": 51.59657958661414,
+          "water": 74.7929802233948,
+          "mode": "run",
+          "handle": "4294967296",
+          "embodied": "4294967296",
+          "species": "wolf"
+        },
+        "statusText": "13:09 · RUN · Snow 0.0 cm · Stamina 94/100 · Energy 52/100 · Water 75% · Rest 100% · HOLDING\nHolding a hare · X eat · B release\n0 remembered · 0 friends · 0 herbs",
+        "noticeText": "Pinned. X eats, B releases."
+      },
+      "beforeEat": {
+        "x": 143.61844117514133,
+        "z": -73.76461767549435,
+        "yaw": 5.11772241057021,
+        "energy": 8.909950644397739,
+        "water": 73.67413643865268,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      },
+      "afterEat": {
+        "player": {
+          "x": 150.05264098961206,
+          "z": -76.52549607117145,
+          "yaw": 8.248640780521619,
+          "energy": 57.507550655271615,
+          "water": 91.98985323277432,
+          "mode": "walk",
+          "handle": "4294967296",
+          "embodied": "4294967296",
+          "species": "wolf"
+        },
+        "energyGainInstant": 48.598,
+        "waterGainInstant": 18.316,
+        "noticeText": "Ate the hare. +49 energy, +18 water. Gut contents left on the ground.",
+        "statusText": "13:27 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 58/100 · Water 92% · Rest 97%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 1 friends · 0 herbs",
+        "carcassDeltas": [
+          {
+            "kind": "carcass",
+            "x": 144.9892115671786,
+            "z": -74.37739905975208,
+            "t": 0.00005062814662709755,
+            "m": 0.14576230584051375,
+            "meta": "hare:6"
+          }
+        ]
+      },
+      "bondTelemetry": {
+        "savedBeforeReleaseWasNull": true,
+        "savedImmediatelyAfterReleaseCommitted": false,
+        "hudShows1Friend": true,
+        "statusText": "13:11 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 52/100 · Water 75% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 1 friends · 0 herbs",
+        "noticeText": "Released. It treats you as a friend until the memory fades.",
+        "bondStrengthAtReloadClock0": 1.149,
+        "friendCountAtReloadClock0": 1
+      }
+    },
+    "frame2_autonomousStallAndDeltaEviction": {
+      "autoSetup": {
+        "targetId": 6,
+        "hx": 117.42099553553767,
+        "hz": -18.23853343514056,
+        "wx": 113.72978503363017,
+        "wz": -20.24227120007084
+      },
+      "autoTrace": [
+        {
+          "tMs": 0,
+          "energy": 51.525,
+          "mode": "walk",
+          "nearestHare": {
+            "id": 6,
+            "d": 4.2,
+            "state": "freeze"
+          },
+          "statusLine": "AUTONOMOUS · 13:11 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 52/100 · Water 75% · Rest 100% · following hare hare:6 (following hare hare:6)"
+        },
+        {
+          "tMs": 160,
+          "energy": 51.505,
+          "mode": "walk",
+          "nearestHare": {
+            "id": 6,
+            "d": 7.405,
+            "state": "flee"
+          },
+          "statusLine": "AUTONOMOUS · 13:11 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 52/100 · Water 75% · Rest 100% · following hare hare:6 (following hare hare:6)"
+        },
+        {
+          "tMs": 320,
+          "energy": 51.499,
+          "mode": "walk",
+          "nearestHare": {
+            "id": 6,
+            "d": 8.655,
+            "state": "flee"
+          },
+          "statusLine": "AUTONOMOUS · 13:11 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 51/100 · Water 75% · Rest 100% · following hare hare:6 (following hare hare:6)"
+        },
+        {
+          "tMs": 480,
+          "energy": 51.268,
+          "mode": "walk",
+          "nearestHare": {
+            "id": 6,
+            "d": 29.32,
+            "state": "nibble"
+          },
+          "statusLine": "AUTONOMOUS · 13:13 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 51/100 · Water 75% · Rest 99% · following hare hare:6 (following hare hare:6)"
+        },
+        {
+          "tMs": 640,
+          "energy": 50.894,
+          "mode": "walk",
+          "nearestHare": {
+            "id": 6,
+            "d": 9.653,
+            "state": "flee"
+          },
+          "statusLine": "AUTONOMOUS · 13:15 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 51/100 · Water 74% · Rest 99% · following hare hare:6 (following hare hare:6)"
+        },
+        {
+          "tMs": 800,
+          "energy": 50.778,
+          "mode": "walk",
+          "nearestHare": {
+            "id": 6,
+            "d": 33.15,
+            "state": "flee"
+          },
+          "statusLine": "AUTONOMOUS · 13:16 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 51/100 · Water 74% · Rest 99% · following hare hare:6 (following hare hare:6)"
+        },
+        {
+          "tMs": 960,
+          "energy": 50.723,
+          "mode": "walk",
+          "nearestHare": {
+            "id": 6,
+            "d": 31.062,
+            "state": "flee"
+          },
+          "statusLine": "AUTONOMOUS · 13:16 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 51/100 · Water 74% · Rest 98% · following hare hare:6 (following hare hare:6)"
+        },
+        {
+          "tMs": 1120,
+          "energy": 50.407,
+          "mode": "run",
+          "nearestHare": {
+            "id": 6,
+            "d": 21.639,
+            "state": "nibble"
+          },
+          "statusLine": "AUTONOMOUS · 13:18 · RUN · Snow 0.0 cm · Stamina 97/100 · Energy 50/100 · Water 74% · Rest 98% · around stones:4:-2:74 (detour 0.0<jump 8.7 J/kg)"
+        },
+        {
+          "tMs": 1280,
+          "energy": 50.339,
+          "mode": "walk",
+          "nearestHare": {
+            "id": 6,
+            "d": 22.091,
+            "state": "nibble"
+          },
+          "statusLine": "AUTONOMOUS · 13:19 · WALK · Snow 0.0 cm · Stamina 98/100 · Energy 50/100 · Water 74% · Rest 98% · following hare hare:6 (following hare hare:6)"
+        },
+        {
+          "tMs": 1440,
+          "energy": 49.645,
+          "mode": "run",
+          "nearestHare": {
+            "id": 6,
+            "d": 32.002,
+            "state": "nibble"
+          },
+          "statusLine": "AUTONOMOUS · 13:23 · RUN · Snow 0.0 cm · Stamina 92/100 · Energy 50/100 · Water 74% · Rest 97% · following hare hare:6 (following hare hare:6)"
+        },
+        {
+          "tMs": 1600,
+          "energy": 49.629,
+          "mode": "walk",
+          "nearestHare": {
+            "id": 6,
+            "d": 31.672,
+            "state": "nibble"
+          },
+          "statusLine": "AUTONOMOUS · 13:23 · WALK · Snow 0.0 cm · Stamina 97/100 · Energy 50/100 · Water 74% · Rest 97% · following hare hare:6 (following hare hare:6)"
+        },
+        {
+          "tMs": 1760,
+          "energy": 49.607,
+          "mode": "walk",
+          "nearestHare": {
+            "id": 6,
+            "d": 31.281,
+            "state": "nibble"
+          },
+          "statusLine": "AUTONOMOUS · 13:23 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 50/100 · Water 74% · Rest 97% · following hare hare:6 (following hare hare:6)"
+        },
+        {
+          "tMs": 1920,
+          "energy": 49.543,
+          "mode": "walk",
+          "nearestHare": {
+            "id": 6,
+            "d": 27.862,
+            "state": "nibble"
+          },
+          "statusLine": "AUTONOMOUS · 13:24 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 50/100 · Water 74% · Rest 96% · around stones:3:-2:66 (detour 0.0<jump 8.7 J/kg)"
+        },
+        {
+          "tMs": 2080,
+          "energy": 49.511,
+          "mode": "walk",
+          "nearestHare": {
+            "id": 6,
+            "d": 25.462,
+            "state": "nibble"
+          },
+          "statusLine": "AUTONOMOUS · 13:24 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 50/100 · Water 74% · Rest 96% · around stones:3:-2:66 (detour 0.0<jump 8.7 J/kg)"
+        },
+        {
+          "tMs": 2240,
+          "energy": 49.497,
+          "mode": "run",
+          "nearestHare": {
+            "id": 6,
+            "d": 23.928,
+            "state": "nibble"
+          },
+          "statusLine": "AUTONOMOUS · 13:24 · RUN · Snow 0.0 cm · Stamina 100/100 · Energy 49/100 · Water 74% · Rest 96% · around stones:3:-2:66 (detour 0.0<jump 8.7 J/kg)"
+        },
+        {
+          "tMs": 2400,
+          "energy": 49.482,
+          "mode": "run",
+          "nearestHare": {
+            "id": 6,
+            "d": 21.391,
+            "state": "nibble"
+          },
+          "statusLine": "AUTONOMOUS · 13:24 · RUN · Snow 0.0 cm · Stamina 98/100 · Energy 49/100 · Water 74% · Rest 96% · around stones:3:-2:34 (detour 0.0<jump 8.7 J/kg)"
+        }
+      ],
+      "anyHareCaughtByAutonomous": false,
+      "deltaEvictionProbe": {
+        "initialScentMarks": 1,
+        "maxG": 55.445,
+        "eaten": 55.445,
+        "grazedStoredM": 0,
+        "gramsImmediatelyAfterStrip": 0,
+        "evictedByFootprints": true,
+        "gramsAfterFootprintEviction": 55.445
+      }
+    },
+    "frame3_frozenDeerAndCervidHuntExclusion": {
+      "deerScene": {
+        "totalNearbyDeer": 14,
+        "chosenDeer": {
+          "key": "4:-2:1",
+          "x": 160.42639438062906,
+          "z": -73.19203400053084,
+          "h": 0.536839898119106,
+          "localTrees": 0
+        },
+        "cameraPose": {
+          "wx": 160.42639438062906,
+          "wz": -31.69203400053084,
+          "wh": 2.1821943422222687,
+          "yaw": 0,
+          "dist": 41.5
+        }
+      },
+      "deerSamples": [
+        {
+          "step": 0,
+          "statusText": "13:29 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 57/100 · Water 92% · Rest 97%\naiming\n0 remembered · 1 friends · 0 herbs",
+          "aimingButNotLocked": true
+        },
+        {
+          "step": 1,
+          "statusText": "13:29 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 57/100 · Water 92% · Rest 97%\naiming\n0 remembered · 1 friends · 0 herbs",
+          "aimingButNotLocked": true
+        },
+        {
+          "step": 2,
+          "statusText": "13:29 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 57/100 · Water 92% · Rest 97%\naiming\n0 remembered · 1 friends · 0 herbs",
+          "aimingButNotLocked": true
+        },
+        {
+          "step": 3,
+          "statusText": "13:29 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 57/100 · Water 92% · Rest 97%\naiming\n0 remembered · 1 friends · 0 herbs",
+          "aimingButNotLocked": true
+        },
+        {
+          "step": 4,
+          "statusText": "13:30 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 57/100 · Water 92% · Rest 97%\naiming\n0 remembered · 1 friends · 0 herbs",
+          "aimingButNotLocked": true
+        },
+        {
+          "step": 5,
+          "statusText": "13:33 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 57/100 · Water 92% · Rest 97%\naiming\n0 remembered · 1 friends · 0 herbs",
+          "aimingButNotLocked": true
+        },
+        {
+          "step": 6,
+          "statusText": "13:33 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 57/100 · Water 92% · Rest 97%\naiming\n0 remembered · 1 friends · 0 herbs",
+          "aimingButNotLocked": true
+        },
+        {
+          "step": 7,
+          "statusText": "13:33 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 57/100 · Water 92% · Rest 97%\naiming\n0 remembered · 1 friends · 0 herbs",
+          "aimingButNotLocked": true
+        },
+        {
+          "step": 8,
+          "statusText": "13:33 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 57/100 · Water 92% · Rest 97%\naiming\n0 remembered · 1 friends · 0 herbs",
+          "aimingButNotLocked": true
+        },
+        {
+          "step": 9,
+          "statusText": "13:33 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 57/100 · Water 92% · Rest 97%\naiming\n0 remembered · 1 friends · 0 herbs",
+          "aimingButNotLocked": true
+        }
+      ],
+      "deerModuleProbe": {
+        "testDistanceM": 41.5,
+        "playerHearingRadiusM": 40,
+        "interestNearM": 60,
+        "interestMidM": 100,
+        "withinEarshotAt41_5m": false,
+        "renderAnimalDistanceM": null,
+        "lodBodyShareAt41_5m": 1,
+        "deerSightRangeM": 80,
+        "deerHearingRangeM": 60,
+        "deerScentRangeM": 2
+      }
+    }
+  },
+  "recordingBytes": 7095872
+}

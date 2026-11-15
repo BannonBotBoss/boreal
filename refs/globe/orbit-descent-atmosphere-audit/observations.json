@@ -1,0 +1,204 @@
+{
+  "capturedAt": "2026-11-15T07:04:47.939Z",
+  "baseUrl": "http://127.0.0.1:5260",
+  "observations": [
+    {
+      "frame": 0,
+      "label": "orbit_home_in_kazakhstan_65_54E_kenora_in_midnight_and_untoggled_static_orbit_clouds",
+      "homeLatDeg": 49.77,
+      "homeLonDeg": 65.5367,
+      "expectedKenoraLatDeg": 49.77,
+      "expectedKenoraLonDeg": -94.49,
+      "lonOffsetDeg": 160.0267,
+      "greatCircleOffsetKm": 8784.3,
+      "noonSolarCheck": {
+        "gameLocalHour": 12.101,
+        "subsolarLatDeg": 23.452,
+        "subsolarLonDeg": 67.045,
+        "kenoraSunElevDegAtNoon": -14.961,
+        "expectedKenoraNoonSunElevDeg": 63.67,
+        "gameLayerUtcHours": 7.731,
+        "expectedKenoraUtcHours": 18.4,
+        "utcPhaseErrorHours": 10.669
+      },
+      "orbitCloudToggleAndDriftAudit": {
+        "altitudeM": 14016219,
+        "cloudsCheckboxFound": true,
+        "cloudsCheckedAfterClick": false,
+        "uOrbitWithCloudsOff": 1,
+        "uOrbitDeckWithCloudsOff": 1,
+        "orbitFragUsesDriftUniform": false
+      },
+      "hudText": "Boreal planet · seed 1400 (staged)\naltitude 14016 km · ground -4959 m · 49.77°, 65.54°\ntiles drawn 42 (42 in view, cap 130) · culled 18 · cached 62 · deepest L2 · queued 12\nbuild (4 workers) 66 tiles (0 cancelled, 12 waiting) · avg 28.7 ms · p95 115.9 ms · worst frame 721.7 ms\ntier High · 64 seg · 37 fps · shaders 24035 ms async · work 24.3 ms\ndouble-click a point to drop · A drops on the centre · drag orbits · wheel zooms · H home · G drops here · F fades down"
+    },
+    {
+      "frame": 1,
+      "label": "hard_1frame_cloud_swap_across_2500km_and_dead_cloud_open_1500_to_40km",
+      "above2500": {
+        "altM": 2505000,
+        "orbitWeight": 1,
+        "uOrbit": 1,
+        "uOrbitDeck": 1
+      },
+      "below2500": {
+        "altM": 2495000,
+        "orbitWeight": 0.99998,
+        "uOrbit": 0.99998,
+        "uOrbitDeck": 0
+      },
+      "across10kmMeanRgbJump01": 0.4133,
+      "across10kmChangedPixelShare": 0.8169,
+      "cloudOpenVsLiveSetClearSweep": [
+        {
+          "altKm": 1500,
+          "designedCloudClear": 0,
+          "liveLocalFade": 0,
+          "liveAppliedSetClear": 0
+        },
+        {
+          "altKm": 800,
+          "designedCloudClear": 0.273,
+          "liveLocalFade": 0,
+          "liveAppliedSetClear": 0
+        },
+        {
+          "altKm": 400,
+          "designedCloudClear": 0.574,
+          "liveLocalFade": 0,
+          "liveAppliedSetClear": 0
+        },
+        {
+          "altKm": 200,
+          "designedCloudClear": 0.8751,
+          "liveLocalFade": 0,
+          "liveAppliedSetClear": 0
+        },
+        {
+          "altKm": 140.4,
+          "designedCloudClear": 1,
+          "liveLocalFade": 0,
+          "liveAppliedSetClear": 0
+        },
+        {
+          "altKm": 60,
+          "designedCloudClear": 1,
+          "liveLocalFade": 0,
+          "liveAppliedSetClear": 0
+        },
+        {
+          "altKm": 41,
+          "designedCloudClear": 1,
+          "liveLocalFade": 0,
+          "liveAppliedSetClear": 0
+        },
+        {
+          "altKm": 36,
+          "designedCloudClear": 1,
+          "liveLocalFade": 0.5,
+          "liveAppliedSetClear": 0.5
+        },
+        {
+          "altKm": 31,
+          "designedCloudClear": 1,
+          "liveLocalFade": 1,
+          "liveAppliedSetClear": 1
+        }
+      ]
+    },
+    {
+      "frame": 2,
+      "label": "orbit_frame1_99pct_teleport_and_400m_glide_frozen_at_0ms",
+      "descentTrace": {
+        "preDropAltM": 14016219.4,
+        "preDropCover": 0,
+        "frame1ElapsedMs": 824.8,
+        "frame1AltM": 57946.5,
+        "frame1AltSkippedFraction": 0.995866,
+        "frame1Cover": 0.6182,
+        "configuredDescentSec": 14,
+        "configuredVacuumSkipShare": 0.46,
+        "actualRemainingDescentSec": 7.56,
+        "vacuumFallVel100kmTo10kFtMs": -1368.89,
+        "vacuumFreeFall3000mTo400mMs": -225.88
+      },
+      "measuredDescentWallSec": 8.33,
+      "glideCheckOver1500ms": {
+        "heightStartM": 400,
+        "heightEndM": 400,
+        "airRushStartMs": 0,
+        "airRushEndMs": 0,
+        "horizontalGlidedM": 0,
+        "expectedGlideSpeedMs": 8,
+        "expectedHorizontalGlidedM": 12,
+        "flightPromptText": "Gliding above the land · WASD fly · drag look · Q/E or Space/Ctrl down/up · Shift fast · G become the wolf · Esc planet. Same fly as photo mode. Speed carries on."
+      }
+    },
+    {
+      "frame": 3,
+      "label": "embody_1frame_398m_camera_snap_and_shiftG_ascent_6674x_teleport_wiping_remote_site",
+      "embodyAudit": {
+        "preEmbodyCamY": 403.75,
+        "preEmbodyHeightAGL": 400,
+        "postEmbodyCamY": 5.3,
+        "embodySnapJumpM": 398.45,
+        "configuredBlendSec": 1,
+        "gameReachedAtFrame": 2,
+        "gameReachedDtMs": 935.7,
+        "embodyFrameTrace": [
+          {
+            "frame": 0,
+            "dtMs": 0,
+            "mode": "band",
+            "camY": 403.75
+          },
+          {
+            "frame": 1,
+            "dtMs": 140.4,
+            "mode": "band",
+            "camY": 403.75
+          },
+          {
+            "frame": 2,
+            "dtMs": 935.7,
+            "mode": "game",
+            "camY": 5.3
+          },
+          {
+            "frame": 3,
+            "dtMs": 1025.9,
+            "mode": "game",
+            "camY": 5.3
+          },
+          {
+            "frame": 4,
+            "dtMs": 1068.2,
+            "mode": "game",
+            "camY": 5.3
+          },
+          {
+            "frame": 5,
+            "dtMs": 1127.3,
+            "mode": "game",
+            "camY": 5.3
+          },
+          {
+            "frame": 6,
+            "dtMs": 1181.7,
+            "mode": "game",
+            "camY": 5.3
+          }
+        ]
+      },
+      "ascentAudit": {
+        "remoteBeforeAscend": true,
+        "siteLonBeforeAscend": -94.49,
+        "lastBandHeightM": 2100,
+        "firstGlobeAltM": 14016219.4,
+        "ascentOneFrameJumpRatio": 6674.4,
+        "firstGlobeLonDegAfterAscent": 65.536,
+        "wipedRemoteSiteLonDeltaDeg": 160.026
+      }
+    }
+  ],
+  "pageErrors": []
+}

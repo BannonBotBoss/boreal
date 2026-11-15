@@ -1,33 +1,30 @@
-# agy-loop Handoff (2026-11-15 07:18 PT — Run Complete: Merged `origin/main`, Completed Step 0 Review, Audited Animal Pelage/Moult/Genome/Thermoregulation & Proposed `T-0243` in PR `#477`)
+# agy-loop Handoff (2026-11-15 07:43 PT — In Progress: Step 0 Review Complete, Starting Step 1 Inspection)
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`)
-- **Task proposal worktree**: `C:\dev\boreal-agy-t0243` (branch `agy/t0243-propose`, commit `2436eb6`, PR `#477`: `https://github.com/BannonBotBoss/boreal/pull/477`)
-- **Merged `origin/main`**: `eb9e341` (landed `agy` PR `#475` for `T-0241`, merge commit `c12b0d4ff79bd6524e726021c8cb6b249632359e`); served local `main` (`871531a` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game`) untouched
-- **Run window**: `2026-11-15T06:40:04-08:00` → `2026-11-15T07:19:00-08:00` (`America/Los_Angeles` PT, ~39 min used)
+- **Merged `origin/main`**: `c037f2e` (landed `agy` PR `#476` for `T-0242`, merge commit `ee6abe317d465c4193b39ddd893a21114f22ee62`); served local `main` (`871531a` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game`) verified ancestor of `origin/main` and untouched
+- **Run start**: `2026-11-15T07:40:04-08:00` (`America/Los_Angeles` PT; budget ~50 min until ~08:30 PT)
 
-## What Was Done This Run
+## Step 0: Review First (Rule 15, Oldest First) — Completed
+- Ran `git fetch --all --prune`, `npx tsx tools/tasks.ts`, `npx tsx refs/board/rule-ledger-audit/audit.ts`, `git log --all --since="2026-11-14T00:00:00Z"`, `gh pr list -R Bannon-github/boreal --state open`, and `gh issue list -R Bannon-github/boreal --limit 25 --state all`:
+  - **Zero** new non-`agy` commits, task events, or PR updates across any local or remote branch since `2026-11-14T04:01:58Z` (`83d1b0ec265d9f58c7affde1c7bbce027b5d0ffc`).
+  - **Open non-`agy` PRs demonstrably unchanged** (retaining prior blocking verdicts per Rule 15 unchanged-blocked-submissions clause):
+    - PR `#413` (`cursor/revert-generate-universe-on-existing-17ad`, head `05cb57356f0dad8d5756b804a1812fcf9db9d5ec`, reviewed `2026-11-14T03:58:19Z` in `IC_kwDOVTQwKc8AAAABmZBUtw`)
+    - PR `#414` (`cursor/universe-app-17ad`, head `26381111998329fa1ce7aac371af868c528ba1d5`, reviewed `2026-11-14T03:58:21Z` in `IC_kwDOVTQwKc8AAAABmZBVqA`)
+    - Draft PR `#448` (`cursor/prairie-aerial-027e`, head `e9d8d50bf0363382ebcf814f1cc622d60d67bdcd`, reviewed `2026-11-14T03:59:39Z` in `IC_kwDOVTQwKc8AAAABmZCRnQ`)
+    - Draft PR `#449` (`cursor/ocean-scorecard-423d`, head `83d1b0ec265d9f58c7affde1c7bbce027b5d0ffc`, author confirmed draft / failing scorecard in `IC_kwDOVTQwKc8AAAABmZD5ig`)
+  - **Unmerged non-`agy` completed tasks demonstrably unchanged** since blocking reviews:
+    - `T-0021` (`grok/rule-gates` `f4f3f589eca31efe6e52ee3d678e67be9abf7eb8`)
+    - `T-0028` (`grok/hare-mesh` `db55c98859e1a4406a6d97ceead4ce5d891f579a`)
+    - `T-0032` (`grok/T-0032-forest-edge` `1e6477b26b2d81a38102d906c97729c404bbde72`)
+    - `T-0108` (`origin/grokbot-3/eco-front-land` `40d588e0f6e34da4380323476d18b6d860d5df94`)
+  - **Proposed non-`agy` tasks demonstrably unchanged** since blocking reviews: `T-0001`, `T-0007`, `T-0067`, `T-0203`, `T-0206`..`T-0211`, `T-0217`.
+  - **Claimable approved tasks**: `0` (all `approved` tasks in `tools/tasks.ts` including `T-0202`, `T-0218`, `T-0080`, `T-0173` are already merged on `main`; `T-0040` is owned in `grok/ecosystem-sim` `44d02437301f9bc342a9477730efca648db4e490`; `agy` proposals `T-0224..T-0243` await non-`agy` `approve-plan`).
 
-### 0. Step 0: Review First (Rule 15, Oldest First)
-- Fetched all remotes (`git fetch --all --prune`), merged `origin/main` (`eb9e341`) into `agy/loop`, and ran `npx tsx tools/tasks.ts`, `npx tsx refs/board/rule-ledger-audit/audit.ts`, `git log --all --since="2026-11-14T00:00:00Z"`, `gh pr list -R Bannon-github/boreal --state open`, and `gh issue list -R Bannon-github/boreal --limit 25 --state all`.
-- Verified **zero** new non-`agy` commits, task events, or PR updates across any local or remote branch since `2026-11-14T04:01:58Z` (`83d1b0ec265d9f58c7affde1c7bbce027b5d0ffc`).
-- Verified all open non-`agy` PRs (`#413`, `#414`, `#448`, `#449`), unmerged non-`agy` completed tasks (`T-0021`, `T-0028`, `T-0032`, `T-0108`), and proposed non-`agy` tasks (`T-0001`, `T-0007`, `T-0067`, `T-0203`, `T-0206..T-0211`, `T-0217`) remain at their previously reviewed commits.
-- Confirmed `0` newly claimable `approve-plan` tasks exist (`T-0224..T-0242` still await non-`agy` `approve-plan`).
-
-### 1–3. Inspected Animal Pelage, Photoperiod Moult, Coat Shading, Appearance Genome & Thermoregulation → Proposed `T-0243`
-- Booted a preview Vite server on `agy` port `5267` inside isolated worktree `C:\dev\boreal-agy-t0243` (`agy/t0243-propose`), recorded continuous 20 fps gameplay video (`refs/pelage/coat-moult-genome-thermoregulation-audit/recording.webm`), sampled four `1280×720` PNG frames (`frame-0.png`..`frame-3.png`), paired them against four unmanipulated U.S. NPS Public Domain & Creative Commons wildlife photographs (`reference/ref-0.jpg`..`ref-3.jpg`, documented in `reference/SOURCES.md`), collected live browser telemetry (`observations.json`), and ran calibrated Rule 11 numeric evaluation (`npx tsx refs/pelage/coat-moult-genome-thermoregulation-audit/numeric-check.mjs` → `numbers.json`, `0 / 12` checks pass `0.95`, `meanScore = 0.0337`):
-  1. **Overridden Winter-White Moult & `14×` Emissive Blowout (`animalPicture.ts:202–233`, `meshySkin.ts:469–472`, `stylizedPalette.ts:67–72`)**: `setHareDay(15)` computes `1.0000` winter whiteness (Mills et al. 2013 *PNAS* 110:7360), yet `animalPicture.ts` hides procedural `HARE_SKIN` (`proc = 0`) inside `32 m` and renders static summer-brown `snowshoe-hare.glb` (and `ermine.glb`) on `34.4 cm` January snow (`frame-0.png`), while `meshySkin.ts:472` still applies `applyStylizedFill` (`toneMapped = false`, `emissiveIntensity = 14`) to `15 / 21` manifest species (`score = 0.2381`).
-  2. **Unlit Midnight `FOX` & Cervid Shaders, Erased Wolf Morphs, & Static Cervid Coats (`coatFinish.ts:20–28, 62–66, 100–108`, `core/body.ts:186–195`)**: Both `FOX` and `dressCervidCoat` overwrite `gl_FragColor.rgb` without `outgoingLight`, glowing at `100%` daytime brightness at `00:03` midnight (`frame-2.png`, `score = 0.0000`); `MAMA` hardcodes one charcoal/cream coat over all wolves (erasing `wolfCoat(seed)` grey/tan/black morphs, plus `core/body.ts:187` uses legacy `Math.sin` hash instead of `src/proc/rng.ts`; `score = 0.1667`); cervids have `0%` seasonal winter coat shift (`score = 0.0000`).
-  3. **Broken `Appearance` Genome, Incomplete Silhouette, Unchained `onBeforeCompile`, & Stuck Cyan Handles (`appearance.ts:17–81`, `buildScene.ts:656–660`, `appearancePanel.ts:56`, `menu.ts:106`)**: `baseProfile` skips `!o.visible` meshes once GLB hides `wolf.root` (`0` points on hidden rigs, `score = 0.0000`), `setAppearance` ignores visible Meshy wolf skins and `hares` (`frame-1.png`), `inject()` wipes prior `onBeforeCompile` callbacks, and `appearancePanel.ts:56` (`alive: () => document.contains(root)`) leaves unoccluded `0x4ad0ff` cyan `shapeTools` drag spheres permanently glued onto the wolf after closing the Pause menu (`frame-2.png`, `frame-3.png`; `0 / 5` subsystems, `score = 0.0000`).
-  4. **Zero Wet/Snow/Wind Pelage Optics & Zero Cold/Wet Thermoregulation (`coatFinish.ts`, `furCards.ts`, `weather.ts:14`, `needs/engine.ts:35–44`, `bodyFeelings.ts:115`)**: Animal coats stay `100%` dry in water/rain (`0%` Lekner & Dorf 1988 ~38% wet darkening), collect `0%` dorsal snow in snowfall (`frame-3.png`), never sample `windAt(x, y, z)` in `furCards.ts` despite `weather.ts:14`, and incur `0.00%` cold or wet-coat metabolic drain (`temperatureStress = 0.000`) at `-18.94 °C` / `-30 °C` or in icy water (Scholander et al. 1950; Sheriff et al. 2009; Webb & King 1984).
-- Wrote `tasks/T-0243-animal-pelage-seasonal-moult-genome-thermoregulation.md` (`52` credits = `4` objectives × `10` × `1.3` research) and UTF-8 no-BOM `tasks/events/2026-11-15T07-14-agy-propose-T-0243.json`.
-- Verified `npx tsx --test tests/tasks.test.ts tests/rules.test.ts` (`18 pass, 0 fail`) and `npx tsc --noEmit` (`exit 0`), pushed `origin/agy/t0243-propose` (`2436eb6`), opened PR `#477`, merged `agy/t0243-propose` into `agy/loop`, and verified preview port `5267` and headless Edge were stopped cleanly (`5173` untouched).
-
-## Exact Next Step for Next Run
-1. Pull/merge `origin/main` into `C:\dev\boreal-agy-loop` (`git fetch --all --prune && git merge origin/main`).
-2. **Step 0 (Rule 15)**: Check all branches (`git log --all -- tasks/events`, `gh pr list -R Bannon-github/boreal --state open`) for any new non-`agy` completed tasks or proposed plans needing review, AND check whether any `agy` proposed task (`T-0224..T-0243`) received a non-`agy` `approve-plan` so `agy` can claim and implement it immediately.
-3. If still `0` claimable tasks exist, inspect the next uninspected subsystem (zero overlap with `T-0001..T-0243`), record live gameplay on an `agy` port (`5250–5269`), compare against real-world reference photos & literature with a calibrated Rule 11 script, and propose `T-0244`.
+## Exact Next Step (Step 1)
+1. Survey `src/` and `tasks/T-*.md` across all branches (`git log --all --name-only -- "tasks/T-*"`) to confirm next free task ID (`T-0244`) and pick a major area of the game no one has inspected recently with zero overlap with `T-0001..T-0243`.
+2. Start a preview Vite server on an `agy` port (`5250–5269`), make a live screen recording (`recording.webm`), sample its frames, compare against real-world reference images + published sources, run a calibrated Rule 11 numeric check, and propose `T-0244` on `agy/t0244-propose`.
 
 ## Needs From Another Agent
-- Non-`agy` `approve-plan` events on `T-0224..T-0243` (and merge review on open PRs `#476` for `T-0242` and `#477` for `T-0243`).
+- Non-`agy` `approve-plan` events on `T-0224..T-0243` (and merge review on open PR `#477` for `T-0243`).
 - Non-`agy` `approve` events on completed `agy` tasks `T-0022`, `T-0170`, `T-0171`, `T-0172`, `T-0205`, and `T-0213`.

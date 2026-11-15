@@ -1,0 +1,125 @@
+{
+  "capturedAt": "2026-11-15T04:58:46.673Z",
+  "baseUrl": "http://127.0.0.1:5259",
+  "observations": [
+    {
+      "frame": 0,
+      "label": "shoreline_photo_fly_submerged_under_staged_lake_plus_dead_focal_slider_and_frozen_meta",
+      "requestedUrlFocalMm": 200,
+      "expectedVerticalFovDeg": 6.867,
+      "actualGameCameraFovDeg": 48,
+      "photoMetaCheck": {
+        "actualLiveHour": 14.063,
+        "actualFormattedClock": "14:03",
+        "recordedMetaGameTime": "12:00",
+        "recordedMetaFocalMm": 200,
+        "recordedMetaEv100": 15
+      },
+      "homeLakeFloorCheck": {
+        "lakeSurfaceY": -0.25,
+        "lakeBedHeightY": -1.649,
+        "photoFlyFloorY": 0.05,
+        "submergedBelowLakeSurfaceM": -0.3
+      },
+      "steepestHomeTileSlopeBurial": {
+        "x": -184,
+        "z": -72,
+        "yaw": 0.7854,
+        "subjectGroundY": 0.537,
+        "camTerrainY": 1.235,
+        "wolfCamY": 1.887,
+        "wolfBurialM": -0.652,
+        "hareCamY": 0.987,
+        "hareBurialM": 0.248
+      },
+      "cameraPanelReadout": "game  EV100 15.0 auto\nP photo  Shift+P photo+EXR  G gallery  ` debug HUD",
+      "playerShorePose": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": 14.62
+      }
+    },
+    {
+      "frame": 1,
+      "label": "midnight_manual_night_exposure_blown_solid_white_by_hardcoded_ev15_reference",
+      "isNightBodyClass": true,
+      "manualNightSettings": {
+        "N": 1.4,
+        "t": 1,
+        "iso": 3200,
+        "ev100": -4.029
+      },
+      "hardcodedAutoEvCalib": 15,
+      "appliedStopsAtMidnight": 19.029,
+      "appliedLinearGain": 534933.5,
+      "manualNightCanvasStats": {
+        "meanSrgbLuma01": 0,
+        "clippedWhiteFraction": 0
+      },
+      "cameraPanelReadoutManualNight": "game  EV100 -4.0 manual\nP photo  Shift+P photo+EXR  G gallery  ` debug HUD",
+      "filterStopsAudit": {
+        "redStops": 0,
+        "greenStops": 0,
+        "blueStops": 0,
+        "luminanceStops": 0,
+        "halphaStops": 12.2076
+      },
+      "sunny16AtMidnightStats": {
+        "meanSrgbLuma01": 0,
+        "clippedWhiteFraction": 0
+      },
+      "autoMidnightStats": {
+        "meanSrgbLuma01": 0,
+        "clippedWhiteFraction": 0
+      },
+      "autoMidnightReadout": "game  EV100 15.0 auto\nP photo  Shift+P photo+EXR  G gallery  ` debug HUD"
+    },
+    {
+      "frame": 2,
+      "label": "photo_dof_misses_wolf_and_blurs_hyperfocal_infinity_plus_incomplete_rewind_hub",
+      "expectedWolfSubjectDistanceM": 3.2,
+      "clickFocusSweepAcrossWolfColumn": [
+        {
+          "screenY": 360,
+          "resultingFocusM": 77.7
+        },
+        {
+          "screenY": 410,
+          "resultingFocusM": 26.9
+        },
+        {
+          "screenY": 460,
+          "resultingFocusM": 21.4
+        },
+        {
+          "screenY": 510,
+          "resultingFocusM": 17.2
+        },
+        {
+          "screenY": 550,
+          "resultingFocusM": 14.6
+        }
+      ],
+      "centerAutofocusConvergedM": 40,
+      "hyperfocalTestSettings": {
+        "focalMm": 50,
+        "fstop": 16,
+        "focusM": 30,
+        "theoreticalHyperfocalM": 5.208,
+        "expectedInfinityBlurPx": 0
+      },
+      "rewindTimelineAudit": {
+        "ringSnapshotsCount": 76,
+        "rewindLabel": "−14.8 s",
+        "playerMovedDuringLiveRunM": 2.133,
+        "worldSecBeforeEnter": 108707.864,
+        "worldSecAtEarliestSnapshotExpected": 108688.931,
+        "worldSecAfterScrubToZero": 108708.124,
+        "worldClockRewoundDeltaSec": 0.26,
+        "pup0MovedDuringLiveRunM": 1.934,
+        "pup0RewoundDeltaM": 0.239
+      }
+    }
+  ],
+  "pageErrors": []
+}

@@ -1,0 +1,186 @@
+{
+  "taskId": "T-0243",
+  "evaluatedAt": "2026-11-15T15:13:58.424Z",
+  "branch": "agy/t0243-propose",
+  "calibration": {
+    "metrics": {
+      "ratioScore": "min(measured, target) / max(measured, target) for strictly positive physical quantities (>= 0.95 pass)",
+      "unitScore": "max(0, 1 - |measured - target| / fullScale) for bounded [0, fullScale] shares/rates (>= 0.95 pass)"
+    },
+    "knownMatches": [
+      {
+        "name": "Procedural HARE_SKIN seasonalWhiteness on Jan 15 (day 15) vs Mills et al. (2013, PNAS 110:7360) full winter white (1.0)",
+        "measured": 1,
+        "target": 1,
+        "score": 1
+      },
+      {
+        "name": "HARE_SKIN winter/summer guard-hair length ratio (43.19 mm / 31.67 mm) vs Sheriff et al. (2009, J. Comp. Physiol. B 179:305)",
+        "measured": 1.3638,
+        "target": 1.3638,
+        "score": 1
+      },
+      {
+        "name": "WOLF_NEEDS heatFactor at +30 C (above +20 C heatAboveC) vs 1 + 0.04*(30-20) = 1.40 evaporative water multiplier",
+        "measured": 1.4,
+        "target": 1.4,
+        "score": 1
+      }
+    ],
+    "knownMismatches": [
+      {
+        "name": "Summer brown pelage (whiteness = 0.0) in midwinter snow (target whiteness = 1.0, Mills et al. 2013)",
+        "measured": 0,
+        "target": 1,
+        "score": 0
+      },
+      {
+        "name": "Zero cold metabolic increase (+0%) at -30 C vs winter Snowshoe Hare Scholander-curve increase (+40.8%, Sheriff et al. 2009)",
+        "measured": 0,
+        "target": 0.4082,
+        "score": 0
+      }
+    ]
+  },
+  "summary": {
+    "totalChecks": 12,
+    "passingAt95Pct": 0,
+    "meanScore": 0.0337,
+    "passesGate": false
+  },
+  "runtimeObservationsLoaded": true,
+  "checks": [
+    {
+      "id": "snowshoe_hare_jan15_visible_winter_whiteness",
+      "quantity": "Near-camera (<32 m) visible Snowshoe Hare pelage whiteness on Jan 15 (day 15)",
+      "gameValue": 0,
+      "natureTarget": 1,
+      "unit": "whiteness [0..1]",
+      "source": "Mills et al. (2013) PNAS 110:7360; Sheriff et al. (2009) J. Comp. Physiol. B 179:305",
+      "score": 0,
+      "resemblesNature": false,
+      "note": "HARE_SKIN computes 1.0000 winter white, but animalPicture.ts hides HARE_SKIN (proc=0) and draws brown snowshoe-hare.glb"
+    },
+    {
+      "id": "boreal_winter_white_moult_species_coverage",
+      "quantity": "Manifest winter-white moulting species (Snowshoe Hare, Ermine) white in January",
+      "gameValue": "0 / 2",
+      "natureTarget": "2 / 2",
+      "unit": "species",
+      "source": "Mills et al. (2013) PNAS 110:7360; King & Powell (2007) Natural History of Weasels and Stoats",
+      "score": 0,
+      "resemblesNature": false,
+      "note": "Both snowshoe-hare.glb and ermine.glb render static summer-brown pelage all winter"
+    },
+    {
+      "id": "stored_meshy_species_physical_tonemapped_coat_share",
+      "quantity": "Manifest animal species without unmapped 14x emissive blowout (toneMapped=true, emissive=0)",
+      "gameValue": "5 / 21",
+      "natureTarget": "21 / 21",
+      "unit": "species",
+      "source": "Pharr, Jakob & Humphreys (2023) Physically Based Rendering 4th ed.; coatFinish.ts:86-90",
+      "score": 0.2381,
+      "resemblesNature": false,
+      "note": "15 species hit applyStylizedFill (emissiveIntensity=14, toneMapped=false) and Red Fox sets toneMapped=false"
+    },
+    {
+      "id": "nocturnal_scene_light_coupling_fox_and_cervid",
+      "quantity": "Custom non-wolf Meshy coat shaders (Red Fox, Cervids) coupled to outgoingLight at night",
+      "gameValue": "0 / 2",
+      "natureTarget": "2 / 2",
+      "unit": "shaders",
+      "source": "Johnsen et al. (2006) J. Exp. Biol. 209:789 (starlight/nocturnal irradiance <1e-3x noon)",
+      "score": 0,
+      "resemblesNature": false,
+      "note": "Both FOX (coatFinish.ts:62-66) and dressCervidCoat (coatFinish.ts:100-108) omit outgoingLight and glow full-bright at 00:00"
+    },
+    {
+      "id": "gray_wolf_coat_polymorphism_and_shared_rng",
+      "quantity": "Visible Meshy Gray Wolf coat morphs (grey/tan/black) & shared src/proc/rng.ts compliance",
+      "gameValue": "1/3 morphs, sin-hash=true",
+      "natureTarget": "3/3 morphs + src/proc/rng.ts",
+      "unit": "composite [0..1]",
+      "source": "Gipson et al. (2002) Wildl. Soc. Bull. 30:821; Anderson et al. (2009) Science 323:1339; PROJECT-RULES Rule 2",
+      "score": 0.1667,
+      "resemblesNature": false,
+      "note": "MAMA shader overwrites gl_FragColor.rgb with one charcoal/cream coat for all wolves; body.ts:187 uses Math.sin hash"
+    },
+    {
+      "id": "cervid_seasonal_summer_winter_coat_shift",
+      "quantity": "Cervid summer rufous-tan -> winter grey-brown guard-hair R/B chroma shift",
+      "gameValue": 0,
+      "natureTarget": 0.4,
+      "unit": "relative R/B shift",
+      "source": "Jacobsen (1980) J. Wildl. Manage. 44:691-697; Cowan (1956) Deer of North America",
+      "score": 0,
+      "resemblesNature": false,
+      "note": "dressCervidCoat bakes static summer coatOf(species) RGB literal with zero dayOfYear winter shift"
+    },
+    {
+      "id": "appearance_base_profile_silhouette_points_with_glb_active",
+      "quantity": "Shape-tools side-silhouette points captured on player rig after GLB hides procedural mesh",
+      "gameValue": 0,
+      "natureTarget": 64,
+      "unit": "silhouette points",
+      "source": "src/render/appearance.ts:17-32 & src/ui/shapeTools.ts:68-80 spec",
+      "score": 0,
+      "resemblesNature": false,
+      "note": "baseProfile skips !o.visible meshes after setBodyShare(wolf.root, 0), caching min=+Infinity, size=-Infinity, side=[]"
+    },
+    {
+      "id": "appearance_genome_live_meshy_and_shader_integration",
+      "quantity": "Appearance genome integration (visible Meshy scale/tint, hares, onBeforeCompile chain, MAMA coatTint, handle hide)",
+      "gameValue": "0 / 5",
+      "natureTarget": "5 / 5",
+      "unit": "subsystems",
+      "source": "src/core/genome.ts, src/render/appearance.ts:41-81, src/ui/appearancePanel.ts:56, src/render/buildScene.ts:656-660",
+      "score": 0,
+      "resemblesNature": false,
+      "note": "Visible Meshy wolf ignores genome; inject() wipes prev onBeforeCompile; hares omitted; cyan 0x4ad0ff handles stay stuck after menu close"
+    },
+    {
+      "id": "wet_pelage_lekner_dorf_optical_darkening",
+      "quantity": "Water-saturated pelage diffuse albedo darkening & guard-hair roughness clumping",
+      "gameValue": 0,
+      "natureTarget": 0.38,
+      "unit": "albedo drop fraction",
+      "source": "Lekner & Dorf (1988) Appl. Opt. 27:1278-1280 (water film n=1.33 internal reflection ~38% darkening)",
+      "score": 0,
+      "resemblesNature": false,
+      "note": "Terrain applies wet darkening/roughness, but animal coats and fur cards stay 100% dry when swimming/wading"
+    },
+    {
+      "id": "snow_dusting_and_wind_at_fur_deflection",
+      "quantity": "Environmental coat coupling: dorsal snowfall dusting + weather.ts:14 windAt fur-card deflection",
+      "gameValue": "0 / 2",
+      "natureTarget": "2 / 2",
+      "unit": "couplings",
+      "source": "src/core/weather.ts:14 (\"windAt(x,y,z) is sampled by trees, grass, fur...\"); boreal winter snowfall optics",
+      "score": 0,
+      "resemblesNature": false,
+      "note": "Zero dorsal snow accumulation on coats and zero windAt sampling in furCards.ts"
+    },
+    {
+      "id": "cold_exposure_scholander_metabolic_cost_at_minus_30c",
+      "quantity": "Standing metabolic cold-thermogenesis increase at -30 C (winter Snowshoe Hare below T_lc = -10 C)",
+      "gameValue": "0% (stress=0.000)",
+      "natureTarget": "40.82% (stress > 0)",
+      "unit": "% metabolic increase above TNZ",
+      "source": "Scholander et al. (1950) Biol. Bull. 99:237; Hart et al. (1965) Can. J. Zool. 43:731; Sheriff et al. (2009)",
+      "score": 0,
+      "resemblesNature": false,
+      "note": "heatFactor (needs/engine.ts:35) clamps Math.max(0, tC - heatAboveC): 0% cold drain and 0.000 temperatureStress at -30 C"
+    },
+    {
+      "id": "wet_coat_thermal_conductance_penalty",
+      "quantity": "Soaked-pelage excess thermal conductance (C_wet/C_dry - 1) in cold water / rain",
+      "gameValue": "0 (1.00x dry)",
+      "natureTarget": "2 (3.00x dry)",
+      "unit": "excess conductance multiple",
+      "source": "Scholander et al. (1950) Biol. Bull. 99:237; Webb & King (1984) J. Therm. Biol. 9:189 (2.5-4.0x wet fur conductance)",
+      "score": 0,
+      "resemblesNature": false,
+      "note": "NeedsStep & BodyStep omit coat wetness/submersion; swimming in 0 C January water incurs 0% extra heat loss"
+    }
+  ]
+}

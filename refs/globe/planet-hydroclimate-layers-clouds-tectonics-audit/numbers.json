@@ -1,0 +1,250 @@
+{
+  "task": "T-0247",
+  "generatedAt": "2026-11-15T21:58:37.527Z",
+  "calibration": {
+    "knownMatches": [
+      {
+        "name": "ECCC Kenora A WMO 71850 July daily mean 19.7 C vs 19.9 C reanalysis cell (scale 15 C)",
+        "score": 0.9867
+      },
+      {
+        "name": "GPCC / GPCP v2.3 global land mean precipitation 786 mm/yr vs 795 mm/yr",
+        "score": 0.9887
+      },
+      {
+        "name": "Schaefer (1993) / atmSkyF civil-twilight skylight ratio at -1.2 deg (0.01589 vs 0.01600)",
+        "score": 0.9931
+      },
+      {
+        "name": "Argus et al. (2011) NNR-MORVEL56 right-handed ECEF Euler velocity alignment (cosTheta = +1.0)",
+        "score": 1
+      }
+    ],
+    "knownMismatches": [
+      {
+        "name": "Central Sahara (23.5N, 10E) receiving 720.6 mm/yr humid-subtropical Cfa rain vs WMO Tamanrasset 43 mm/yr BWh",
+        "score": 0.0597
+      },
+      {
+        "name": "localClouds skyLevel(-1.2 deg) = 0.3311 omitting 0.048 sunset-to-daylight ratio vs atmSkyF = 0.01589",
+        "score": 0.048
+      },
+      {
+        "name": "Sign-inverted left-handed MORVEL Euler velocity (-v_ECEF, cosTheta = -1.0)",
+        "score": 0
+      }
+    ]
+  },
+  "calibrationValid": true,
+  "summary": {
+    "totalChecks": 12,
+    "passedChecks": 0,
+    "meanScore": 0.1196,
+    "overallPass": false
+  },
+  "checks": [
+    {
+      "id": "kenora_annual_precip_and_koppen_class",
+      "metric": "ratioScore(mapMm, 715.0) against ECCC 1981-2010 Kenora A WMO 71850 (715.0 mm/yr, Dfb boreal forest)",
+      "gameValue": {
+        "mapMm": 217.9,
+        "koppen": "BSk",
+        "name": "Arid cold steppe"
+      },
+      "referenceValue": {
+        "mapMm": 715,
+        "koppen": "Dfb",
+        "source": "Environment and Climate Change Canada 1981-2010 Climate Normals, Kenora A (ID 6034075 / WMO 71850); Peel et al. 2007 HESS 11:1633"
+      },
+      "score": 0.3047,
+      "pass": false
+    },
+    {
+      "id": "kenora_july_mean_temperature",
+      "metric": "deltaScore(julyTC, 19.7, 15.0) against ECCC 1981-2010 Kenora A July daily mean (19.7 C)",
+      "gameValue": {
+        "julyTC_90x180": 27.57,
+        "julyTC_180x360": 27.66,
+        "saharaJulyTC": 26.02
+      },
+      "referenceValue": {
+        "julyTC": 19.7,
+        "source": "ECCC 1981-2010 Climate Normals, Kenora A (19.7 C July mean; boreal Dfb requires Thot < 22.0 C per Peel et al. 2007 Table 1)"
+      },
+      "score": 0.4756,
+      "pass": false
+    },
+    {
+      "id": "central_sahara_hyperarid_precipitation",
+      "metric": "ratioScore(mapMm, 43.0) at 23.5N, 10.0E against WMO Tamanrasset (60680) 43.0 mm/yr hyper-arid BWh normal",
+      "gameValue": {
+        "mapMm": 719.31,
+        "koppen": "Cfa",
+        "name": "Temperate, no dry season, hot summer",
+        "minMonthMm": 38.11,
+        "julRh180": 0.777
+      },
+      "referenceValue": {
+        "mapMm": 43,
+        "koppen": "BWh",
+        "source": "WMO 1981-2010 Climatological Normals, Tamanrasset Algeria (WMO 60680, 22.78N 5.52E, 43 mm/yr, RH 15-25%, BWh); Peel et al. 2007"
+      },
+      "score": 0.0598,
+      "pass": false
+    },
+    {
+      "id": "global_land_mean_precipitation_budget",
+      "metric": "ratioScore(globalLandMmYr, 786.0) against GPCC / GPCP v2.3 global land mean precipitation",
+      "gameValue": {
+        "globalLandMmYr": 1566.9,
+        "globalLandMmDay": 4.293,
+        "globalAllMmDay": 3.089,
+        "yakutskKoppen": "BWk",
+        "yakutskJanTC": -23.89
+      },
+      "referenceValue": {
+        "globalLandMmYr": 786,
+        "globalLandMmDay": 2.153,
+        "yakutskKoppen": "Dfd",
+        "yakutskJanTC": -38.6,
+        "source": "Schneider et al. 2014 Theor. Appl. Climatol. 115:15 (GPCC 786 mm/yr land); Adler et al. 2018 Atmosphere 9:138 (GPCP v2.3 2.69 mm/day global)"
+      },
+      "score": 0.5016,
+      "pass": false
+    },
+    {
+      "id": "planet_layers_unshadowed_tier_fraction",
+      "metric": "Fraction of active PlanetSim LAYER_TIERS (tiers 0..4) where LAYERS_FRAG samples spun-up uLayerTex under default uHydroLayer",
+      "gameValue": {
+        "unshadowedTiers": 0,
+        "activeTiers": 5,
+        "uHydroLayerDefault": 1
+      },
+      "referenceValue": {
+        "unshadowedTiers": 5,
+        "activeTiers": 5,
+        "source": "planetLayers.ts:15-17, 101-113 vs globeView.ts:687 (uHydroLayer = 1 gates off uHydroLayer < 0.5 on all 5 active tiers)"
+      },
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "globe_snow_ice_checkbox_suppression",
+      "metric": "Fraction of seasonal snow/sea-ice layer pixels suppressed when unchecking Snow / ice in #globe-layers",
+      "gameValue": {
+        "uLayersXYWhenOff": [
+          0,
+          0
+        ],
+        "hydroShaderReadsSnowToggle": false,
+        "liveChangedPixelsFraction": 0
+      },
+      "referenceValue": {
+        "expectedSuppression": 1,
+        "source": "layerPanel.ts:29, 44 & planetLayers.ts:88, 108-113 (unchecking Snow / ice sets uLayers.xy = 0, ignored by uHydroLayer > 0.5 and baked planet.ts:298 iceCover)"
+      },
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "orbital_soil_moisture_visibility_gate",
+      "metric": "Agreement of orbital (14,016 km) soil-moisture darkening weight in LAYERS_FRAG with visibility.ts angular-resolution gate",
+      "gameValue": {
+        "effectiveHydroSoilWeightAtOrbit": 1,
+        "visibilityWeightSoilAtOrbit": 0
+      },
+      "referenceValue": {
+        "expectedSoilWeightAtOrbit": 0,
+        "characteristicScaleM": 2000,
+        "angularPixelsAt14016Km": 0.023,
+        "source": "visibility.ts visibleWeight(soilMoisture, 14016 km) = 0 (Lobell & Asner 2002 ~2 km soil patches unresolved from 2.2 R_E orbit)"
+      },
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "local_clouds_civil_twilight_skylight_continuity",
+      "metric": "ratioScore(skyLevel(-1.2 deg), atmSkyF(-1.2 deg)) against Schaefer (1993) / CIE sunset-to-daylight illuminance ratio (960 / 20000 = 0.048)",
+      "gameValue": {
+        "skyLevelAtMinus1_2Deg": 0.33113,
+        "overbrightRatio": 20.833,
+        "horizonDirectSunFloor": 0.25
+      },
+      "referenceValue": {
+        "atmSkyFAtMinus1_2Deg": 0.01589,
+        "horizonDirectSunFloor": 0,
+        "source": "Schaefer 1993 Vistas Astron. 36:311; skyVisibility.ts twilightIlluminance (~960 lx at h=0 vs 20,000 lx clear diffuse day = 0.048 in atmosphere.ts:204)"
+      },
+      "score": 0.048,
+      "pass": false
+    },
+    {
+      "id": "kept_clouds_game_mode_dynamic_lighting_sync",
+      "metric": "Fraction of time-varying solar/skylight uniforms (uSunLocal, uSunCol, uSunMu, uSkyF, uAlb) updated by keptClouds in game mode",
+      "gameValue": {
+        "updatedUniforms": 0,
+        "totalDynamicUniforms": 5,
+        "standaloneReloadHasLocalClouds": false
+      },
+      "referenceValue": {
+        "updatedUniforms": 5,
+        "totalDynamicUniforms": 5,
+        "standaloneReloadHasLocalClouds": true,
+        "source": "inpage.ts:548-560 & localClouds.ts:360-389 (keptClouds freezes landing-instant sun/sky uniforms across dusk and midnight)"
+      },
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "morvel_plate_velocity_vector_handedness",
+      "metric": "Mean (1 + cosTheta)/2 across all 25 NNR-MORVEL56 plates vs right-handed ECEF Euler kinematics v = omega x r",
+      "gameValue": {
+        "meanCosTheta": -1,
+        "alignedPlates": 0,
+        "totalPlates": 25,
+        "invertedDivergentConvergentBoundaries": "2867 / 2867 (100.0%)"
+      },
+      "referenceValue": {
+        "meanCosTheta": 1,
+        "alignedPlates": 25,
+        "invertedDivergentConvergentBoundaries": "0 / 2589 (0.0%)",
+        "source": "Argus, Gordon & DeMets 2011 Geochem. Geophys. Geosyst. 12:Q11001 Table 1 (NNR-MORVEL56); Bird 2003 G3 4:1027"
+      },
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "plate_boundary_spherical_sampling_isotropy",
+      "metric": "Ratio of near-polar (89.8 deg) to equatorial (0.2 deg) zonal point spacing dx = R cos(lat) dlon in boundaries()",
+      "gameValue": {
+        "polarToEquatorialDxRatio": 0.00349,
+        "polarOversamplingFactor": 286.5
+      },
+      "referenceValue": {
+        "isotropicSpacingRatio": 1,
+        "source": "González 2010 Math. Geosci. 42:49 (uniform spherical / Fibonacci sampling vs equirectangular 1/cos(lat) polar crowding in plates.ts:48)"
+      },
+      "score": 0.0035,
+      "pass": false
+    },
+    {
+      "id": "axis_cutaway_clipping_key_and_color_pipeline",
+      "metric": "Mean of 4 Axis cutaway gates: R key wired, 6/6 globe shells clipped, discMat tonemap+sRGB chunks, and oblique 3D orbit view allowed",
+      "gameValue": {
+        "hasKeyRToggle": 0,
+        "clippedGlobeShells": "1 / 6",
+        "discHasTonemapAndColorspace": 0,
+        "discAllowsObliqueOrbitView": 0
+      },
+      "referenceValue": {
+        "hasKeyRToggle": 1,
+        "clippedGlobeShells": "6 / 6",
+        "discHasTonemapAndColorspace": 1,
+        "discAllowsObliqueOrbitView": 1,
+        "source": "axisView.ts:6, 34-45, 86, 102-104 & Dziewonski & Anderson 1981 Phys. Earth Planet. Inter. 25:297 (PREM)"
+      },
+      "score": 0.0417,
+      "pass": false
+    }
+  ]
+}

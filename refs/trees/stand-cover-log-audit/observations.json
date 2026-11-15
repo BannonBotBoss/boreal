@@ -1,0 +1,118 @@
+{
+  "capturedAt": "2026-11-15T09:20:01.598Z",
+  "baseUrl": "http://127.0.0.1:5261",
+  "observations": [
+    {
+      "frame": 0,
+      "scene": "kenora_staged_upland_water_trees",
+      "player": {
+        "x": -1379.9,
+        "z": -784.27,
+        "yaw": -0.1963
+      },
+      "cover": {
+        "lat": 49.77705151076499,
+        "lon": 65.5559012341342,
+        "elevM": 208.962015830373,
+        "vegetation": 0.5133771482264045,
+        "water": false,
+        "biome": "prairie",
+        "coastM": 72214.89784980303,
+        "treeShare": 0.04591836734693877,
+        "stemsPerHa": 73,
+        "heightM": 0.8368241592171703,
+        "scaleMul": 0.06973534660143087
+      },
+      "farTreesInstances": 0,
+      "floraInstances": 0
+    },
+    {
+      "frame": 1,
+      "scene": "sahara_hyperarid_erg_boreal_forest_bug",
+      "latLon": [
+        21,
+        99.00000000000001
+      ],
+      "siteTreeShare": 0.007346938775510205,
+      "player": {
+        "x": -63.05,
+        "z": 242.31,
+        "yaw": 0
+      },
+      "cover": {
+        "lat": 20.997820855750813,
+        "lon": 99.00060735336247,
+        "elevM": 3173.1487708816726,
+        "vegetation": 0.9996773413777207,
+        "water": false,
+        "biome": "boreal",
+        "coastM": 624919.0626016861,
+        "treeShare": 1,
+        "stemsPerHa": 2716,
+        "heightM": 22.999577492845553,
+        "scaleMul": 1
+      },
+      "farTreesInstances": 1625,
+      "floraInstances": 0
+    },
+    {
+      "frame": 2,
+      "scene": "greenland_ice_sheet_boreal_spruce_and_grass_bug",
+      "latLon": [
+        48.50000000000001,
+        -111
+      ],
+      "datumM": 2868.4461002310713,
+      "siteTreeShare": 0,
+      "player": {
+        "x": -98.76,
+        "z": -31.48,
+        "yaw": 0
+      },
+      "cover": {
+        "lat": 48.500283098269506,
+        "lon": -110.99865960326157,
+        "elevM": 2870.5287095345457,
+        "vegetation": 0,
+        "water": false,
+        "biome": "rock",
+        "coastM": 442077.3890808843,
+        "treeShare": 0,
+        "stemsPerHa": 0,
+        "heightM": 0,
+        "scaleMul": 1
+      },
+      "farTreesInstances": 0,
+      "floraInstances": 0
+    },
+    {
+      "frame": 3,
+      "scene": "kenora_rotated_giant_chainsaw_log_and_birch_crown",
+      "targetLog": {
+        "key": "extra-log:16:-9:0",
+        "x": 653.89,
+        "z": -327.81,
+        "y": 6.75,
+        "rotationRad": 5.061,
+        "scale": 1.379,
+        "midDiameterM": 1.034,
+        "buttDiameterM": 1.186,
+        "lengthM": 6.066,
+        "grassDensityAtLog": 0.45,
+        "camera": {
+          "x": 653.07,
+          "z": -323.04,
+          "yaw": -0.1705
+        }
+      },
+      "player": {
+        "x": 653.07,
+        "z": -323.04,
+        "yaw": -0.1705
+      },
+      "farTreesInstances": 0,
+      "floraInstances": 0
+    }
+  ],
+  "pageErrors": []
+}

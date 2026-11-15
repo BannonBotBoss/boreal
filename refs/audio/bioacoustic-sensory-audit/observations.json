@@ -1,0 +1,138 @@
+{
+  "capturedAt": "2026-11-15T12:10:10.996Z",
+  "baseUrl": "http://127.0.0.1:5264",
+  "observations": [
+    {
+      "frame": 0,
+      "label": "pre_unlock_deafness_45m_cull_cliff_and_unattenuated_loud_spatial_cue",
+      "preUnlockCtxCount": 0,
+      "preUnlockHearingArrows": 0,
+      "cullDistanceM": 45,
+      "mixHearingDistanceM": 40,
+      "playerHearingRadiusM": 40,
+      "sensesRangeM": 40,
+      "deerAgentSnortRadiusM": 200,
+      "callersWithin500m": {
+        "total": 2,
+        "loons": 0,
+        "owls": 0,
+        "woodpeckers": 2,
+        "nearestLoonDistM": null
+      },
+      "callersWithin45mCull": {
+        "total": 0,
+        "loons": 0
+      },
+      "captionAt1m": "something, ahead, loud",
+      "captionAt39_5mUnattenuated": "something, ahead, loud",
+      "liveArrowsAt38m": [],
+      "liveArrowsAt46_5m": 0,
+      "samplePannerConfig": null
+    },
+    {
+      "frame": 1,
+      "label": "mother_wolf_with_vocalizing_pups_zero_spatial_hearing_cues",
+      "pupVocalizationsHeard": [
+        {
+          "kind": "whimper",
+          "clip": "whimper_01",
+          "x": -98.22159072729977,
+          "z": -101.6742101524523,
+          "ageYears": 0.08091495192307627,
+          "rate": 1.2272410055497203
+        },
+        {
+          "kind": "whimper",
+          "clip": "whimper_03",
+          "x": -98.52936852673817,
+          "z": -100.23631801688556,
+          "ageYears": 0.0809362227564094,
+          "rate": 1.2171320737414129
+        }
+      ],
+      "sensesHearingArrowCount": 0,
+      "sensesHearingArrows": [],
+      "senseStreamHearingBubbles": 0,
+      "senseStreamScentBubbles": 2
+    },
+    {
+      "frame": 2,
+      "label": "substrate_blind_paw_footsteps_soft_snow_peat_vs_hard_till_rock",
+      "softestCell": {
+        "x": -75.74,
+        "z": -119.65,
+        "topLayer": "snow",
+        "topThicknessM": 0.3426,
+        "organicM": 0.1183,
+        "sinkM": 0.131,
+        "absorb": 0.4073,
+        "cost": 2.7512
+      },
+      "hardestCell": {
+        "x": -115.74,
+        "z": -119.65,
+        "topLayer": "snow",
+        "topThicknessM": 0.3426,
+        "organicM": 0.091,
+        "sinkM": 0.0047,
+        "absorb": 0.9506,
+        "cost": 1.0118,
+        "localHardestAbsorb": 0.4073
+      },
+      "softStepCount": 0,
+      "hardStepCount": 0,
+      "meanSoftStepGain": 0,
+      "meanHardStepGain": 0,
+      "softToHardGainRatio": null,
+      "attenuationDbOnSoftGround": 0,
+      "meanSoftStepRate": 0,
+      "meanHardStepRate": 0
+    },
+    {
+      "frame": 3,
+      "label": "stationary_howl_prey_deafness_and_orbit_hrtf_sight_halo_desync",
+      "targetHareBeforeHowl": {
+        "id": 5,
+        "x": 15.144970660371115,
+        "z": -22.714579248719186,
+        "state": "nibble",
+        "linked": 2,
+        "knows": false,
+        "d": 87.4079315088717
+      },
+      "targetHareAfterHowlAt6_5m": {
+        "id": 5,
+        "x": 15.358817555894468,
+        "z": -21.069111398886246,
+        "state": "flee",
+        "linked": 1,
+        "knows": true
+      },
+      "howlAndGrowlWebAudioSourcesFired": 7,
+      "deerSoundPerceptDuringHowlAt6_5m": 0,
+      "hareHearingPerceptDuringHowlAt6_5m": 0,
+      "sightBubblesLookingForwardAtHare": 2,
+      "pYaw": 3.711235999703108,
+      "cueBeaconsFnArity": 4,
+      "listenerAt90DegOrbit": {
+        "forwardX": 0.5393,
+        "forwardZ": 0.8421
+      },
+      "expectedWolfBodyForward": {
+        "forwardX": 0.5393,
+        "forwardZ": 0.8421
+      },
+      "expectedCameraForward90": {
+        "forwardX": -0.8427,
+        "forwardZ": 0.5383
+      },
+      "sightBubblesWhenCameraOrbited180DegBehindWolfEyes": 1,
+      "haloSupportsSightBeacons": false,
+      "haloBeaconKindsSupported": [
+        "sound",
+        "scent"
+      ]
+    }
+  ],
+  "pageErrors": []
+}

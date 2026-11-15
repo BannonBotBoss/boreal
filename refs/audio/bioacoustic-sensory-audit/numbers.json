@@ -1,0 +1,162 @@
+{
+  "task": "T-0240",
+  "generatedAt": "2026-11-15T12:11:01.886Z",
+  "metric": {
+    "positiveRatio": "ratioScore(a, b) = min(a, b) / max(a, b)",
+    "boundedError": "unitScore(measured, target, fullScale) = max(0, 1 - |measured - target| / fullScale)",
+    "passThreshold": 0.95
+  },
+  "calibration": {
+    "knownMatches": {
+      "wolfScentRangeMech1970": 1,
+      "deerSnortRadiusAtkeson1988": 1,
+      "jumpLandingGroundAbsorbScaling": 1
+    },
+    "knownMismatches": {
+      "cull45mVsLoon500m": 0.09,
+      "stationaryHowlZeroPreySound": 0
+    },
+    "calibrated": true
+  },
+  "runtimeStepSample": {
+    "deterministicPawWalkLevel": 0.6475,
+    "softestCell": {
+      "x": -75.74,
+      "z": -119.65,
+      "topLayer": "snow",
+      "topThicknessM": 0.3426,
+      "organicM": 0.1183,
+      "sinkM": 0.131,
+      "absorb": 0.4073,
+      "cost": 2.7512
+    },
+    "hardestCell": {
+      "x": -115.74,
+      "z": -119.65,
+      "topLayer": "snow",
+      "topThicknessM": 0.3426,
+      "organicM": 0.091,
+      "sinkM": 0.0047,
+      "absorb": 0.9506,
+      "cost": 1.0118,
+      "localHardestAbsorb": 0.4073
+    }
+  },
+  "checks": [
+    {
+      "id": "loon_wail_audibility_radius_m",
+      "game": 45,
+      "natureTarget": 500,
+      "unit": "m",
+      "source": "Mager, Walcott & Piper (2007), Bioacoustics 16:149 (108 dB SPL at 1 m -> 1.5-5 km; >= 500 m loaded world)",
+      "score": 0.09,
+      "passes95": false
+    },
+    {
+      "id": "owl_hoot_and_woodpecker_drum_earshot_m",
+      "game": 45,
+      "natureTarget": "350 m owl / 250 m woodpecker",
+      "unit": "m",
+      "source": "Odom & Mennill (2010), Condor 112:549; Dodenhoff et al. (2001), Auk 118:943",
+      "score": 0.1543,
+      "passes95": false
+    },
+    {
+      "id": "deer_alarm_snort_player_earshot_m",
+      "game": 40,
+      "natureTarget": 200,
+      "unit": "m",
+      "source": "Atkeson, Marchinton & Miller (1988), Am. Midl. Nat. 120:194 & DEER_AGENT.social.snort.radius = 200 m",
+      "score": 0.2,
+      "passes95": false
+    },
+    {
+      "id": "spatial_sound_cue_distance_attenuation_at_39m",
+      "game": 0.9,
+      "natureTarget": 0.0584,
+      "unit": "0..1 cue intensity",
+      "source": "ISO 9613-2 (1996) & Wiley & Richards (1978), Behav. Ecol. Sociobiol. 3:69 (spherical spreading rolloff)",
+      "score": 0.0649,
+      "passes95": false
+    },
+    {
+      "id": "biological_hearing_when_audio_muted_or_pre_unlock",
+      "game": 0,
+      "natureTarget": 1,
+      "unit": "cues delivered",
+      "source": "Heffner (1983), J. Comp. Psychol. 97:138 (embodied animal hearing independent of UI speaker mute)",
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "mother_wolf_pup_vocalization_spatial_cues",
+      "game": 0,
+      "natureTarget": 2,
+      "unit": "spatial cues",
+      "source": "Packard (2003), in Mech & Boitani Wolves, Univ. of Chicago Press (maternal acoustic localization of pups)",
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "paw_footstep_soft_snow_peat_vs_rock_gain_ratio",
+      "game": 1,
+      "natureTarget": 0.4285,
+      "unit": "gain ratio (soft/hard)",
+      "source": "Ishida (1965), Low Temp. Sci. A23:31; Embleton et al. (1983), JASA 74:1239; ground.ts footing().absorb",
+      "runtimeSoftToHardRatio": 1,
+      "score": 0.4285,
+      "passes95": false
+    },
+    {
+      "id": "npc_prey_hearing_of_stationary_wolf_howl_at_6_5m",
+      "game": 0,
+      "natureTarget": 1,
+      "unit": "0..1 percept",
+      "source": "Harrington & Mech (1979), Can. J. Zool. 57:751 (~105 dB SPL howl); Hettena et al. (2014), Behav. Ecol. 25:629",
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "npc_prey_footfall_substrate_muffling_ratio",
+      "game": 1,
+      "natureTarget": 0.4285,
+      "unit": "sound percept ratio (snow/rock)",
+      "source": "Lingle & Wilson (2001), Ethology 107:125 & Ishida (1965) (snow/moss muffles stalking footfalls)",
+      "score": 0.4285,
+      "passes95": false
+    },
+    {
+      "id": "binaural_hrtf_listener_error_at_90deg_camera_orbit",
+      "game": 90.07,
+      "natureTarget": 0,
+      "unit": "deg",
+      "source": "Middlebrooks & Green (1991), Annu. Rev. Psychol. 42:135 (HRTF listener tracks view azimuth)",
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "anatomical_sight_hits_under_180deg_camera_orbit",
+      "game": 0,
+      "natureTarget": 1,
+      "unit": "sight hits (prey 6.5m ahead of snout)",
+      "source": "Miller & Murphy (1995), JAVMA 207:1623 (canid 250 deg ocular FOV anchored to head, not third-person camera)",
+      "runtimeOrbited180SightBubbles": 1,
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "senses_halo_3d_beacon_modality_coverage",
+      "game": "2 / 3 (sound, scent; omits sight)",
+      "natureTarget": "3 / 3 (sound, scent, sight)",
+      "unit": "modalities",
+      "source": "ui/senses.ts sensesHUD.{sounds,scents,sights} -> render/sensesHalo.ts parity (T-0171)",
+      "sampleCueBeaconsWritten": 2,
+      "score": 0.6667,
+      "passes95": false
+    }
+  ],
+  "passingCount": 0,
+  "totalChecks": 12,
+  "meanScore": 0.1694,
+  "passesGate": false
+}

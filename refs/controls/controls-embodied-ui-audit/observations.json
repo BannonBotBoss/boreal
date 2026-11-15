@@ -1,0 +1,122 @@
+{
+  "capturedAt": "2026-11-15T12:55:54.587Z",
+  "baseUrl": "http://127.0.0.1:5265",
+  "observations": [
+    {
+      "frame": 0,
+      "label": "embodied_hud_health_bars_data_btn_and_steer_throttle_drop",
+      "inspectorHidden": true,
+      "statusText": "11:37 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+      "hasNumericHealthReadoutsInEmbodiedPlay": true,
+      "dataBtnRect": {
+        "x": 8,
+        "y": 8,
+        "width": 79.953125,
+        "height": 35,
+        "top": 8,
+        "right": 87.953125,
+        "bottom": 43,
+        "left": 8
+      },
+      "headerRect": {
+        "x": 34,
+        "y": 30,
+        "width": 226.84375,
+        "height": 100,
+        "top": 30,
+        "right": 260.84375,
+        "bottom": 130,
+        "left": 34
+      },
+      "dataBtnZIndex": 70,
+      "camPanelRect": {
+        "x": 1052,
+        "y": 679,
+        "width": 220,
+        "height": 33,
+        "top": 679,
+        "right": 1272,
+        "bottom": 712,
+        "left": 1052
+      },
+      "helpBtnRect": {
+        "x": 1130.25,
+        "y": 662,
+        "width": 119.75,
+        "height": 38,
+        "top": 662,
+        "right": 1250,
+        "bottom": 700,
+        "left": 1130.25
+      },
+      "camPanelOverlapsHelpBtn": true,
+      "stealthKeyCHijacksCameraDrawer": true,
+      "straightSpeedMps": 2.0892,
+      "turningSpeedMps": 1.4008,
+      "turnToStraightSpeedRatio": 0.6705,
+      "stickAt10DegSteerRight": 0,
+      "stickAt10DegMoveForward": 0.9815,
+      "stickAt45DegSteerRight": 0.6428,
+      "stickAt45DegMoveForward": 0.6428
+    },
+    {
+      "frame": 1,
+      "label": "camera_pan_off_subject_snapback_and_stranded_pad_prey",
+      "wolfNdcAt60DegOrbit": {
+        "x": -2.1132,
+        "y": -0.7537,
+        "z": 0.9125
+      },
+      "wolfInFrustumAt60Deg": false,
+      "deviceFooterOnPad": "LS ↑ / LS ↓ move · LS ← / LS → steer · RT run · LT stealth · LB focus · RB lock · — eat held · — release · X jump · A interact · D-pad ↑ hour · hold D-pad ← rewind · hold D-pad → forward · LS click pause time · Controls: — → Controls",
+      "emptyPadPlayOrAnyActions": [
+        "eatPrey",
+        "releasePrey",
+        "howl",
+        "growl",
+        "pause",
+        "photo",
+        "dataPanel",
+        "planet"
+      ],
+      "snapbackDecayFactorAfter0_65s": 0.0388
+    },
+    {
+      "frame": 2,
+      "label": "controls_screen_illegible_contrast_and_clash_row",
+      "rowCount": 87,
+      "sectionHeaders": 0,
+      "keyCellColor": "rgb(75, 94, 84)",
+      "panelBgColor": "rgb(13, 23, 18)",
+      "clashBgColor": "rgb(246, 210, 184)",
+      "clashTextColor": "rgb(38, 61, 50)",
+      "dataBtnOverStartMenu": {
+        "dataBtnZ": 70,
+        "startMenuZ": 40,
+        "dataBtnDisplay": "block"
+      }
+    },
+    {
+      "frame": 3,
+      "label": "gamepad_settings_missing_axis_context_and_haptics_detent",
+      "tabLabels": [
+        "Game",
+        "Chronometer",
+        "Globe",
+        "Drone",
+        "Camera",
+        "Menus",
+        "Everywhere"
+      ],
+      "axisTabPresent": false,
+      "axisActionsHiddenCount": 12,
+      "dataBtnDisplayInPhotoMode": "block",
+      "statusDisplayInPhotoMode": "none",
+      "gpsZIndex": 60,
+      "dataBtnZIndex": 70,
+      "landRumbleStrongMagnitude": 0.666,
+      "rumblesOnRealtimeDetentCross": 0
+    }
+  ],
+  "pageErrors": []
+}

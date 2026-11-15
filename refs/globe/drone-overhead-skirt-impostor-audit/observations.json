@@ -1,0 +1,151 @@
+{
+  "capturedAt": "2026-11-15T17:19:30.967Z",
+  "baseUrl": "http://127.0.0.1:5268",
+  "setupInfo": {
+    "bestShore": {
+      "x": 600,
+      "z": -1000,
+      "yaw": -1.1167228287944613,
+      "waterCount": 36,
+      "dryCount": 40,
+      "score": 71
+    },
+    "seededHomeLat": 49.779,
+    "seededHomeLon": 65.5283,
+    "seededHomeClassifiedBiome": "prairie",
+    "seededHomeVegetation": 0.2987,
+    "bestBorealSite": {
+      "lat": 46,
+      "lon": -94,
+      "nearLake": false,
+      "elevM": 291,
+      "biome": "boreal"
+    },
+    "bestDesert": {
+      "lat": 65.2,
+      "lon": -165,
+      "elevM": 195,
+      "vegetation": 0.0486,
+      "biome": "desert",
+      "treeShare": 0.007347,
+      "stemsPerHa": 254,
+      "heightM": 1.23
+    }
+  },
+  "observations": [
+    {
+      "frame": 0,
+      "label": "globe_450m_midnight_uCrownFloor_post_tonemap_daylight_override_and_unlit_floor_over_lake_with_midnight_shadows",
+      "mode": "globe",
+      "altitudeM": 450,
+      "hour": 0.21,
+      "sunElevationDeg": -26.14,
+      "uCrownFloor": 1,
+      "overheadFloorVisible": true,
+      "overheadFloorScaleM": [
+        795.3,
+        447.4
+      ],
+      "overheadFloorToneMapped": false,
+      "overheadFloorDepthTest": false,
+      "spruceCount": 298,
+      "aspenCount": 38,
+      "midnightShadowCount": 336,
+      "spruceEmissiveRGB": [
+        0.016,
+        0.028,
+        0.018
+      ],
+      "spruceDepthTest": false,
+      "midnightCenterSrgbMeanRGB": [
+        0.2262,
+        0.2858,
+        0.1589
+      ],
+      "midnightCenterSrgbMeanLuma": 0.264,
+      "midnightBrightPixelFractionGt020": 0.9712
+    },
+    {
+      "frame": 1,
+      "label": "band_drone_135m_daytime_horizonCover_6m_grid_truncated_at_220m_in_water_and_glb_impostors",
+      "mode": "band",
+      "heightM": 135,
+      "siteBiome": "boreal",
+      "seededHomeMisclassifiedBiome": "prairie",
+      "horizonCoverCount": 4096,
+      "uncapped900mSpotCount": 70564,
+      "annulusCoverageFraction": 0.0581,
+      "minSpotRadiusM": 36,
+      "maxSpotRadiusM": 219.72,
+      "spotsPlantedBelowWaterSurface": 2154,
+      "spotsInWaterFraction": 0.5259,
+      "meanNearestNeighbourM": 6,
+      "clarkEvansIndexR": 2,
+      "atlasWidthPx": 640,
+      "atlasColorSpace": "srgb",
+      "horizonCoverEmissiveRGB": [
+        0.028,
+        0.042,
+        0.018
+      ]
+    },
+    {
+      "frame": 2,
+      "label": "band_drone_260m_midnight_uSkirtHazeColor_daylight_blue_horizon_glowing_green_cover_and_inpage_fog_override",
+      "mode": "band",
+      "heightM": 260,
+      "hour": 0.055,
+      "sunElevationDeg": -26.2,
+      "sceneFogColorRGB": [
+        0.45,
+        0.62,
+        0.9
+      ],
+      "topSkyMeanSrgbLuma": 0.2068,
+      "peakSkirtHorizonRowY": 164,
+      "peakSkirtHorizonMeanSrgbRGB": [
+        0.8035,
+        0.7837,
+        0.7754
+      ],
+      "peakSkirtHorizonMeanSrgbLuma": 0.7873
+    },
+    {
+      "frame": 3,
+      "label": "band_drone_220m_remote_desert_unread_uForest_conifer_canopy_oak_broadleaf_billboards_and_boreal_floor",
+      "mode": "band",
+      "heightM": 220,
+      "desertSite": {
+        "latDeg": 65.2,
+        "lonDeg": -165,
+        "remote": true,
+        "biome": "desert",
+        "vegetation": 0.0486,
+        "treeShare": 0.007347,
+        "heightM": 1.23
+      },
+      "horizonCoverKind": "desert",
+      "horizonCoverDesertTreeCount": 516,
+      "horizonCoverDesertTreeSlotHistogram": {
+        "3": 180,
+        "4": 336
+      },
+      "uCrownFloorOnDesert": 1,
+      "overheadBorealFloorVisibleOnDesert": true,
+      "skirtVisible": true
+    }
+  ],
+  "sourceVerification": {
+    "horizonMeshUForestTokenCount": 2,
+    "horizonMeshUForestReadInShader": false,
+    "setHazeCallerCountAcrossCodebase": 0,
+    "inpageHardcodesDaylightFogBlue": true,
+    "cc0LoadsStoredGlbTrees": true,
+    "cc0TagsLinearRenderTargetAsSrgb": true,
+    "tileOverwritesGlFragColorAfterDithering": true,
+    "overheadFloorToneMappedFalse": true,
+    "aerialExemplarUsesNoColorSpaceOnPng": true,
+    "horizonCoverUsesUnseededMathSin": true
+  },
+  "pageErrors": []
+}

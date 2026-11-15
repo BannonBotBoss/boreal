@@ -1,0 +1,7 @@
+# Nature reference photographs (check-only: NEVER render inputs)
+
+| file | what | date / location | license / source / credit |
+|---|---|---|---|
+| `ref-0-nasa-epic-2024-06-21-1750utc-north-america-noon.jpg` | Full sunlit Earth disc at northern summer solstice near Kenora solar noon (`17:49:41 UTC`, centroid `18.77° N, -96.58° W`), showing North America, Hudson Bay, Great Lakes, Lake Winnipeg, and Kenora (`49.77° N, -94.49° W`) in midday daylight with continuous synoptic cloud systems | 2024-06-21 17:49:41 UTC (DSCOVR L1) | Public domain (NASA EPIC team, `epic_1b_20240621175430`, https://epic.gsfc.nasa.gov/archive/natural/2024/06/21/jpg/epic_1b_20240621175430.jpg) |
+| `ref-1-nasa-iss040e080833-oblique-cloud-limb.jpg` | Oblique low-Earth-orbit view (~420 km, ISS Expedition 40) across multi-scale tropospheric cloud decks and Rayleigh limb | 2014 (ISS Exp. 40) | Public domain (NASA / ISS crew, `iss040e080833`, https://images.nasa.gov/details/iss040e080833) |
+| `ref-2-kenora-ontario-helicopter-400m.jpg` | Oblique ~400 m helicopter view over Kenora, Ontario / Lake of the Woods (`49.77° N, -94.49° W`), showing Precambrian Shield islands, boreal conifer/birch canopy, dark tannin lake channels, and sunlit atmospheric haze | Kenora, Ontario, Canada | CC BY-SA 4.0, Super dingo95 via Wikimedia Commons (`File:Helicopter view of Kenora, Ontario, Canada..jpg`, https://commons.wikimedia.org/wiki/File:Helicopter_view_of_Kenora,_Ontario,_Canada..jpg) |

@@ -1,0 +1,132 @@
+{
+  "task": "T-0235",
+  "subsystem": "Planetary globe Kenora geography & UTC phase, orbit-to-forest descent/ascent & embody continuity, US76 aerodynamic free-fall drag & 8 m/s glide handoff, and multi-scale cloud-deck crossfades",
+  "generatedAt": "2026-11-15T07:09:58.435Z",
+  "metric": {
+    "formula": "ratioScore(a,b) = min(a,b)/max(a,b) for positive scales; unitScore(m,t,S) = max(0, 1 - |m - t|/S) for bounded physical intervals",
+    "passThreshold": 0.95,
+    "calibration": {
+      "knownMatchKenoraLat": 1,
+      "knownMatchSeaLevelTerminalSpeed": 0.9987,
+      "knownMismatchKazakhstanLon": 0.1109,
+      "knownMismatchVacuumFallSpeed": 0.0446
+    }
+  },
+  "summary": {
+    "checksCount": 12,
+    "passingAt95": 0,
+    "failingAt95": 12,
+    "meanScore": 0.0463,
+    "overallPass": false
+  },
+  "checks": [
+    {
+      "id": "globe_home_kenora_longitude_on_real_earth_coasts",
+      "label": "Planetary globe home longitude (PLANET.home) when real-Earth ETOPO1 coasts & Blue Marble clouds are active",
+      "gameValue": "49.77 deg N, +65.54 deg E (Kostanay Steppe, Kazakhstan; 8785 km / 160.03 deg off)",
+      "natureTarget": "49.77 deg N, -94.49 deg W (Kenora, Ontario, Lake of the Woods)",
+      "source": "NRCan Canadian Geographical Names Data Base (Kenora, ON) & Amante & Eakins (2009) ETOPO1 global relief",
+      "score": 0.111,
+      "passes95": false
+    },
+    {
+      "id": "globe_kenora_noon_solar_elevation_and_utc_phase",
+      "label": "Solar elevation over Kenora (-94.49 W) & PlanetSim UTC spinup at 12:00 local solar noon (summer solstice)",
+      "gameValue": "-14.66 deg sun (astronomical night!) & 7.63 h UTC (10.67 h phase error)",
+      "natureTarget": "+63.67 deg sun elevation & 18.30 h UTC",
+      "source": "Meeus (1998) Astronomical Algorithms & Reda & Andreas (2004), Solar Energy 76(5):577-589",
+      "score": 0.1203,
+      "passes95": false
+    },
+    {
+      "id": "orbit_descent_frame1_altitude_continuity",
+      "label": "Frame-1 orbital altitude retained on pressing G / double-clicking at 2.2 R (14,016 km)",
+      "gameValue": "57.9 km on Frame 1 (99.59% of altitude teleported in 1 frame; 7.56 s left)",
+      "natureTarget": ">= 13315 km on Frame 1 (continuous 14.0 s trajectory from live orbital altitude)",
+      "source": "Carlbom & Paciorek (1978), ACM Comput. Surv. 10(4):465-502 & Christie et al. (2008) C^1 camera continuity",
+      "score": 0.0041,
+      "passes95": false
+    },
+    {
+      "id": "orbit_descent_frame1_vignette_continuity",
+      "label": "Frame-1 #descent-cover vignette opacity jump when initiating glide descent (t = 0)",
+      "gameValue": "0.618 opacity on Frame 1 (99.7% of 0.62 peak popped instantaneously)",
+      "natureTarget": "0.000 opacity at t = 0 (smooth ramp-in over initial descent)",
+      "source": "Boreal flight.ts:109 vignette envelope contract (sin(pi * p) starting from p = 0)",
+      "score": 0.0029,
+      "passes95": false
+    },
+    {
+      "id": "embody_handover_blend_duration_400m_to_ground",
+      "label": "Aerial-to-wolf embody camera handover interpolation (400 m isometric glide -> 1.55 m ground rig on pressing G)",
+      "gameValue": "0 blended frames (1-frame 398.45 m snap 403.75 m -> 5.30 m; blend = 1 immediately & handoverBlend returns pose unchanged)",
+      "natureTarget": "1000 ms (~60 frames) smooth Hermite position & quaternion blend (TRANSITION.blendSec = 1.0 s)",
+      "source": "Christie, Olivier & Normand (2008), Comput. Graph. Forum 27(8):2197-2218 & transition.ts:26 blendSec = 1",
+      "score": 0.0333,
+      "passes95": false
+    },
+    {
+      "id": "shift_g_ascent_altitude_and_remote_site_continuity",
+      "label": "Shift+G ascent handoff from bandTop (2.1 km) to globe mode & remote landing site preservation",
+      "gameValue": "2.1 km -> 14016 km in 1 frame (6,674x jumpTo teleport; remote site wiped 160.026 deg back to +65.54 E)",
+      "natureTarget": "Continuous climb from 2.1 km toward orbital targetAlt while preserving landed SITE.dir",
+      "source": "Christie et al. (2008) continuous ascent & Boreal T-0216 remote site frame contract",
+      "score": 0.0001,
+      "passes95": false
+    },
+    {
+      "id": "atmospheric_drag_terminal_velocity_at_10000ft",
+      "label": "Free-fall vertical speed at 10,000 ft (3,048 m) from 100 km Karman line (fallVelocity)",
+      "gameValue": "1368.9 m/s (Mach 4.4 vacuum acceleration; 0 aerodynamic drag)",
+      "natureTarget": "61.6 m/s (US76 rho(3048 m) = 0.905 kg/m^3, beta = 175 kg/m^2)",
+      "source": "U.S. Standard Atmosphere (1976), NOAA-S/T 76-1562 & Hoerner (1965), Fluid-Dynamic Drag",
+      "score": 0.045,
+      "passes95": false
+    },
+    {
+      "id": "sub_10000ft_free_fall_drag_at_400m",
+      "label": "Sub-10,000 ft freeFallVy vertical speed arriving at 400 m from a 3,000 m drop",
+      "gameValue": "225.9 m/s (813 km/h vacuum free-fall)",
+      "natureTarget": "54.0 m/s (US76 rho(400 m) = 1.179 kg/m^3 terminal speed)",
+      "source": "U.S. Standard Atmosphere (1976) & Hoerner (1965), Fluid-Dynamic Drag",
+      "score": 0.2391,
+      "passes95": false
+    },
+    {
+      "id": "forward_glide_handoff_speed_at_400m",
+      "label": "Horizontal forward glide speed at 400 m hold (\"Gliding above the land · Speed carries on\")",
+      "gameValue": "0.000 m/s (stationary hover; vy = -0.164 >= -0.5 leaves arrestGlide dead & airRush = 0)",
+      "natureTarget": "8.0 m/s forward glide along heading (ANIMAL_LADDER.glideMs)",
+      "source": "Pennycuick (2008), Modelling the Flying Bird (8-15 m/s avian glide) & animalLadder.ts:29, 59-62",
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "orbit_cloud_crossfade_continuity_across_2500km",
+      "label": "Cloud-deck crossfade step across 2,505 km -> 2,495 km (ORBIT_FADE 2,500 km -> 700 km window)",
+      "gameValue": "delta uOrbitDeck = 1.0000 (1-frame hard swap between NASA Blue Marble & procedural shell at 2,500 km)",
+      "natureTarget": "delta weight = 0.00002 (smooth crossfade across 2,500 km -> 700 km)",
+      "source": "Boreal orbitAlbedo.ts:26, 58-64 ORBIT_FADE contract & King et al. (2013) MODIS cloud continuity",
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "orbit_cloud_layer_toggle_and_zonal_wind_drift",
+      "label": "Layer Panel Clouds toggle obedience & zonal wind advection (stepCloudDrift) on orbit clouds (> 2,500 km)",
+      "gameValue": "toggle obeyed = 0, wind drift wired = 0 (clouds stay 100% visible when toggled off & frozen onto continents)",
+      "natureTarget": "toggle obeyed = 1, wind drift wired = 1 (advected by stepCloudDrift ~12 m/s eastward)",
+      "source": "Peixoto & Oort (1992), Physics of Climate (synoptic zonal advection) & Boreal layerPanel.ts / atmosphere.ts:111",
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "cloud_open_planetary_shell_clearing_at_200km",
+      "label": "Planetary cloud-shell clearing (atmos.setClear) at 200 km altitude during descent (T-0041 CLOUD_OPEN)",
+      "gameValue": "0.0000 (multiplied by localCloudFade(200 km) = 0 -> 0.000 across 1,500..40 km, then 18.7x pop at 40..32 km)",
+      "natureTarget": "0.8751 (cloudClear(200 km) log-altitude ramp over 1,500 km -> 150 km)",
+      "source": "Boreal T-0041 & transition.ts:42-43 CLOUD_OPEN specification",
+      "score": 0,
+      "passes95": false
+    }
+  ]
+}

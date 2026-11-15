@@ -1,0 +1,327 @@
+{
+  "task": "T-0236",
+  "audit": "deep-time-dial-audit",
+  "generatedAt": "2026-11-15T08:23:19.221Z",
+  "calibration": {
+    "metrics": {
+      "ratioScore": "min(a, b) / max(a, b) for positive physical ratios",
+      "unitScore": "max(0, 1 - |measured - target| / fullScale) for bounded intervals",
+      "passThreshold": 0.95
+    },
+    "knownMatches": {
+      "goughZamsLuminosityMinus4_54Gyr": 0.9998,
+      "ordovicianLandPlants470Myr": 1
+    },
+    "knownMismatches": {
+      "unscaledModernSunInHadean": 0.7077,
+      "cambrian488MyaClockWith2_4GyaFigure": 0.2033
+    },
+    "calibrated": true
+  },
+  "summary": {
+    "totalChecks": 11,
+    "passedChecks": 0,
+    "meanScore": 0.1536,
+    "overallPass": false
+  },
+  "checks": [
+    {
+      "id": "orbit_inpage_time_dial_input_response",
+      "description": "In-page orbit (mode=\"globe\") #109 Time Dial deflection after 12 \".\" (timeFaster) keypresses",
+      "gameValue": 0,
+      "natureOrSpecTarget": 0.24,
+      "unit": "dial units [-1, +1]",
+      "score": 0,
+      "pass": false,
+      "source": "Issue #109 (tasks/RULES.md Rule 18); src/main.ts:571 & src/world/globe/globeView.ts:151"
+    },
+    {
+      "id": "world_clock_epoch_offset_and_geological_scrub",
+      "description": "World-clock epochOffsetYr / dialToYears runtime wiring (2 consumers) & Hadean reachability time",
+      "gameValue": {
+        "wiredConsumers": 0,
+        "secToHadeanAtMaxDial": 143271.5
+      },
+      "natureOrSpecTarget": {
+        "wiredConsumers": 2,
+        "secToHadeanInteractiveScrub": 60
+      },
+      "unit": "consumers & seconds",
+      "score": 0.0002,
+      "pass": false,
+      "source": "Issues #108 & #109 (Rule 18); src/core/worldClock.ts:217, src/core/deepTime.ts:95, src/world/globe/layerPanel.ts:39"
+    },
+    {
+      "id": "non_existent_planet_epochs_hidden",
+      "description": "Solid Earth globe hidden when planet=false (-4.56 Gyr solar nebula & +7.60 Gyr RGB engulfment)",
+      "gameValue": {
+        "drawnTilesMinus4_56Gyr": 8,
+        "drawnTilesPlus7_60Gyr": 5
+      },
+      "natureOrSpecTarget": {
+        "drawnTilesMinus4_56Gyr": 0,
+        "drawnTilesPlus7_60Gyr": 0
+      },
+      "unit": "rendered Earth tiles",
+      "score": 0,
+      "pass": false,
+      "source": "Dalrymple (2001) Geol. Soc. London Spec. Publ. 190:205 (4.54 Gya); Schröder & Smith (2008) MNRAS 386:155 (+7.59 Gyr)"
+    },
+    {
+      "id": "hadean_molten_magma_ocean_globe_surface",
+      "description": "Hadean (-4.50 Gyr, frame-0.png) uEra.x magma weight & absence of liquid blue oceans / green plants / polar ice",
+      "gameValue": {
+        "uEraMagma": 0,
+        "blueGreenIceDiscFrac": 0.8833,
+        "layerExistence": {
+          "atmosphere": {
+            "e": "present",
+            "why": "composition N2-CO2 (anoxic)"
+          },
+          "ocean": {
+            "e": "not-yet-formed",
+            "why": "magma ocean: surface above boiling"
+          },
+          "clouds": {
+            "e": "not-yet-formed",
+            "why": "hydrological cycle needs liquid water"
+          },
+          "snowIce": {
+            "e": "not-yet-formed",
+            "why": "where the energy budget allows"
+          },
+          "ozone": {
+            "e": "not-yet-formed",
+            "why": "O2 1.0e-6 PAL (shield >= 0.1 PAL)"
+          },
+          "aurora": {
+            "e": "not-yet-formed",
+            "why": "needs the geodynamo field"
+          },
+          "vegetation": {
+            "e": "not-yet-formed",
+            "why": "land plants ~470 Ma [evidenceDate]",
+            "evidenceDate": true
+          },
+          "forests": {
+            "e": "not-yet-formed",
+            "why": "forests ~385 Ma [evidenceDate]",
+            "evidenceDate": true
+          },
+          "plates": {
+            "e": "not-yet-formed",
+            "why": "modern plate tectonics ~3.0-3.2 Ga [DISPUTED, evidenceDate]",
+            "evidenceDate": true
+          },
+          "state": {
+            "formed": true,
+            "moltenSurface": true,
+            "liquidWater": false,
+            "waterLost": false,
+            "o2PAL": 0.000001,
+            "ozoneShield": false,
+            "dynamo": false,
+            "snowball": false,
+            "sunRatio": 0.7174254317111459,
+            "seed": 1,
+            "moon": {
+              "aKm": null,
+              "dayLengthH": null,
+              "stabilisesObliquity": true
+            },
+            "composition": "N2-CO2 (anoxic)"
+          }
+        },
+        "moltenSurface": true
+      },
+      "natureOrSpecTarget": {
+        "uEraMagma": 1,
+        "blueGreenIceDiscFrac": 0
+      },
+      "unit": "shader weight & disc fraction",
+      "score": 0.0584,
+      "pass": false,
+      "source": "Zahnle et al. (2007) Space Sci. Rev. 129:35; Wilde et al. (2001) Nature 409:175"
+    },
+    {
+      "id": "cryogenian_snowball_earth_global_glaciation",
+      "description": "Cryogenian Sturtian Snowball Earth (-700 Myr, frame-1.png) global equatorial glaciation & zero vascular green forests",
+      "gameValue": {
+        "whiteIceDiscFrac": 0.3946,
+        "greenVegDiscFrac": 0.014,
+        "snowballFlag": true,
+        "vegetationExistence": {
+          "e": "not-yet-formed",
+          "why": "land plants ~470 Ma [evidenceDate]",
+          "evidenceDate": true
+        }
+      },
+      "natureOrSpecTarget": {
+        "whiteIceDiscFrac": ">= 0.90",
+        "greenVegDiscFrac": 0
+      },
+      "unit": "sunlit disc fraction",
+      "score": 0.2192,
+      "pass": false,
+      "source": "Hoffman et al. (2017) Sci. Adv. 3:e1600983; Wellman et al. (2003) Nature 425:282 (-470 Myr first land plants)"
+    },
+    {
+      "id": "future_runaway_oceans_lost_desiccated_globe",
+      "description": "Future moist/runaway greenhouse Earth (+2.00 Gyr, frame-2.png) causal ocean/vegetation/snowIce gating & dry surface",
+      "gameValue": {
+        "wiredSurfaceGatesOf3": 1,
+        "oceanVegIceDiscFrac": 0.883,
+        "waterLostFlag": true,
+        "layerExistence": {
+          "atmosphere": {
+            "e": "present",
+            "why": "composition N2-O2 (modern)"
+          },
+          "ocean": {
+            "e": "gone",
+            "why": "water lost (Sun flux > waterLoss)"
+          },
+          "clouds": {
+            "e": "gone",
+            "why": "hydrological cycle needs liquid water"
+          },
+          "snowIce": {
+            "e": "gone",
+            "why": "where the energy budget allows"
+          },
+          "ozone": {
+            "e": "present",
+            "why": "O2 1.0e+0 PAL (shield >= 0.1 PAL)"
+          },
+          "aurora": {
+            "e": "present",
+            "why": "needs the geodynamo field"
+          },
+          "vegetation": {
+            "e": "gone",
+            "why": "land plants ~470 Ma [evidenceDate]",
+            "evidenceDate": true
+          },
+          "forests": {
+            "e": "gone",
+            "why": "forests ~385 Ma [evidenceDate]",
+            "evidenceDate": true
+          },
+          "plates": {
+            "e": "present",
+            "why": "modern plate tectonics ~3.0-3.2 Ga [DISPUTED, evidenceDate]",
+            "evidenceDate": true
+          },
+          "state": {
+            "formed": true,
+            "moltenSurface": false,
+            "liquidWater": false,
+            "waterLost": true,
+            "o2PAL": 1,
+            "ozoneShield": true,
+            "dynamo": true,
+            "snowball": false,
+            "sunRatio": 1.2122015915119364,
+            "seed": 1,
+            "moon": {
+              "aKm": null,
+              "dayLengthH": null,
+              "stabilisesObliquity": true
+            },
+            "composition": "N2-O2 (modern)"
+          }
+        }
+      },
+      "natureOrSpecTarget": {
+        "wiredSurfaceGatesOf3": 3,
+        "oceanVegIceDiscFrac": 0
+      },
+      "unit": "gates & sunlit disc fraction",
+      "score": 0.2252,
+      "pass": false,
+      "source": "Kasting (1988) Icarus 74:472; Wolf & Toon (2015) JGR Atmospheres 120:5775"
+    },
+    {
+      "id": "gough_1981_globe_solar_luminosity_scaling",
+      "description": "Globe directional sunlight scaling with Gough (1981) luminosityRatio(offsetYr) at -4.50 Gyr & +2.00 Gyr",
+      "gameValue": {
+        "minus4_50GyrL0": 1,
+        "plus2_00GyrL0": 1
+      },
+      "natureOrSpecTarget": {
+        "minus4_50GyrL0": 0.7174,
+        "plus2_00GyrL0": 1.2122
+      },
+      "unit": "L / L0",
+      "score": 0.7712,
+      "pass": false,
+      "source": "Gough (1981) Solar Physics 74:21-34; Ribas (2010) IAU Symp. 264:3"
+    },
+    {
+      "id": "sun_view_red_giant_deep_time_evolution",
+      "description": "Sun view (?view=sun&deep=7500000000) upper-RGB solar radius evolution vs modern 1.00 R_sun",
+      "gameValue": 1,
+      "natureOrSpecTarget": 150,
+      "unit": "R / R_sun0",
+      "score": 0.0067,
+      "pass": false,
+      "source": "Schröder & Smith (2008) MNRAS 386:155-163 (RGB tip ~256 R_sun, T_eff ~ 2,602 K)"
+    },
+    {
+      "id": "big_bang_quark_epoch_particle_energy_at_1us",
+      "description": "Big Bang Opening Film (#cine-panel at t = 35.8 s, clock = 10^-6 s) mean particle thermal energy",
+      "gameValue": {
+        "clock": "3.0 × 10⁻⁷ s",
+        "figure": "Energy ≈ 100 GeV per particle",
+        "energyGeV": 100
+      },
+      "natureOrSpecTarget": {
+        "clock": "10⁻⁶ s",
+        "energyGeV": 1.3
+      },
+      "unit": "GeV per particle",
+      "score": 0.013,
+      "pass": false,
+      "source": "Weinberg (2008) Cosmology; Particle Data Group (100 GeV electroweak is ~10^-11 s; 10^-6 s QGP is ~1.3 GeV)"
+    },
+    {
+      "id": "big_bang_sun_earth_theia_chronology_alignment",
+      "description": "Big Bang Opening Film (t = 82..91 s) Sun CAI (4.5673 Gya), Earth accretion (4.54 Gya), & Theia impact (4.51 Gya) alignment",
+      "gameValue": {
+        "sunAt82sGya": 4.6,
+        "earthShownAt83_2sGya": 4.576,
+        "theiaPeakAt89_5sGya": 4.45,
+        "meanErrorMyr": 42.9
+      },
+      "natureOrSpecTarget": {
+        "sunCaiGya": 4.5673,
+        "earthAccretionGya": 4.54,
+        "theiaImpactGya": 4.51,
+        "meanErrorMyr": 0
+      },
+      "unit": "Gya & Myr error",
+      "score": 0.2513,
+      "pass": false,
+      "source": "Amelin et al. (2010) EPSL 300:343; Dalrymple (2001); Barboni et al. (2017) Sci. Adv. 3:e1602365"
+    },
+    {
+      "id": "big_bang_cine_panel_clock_vs_figure_sync",
+      "description": "Big Bang Opening Film (#cine-panel at t = 100..107.2 s, frame-3.png) clock vs milestone figure sync & monotonicity at t = 106 s",
+      "gameValue": {
+        "clockAt105_8sMya": 496.27,
+        "figureAt105_8s": "2.4 Gya",
+        "clockAt105_99sMya": 466.51,
+        "clockAt106_00sMya": 469.89,
+        "monotonicAt106s": false
+      },
+      "natureOrSpecTarget": {
+        "clockMatchesFigureWithin5Pct": true,
+        "monotonicAt106s": true
+      },
+      "unit": "Mya & monotonicity",
+      "score": 0.1447,
+      "pass": false,
+      "source": "Bekker et al. (2004) Nature 427:117 (2.4 Gya GOE); Wellman et al. (2003) Nature 425:282 (470 Mya land plants)"
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "capturedAt": "2026-11-15T18:31:19.350Z",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "recordingBytes": 8718295,
+  "pageErrors": [],
+  "observations": [
+    {
+      "frame": 0,
+      "label": "home_drained_19m_base_water_lake_crater_missing_open_water_sheet",
+      "shoreStand": {
+        "x": -40,
+        "z": -340,
+        "groundHeightM": -18.3,
+        "cameraHeightM": -16.75
+      },
+      "craterCenterSurfaceAt": {
+        "height": -19.469708805936083,
+        "lake": {
+          "surface": -0.25,
+          "areaHa": null,
+          "kind": "open"
+        },
+        "river": null,
+        "soil": "water",
+        "wetness": 1
+      },
+      "craterDepthM": 19.22,
+      "drawOpenWaterAtCrater": false,
+      "baseWaterChunksInMid": 49,
+      "openWaterSheetsMountedInMid": 0,
+      "craterBasinMeanSrgbRGB": [
+        0.7639,
+        0.7325,
+        0.6053
+      ],
+      "craterBasinBlueWaterPixelFraction": 0.0001
+    },
+    {
+      "frame": 1,
+      "label": "perched_102ha_lake_710m_fetch_truncated_at_100m_interest_mid_exposing_dry_bed",
+      "stand": {
+        "x": 2265,
+        "z": 3180,
+        "groundHeightM": 27.71,
+        "cameraY": 29.26
+      },
+      "lakeSurfaceM": 23.37,
+      "lakeFetchEastM": 710,
+      "interestMidM": 100,
+      "unrenderedFetchBeyondMidM": 610,
+      "geometricHorizonM": 8666.37,
+      "nearLakeWaterSrgbRGB": [
+        0.4348,
+        0.4716,
+        0.3966
+      ],
+      "beyond100mDrainedLakeBedSrgbRGB": [
+        0.4961,
+        0.5471,
+        0.5033
+      ]
+    },
+    {
+      "frame": 2,
+      "label": "submerged_camera_underwater_frontside_culled_zero_snells_window_unattenuated_dry_sky",
+      "wolfStand": {
+        "x": 2419,
+        "z": 3180,
+        "bed": 20.61,
+        "surface": 23.37,
+        "camY": 22.16
+      },
+      "submersionDepthM": 1.21,
+      "waterMaterialSideEnum": 0,
+      "waterMaterialIsFrontSideOnly": true,
+      "overheadSkyFromUnderwaterMeanSrgbRGB": [
+        0.8559,
+        0.9014,
+        0.9256
+      ]
+    },
+    {
+      "frame": 3,
+      "label": "astronomical_midnight_bioluminescent_055_wake_glow_and_zero_river_advection",
+      "wadeStart": {
+        "x": 2313,
+        "z": 3176,
+        "depth": 0.187
+      },
+      "hour": 0.192,
+      "sunElevationDeg": -26.15,
+      "activeRings": 8,
+      "activeWakes": 1,
+      "midnightWaterMeanLuma": 0.1744,
+      "midnightWakePeakSrgbLuma": 0.5392,
+      "midnightGlowingPixelsGt025": 25395,
+      "midnightGlowingPixelsGt050": 48,
+      "staticRingSlopeMagUpstreamAgainstCurrent": 17.5495,
+      "ringSlopeMagAtPhysicalDownstreamAdvectedPos": 0
+    }
+  ]
+}

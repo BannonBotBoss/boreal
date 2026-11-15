@@ -1,0 +1,313 @@
+{
+  "taskId": "T-0246",
+  "evaluatedAt": "2026-11-15T18:33:22.734Z",
+  "gateThreshold": 0.95,
+  "calibrationValid": true,
+  "calibration": {
+    "metrics": {
+      "ratioScore": "min(measured, target) / max(measured, target) for strictly positive physical quantities (>= 0.95 pass)",
+      "unitScore": "max(0, 1 - |measured - target| / fullScale) for bounded shares, optical depths, and zero-target emissions (>= 0.95 pass)"
+    },
+    "knownMatches": [
+      {
+        "name": "horizonMetres(3.2 m) vs Bowditch (2019) exact spherical Earth horizon sqrt(2 R h + h^2)",
+        "measured": 6385.4887,
+        "target": 6385.4887,
+        "score": 1,
+        "passes95": true
+      },
+      {
+        "name": "WAVE.c (lambda = 0.10 m) vs Lighthill (1978) / IAPWS R1-76 capillary-gravity phase speed",
+        "measured": 0.4011,
+        "target": 0.4008,
+        "score": 0.9993,
+        "passes95": true
+      },
+      {
+        "name": "Freshwater air-water critical angle arcsin(1/1.333) vs Hecht (2017) Optics Snell window (48.61 deg)",
+        "measured": 48.6066,
+        "target": 48.61,
+        "score": 0.9999,
+        "passes95": true
+      }
+    ],
+    "knownMismatches": [
+      {
+        "name": "Truncating water meshes at INTEREST.mid = 100 m vs 6,385.49 m geometric horizon",
+        "measured": 100,
+        "target": 6385.49,
+        "score": 0.0157,
+        "below75": true
+      },
+      {
+        "name": "Unconditional 0.55 linear emissive freshwater wake glow at -26.2 deg astronomical midnight vs 0.000 natural emission",
+        "measured": 0.55,
+        "target": 0,
+        "score": 0,
+        "below75": true
+      },
+      {
+        "name": "Static ground-pinned ring advection (0 m/s) on 1.194 m/s river reach",
+        "measured": 0,
+        "target": 1.194,
+        "score": 0,
+        "below75": true
+      }
+    ]
+  },
+  "summary": {
+    "totalChecks": 12,
+    "passingChecksAt95": 0,
+    "failingChecksAt95": 12,
+    "meanScore": 0.0486,
+    "passes95Gate": false
+  },
+  "diagnostics": {
+    "homeBaseWaterSamples": {
+      "total": 12350,
+      "withOpenWaterSheet": 74,
+      "missingShare": 0.994
+    },
+    "riverAdvection": {
+      "totalCurvedSamples": 266,
+      "superCritGroupSamples": 253,
+      "superCritShare": 0.9511,
+      "maxRiverSpeedMps": 1.194,
+      "waveCgMps": 0.212,
+      "waveCMps": 0.4011
+    },
+    "channelSteps": {
+      "totalSteps": 193,
+      "strandedStepsOutsideChannel": 4
+    },
+    "greatLakeDetails": [
+      {
+        "name": "Lake Superior (47.7N, 87.5W)",
+        "demM": 183,
+        "waterFlag": false,
+        "photoVeg": 0.87,
+        "classifiedBiome": "boreal"
+      },
+      {
+        "name": "Lake Winnipeg (52.1N, 97.3W)",
+        "demM": 217,
+        "waterFlag": false,
+        "photoVeg": 0.85,
+        "classifiedBiome": "boreal"
+      },
+      {
+        "name": "Lake Baikal (53.5N, 108.0E)",
+        "demM": 455,
+        "waterFlag": false,
+        "photoVeg": 0.8794,
+        "classifiedBiome": "boreal"
+      }
+    ],
+    "liveFrameObservations": [
+      {
+        "frame": 0,
+        "label": "home_drained_19m_base_water_lake_crater_missing_open_water_sheet",
+        "shoreStand": {
+          "x": -40,
+          "z": -340,
+          "groundHeightM": -18.3,
+          "cameraHeightM": -16.75
+        },
+        "craterCenterSurfaceAt": {
+          "height": -19.469708805936083,
+          "lake": {
+            "surface": -0.25,
+            "areaHa": null,
+            "kind": "open"
+          },
+          "river": null,
+          "soil": "water",
+          "wetness": 1
+        },
+        "craterDepthM": 19.22,
+        "drawOpenWaterAtCrater": false,
+        "baseWaterChunksInMid": 49,
+        "openWaterSheetsMountedInMid": 0,
+        "craterBasinMeanSrgbRGB": [
+          0.7639,
+          0.7325,
+          0.6053
+        ],
+        "craterBasinBlueWaterPixelFraction": 0.0001
+      },
+      {
+        "frame": 1,
+        "label": "perched_102ha_lake_710m_fetch_truncated_at_100m_interest_mid_exposing_dry_bed",
+        "stand": {
+          "x": 2265,
+          "z": 3180,
+          "groundHeightM": 27.71,
+          "cameraY": 29.26
+        },
+        "lakeSurfaceM": 23.37,
+        "lakeFetchEastM": 710,
+        "interestMidM": 100,
+        "unrenderedFetchBeyondMidM": 610,
+        "geometricHorizonM": 8666.37,
+        "nearLakeWaterSrgbRGB": [
+          0.4348,
+          0.4716,
+          0.3966
+        ],
+        "beyond100mDrainedLakeBedSrgbRGB": [
+          0.4961,
+          0.5471,
+          0.5033
+        ]
+      },
+      {
+        "frame": 2,
+        "label": "submerged_camera_underwater_frontside_culled_zero_snells_window_unattenuated_dry_sky",
+        "wolfStand": {
+          "x": 2419,
+          "z": 3180,
+          "bed": 20.61,
+          "surface": 23.37,
+          "camY": 22.16
+        },
+        "submersionDepthM": 1.21,
+        "waterMaterialSideEnum": 0,
+        "waterMaterialIsFrontSideOnly": true,
+        "overheadSkyFromUnderwaterMeanSrgbRGB": [
+          0.8559,
+          0.9014,
+          0.9256
+        ]
+      },
+      {
+        "frame": 3,
+        "label": "astronomical_midnight_bioluminescent_055_wake_glow_and_zero_river_advection",
+        "wadeStart": {
+          "x": 2313,
+          "z": 3176,
+          "depth": 0.187
+        },
+        "hour": 0.192,
+        "sunElevationDeg": -26.15,
+        "activeRings": 8,
+        "activeWakes": 1,
+        "midnightWaterMeanLuma": 0.1744,
+        "midnightWakePeakSrgbLuma": 0.5392,
+        "midnightGlowingPixelsGt025": 25395,
+        "midnightGlowingPixelsGt050": 48,
+        "staticRingSlopeMagUpstreamAgainstCurrent": 17.5495,
+        "ringSlopeMagAtPhysicalDownstreamAdvectedPos": 0
+      }
+    ]
+  },
+  "checks": [
+    {
+      "id": "home_base_water_lake_surface_coverage",
+      "quantity": "Home base-water lake surface mesh coverage (height < -0.25 m, 12,350 pts)",
+      "measured": 0.006,
+      "target": 1,
+      "metric": "unitScore(measured, 1.0, 1.0)",
+      "score": 0.006,
+      "source": "Pekel et al. (2016) Nature 540:418-422; Lehner & Doll (2004) J. Hydrol. 296:1-29 (100% of open lake basins carry a free water surface; 99.40% drained at home)"
+    },
+    {
+      "id": "horizon_water_sheet_radial_extent",
+      "quantity": "Water-sheet radial render extent vs 3.2 m eye geometric horizon (m)",
+      "measured": 100,
+      "target": 6385.49,
+      "metric": "ratioScore(100, 6385.49)",
+      "score": 0.0157,
+      "source": "Bowditch (2019) American Practical Navigator; Cox & Munk (1954) J. Opt. Soc. Am. 44:838-850 (areal share = 0.000245; 99.975% of ocean horizon disc unrendered)"
+    },
+    {
+      "id": "perched_102ha_lake_fetch_continuity",
+      "quantity": "102.6 ha boreal lake (710 m east fetch) continuous water-sheet coverage",
+      "measured": 0.1408,
+      "target": 1,
+      "metric": "ratioScore(100, 710)",
+      "score": 0.1408,
+      "source": "Messager et al. (2016) Nature Commun. 7:13603 (HydroLAKES: continuous hydrostatic lake free surface from shore to opposite shore)"
+    },
+    {
+      "id": "open_water_curvature_drop_at_horizon",
+      "quantity": "Open-water-sheet Earth curvature drop at 6.39 km horizon (m)",
+      "measured": 0,
+      "target": 3.2,
+      "metric": "unitScore(0.0, 3.2000, 3.2000)",
+      "score": 0,
+      "source": "Moritz (2000) J. Geodesy 74:128-162 (IUGG GRS80 curvature drop d^2 / (2 R) = 3.20 m at 6.385 km, matching continuousTerrain)"
+    },
+    {
+      "id": "water_material_aerial_perspective_extinction",
+      "quantity": "Water shader horizon airlight optical extinction (1 - exp(-beta * d))",
+      "measured": 0,
+      "target": 0.7546,
+      "metric": "unitScore(measured, 0.7546, 0.7546)",
+      "score": 0,
+      "source": "Middleton (1952) Vision Through the Atmosphere; Preetham et al. (1999) SIGGRAPH (distant water must undergo identical Beer-Lambert airlight in-scattering as adjacent terrain)"
+    },
+    {
+      "id": "underwater_overhead_surface_and_snell_window",
+      "quantity": "Submerged camera overhead water-surface refraction & 48.61 deg Snell window + TIR",
+      "measured": 0,
+      "target": 1,
+      "metric": "unitScore(measured, 1.0, 1.0)",
+      "score": 0,
+      "source": "Hecht (2017) Optics (5th ed.); Mobley (1994) Light and Water (waterMaterial uses THREE.FrontSide so 100% of overhead water triangles are backface-culled from underwater)"
+    },
+    {
+      "id": "underwater_boreal_humic_diffuse_attenuation_kd",
+      "quantity": "Submerged camera diffuse downwelling attenuation Kd(PAR) in Shield lake (m^-1)",
+      "measured": 0,
+      "target": 1.15,
+      "metric": "unitScore(0.0, 1.15, 1.15)",
+      "score": 0,
+      "source": "Fee et al. (1996) Can. J. Fish. Aquat. Sci. 53:1089-1099 (ELA Kenora boreal Shield lakes); Kirk (1994) Light and Photosynthesis in Aquatic Ecosystems (Kd = 0.6-2.5 m^-1)"
+    },
+    {
+      "id": "nocturnal_freshwater_wake_emissive_radiance",
+      "quantity": "Astronomical midnight (-26.2 deg sun) freshwater wake self-emissive radiance",
+      "measured": 0.55,
+      "target": 0,
+      "metric": "unitScore(0.55, 0.0, 0.55)",
+      "score": 0,
+      "source": "Herring (1987) J. Biolumin. Chemilumin. 1:147-163 (absence of bioluminescence in freshwater ecosystems); Schaefer (1993) Vistas Astron. 36:311-361"
+    },
+    {
+      "id": "supercritical_river_wake_galilean_advection",
+      "quantity": "Downstream wave-packet advection speed on 1.194 m/s river reach (m/s)",
+      "measured": 0,
+      "target": 1.1943,
+      "metric": "unitScore(0.0, 1.194, 1.194)",
+      "score": 0,
+      "source": "Lighthill (1978) Waves in Fluids, Sec. 1.9; Peregrine (1976) Adv. Appl. Mech. 16:9-117 (95.11% of seed-1400 river reaches exceed cg = 0.212 m/s, yet wakes advect at 0 m/s)"
+    },
+    {
+      "id": "fluvial_water_sheet_width_containment_and_step_alignment",
+      "quantity": "terrainCore river water-sheet width ratio (rv.d < half + bank vs wetted 2*half)",
+      "measured": 2.6906,
+      "target": 1,
+      "metric": "ratioScore(1.0, 2.6906)",
+      "score": 0.3717,
+      "source": "Leopold & Maddock (1953) USGS Prof. Paper 252; Williams (1986) J. Hydrol. 88:147-164; Montgomery & Buffington (1997) GSA Bull. 109:596 (plus 4 D8-chord step boulders stranded outside curved RiverPlan)"
+    },
+    {
+      "id": "remote_inland_great_lakes_water_classification",
+      "quantity": "Real-Earth inland Great Lakes (Superior 183m, Winnipeg 217m, Baikal 455m) water share",
+      "measured": 0,
+      "target": 1,
+      "metric": "unitScore(0.0, 1.0, 1.0)",
+      "score": 0,
+      "source": "Pekel et al. (2016) Nature 540:418-422; Messager et al. (2016) HydroLAKES (groundForCover sets water=false for DEM > 0.5m and vegetationFromPhoto maps dark blue EOX lake pixels to veg=0.85-0.88 -> closed boreal forest)"
+    },
+    {
+      "id": "remote_seeded_lake_bathymetric_mean_depth",
+      "quantity": "Remote globe-landing seeded lake depth vs boreal Shield lake mean depth (m)",
+      "measured": 0.35,
+      "target": 7.2,
+      "metric": "ratioScore(0.35, 7.20)",
+      "score": 0.0486,
+      "source": "Cael, Heathcote & Seekell (2017) Geophys. Res. Lett. 44:894-900; Schindler et al. (1996) Limnol. Oceanogr. 41:1004-1017 (ELA Kenora mean depths 5.7-11.6 m vs hardcoded 0.35 m puddle and 0 remote rivers)"
+    }
+  ]
+}

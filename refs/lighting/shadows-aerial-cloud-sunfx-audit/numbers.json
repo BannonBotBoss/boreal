@@ -1,0 +1,172 @@
+{
+  "task": "T-0244",
+  "evaluatedAt": "2026-11-15T16:28:46.715Z",
+  "calibration": {
+    "metrics": {
+      "ratioScore": "min(measured, target) / max(measured, target) for strictly positive physical quantities (>= 0.95 pass)",
+      "unitScore": "max(0, 1 - |measured - target| / fullScale) for bounded [0, fullScale] shares/transmittances (>= 0.95 pass)"
+    },
+    "knownMatches": [
+      {
+        "name": "aerial.ts BETA_R[1] (550 nm Rayleigh scattering) vs Hillaire (2020, EGSR Table 1: 13.558e-6 m^-1)",
+        "measured": 0.000013558,
+        "target": 0.000013558,
+        "score": 1
+      },
+      {
+        "name": "aerial.ts clear-air mieVisibility(BETA_M) vs Koschmieder (1924) ln(50)/beta = 3.912 / 2.2e-4 m",
+        "measured": 17781.82,
+        "target": 17781.82,
+        "score": 1
+      },
+      {
+        "name": "weather.ts shortwave(cosZ, C=1)/shortwave(cosZ, C=0) vs Kasten & Czeplak (1980, Solar Energy 24:177) 1 - 0.75*1^3.4 = 0.2500",
+        "measured": 0.25,
+        "target": 0.25,
+        "score": 1
+      }
+    ],
+    "knownMismatches": [
+      {
+        "name": "Daylight-white horizon haze (luma 0.8962) at astronomical midnight vs fogNight linear luma (0.0080)",
+        "measured": 0.8962,
+        "target": 0.008,
+        "score": 0.0089
+      },
+      {
+        "name": "Double-applied Kasten-Czeplak overcast factor (0.25^2 = 0.0625) vs published 0.2500 overcast transmittance",
+        "measured": 0.0625,
+        "target": 0.25,
+        "score": 0.25
+      }
+    ]
+  },
+  "summary": {
+    "totalChecks": 12,
+    "passing95Count": 0,
+    "meanScore": 0.0684,
+    "overallPasses95": false
+  },
+  "checks": [
+    {
+      "id": "midnight_horizon_aerial_luminance",
+      "quantity": "Midnight (`sun.elevation = -23.7°`) `AERIAL.uHorizon` linear luminance vs night horizon fog",
+      "measured": 0.8999,
+      "target": 0.007,
+      "unit": "linear radiance",
+      "source": "Schaefer (1993, PASP 105:690); Hillaire (2020, EGSR); sky.ts fogNight (0x0d1422)",
+      "score": 0.0078,
+      "passes95": false
+    },
+    {
+      "id": "dense_fog_terrain_visibility_coherence",
+      "quantity": "Dense radiation-fog (`LWC = 0.3 g/m³`) `continuousTerrain` visibility vs `scene.fog`",
+      "measured": 17781.82,
+      "target": 77.79,
+      "unit": "m",
+      "source": "Kunkel (1984, J. Clim. Appl. Meteorol. 23:34) & Koschmieder (1924): V = 77.80 m",
+      "score": 0.0044,
+      "passes95": false
+    },
+    {
+      "id": "heavy_rain_terrain_visibility_coherence",
+      "quantity": "Heavy rain (`R = 25 mm/h`) `continuousTerrain` visibility vs Marshall-Palmer `scene.fog`",
+      "measured": 17781.82,
+      "target": 1927.18,
+      "unit": "m",
+      "source": "Marshall & Palmer (1948); Sekhon & Srivastava (1971, J. Atmos. Sci. 28:983): V = 1,927.8 m",
+      "score": 0.1084,
+      "passes95": false
+    },
+    {
+      "id": "csm_low_tier_shadow_map_texel_budget",
+      "quantity": "`CSM` per-cascade shadow-map texels on `Medium` / `Low` / `XR_CAPS` (`quality.ts:13`)",
+      "measured": 4194304,
+      "target": 1048576,
+      "unit": "texels/cascade",
+      "source": "Zhang et al. (2006, CSM); quality.ts:13 (`1024^2 = 1,048,576` vs commented-out `2048^2`)",
+      "score": 0.25,
+      "passes95": false
+    },
+    {
+      "id": "pcss_solar_disc_penumbra_width_15m",
+      "quantity": "Solar-disc (`0.533°`) PCSS penumbra blur width at `15 m` canopy blocker distance",
+      "measured": 0,
+      "target": 0.1395,
+      "unit": "m",
+      "source": "IAU (2015) solar disc 0.533 deg; Fernando (2005, PCSS): w = 2*d*tan(0.2665 deg) = 0.1396 m",
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "winter_deciduous_leaf_shadow_discard",
+      "quantity": "Midwinter (`uOff = 1.0`) leafless birch/aspen foliage-cone discard in shadow depth pass",
+      "measured": 0,
+      "target": 1,
+      "unit": "discard share",
+      "source": "Baldocchi et al. (1984, Agric. For. Meteorol. 33:177); Federer (1971) leafless crown transmittance",
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "wind_vegetation_shadow_depth_coupling",
+      "quantity": "Wind-displaced vegetation casters (`trees`, `conifer`, `flora`, `grass`) with `customDepthMaterial`",
+      "measured": 0,
+      "target": 4,
+      "unit": "subsystems",
+      "source": "Finnigan (2000, Annu. Rev. Fluid Mech. 32:519) synchronous crown-shadow kinematics",
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "planetary_cloud_shadow_tex_coupling",
+      "quantity": "`CLOUD_SHADOW.uCloudTex` condensate amplitude under `70%` `PlanetSim` cloud cover",
+      "measured": 0,
+      "target": 0.7,
+      "unit": "cloud share",
+      "source": "Stephens (1978, J. Atmos. Sci. 35:2123) LWP-optical depth; weather.ts:457 clim.cloud",
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "kenora_annual_unclamped_cloud_uv_hours",
+      "quantity": "Kenora (`49.79° N`) annual daylight hours (`el > 2°`) with un-clamped cloud-shadow UV",
+      "measured": 0,
+      "target": 1,
+      "unit": "hour share",
+      "source": "Reda & Andreas (2004, Solar Energy 76:577): max Kenora el 63.65 deg -> 1000/tan(el) >= 495 m > 192 m",
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "kasten_czeplak_single_overcast_attenuation",
+      "quantity": "Overcast (`C = 1.0`) direct-light cloud factor (`Esun × addCloudShadow`) without double-squaring",
+      "measured": 0.0625,
+      "target": 0.25,
+      "unit": "transmittance",
+      "source": "Kasten & Czeplak (1980, Solar Energy 24:177): T(C=1) = 1 - 0.75 * 1^3.4 = 0.2500 (not 0.25^2 = 0.0625)",
+      "score": 0.25,
+      "passes95": false
+    },
+    {
+      "id": "sunfx_solid_terrain_occlusion_distance",
+      "quantity": "Max distance where solid hills occlude `SUNFX` god-rays (`tDepth < 0.9999` vs `far = 8,000 m`)",
+      "measured": 1600.03,
+      "target": 8000,
+      "unit": "m",
+      "source": "Mitchell (2007, GPU Gems 3 Ch. 13) volumetric light scattering solid-geometry depth occlusion",
+      "score": 0.2,
+      "passes95": false
+    },
+    {
+      "id": "sunfx_below_horizon_and_overcast_gating",
+      "quantity": "`SUNFX` physical solar-beam gates (zero after sunset `-2°` & attenuated under `100%` overcast)",
+      "measured": 0,
+      "target": 2,
+      "unit": "gates",
+      "source": "Rozenberg (1966, Twilight); Kasten & Czeplak (1980): zero direct solar beam when Esun = 0 or overcast",
+      "score": 0,
+      "passes95": false
+    }
+  ]
+}

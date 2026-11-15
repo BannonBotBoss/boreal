@@ -1,0 +1,110 @@
+{
+  "capturedAt": "2026-11-15T16:27:53.999Z",
+  "baseUrl": "http://127.0.0.1:5268",
+  "poses": {
+    "treeShare": 1,
+    "bestVista": {
+      "x": 160,
+      "z": 25,
+      "yaw": -2.748893571891069,
+      "score": 22.753592533327996
+    },
+    "bestDecid": {
+      "x": 167.30997875332832,
+      "z": 7.2971337009221315,
+      "sp": "trembling-aspen",
+      "height": 24.391358482698475,
+      "seed": 2327573976,
+      "rank": 23.816776427531916
+    }
+  },
+  "observations": [
+    {
+      "frame": 0,
+      "label": "midnight_aerial_uHorizon_daylight_white_band_under_starlit_night_sky",
+      "dayOfYear": 227,
+      "hour": 0.052,
+      "sunElevationDeg": -26.2,
+      "lightingLux": 0.001,
+      "lightingEsunLux": 0,
+      "aerialUHorizonRGB": [
+        0.92,
+        0.9,
+        0.84
+      ],
+      "aerialUHorizonLinearLuma": 0.8999,
+      "zenithSkySrgb": {
+        "mean": 0.079,
+        "max": 0.3942
+      },
+      "horizonGlowPeakRowY": 272,
+      "horizonGlowPeakRowMeanSrgbLuma": 0.3288,
+      "horizonToZenithSrgbRatio": 4.16,
+      "statusText": "00:03 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs"
+    },
+    {
+      "frame": 1,
+      "label": "dense_radiation_fog_78m_scene_fog_vs_17782m_weather_blind_continuousTerrain",
+      "planetaryCloudBeforeFog": 0.6413,
+      "maxCloudShadowTexByteBeforeFog": 0,
+      "fogState": {
+        "fogShare": 1,
+        "sceneFogKoschmiederVisibilityM": 77.56,
+        "continuousTerrainAerialVisibilityM": 17781.82,
+        "terrainToSceneVisibilityMismatchRatio": 229.25
+      },
+      "cloudBoxUniform": [
+        -32,
+        -160,
+        384
+      ],
+      "statusText": "09:04 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs"
+    },
+    {
+      "frame": 2,
+      "label": "midwinter_leafless_deciduous_casts_solid_summer_foliage_cone_shadow_on_snow",
+      "deciduousTarget": {
+        "x": 167.30997875332832,
+        "z": 7.2971337009221315,
+        "sp": "trembling-aspen",
+        "height": 24.391358482698475,
+        "seed": 2327573976,
+        "rank": 23.816776427531916
+      },
+      "ultraTierPcssKnob": 1,
+      "mediumTierShadowsKnob": 1,
+      "lowTierShadowsKnob": 1,
+      "lowTierResScale": 0.8,
+      "statusText": "12:04 · WALK · Snow 34.4 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs"
+    },
+    {
+      "frame": 3,
+      "label": "low_sun_sunfx_tDepth_09999_treats_hills_beyond_1600m_as_sky_and_runs_below_horizon",
+      "hour": 18.919,
+      "sunElevationDeg": 2.17,
+      "sunDirection": {
+        "x": -0.9411,
+        "y": 0.0379,
+        "z": -0.3359
+      },
+      "cameraNearM": 0.2,
+      "cameraMinFarM": 8000,
+      "sunfxSkyStepThresholdDepth": 0.9999,
+      "solidTerrainTreatedAsSkyBeyondMetres": 1600.03,
+      "postGateSourceLine": "const lightFx = !!fx && fx.sunDir.y > -0.05 && (fx.contact > 0 || fx.rays > 0);",
+      "postBelowHorizonMinElevationDeg": -2.87,
+      "postCallSourceLine": "post.render(!!photo, photo?.focalMm ?? 0, fx.ssao, { contact: fx.contact, rays: fx.rays, sunDir: lit.dir, sunCol: sky.sunLight.color });",
+      "statusText": "18:55 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs"
+    }
+  ],
+  "sourceVerification": {
+    "csmRawLine": "csm = new CSM({ camera, parent: scene, cascades: tier.shadows, maxFar: 110, // ≈ the LOD-1 range: distant LOD-2 trees cast no shadow (outside the cascades) shadowMapSize: tier.resScale >= 1 ? 2048 : 1024, // ≤ 2048 (Quest budget)",
+    "shadowMapSizeCommentedOut": true,
+    "pcssShaderConsumerCountInSrc": 0,
+    "treeHasCustomDepthMaterial": false,
+    "coniferHasCustomDepthMaterial": false,
+    "postGateAllowsBelowHorizonToMinus005": true,
+    "cloudShadowHardcodes1000mProjectionHeight": true
+  },
+  "pageErrors": []
+}

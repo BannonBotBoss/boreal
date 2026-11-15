@@ -1,0 +1,241 @@
+{
+  "capturedAt": "2026-11-15T04:00:54.558Z",
+  "baseUrl": "http://127.0.0.1:5258",
+  "observations": [
+    {
+      "frame": 0,
+      "label": "january_winter_neonates_and_forced_maternal_lake_charge_submerging_pups_and_fox",
+      "statusSnapshot": "12:08 · WALK · Snow 34.2 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+      "motherPoseAfterUnprovokedCharge": {
+        "x": -1189,
+        "z": -959.54,
+        "groundY": 17.361,
+        "waterY": 17.631,
+        "waterDepthM": 0.27
+      },
+      "driveState": {
+        "mode": "flee",
+        "protect": 0.438,
+        "committed": true,
+        "holdHijackingPlayerControls": true,
+        "foxX": -1188.43,
+        "foxZ": -943.32,
+        "foxWaterDepthM": 0,
+        "effortPup": 0.25
+      },
+      "pups": [
+        {
+          "slot": 0,
+          "ageYears": 0.0799,
+          "stage": "pup",
+          "act": "sniff",
+          "pupY": 17.556,
+          "waterY": 17.631,
+          "submergedDepthM": 0.075
+        },
+        {
+          "slot": 1,
+          "ageYears": 0.0799,
+          "stage": "pup",
+          "act": "trot",
+          "pupY": 17.388,
+          "waterY": 17.631,
+          "submergedDepthM": 0.243
+        },
+        {
+          "slot": 2,
+          "ageYears": 0.0799,
+          "stage": "pup",
+          "act": "tumble",
+          "pupY": 17.476,
+          "waterY": 17.631,
+          "submergedDepthM": 0.155
+        },
+        {
+          "slot": 3,
+          "ageYears": 0.0799,
+          "stage": "pup",
+          "act": "sniff",
+          "pupY": 17.376,
+          "waterY": 17.631,
+          "submergedDepthM": 0.256
+        },
+        {
+          "slot": 4,
+          "ageYears": 0.0799,
+          "stage": "pup",
+          "act": "tumble",
+          "pupY": 17.549,
+          "waterY": 17.631,
+          "submergedDepthM": 0.082
+        }
+      ]
+    },
+    {
+      "frame": 1,
+      "label": "four_hour_same_afternoon_hypergrowth_to_1_21x_oversized_woolly_clones",
+      "elapsedWorldSec": 105002.8,
+      "pupsBefore": [
+        {
+          "slot": 0,
+          "ageYears": 0.079,
+          "stage": "pup"
+        },
+        {
+          "slot": 1,
+          "ageYears": 0.079,
+          "stage": "pup"
+        },
+        {
+          "slot": 2,
+          "ageYears": 0.079,
+          "stage": "pup"
+        },
+        {
+          "slot": 3,
+          "ageYears": 0.079,
+          "stage": "pup"
+        },
+        {
+          "slot": 4,
+          "ageYears": 0.079,
+          "stage": "pup"
+        }
+      ],
+      "pupsAfter": [
+        {
+          "slot": 0,
+          "ageYears": 7.3699,
+          "stage": "adult",
+          "scaleXYZ": [
+            1.023,
+            0.93,
+            1.0416
+          ]
+        },
+        {
+          "slot": 1,
+          "ageYears": 7.3699,
+          "stage": "adult",
+          "scaleXYZ": [
+            1.188,
+            1.08,
+            1.2096
+          ]
+        },
+        {
+          "slot": 2,
+          "ageYears": 7.3699,
+          "stage": "adult",
+          "scaleXYZ": [
+            1.078,
+            0.98,
+            1.0976
+          ]
+        },
+        {
+          "slot": 3,
+          "ageYears": 7.3699,
+          "stage": "adult",
+          "scaleXYZ": [
+            0.968,
+            0.88,
+            0.9856
+          ]
+        },
+        {
+          "slot": 4,
+          "ageYears": 7.3699,
+          "stage": "adult",
+          "scaleXYZ": [
+            1.133,
+            1.03,
+            1.1536
+          ]
+        }
+      ],
+      "maxLengthScaleVsMother": 1.2096,
+      "foxEffortOnGrownOffspring": 0.25,
+      "statusSnapshot": "02:03 · WALK · Snow 32.5 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs"
+    },
+    {
+      "frame": 2,
+      "label": "behavioral_20x_scale_pups_unfolded_and_moving_while_simdt_zero_plus_charge_hijack",
+      "driveDuringHijack": {
+        "mode": "watch",
+        "protect": 0.129,
+        "committed": false,
+        "hold": true
+      },
+      "clockRateAt20x": 20.000000000000004,
+      "observationAt20x": {
+        "scale": "behavioral",
+        "lower": "behavioral",
+        "higher": "behavioral",
+        "blend": 1
+      },
+      "simWorldSecAt20x": 0,
+      "expectedCoarseBodyShareAt20x": 0,
+      "pupMotionOver650msAt20xWhileSimDtZero": [
+        {
+          "slot": 0,
+          "deltaPosM": 0.3694,
+          "deltaYawRad": 25.1201
+        },
+        {
+          "slot": 1,
+          "deltaPosM": 0.0886,
+          "deltaYawRad": 0
+        },
+        {
+          "slot": 2,
+          "deltaPosM": 0.098,
+          "deltaYawRad": 0
+        },
+        {
+          "slot": 3,
+          "deltaPosM": 0.2895,
+          "deltaYawRad": 31.6998
+        },
+        {
+          "slot": 4,
+          "deltaPosM": 0.1507,
+          "deltaYawRad": 0.12
+        }
+      ],
+      "statusSnapshotAt20x": "12:09 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+      "rewindCheck": {
+        "clockRateRewind": -10,
+        "simWorldSecOnRewind": 0,
+        "pupMotionOver450msDuringRewind": [
+          {
+            "slot": 0,
+            "deltaPosM": 0.067,
+            "deltaYawRad": 0.1165
+          },
+          {
+            "slot": 1,
+            "deltaPosM": 0.1076,
+            "deltaYawRad": 30.383
+          },
+          {
+            "slot": 2,
+            "deltaPosM": 0.0446,
+            "deltaYawRad": 0
+          },
+          {
+            "slot": 3,
+            "deltaPosM": 0.0219,
+            "deltaYawRad": 0.4091
+          },
+          {
+            "slot": 4,
+            "deltaPosM": 0.0575,
+            "deltaYawRad": 29.5112
+          }
+        ]
+      }
+    }
+  ],
+  "pageErrors": []
+}

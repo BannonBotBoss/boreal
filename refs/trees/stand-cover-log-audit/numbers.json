@@ -1,0 +1,321 @@
+{
+  "generatedAt": "2026-11-15T09:21:21.571Z",
+  "taskId": "T-0237",
+  "calibration": {
+    "metrics": {
+      "ratioScore": "min(a, b) / max(a, b) for strictly positive dimensions/ratios",
+      "unitScore": "max(0, 1 - |measured - target| / fullScale) for bounded counts/rates/shares",
+      "threshold": 0.95
+    },
+    "knownMatches": [
+      {
+        "name": "generateChunk base isDryLand check: 0 terrestrial trees inside Kenora lakes/rivers before applyPopulation runs",
+        "measured": 0,
+        "target": 0,
+        "score": 1
+      },
+      {
+        "name": "generateChunk base treeShare = 0 on Polar Glacial Ice Sheet before applyPopulation runs",
+        "measured": 0,
+        "target": 0,
+        "score": 1
+      }
+    ],
+    "knownMismatches": [
+      {
+        "name": "Fallen log mid-diameter (0.806 m) vs parent boreal tree DBH (0.215 m)",
+        "measured": 0.7874,
+        "target": 0.2202,
+        "score": 0.2796
+      },
+      {
+        "name": "Rotated log (yaw = pi/2) ground-flora footprint IoU (unrotated hx=2.25, hz=0.45)",
+        "measured": 0.1088,
+        "target": 1,
+        "score": 0.1088
+      }
+    ]
+  },
+  "summary": {
+    "totalChecks": 12,
+    "passingAt095": 0,
+    "meanScore": 0.2028
+  },
+  "scenesForCapture": {
+    "frame0_kenoraWaterTrees": {
+      "cx": -35,
+      "cz": -21,
+      "count": 3,
+      "waterBodyKind": "pond",
+      "targetMid": {
+        "x": -1375.02,
+        "z": -808.79
+      },
+      "camera": {
+        "x": -1379.9,
+        "z": -784.27,
+        "h": 18.04,
+        "yaw": -0.1963
+      },
+      "sampleTrees": [
+        {
+          "key": "extra-spruce:-35:-21:1",
+          "x": -1364.4794659595937,
+          "z": -813.5008420329541,
+          "h": 16.481189958681995,
+          "waterSurface": 17.631462138467267,
+          "kind": "pond"
+        },
+        {
+          "key": "extra-spruce:-35:-21:2",
+          "x": -1375.6369907129556,
+          "z": -804.7891168203205,
+          "h": 16.763141538428332,
+          "waterSurface": 17.631462138467267,
+          "kind": "pond"
+        },
+        {
+          "key": "extra-spruce:-35:-21:3",
+          "x": -1384.94657904841,
+          "z": -808.0731449276209,
+          "h": 17.456989850449045,
+          "waterSurface": 17.631462138467267,
+          "kind": "pond"
+        }
+      ]
+    },
+    "frame1_saharaBorealForest": {
+      "label": "hyperarid_subtropical_desert",
+      "latDeg": 21,
+      "lonDeg": 99,
+      "biome": "boreal",
+      "vegetationWeight": 1,
+      "rawSiteTreeShare": 1,
+      "siteTreeShare": 0.0073,
+      "datumM": 3163.8,
+      "subtropicalBeltDesertShare": 0,
+      "treesAllowedByClimate": true,
+      "herbsAllowedByTempOnly": true,
+      "patch81Chunks13ha": {
+        "spruceTrees": 456,
+        "fallenLogs": 7,
+        "herbProps": 99,
+        "blueberryForagePatches": 283,
+        "whiteTailedDeer": 47
+      },
+      "meanGrassDensity01": 1,
+      "meanMossLichenCover01": 0.4744,
+      "peakBorealVascularSuitability01": 0.3586,
+      "bestChunk": {
+        "cx": -2,
+        "cz": 5,
+        "spruceCount": 27,
+        "logCount": 1,
+        "plantCount": 4,
+        "forageCount": 13,
+        "camera": {
+          "x": -63.05,
+          "z": 242.31,
+          "yaw": 0
+        }
+      }
+    },
+    "frame2_greenlandIceForest": {
+      "label": "polar_glacial_ice_sheet",
+      "latDeg": 48.5,
+      "lonDeg": -111,
+      "biome": "ice",
+      "vegetationWeight": 0,
+      "rawSiteTreeShare": 0,
+      "siteTreeShare": 0,
+      "datumM": 2868.4,
+      "subtropicalBeltDesertShare": 0,
+      "treesAllowedByClimate": false,
+      "herbsAllowedByTempOnly": false,
+      "patch81Chunks13ha": {
+        "spruceTrees": 447,
+        "fallenLogs": 7,
+        "herbProps": 37,
+        "blueberryForagePatches": 0,
+        "whiteTailedDeer": 0
+      },
+      "meanGrassDensity01": 0.6426,
+      "meanMossLichenCover01": 0,
+      "peakBorealVascularSuitability01": 0,
+      "bestChunk": {
+        "cx": -3,
+        "cz": -2,
+        "spruceCount": 26,
+        "logCount": 1,
+        "plantCount": 2,
+        "forageCount": 0,
+        "camera": {
+          "x": -98.76,
+          "z": -31.48,
+          "yaw": 0
+        }
+      }
+    },
+    "frame3_rotatedGiantLog": {
+      "key": "extra-log:16:-9:0",
+      "x": 653.89,
+      "z": -327.81,
+      "y": 6.75,
+      "rotationRad": 5.061,
+      "scale": 1.379,
+      "midDiameterM": 1.034,
+      "buttDiameterM": 1.186,
+      "lengthM": 6.066,
+      "grassDensityAtLog": 0.45,
+      "camera": {
+        "x": 653.07,
+        "z": -323.04,
+        "yaw": -0.1705
+      }
+    }
+  },
+  "runtimeObservationsLoaded": true,
+  "checks": [
+    {
+      "id": "kenora_upland_water_extra_and_far_trees",
+      "quantity": "Terrestrial spruce/birch/pine trees spawned inside open Kenora lakes & rivers (applyPopulation + farTrees)",
+      "measured": 503,
+      "measuredDetail": {
+        "extraSpruceInWater": 15,
+        "farTreesInWater": 488,
+        "extraLogsInWater": 0
+      },
+      "natureTarget": 0,
+      "source": "Keddy (2010) Wetland Ecology; Sims et al. (1997) NWO FEC (0 terrestrial conifers rooted in open water)",
+      "score": 0
+    },
+    {
+      "id": "sahara_desert_boreal_trees_logs_deer",
+      "quantity": "Boreal spruce/pine/birch trees & fallen logs in 13 ha hyper-arid Sahara erg (23.5 N, 12.0 E, BWh, veg=0)",
+      "measured": 463,
+      "measuredDetail": {
+        "spruceTrees": 456,
+        "fallenLogs": 7,
+        "herbProps": 99,
+        "blueberryForagePatches": 283,
+        "whiteTailedDeer": 47
+      },
+      "natureTarget": 0,
+      "source": "Peel et al. (2007) Koppen BWh; UNESCO (1979) hyper-arid erg (0 boreal conifers or logs)",
+      "score": 0
+    },
+    {
+      "id": "sahara_desert_boreal_grass_moss_forage",
+      "quantity": "Boreal graminoid blade density + Pleurozium/Sphagnum moss cover in hyper-arid Sahara erg (23.5 N, 12.0 E)",
+      "measured": 1.4744,
+      "measuredDetail": {
+        "meanGrassDensity01": 1,
+        "meanMossLichenCover01": 0.4744,
+        "blueberryPatches81Chunks": 283,
+        "peakVascularSuitability01": 0.3586
+      },
+      "natureTarget": 0,
+      "source": "Peel et al. (2007) Koppen BWh; Baldwin & Sims (1997) NWO boreal flora (0 cover in hyper-arid sand sea)",
+      "score": 0
+    },
+    {
+      "id": "greenland_ice_sheet_trees_and_logs",
+      "quantity": "Boreal trees & fallen logs in 13 ha interior Greenland Ice Sheet (75.0 N, 40.0 W, ~2500 m, EF)",
+      "measured": 454,
+      "measuredDetail": {
+        "spruceTrees": 447,
+        "fallenLogs": 7,
+        "herbProps": 37,
+        "blueberryForagePatches": 0,
+        "whiteTailedDeer": 0
+      },
+      "natureTarget": 0,
+      "source": "Korner & Paulsen (2004) J. Biogeogr. 31:713; Peel et al. (2007) Koppen EF (0 trees/logs on ice sheet)",
+      "score": 0
+    },
+    {
+      "id": "greenland_ice_sheet_grass_sedge_density",
+      "quantity": "Vascular grass/sedge/Labrador-tea blade density (defaultCover) on permanent Greenland glacier ice",
+      "measured": 0.6426,
+      "natureTarget": 0,
+      "source": "Korner (2012) Alpine Treelines / nival cryosphere (0 vascular graminoid blades on permanent glacier ice)",
+      "score": 0
+    },
+    {
+      "id": "paper_birch_lod2_crown_width_ratio",
+      "quantity": "Paper birch (Betula papyrifera) LOD-2 crown diameter / height ratio (broadleafCrown)",
+      "measured": 0.2202,
+      "natureTarget": 0.45,
+      "source": "Farrar (1995) Trees in Canada & treeSpecies.ts:32 (Betula papyrifera crownWidth = 0.45 * height)",
+      "score": 0.4894
+    },
+    {
+      "id": "canopy_shade_radius_vs_crown_radius",
+      "quantity": "Understory canopy-shade radius (flora.ts:59) vs actual tree crown radius (double-halving bug)",
+      "measured": 1.7366,
+      "natureTarget": 3.4732,
+      "source": "Canham et al. (1994) Can. J. For. Res. 24:337; trees.ts:265 (crownWidth factor is already R_crown)",
+      "score": 0.5
+    },
+    {
+      "id": "dead_snag_live_foliar_mass_shade_litterfall",
+      "quantity": "Dead leafless snag live crown mass (kg) & foliar litterfall (kg/m2/yr) vs leafless snag target (0)",
+      "measured": 26.35,
+      "measuredDetail": {
+        "snagLeafVertices": 0,
+        "reportedLiveCrownMassKg": 14.25,
+        "reportedShadeRadiusM": 0.645,
+        "reportedGreenLitterfallKgM2Yr": 0.121
+      },
+      "natureTarget": 0,
+      "source": "Viereck & Johnston (1990); Gower et al. (1997) JGR 102:29029 (dead leafless snags have 0 foliage mass & 0 foliar litterfall)",
+      "score": 0.473
+    },
+    {
+      "id": "fallen_log_diameter_vs_parent_stand_dbh",
+      "quantity": "Mean fallen-log mid-diameter (m) vs parent Kenora boreal stand mature tree DBH (m)",
+      "measured": 0.7874,
+      "measuredDetail": {
+        "meanLogMidDiameterM": 0.7874,
+        "logButtDiameterRangeM": [
+          0.645,
+          1.204
+        ],
+        "meanParentTreeDbhM": 0.2202,
+        "diameterInflationFactor": 3.58
+      },
+      "natureTarget": 0.2202,
+      "source": "Viereck & Johnston (1990) & Rudolph & Laidly (1990) Silvics of North America (Kenora spruce/pine DBH 0.18-0.26 m)",
+      "score": 0.2796
+    },
+    {
+      "id": "fallen_log_slenderness_length_to_diameter",
+      "quantity": "Fallen-log slenderness ratio (length / diameter) vs boreal windthrown bole slenderness",
+      "measured": 5.867,
+      "natureTarget": 32,
+      "source": "Yatskov et al. (2003) Can. J. For. Res. 33:1211; Boulanger & Sirois (2006) (6-12 m boles at 0.20-0.25 m diam -> L/D >= 30)",
+      "score": 0.1833
+    },
+    {
+      "id": "rotated_log_flora_exclusion_footprint_iou",
+      "quantity": "Rotated log (yaw = 90 deg, scale = 1.25) ground-flora exclusion footprint IoU (flora.ts:62 / site.ts:43)",
+      "measured": 0.1088,
+      "measuredDetail": {
+        "iou": 0.1088,
+        "protectedTrunkAreaShare": 0.1593,
+        "invadedTrunkAreaShare": 0.8407
+      },
+      "natureTarget": 1,
+      "source": "Rigid-body solid occupancy (ground plants cannot grow through rotated fallen wood at any yaw)",
+      "score": 0.1088
+    },
+    {
+      "id": "decayed_class5_log_vertical_slump_ratio",
+      "quantity": "Decay Class 5 (~100 yr) fallen-log cross-section height/width slump ratio (geometry.ts:157)",
+      "measured": 1,
+      "natureTarget": 0.4,
+      "source": "Maser et al. (1979) USDA GTR-PNW-96; Yatskov et al. (2003) Class 4-5 oval slump (H/W <= 0.45, ~0.40)",
+      "score": 0.4
+    }
+  ]
+}

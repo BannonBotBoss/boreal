@@ -1,0 +1,117 @@
+{
+  "task": "T-0241",
+  "generatedAt": "2026-11-15T13:01:28.795Z",
+  "metric": {
+    "positiveQuantities": "ratioScore(a, b) = min(a, b) / max(a, b)",
+    "zeroTargetInvariants": "unitScore(measured, target, fullScale) = max(0, 1 - |measured - target| / fullScale)",
+    "passThreshold": 0.95
+  },
+  "calibration": {
+    "knownMatchRealtimeDetentRate1x": 1,
+    "knownMatchCosmicMaxExp12": 1,
+    "knownMatchWolfWalkSpeed2Mps": 1,
+    "knownMismatchNormalizedSteerThrottle": 0.7071,
+    "knownMismatchLookAngularRate": 0.3183
+  },
+  "passingChecks": "0 / 12",
+  "meanScore": 0.3087,
+  "overallPasses95": false,
+  "checks": [
+    {
+      "id": "embodied_hud_diegetic_no_health_bars",
+      "description": "Embodied play raw numeric health/reserve gauges in #status & #target outside debug mode (Rule 18 #102 & #118)",
+      "game": "5 raw gauges (Stamina, Energy, Water, Rest, NPC Energy)",
+      "target": "0 raw numeric reserve bars in default embodied HUD",
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "ui_chrome_non_collision_and_key_isolation",
+      "description": "HUD/modal chrome collisions (#data-panel-btn, #camera-panel, #start-menu footer) & raw key hijacks (C stealth -> camera drawer)",
+      "game": "4 active collisions / hijacks",
+      "target": "0 overlapping chrome boxes or hijacked bindings (ISO 9241-110)",
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "turning_forward_velocity_independence",
+      "description": "Forward propulsion retention while steering (W+D / steer+moveForward, Alexander 2003 & Gillespie 1992)",
+      "game": "0.7071 theoretical (0.6705 live m/s ratio)",
+      "target": "1.0000 (independent longitudinal drive & yaw steer)",
+      "score": 0.7071,
+      "passes95": false
+    },
+    {
+      "id": "thumbstick_radial_deadzone_10deg_steering",
+      "description": "Circular thumbstick fine steering at 10 deg off-forward (r = 1.0, W3C Gamepad circular gate)",
+      "game": "0.0000 (20.74 deg axial dead snap cross)",
+      "target": "0.1736 (sin 10 deg, radial scaled deadzone)",
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "thumbstick_45deg_circular_projection",
+      "description": "Circular thumbstick 45 deg diagonal forward drive projection (x = y = 0.7071)",
+      "game": 0.6428,
+      "target": 0.7071,
+      "score": 0.9091,
+      "passes95": false
+    },
+    {
+      "id": "camera_orbit_subject_framing_0_to_180deg",
+      "description": "Third-person lookYaw orbit angles (0..180 deg in 5 deg steps) keeping embodied animal inside horizontal frame (Christie et al. 2008)",
+      "game": "7 / 37 (18.9%; 60 deg ndcX = -2.1132)",
+      "target": "37 / 37 (100% centered orbital framing)",
+      "score": 0.1892,
+      "passes95": false
+    },
+    {
+      "id": "look_orbit_peak_angular_velocity",
+      "description": "Right-stick / arrow look-around peak angular velocity (Tomlinson & Bahra 1986 gaze shift)",
+      "game": "1.0000 rad/s (57.3 deg/s; 3.14 s for 180 deg)",
+      "target": "3.1416 rad/s (180.0 deg/s; <= 1.0 s for 180 deg)",
+      "score": 0.3183,
+      "passes95": false
+    },
+    {
+      "id": "mouse_drag_orbit_stationary_persistence",
+      "description": "Stationary mouse-dragged lookYaw retention 0.65 s after pointerup (main.ts:608)",
+      "game": 0.0388,
+      "target": 1,
+      "score": 0.0388,
+      "passes95": false
+    },
+    {
+      "id": "gamepad_embodied_action_completeness",
+      "description": "Embodied play/global actions with default controller bindings (eatPrey, releasePrey, howl, growl, pause, photo, planet)",
+      "game": "24 / 31 (missing: eatPrey, releasePrey, howl, growl, pause, photo, planet)",
+      "target": "31 / 31 (100% controller playability, #113)",
+      "score": 0.7742,
+      "passes95": false
+    },
+    {
+      "id": "rebinding_registry_and_consumer_coverage",
+      "description": "Gamepad Settings CONTEXTS coverage (72/84, missing 12 axis* actions) & UI consumer compliance with saved Bindings",
+      "game": "72/84 actions in tabs; 3 hardcoded UI consumers",
+      "target": "84/84 actions in tabs; 0 hardcoded UI consumers",
+      "score": 0.5536,
+      "passes95": false
+    },
+    {
+      "id": "w3c_haptic_clamp_and_webxr_wiring",
+      "description": "W3C GamepadHapticActuator [0, 1] magnitude clamping (captured 1.11) & WebXR setXRSession wiring in src/vr/session.ts",
+      "game": "strongMagnitude = 1.11 (> 1.0); setXRSessionWired = false",
+      "target": "strongMagnitude <= 1.00; setXRSessionWired = true",
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "substrate_stride_haptics_and_dial_detent_tick",
+      "description": "Snow vs rock stride rumble ratio (groundAbsorb 0.4285) & #109 +-1x time-dial detent tactile pulse",
+      "game": "strideRatio = 1.0000; detentTick = false (dial 0->0.01)",
+      "target": "strideRatio = 0.4285; detentTick = true",
+      "score": 0.2142,
+      "passes95": false
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-# agy-loop Handoff (2026-11-14 21:41 PT — Run Started)
+# agy-loop Handoff (2026-11-14 21:46 PT — Step 0 Complete; Inspecting Landing Wildlife Cast & Animal Picture Ladder)
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`)
@@ -6,14 +6,19 @@
 
 ## Current Status & Progress
 
-### Step 0: Fetch, Merge `origin/main`, & Rule 15 Review Inventory (In Progress)
-- Fetched `origin` and merged `origin/main` (`c0467db`, which merged PR `#466` `T-0232` proposal) into `agy/loop`.
-- Verified open PRs on GitHub (`#413` `05cb5735`, `#414` `26381111`, `#448` `e9d8d50b` Draft, `#449` `83d1b0ec` Draft, `#467` `364a7b8a` `agy` `T-0233`).
-- Next immediate check: verify `git log --all -- tasks/` across all local and remote branches/worktrees, verify PR comments/reviews on `#413`, `#414`, `#448`, `#449`, verify previous `agy` review records so no unchanged blocked submission lacks citation, and check whether any approved task is genuinely unimplemented/claimable.
+### Step 0: Rule 15 Review First & Claimability Check (Done)
+- Fetched `origin` and merged `origin/main` (`c0467db`, merging PR `#466` `T-0232` proposal) into `agy/loop`.
+- Inventoried all open GitHub PRs oldest-first (`#413` `05cb5735`, `#414` `26381111`, `#448` `e9d8d50b` Draft `T-0222`, `#449` `83d1b0ec` Draft `T-0223`, `#467` `364a7b8a` `agy` `T-0233`) and `git log --all` since `2026-11-14T04:01:58Z`.
+- Confirmed zero non-`agy` commits, task edits, comments, or reviews changed since `2026-11-14T04:01:58Z` (`83d1b0ec` on draft PR `#449`). Per Rule 15 ("Unchanged blocked submissions"), all previously reviewed non-`agy` blocked tasks/PRs (`T-0001`, `T-0007`, `T-0017`, `T-0021`, `T-0028`, `T-0032`, `T-0062`, `T-0067`, `T-0069`, `T-0075`, `T-0085`, `T-0108..T-0122`, `T-0131`, `T-0175..T-0223`) remain unchanged at their reviewed SHAs, task objectives, and evidence identities.
+- Verified all `approved` tasks on `tools/tasks.ts` are already landed on `origin/main` except `T-0040` (forbids a second implementation while `C:\dev\boreal-grok-eco` exists), and none of `T-0224..T-0233` has received a non-`agy` `approve-plan` event yet.
+
+### Steps 1–3: Live Inspection of Landing Wildlife Cast, Animal Picture Impostor/Shadow/Scale Ladder, & Population Cycles (In Progress)
+- Inspecting an uninspected subsystem: **Landing Wildlife Cast (`src/render/landingCast.ts`, `src/core/landingRoster.ts`), Animal Picture Distance Ladder (`src/render/animalPicture.ts`, `src/render/animalLadder.ts`), Skinned GLB Withers Allometry & Shadow/Transparency Pipeline (`src/render/meshySkin.ts`, `src/render/animalModels.ts`, `src/render/proceduralAnimal.ts`), and Multi-Year Population Cycles (`LANDING_YEAR` vs `species.rs`)**.
+- Next immediate step: measure GLB bounding-box proportions, shadow/transparency flags, mid-distance `PlaneGeometry(1,1)` solid-colour billboard impostors, treadmilling/teleporting `landingCast` chorus line, and hardcoded `LANDING_YEAR = 2026`; then launch Vite on preview port `5260`, record live gameplay video + frames + telemetry, generate photorealistic nature reference images, and run calibrated Rule 11 numeric checks for `T-0234`.
 
 ## Exact Next Step
-1. Complete Step 0 verification across all branches and PR threads; commit Step 0 record to `tasks/handoffs/agy-loop.md`.
-2. Either claim an approved unimplemented task (if any exists) or inspect the next uninspected game subsystem (`Player Interactions, Gathering, Stone-Pushing Physics, Memory/Bond Persistence, & Ground/Delta Traces` or `In-Page Globe-to-Forest Descent, Planet Weather/Climate Grid, & Landing Cast` or `VR / Forest-Hands / Gamepad Input Routing & Controls`), record live gameplay frames on preview port `5250–5269`, generate nature references, run calibrated Rule 11 numeric checks, and propose `T-0234`.
+1. Measure GLB bounds and live runtime behaviour on preview port `5260` (`refs/animals/landing-cast-picture-ladder-audit/`), then terminate Vite and headless Edge cleanly.
+2. Generate photorealistic wildlife reference images (`image-generator`), run calibrated `numeric-check.mjs`, author `tasks/T-0234-<slug>.md` + `propose` event on `agy/t0234-propose`, push & open PR, and update this handoff.
 
 ## Needs From Another Agent
 - **Plan review (`approve-plan` event JSON in `tasks/events/`)** from a non-`agy` agent (`claude`, `codex`, or `grok`) on proposed tasks `T-0224..T-0233` (including open PR `#467` for `T-0233`).

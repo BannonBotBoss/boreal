@@ -1,0 +1,221 @@
+{
+  "generatedAt": "2026-11-15T11:16:42.929Z",
+  "task": "T-0239",
+  "runtimeObservationsLoaded": true,
+  "calibration": {
+    "metric": "ratioScore(a,b) = min(a,b)/max(a,b) for positive physical/allometric quantities; unitScore(m,t,scale) = max(0, 1 - |m-t|/scale) for zero-target conservation/burial invariants; pass >= 0.95",
+    "knownMatches": [
+      {
+        "name": "Surface gravitational acceleration gravity(0) vs standard boreal surface gravity (~49 deg N)",
+        "measured": 9.82022,
+        "reference": 9.81,
+        "unit": "m/s^2",
+        "source": "WGS84 / Somigliana normal gravity at 49 deg N (9.810 m/s^2)",
+        "score": 0.9989589484748426
+      },
+      {
+        "name": "Canadian Shield granite mineral density vs Klein & Dutrow (2007)",
+        "measured": 2614,
+        "reference": 2630,
+        "unit": "kg/m^3",
+        "source": "Klein & Dutrow (2007), Manual of Mineral Science (23rd ed.): granite 2,630 kg/m^3",
+        "score": 0.993916349809886
+      },
+      {
+        "name": "Adult comfortable walking speed PERSON_WALK_MPS vs Bohannon (1997)",
+        "measured": 1.393,
+        "reference": 1.393,
+        "unit": "m/s",
+        "source": "Bohannon (1997), Age and Ageing 26:15-19: 1.393 m/s",
+        "score": 1
+      }
+    ],
+    "knownMismatches": [
+      {
+        "name": "Voxel-column White-tailed Deer rigMass (515.35 kg at scale=1) vs adult O. virginianus (75 kg)",
+        "measured": 515.35,
+        "reference": 75,
+        "unit": "kg",
+        "score": 0.14553174790259935
+      },
+      {
+        "name": "Pre-T-0027 7-ellipsoid lowbush blueberry entityMass (130.38 kg) vs published shoot biomass (0.35 kg)",
+        "measured": 130.38,
+        "reference": 0.35,
+        "unit": "kg",
+        "score": 0.0026844427277399707
+      }
+    ]
+  },
+  "summary": {
+    "totalChecks": 12,
+    "passedChecks": 0,
+    "failedChecks": 12,
+    "meanScore": 0.1989,
+    "passThreshold": 0.95,
+    "overallPass": false
+  },
+  "checks": [
+    {
+      "id": "deer_allometric_body_mass",
+      "label": "Adult White-tailed Deer procedural rigMass (scale=1.0: 515.35 kg; wild mean: 640.3 kg, 1:0:15 = 1,303.2 kg)",
+      "measured": 515.35,
+      "expected": "65-95 kg (75.0 kg mean adult boreal Odocoileus virginianus)",
+      "referenceValue": 75,
+      "unit": "kg",
+      "source": "Fuller (1990), Wildl. Monogr. 110:1-37; Ditchkoff (2011), Biology and Management of White-tailed Deer",
+      "score": 0.14553174790259935,
+      "pass": false
+    },
+    {
+      "id": "deer_antler_and_stature_height",
+      "label": "White-tailed Deer rig total height (scale=1.0: 3.25 m antler top / 1.95 m back; wild 1:0:15 = 4.43 m)",
+      "measured": 3.25,
+      "expected": "0.90-1.05 m shoulder height (~1.35 m antler top on mature buck)",
+      "referenceValue": 1.35,
+      "unit": "m",
+      "source": "Nowak (1999), Walker's Mammals of the World (6th ed.); Sauer (1984)",
+      "score": 0.41538461447044245,
+      "pass": false
+    },
+    {
+      "id": "wolf_hare_bear_rig_masses",
+      "label": "Wolf (72.38 kg vs 38 kg) & Snowshoe Hare (4.09 kg vs 1.45 kg) procedural rigMass mean accuracy",
+      "measured": {
+        "wolfKg": 72.38,
+        "hareKg": 4.09,
+        "bearKg": 458.23
+      },
+      "expected": "Wolf 32-44 kg (38.0 kg mean); Hare 1.35-1.55 kg (1.45 kg mean)",
+      "referenceValue": {
+        "wolfKg": 38,
+        "hareKg": 1.45
+      },
+      "unit": "kg",
+      "source": "Kolenosky & Standfield (1975); Mech & Boitani (2003); Krebs et al. (2001, Kluane Project)",
+      "score": 0.43991766053089243,
+      "pass": false
+    },
+    {
+      "id": "understory_forage_and_herb_mass",
+      "label": "Lowbush blueberry (forage) & bunchberry/lily (plant) entityMass (130.38 kg 7-ellipsoid wood blob)",
+      "measured": 130.38,
+      "expected": "~0.35 kg fresh shoot biomass for r=0.38 m lowbush blueberry clone (~0.015 kg for herb clump)",
+      "referenceValue": 0.35,
+      "unit": "kg",
+      "source": "Hall et al. (1979), Can. Field-Nat. 93(4):415-430 (Vaccinium angustifolium)",
+      "score": 0.0026844427277399707,
+      "pass": false
+    },
+    {
+      "id": "decayed_log_bulk_density_coupling",
+      "label": "Class 5 decayed fallen log (100 yr) density in entityMass & settleTrunk (fixed 511.8 kg/m^3)",
+      "measured": 511.76,
+      "expected": "~108 kg/m^3 dry (~162 kg/m^3 moist) Class 5 CWD bulk density from logDecay.ts arenaOf()",
+      "referenceValue": 162,
+      "unit": "kg/m^3",
+      "source": "Harmon et al. (1986), Adv. Ecol. Res. 15:133-302; Seedre et al. (2013); src/core/logDecay.ts LOG_FLOOR_BULK",
+      "score": 0.3165546349851493,
+      "pass": false
+    },
+    {
+      "id": "terrestrial_traction_accel_cap",
+      "label": "Embodied horizontal ground acceleration (Wolf 30.00 m/s^2 = 3.06 g; Hare 78.20 m/s^2 = 7.97 g)",
+      "measured": {
+        "wolfMps2": 30,
+        "hareMps2": 78.2
+      },
+      "expected": "Wolf ~6.5 m/s^2, Hare ~10.0 m/s^2 (bounded by soil traction mu_s*g ~= 7.86-10 m/s^2, <= 13 m/s^2 cheetah)",
+      "referenceValue": {
+        "wolfMps2": 6.5,
+        "hareMps2": 10
+      },
+      "unit": "m/s^2",
+      "source": "Williams et al. (2009), Biol. Lett. 5:610-613; Wilson et al. (2013), Nature 498:185-189; HARE_AGENT.speed.accel",
+      "score": 0.17227442953419106,
+      "pass": false
+    },
+    {
+      "id": "solid_collision_momentum_conservation",
+      "label": "Player-animal collision momentum conservation & recoil (buildScene.ts:322 discards player recoil v1')",
+      "measured": 1.1399,
+      "expected": "0.0000 fractional momentum violation (both bodies recoil, overlap separated, CONTACTS published)",
+      "referenceValue": 0,
+      "unit": "|Delta p| / p0",
+      "source": "Newtonian conservation of linear momentum (m1*v1 + m2*v2 = m1*v1' + m2*v2')",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "snout_rock_push_mass_and_friction",
+      "label": "Max snout-pushable cobble mass (13.38 kg basalt cobble moved 0.22 m with zero friction/mass scaling)",
+      "measured": 11.49,
+      "expected": "<= 2.50 kg loose surface pebble/cobble (push displacement scaled by 1/(mu*m*g) & soil embedment)",
+      "referenceValue": 2.5,
+      "unit": "kg",
+      "source": "Wentworth (1922), J. Geol. 30:377; Coulomb sliding resistance on forest duff/till (mu_s ~= 0.65)",
+      "score": 0.21748796728569755,
+      "pass": false
+    },
+    {
+      "id": "rock_push_water_obstacle_and_repose_gate",
+      "label": "Snout rock-push waterline, trunk obstacle & steep-slope angle-of-repose (~35 deg) enforcement",
+      "measured": 0,
+      "expected": "1.0000 (stones blocked by trunks/boulders, settle downslope > 35 deg, and never hover/stay dry-pushed underwater)",
+      "referenceValue": 1,
+      "unit": "compliance fraction",
+      "source": "Carson (1977), Earth Surf. Process. 2(4):363-380 (cobble angle of repose 32-38 deg)",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "visitor_human_stature_and_mass",
+      "label": "Human Visitor (person) mean wild stature (2.45 m) & entityMass (525.3 kg; 4:0:15 = 2.69 m / 690.65 kg)",
+      "measured": {
+        "meanHeightM": 2.451,
+        "meanMassKg": 525.28
+      },
+      "expected": "1.75 m mean adult stature, 70.0 kg mean body mass (matching PERSON_REFERENCE_KG = 70 in visitors.ts:20)",
+      "referenceValue": {
+        "heightM": 1.75,
+        "massKg": 70
+      },
+      "unit": "m / kg",
+      "source": "ICRP Publication 23 (1975), Reference Man (1.75 m, 70 kg); Drillis & Contini (1966)",
+      "score": 0.42362873419604974,
+      "pass": false
+    },
+    {
+      "id": "visitor_cranial_ratio_and_walking_stride",
+      "label": "Visitor cranial-to-stature ratio (0.263 = 1:3.8 sphere head) & walking leg swing (0.00 rad welded cylinders)",
+      "measured": {
+        "headToStature": 0.2632,
+        "legExcursionRad": 0
+      },
+      "expected": "Head/stature ~= 0.1333 (1:7.5) and ~0.70 rad (~40 deg) hip stride excursion at 1.393 m/s walk",
+      "referenceValue": {
+        "headToStature": 0.13333333333333333,
+        "legExcursionRad": 0.7
+      },
+      "unit": "ratio / rad",
+      "source": "Drillis & Contini (1966), Body Segment Parameters; Perry & Burnfield (2010), Gait Analysis (2nd ed.)",
+      "score": 0.2533333339956072,
+      "pass": false
+    },
+    {
+      "id": "visitor_seated_ground_clearance_and_biome_gating",
+      "label": "Visitor seated leg burial (-0.48 m mean, -0.53 m on 4:0:15) & biome/staged-water gating",
+      "measured": {
+        "meanLegBurialM": 0.484,
+        "treelineBiomeGated": false,
+        "usesLegacyDeerWater": true
+      },
+      "expected": "0.00 m sub-terrain leg burial (articulated hip/knee sit above ground), treeline/biome cover gate, and staged isDry water check",
+      "referenceValue": 0,
+      "unit": "m underground",
+      "source": "Drillis & Contini (1966) seated anthropometry; staged hydrology surfaceAt.ts isDry()",
+      "score": 0,
+      "pass": false
+    }
+  ]
+}

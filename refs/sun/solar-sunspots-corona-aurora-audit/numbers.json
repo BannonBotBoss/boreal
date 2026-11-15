@@ -1,0 +1,145 @@
+{
+  "task": "T-0242",
+  "subsystem": "Solar Astrophysics, Sunspot Cycle, Multi-Passband Corona & Magnetosphere-Aurora Coupling",
+  "metric": "ratioScore = min(a,b)/max(a,b) and unitScore = max(0, 1 - |a-b|/scale); pass >= 0.95 unrounded",
+  "calibration": {
+    "knownMatches": {
+      "solarTSI_KoppLean2011": 0.9999,
+      "solarAngularRadius_IAU2015B3": 0.9994,
+      "equatorialSiderealOmega_Howard1990": 1
+    },
+    "knownMismatches": {
+      "clippedPhotosphere65Pct": 0.3416,
+      "scalarGreyUmbraContrastVsPlanck3900K": 0.548
+    }
+  },
+  "summary": {
+    "totalChecks": 12,
+    "passed": 0,
+    "failed": 12,
+    "meanScore": 0.2405,
+    "gatePass": false
+  },
+  "checks": [
+    {
+      "id": "view-sun-entry-route",
+      "name": "?view=sun URL route in entry.ts",
+      "gameValue": 0,
+      "natureTarget": 1,
+      "unit": "routed boolean",
+      "source": "src/world/globe/entry.ts:6-9 vs src/world/sun/sunView.ts:3-4 (?view=sun specification)",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "photosphere-limb-darkening-unclipped-fraction",
+      "name": "Unclipped photospheric limb-darkening disc fraction (OutputPass ACES + sRGB)",
+      "gameValue": 0.3416,
+      "natureTarget": 1,
+      "unit": "unclipped disc area fraction",
+      "source": "Neckel & Labs (1994, Sol. Phys. 153:91) & Hestroffer & Magnan (1998, A&A 333:338)",
+      "score": 0.3416,
+      "pass": false
+    },
+    {
+      "id": "spencer-veiling-glare-aureole",
+      "name": "Off-limb veiling-glare aureole at rho = 1.03 (UnrealBloomPass)",
+      "gameValue": 0,
+      "natureTarget": 0.04,
+      "unit": "normalized sRGB luminance",
+      "source": "Spencer, Shirley, Zimmerman & Greenberg (1995, SIGGRAPH 95, pp. 325-334)",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "solar-cycle-25-continuity-post-csv",
+      "name": "Solar Cycle 25 active sunspot groups on 2026-11-15 (past CSV end 2026-09-30)",
+      "gameValue": 0,
+      "natureTarget": 5.34,
+      "unit": "visible bipolar groups",
+      "source": "Hathaway (2015, Living Rev. Sol. Phys. 12:4, Eq. 6) & Hoyt & Schatten (1998, Sol. Phys. 179:189)",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "carrington-b0-tilt-and-shared-rng",
+      "name": "Carrington heliographic axial tilt |B_0| amplitude & shared proc/rng compliance",
+      "gameValue": 0,
+      "natureTarget": 7.25,
+      "unit": "degrees max |B_0| (+ shared RNG)",
+      "source": "IAU Cartographic Coordinates (Archinal et al. 2018) & Meeus (1998, Ch. 29); PROJECT-RULES Rule 2",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "umbra-planck-spectral-contrast-rb",
+      "name": "Sunspot umbra (3900 K) red-to-blue (610 nm / 465 nm) Planck contrast ratio",
+      "gameValue": 1,
+      "natureTarget": 1.8247,
+      "unit": "contrast(610nm)/contrast(465nm)",
+      "source": "Solanki (2003, A&ARv 11:153, T_u = 3900 K) & Planck spectral radiance",
+      "score": 0.548,
+      "pass": false
+    },
+    {
+      "id": "disc-centre-luminance-and-channel-limb-mean",
+      "name": "Solar disc-centre luminance & per-channel [610,550,465 nm] limb-mean normalization",
+      "gameValue": 2.313,
+      "natureTarget": 2,
+      "unit": "10^9 cd/m^2",
+      "source": "Neckel & Labs (1994, Sol. Phys. 153:91) & Allen's Astrophysical Quantities (4th ed., 2000, sec. 14.2)",
+      "score": 0.8151,
+      "pass": false
+    },
+    {
+      "id": "solar-passband-filter-reachability",
+      "name": "Reachable solar wavelength passbands in normal play (without dev ?unlockAll=1)",
+      "gameValue": 1,
+      "natureTarget": 8,
+      "unit": "passbands reachable (of 8)",
+      "source": "Lemen et al. (2012, Sol. Phys. 275:17, SDO/AIA) & src/ui/cameraPanel.ts:16-17 / controls.json:10-11",
+      "score": 0.125,
+      "pass": false
+    },
+    {
+      "id": "euv171-corona-srgb-tonemap",
+      "name": "EUV 171 A (Fe IX 0.63 MK) quiet-corona disc sRGB brightness",
+      "gameValue": 0.0588,
+      "natureTarget": 0.269,
+      "unit": "normalized sRGB [0..1]",
+      "source": "Lemen et al. (2012, Sol. Phys. 275:17) & IEC 61966-2-1 sRGB transfer function (OutputPass)",
+      "score": 0.2187,
+      "pass": false
+    },
+    {
+      "id": "off-limb-aurora-altitude-envelope",
+      "name": "Off-limb auroral dome altitude ceiling (110 km green, 250-400 km red) & disk/limb continuity",
+      "gameValue": 100,
+      "natureTarget": 400,
+      "unit": "km off-limb mesh ceiling (+ disk/limb ratio)",
+      "source": "Chamberlain (1961, Physics of the Aurora and Airglow) & Solomon et al. (1988); AURORA={110,250 km}",
+      "score": 0.205,
+      "pass": false
+    },
+    {
+      "id": "aurora-midnight-oval-shift-and-clock-coupling",
+      "name": "Feldstein-Starkov midnight equatorward auroral shift & worldClock solar-wind coupling",
+      "gameValue": 0,
+      "natureTarget": 4.5,
+      "unit": "degrees midnight-noon MLAT shift",
+      "source": "Feldstein & Starkov (1967, Planet. Space Sci. 15:209) & Newell et al. (2007, JGR 112:A01206)",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "magnetosphere-shue-magnetopause-compression",
+      "name": "Gannon storm subsolar magnetopause field-line stand-off (shueR0 vs symmetric L=8 dipole)",
+      "gameValue": 8,
+      "natureTarget": 5.059,
+      "unit": "Earth radii (R_E)",
+      "source": "Shue et al. (1998, JGR 103:17691) & Tsyganenko (1995, JGR 100:5599) on 2024-05-10T20:00Z OMNI",
+      "score": 0.6324,
+      "pass": false
+    }
+  ]
+}

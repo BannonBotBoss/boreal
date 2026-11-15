@@ -1,0 +1,319 @@
+{
+  "capturedAt": "2026-11-15T06:03:55.108Z",
+  "baseUrl": "http://127.0.0.1:5260",
+  "observations": [
+    {
+      "frame": 0,
+      "label": "landing_cast_chorus_line_zero_velocity_treadmilling_sideways_glbs_and_2_22m_ground_eagle",
+      "homeLaunchKazakhstanBug": {
+        "lat": 49.7701,
+        "lon": 65.5358,
+        "biome": "prairie",
+        "remote": false,
+        "censusCount": 1,
+        "census": [
+          {
+            "species": "red_fox",
+            "display": "Red Fox",
+            "count": 47
+          }
+        ],
+        "shown": [
+          {
+            "species": "Red Fox",
+            "count": 1,
+            "x": 52.19814808112591,
+            "z": -0.13378536514938233
+          }
+        ]
+      },
+      "borealCensus": [
+        {
+          "species": "snowshoe_hare",
+          "display": "Snowshoe Hare",
+          "count": 3104
+        },
+        {
+          "species": "white_tailed_deer",
+          "display": "White-tailed Deer",
+          "count": 56
+        },
+        {
+          "species": "moose",
+          "display": "Moose",
+          "count": 16
+        },
+        {
+          "species": "canada_lynx",
+          "display": "Canada Lynx",
+          "count": 8
+        },
+        {
+          "species": "gray_wolf",
+          "display": "Gray Wolf",
+          "count": 1
+        },
+        {
+          "species": "american_black_bear",
+          "display": "American Black Bear",
+          "count": 26
+        },
+        {
+          "species": "bald_eagle",
+          "display": "Bald Eagle",
+          "count": 4
+        },
+        {
+          "species": "beaver",
+          "display": "Beaver",
+          "count": 88
+        },
+        {
+          "species": "red_fox",
+          "display": "Red Fox",
+          "count": 2
+        }
+      ],
+      "playerPose": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": 14.6205
+      },
+      "pictureCounts": {
+        "specks": 0,
+        "fulls": 6,
+        "lows": 1,
+        "bodies": 0,
+        "wolves": {
+          "near": 0,
+          "mid": 1,
+          "far": 0
+        }
+      },
+      "castMotionAudit": [
+        {
+          "species": "Snowshoe Hare",
+          "count": 1,
+          "x": 60.558,
+          "z": -12.332,
+          "groundY": -0.257,
+          "distFromPlayerM": 7.92,
+          "worldDisplacementOver2sM": 0,
+          "measuredWorldSpeedMps": 0,
+          "posedWalkGaitSpeedMps": 1.2,
+          "fittedSkinDims": {
+            "heightM": 0.355,
+            "widthM": 0.425,
+            "tris": 25958
+          }
+        },
+        {
+          "species": "White-tailed Deer",
+          "count": 1,
+          "x": 59.792,
+          "z": -13.793,
+          "groundY": -0.238,
+          "distFromPlayerM": 7.387,
+          "worldDisplacementOver2sM": 0,
+          "measuredWorldSpeedMps": 0,
+          "posedWalkGaitSpeedMps": 1.2,
+          "fittedSkinDims": {
+            "heightM": 1.613,
+            "widthM": 1.569,
+            "tris": 25975
+          }
+        },
+        {
+          "species": "American Black Bear",
+          "count": 1,
+          "x": 59.025,
+          "z": -15.254,
+          "groundY": -0.23,
+          "distFromPlayerM": 7.2,
+          "worldDisplacementOver2sM": 0,
+          "measuredWorldSpeedMps": 0,
+          "posedWalkGaitSpeedMps": 1.2,
+          "fittedSkinDims": {
+            "heightM": 1.452,
+            "widthM": 2.251,
+            "tris": 25064
+          }
+        },
+        {
+          "species": "Bald Eagle",
+          "count": 1,
+          "x": 58.258,
+          "z": -16.715,
+          "groundY": -0.232,
+          "distFromPlayerM": 7.387,
+          "worldDisplacementOver2sM": 0,
+          "measuredWorldSpeedMps": 0,
+          "posedWalkGaitSpeedMps": 1.2,
+          "fittedSkinDims": {
+            "heightM": 2.224,
+            "widthM": 1.646,
+            "tris": 25460
+          }
+        },
+        {
+          "species": "Beaver",
+          "count": 1,
+          "x": 57.491,
+          "z": -18.176,
+          "groundY": -0.258,
+          "distFromPlayerM": 7.92,
+          "worldDisplacementOver2sM": 0,
+          "measuredWorldSpeedMps": 0,
+          "posedWalkGaitSpeedMps": 1.2,
+          "fittedSkinDims": {
+            "heightM": 0.484,
+            "widthM": 0.835,
+            "tris": 24836
+          }
+        },
+        {
+          "species": "Red Fox",
+          "count": 1,
+          "x": 54.668,
+          "z": -3.588,
+          "groundY": -0.267,
+          "distFromPlayerM": 18.453,
+          "worldDisplacementOver2sM": 17.2741,
+          "measuredWorldSpeedMps": 8.637,
+          "posedWalkGaitSpeedMps": 1.2,
+          "fittedSkinDims": {
+            "heightM": 0.613,
+            "widthM": 0.867,
+            "tris": 25952
+          }
+        }
+      ],
+      "sensesHudText": ""
+    },
+    {
+      "frame": 1,
+      "label": "heading_turn_over_20_deg_teleports_entire_wildlife_cast",
+      "yawBeforeRad": 1.9571,
+      "yawAfterRad": 5.0987,
+      "yawDeltaDeg": 180,
+      "playerTranslatedM": 3.067,
+      "teleports": [
+        {
+          "species": "Snowshoe Hare",
+          "beforeXZ": [
+            60.558,
+            -12.332
+          ],
+          "afterXZ": [
+            67.879,
+            -23.171
+          ],
+          "instantTeleportJumpM": 13.08
+        },
+        {
+          "species": "White-tailed Deer",
+          "beforeXZ": [
+            59.792,
+            -13.793
+          ],
+          "afterXZ": [
+            68.501,
+            -21.643
+          ],
+          "instantTeleportJumpM": 11.725
+        },
+        {
+          "species": "American Black Bear",
+          "beforeXZ": [
+            59.025,
+            -15.254
+          ],
+          "afterXZ": [
+            69.123,
+            -20.114
+          ],
+          "instantTeleportJumpM": 11.207
+        },
+        {
+          "species": "Bald Eagle",
+          "beforeXZ": [
+            58.258,
+            -16.715
+          ],
+          "afterXZ": [
+            69.744,
+            -18.586
+          ],
+          "instantTeleportJumpM": 11.638
+        },
+        {
+          "species": "Beaver",
+          "beforeXZ": [
+            57.491,
+            -18.176
+          ],
+          "afterXZ": [
+            70.366,
+            -17.057
+          ],
+          "instantTeleportJumpM": 12.923
+        },
+        {
+          "species": "Red Fox",
+          "beforeXZ": [
+            54.933,
+            -14.342
+          ],
+          "afterXZ": [
+            41.038,
+            -8.691
+          ],
+          "instantTeleportJumpM": 15
+        }
+      ]
+    },
+    {
+      "frame": 2,
+      "label": "mid_tier_46m_untextured_solid_colour_rectangle_impostors_midday_135mm",
+      "pictureCountsAt46m": {
+        "specks": 0,
+        "fulls": 4,
+        "lows": 0,
+        "bodies": 0,
+        "wolves": {
+          "near": 1,
+          "mid": 0,
+          "far": 0
+        }
+      }
+    },
+    {
+      "frame": 3,
+      "label": "mid_tier_46m_mesh_basic_material_rectangles_glowing_unlit_at_midnight",
+      "lighting": {
+        "hour": 0.14,
+        "dayOfYear": 16,
+        "latitude": 50.95,
+        "sunElevation": -60.1,
+        "day": 0,
+        "golden": 0,
+        "night": 1,
+        "state": "night"
+      },
+      "pictureCountsAtMidnight": {
+        "specks": 0,
+        "fulls": 6,
+        "lows": 5,
+        "bodies": 0,
+        "wolves": {
+          "near": 1,
+          "mid": 0,
+          "far": 0
+        }
+      },
+      "peakUnlitImpostorSrgbLuma01": 0,
+      "meanMidnightGroundSrgbLuma01": 0
+    }
+  ],
+  "pageErrors": []
+}

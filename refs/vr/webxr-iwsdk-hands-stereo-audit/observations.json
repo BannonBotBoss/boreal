@@ -1,0 +1,279 @@
+{
+  "capturedAt": "2026-11-16T07:09:56.723Z",
+  "port": 5269,
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "pageErrors": [],
+  "sampleTimesSec": {
+    "frame0": 32.834,
+    "frame1": 78.023,
+    "frame2": 83.403,
+    "frame3": 98.151
+  },
+  "stage0": {
+    "globe": {
+      "url": "http://127.0.0.1:5269/?view=globe&noprobe",
+      "bodyOnGlobe": false,
+      "vrBtnVisible": false,
+      "vrBtnRect": {
+        "x": 0,
+        "y": 0,
+        "w": 0,
+        "h": 0
+      },
+      "borealVrMounted": false,
+      "iwsdkRootCreatedOnClick": false,
+      "noticeBefore": "",
+      "noticeAfter": ""
+    },
+    "desktopNonXrClick": {
+      "webglContextsCreatedBeforeSessionNullCheck": 1,
+      "iwsdkRootObservedDuringClick": true,
+      "noticeText": "Enter VR needs a Quest browser and hands. This browser did not open an immersive session. Controllers are not a substitute."
+    }
+  },
+  "stage1": {
+    "iwerInit": {
+      "deviceName": "Meta Quest 3",
+      "supportedFrameRates": [
+        72,
+        80,
+        90,
+        120
+      ],
+      "internalNominalFrameRate": 90
+    },
+    "initialPhaseOnEntry": "sphere",
+    "darkPhaseSkipped": true,
+    "initialElapsed": 1.26,
+    "cycleBeforeScrub": 1.258,
+    "cycleAfterReleaseInSphere": 1.316,
+    "scrubSnappedBack": true,
+    "spherePos": [
+      0,
+      -1.815,
+      -0.815
+    ],
+    "panelPos": [
+      0,
+      -1.695,
+      -0.665
+    ],
+    "horizontalOffsetX": 0,
+    "lateralSeparationM": 0.15,
+    "phaseAtPlanet": "sphere",
+    "globeRotYSetTo": 1.25,
+    "globeRotYAfterTick": 1.25,
+    "globeRotationOverwrittenByLookAt": false,
+    "phaseWhenScrubbedBackTo20": "sphere",
+    "canScrubGlobeBackToSphere": true
+  },
+  "stage2": {
+    "phaseAfterEmptyAirPinch": "fall",
+    "fallTriggeredWithoutHittingGlobe": true,
+    "midFall": {
+      "phase": "fall",
+      "fallT": 4.052,
+      "hardcodedFallDurationSec": 10,
+      "issue285SpecDurationSec": 14,
+      "hardcodedStartHeightM": 40,
+      "issue285GlideEndHeightM": 400,
+      "playerY": 10.619,
+      "sphereVisible": false,
+      "globeVisible": false,
+      "groundVisible": false,
+      "panelVisible": true,
+      "panelOrphanedY": -32.025,
+      "vignetteWidthM": 2.2,
+      "vignetteHeightM": 2.2,
+      "vignetteZ": -0.28,
+      "vignetteUniformOpacity": 0.633,
+      "vignetteHasPeripheralHole": false
+    }
+  },
+  "stage3": {
+    "forestLanding": {
+      "presenting": true,
+      "x": 65.4,
+      "z": -18.6,
+      "yaw": 2.0541182735010186
+    },
+    "landingGroundY": 3.75,
+    "distLandingFromOriginM": 67.99,
+    "observationRecordInHeadset": {
+      "x": 0,
+      "y": 1.22,
+      "z": 0.035,
+      "altitude": 2.869
+    },
+    "distObsFromLandingM": 68,
+    "cameraLocalPositionBugConfirmed": true,
+    "headsetSeatedYAboveFloorM": 1.22,
+    "wolfCanonicalEyeHeightM": 0.72,
+    "governorInXr": {
+      "xr": true,
+      "targetFps": 60,
+      "questFpsConst": 60,
+      "quest3NominalHz": 90,
+      "quest3SupportedHz": [
+        72,
+        80,
+        90,
+        120
+      ],
+      "appliedTier": {
+        "name": "High",
+        "resScale": 0.85,
+        "shadows": 1,
+        "ssao": 0,
+        "ibl": 1,
+        "gi": 0,
+        "pcss": 0,
+        "contact": 0,
+        "rays": 0,
+        "clouds": 1,
+        "lod": 1,
+        "near": 42,
+        "mid": 64,
+        "trees": 0.5,
+        "foliage": 0.3,
+        "weather": 6
+      }
+    },
+    "grassInfo": {
+      "tiles": 33,
+      "blades": 57400,
+      "drawn": 921,
+      "culled": 19834,
+      "tris": 1842,
+      "lods": [
+        0,
+        0,
+        921
+      ],
+      "sliceMaxMs": 5.9000000059604645,
+      "packMaxMs": 0.30000001192092896,
+      "packs": 144
+    },
+    "floraInfo": {
+      "tiles": 12,
+      "plants": 2349,
+      "visible": 1,
+      "clumps": 601,
+      "clumpsVisible": 0,
+      "bySpecies": {
+        "labradortea": 1
+      },
+      "sliceMaxMs": 3.7999999821186066,
+      "buildMaxMs": 2.100000023841858,
+      "geometries": 128
+    },
+    "poseReadings": {
+      "default": {
+        "paw": "open",
+        "grab": false,
+        "dig": false,
+        "seenGrab": true,
+        "seenDig": false,
+        "index": 0.1826098820999169,
+        "middle": 0.18926085123202208,
+        "ring": 0.17949098642993222,
+        "pinky": 0.15846656707909657
+      },
+      "open": {
+        "paw": "open",
+        "grab": false,
+        "dig": false,
+        "seenGrab": true,
+        "seenDig": false,
+        "index": 0.18332154412306878,
+        "middle": 0.19092017816292053,
+        "ring": 0.17977226762061313,
+        "pinky": 0.15835567479358295
+      },
+      "fist": {
+        "paw": "fist",
+        "grab": false,
+        "dig": false,
+        "seenGrab": true,
+        "seenDig": true,
+        "index": 0.070762858995516,
+        "middle": 0.06547704435917558,
+        "ring": 0.06766671689681894,
+        "pinky": 0.06990652445227412
+      },
+      "point": {
+        "paw": "point",
+        "grab": false,
+        "dig": false,
+        "seenGrab": true,
+        "seenDig": true,
+        "index": 0.13740899435512394,
+        "middle": 0.0849041731419975,
+        "ring": 0.0689902352712758,
+        "pinky": 0.06405394980613001
+      }
+    },
+    "iwsdkRootDisplay": "none",
+    "iwsdkCanvasStillInDom": true,
+    "iwsdkGlContextLost": false,
+    "leakedSecondaryWebGlContext": true,
+    "afterSessionEnd": {
+      "governorXrAfterEnd": false,
+      "questProfileAfterEnd": false,
+      "iwsdkRootStillInDom": true,
+      "journeyPhaseStuckAt": "forest"
+    }
+  },
+  "recordingBytes": 9477151,
+  "recordingMime": "video/webm;codecs=vp9",
+  "decodedVideoDurationSec": 101.938,
+  "decodedSamples": [
+    {
+      "frame": "frame-0.png",
+      "requestedSec": 32.834,
+      "actualSec": 32.834,
+      "bytes": 568395
+    },
+    {
+      "frame": "frame-1.png",
+      "requestedSec": 78.023,
+      "actualSec": 78.023,
+      "bytes": 198131
+    },
+    {
+      "frame": "frame-2.png",
+      "requestedSec": 83.403,
+      "actualSec": 83.403,
+      "bytes": 31838
+    },
+    {
+      "frame": "frame-3.png",
+      "requestedSec": 98.151,
+      "actualSec": 98.151,
+      "bytes": 484713
+    }
+  ],
+  "consoleLogs": [
+    "[vite] connecting...",
+    "[vite] connected.",
+    "THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead.",
+    "terrain worker did not return the standing chunk; building it on the main thread",
+    "THREE.WebGLProgram: Program Info Log: (210,91-147): warning X4122: sum of 0.996094 and -2.98545e-017 cannot be represented accurately in double precision\n(209,41-69): warning X4122: sum of 1 and -1.49272e-017 cannot be represented accurately in double precisio",
+    "                                                 \n▄▄▄▄▄▄  ▄▄      ▄▄   ▄▄▄▄    ▄▄▄▄▄     ▄▄   ▄▄▄ \n▀▀██▀▀  ██      ██ ▄█▀▀▀▀█   ██▀▀▀██   ██  ██▀  \n  ██    ▀█▄ ██ ▄█▀ ██▄       ██    ██  ██▄██    \n  ██     ██ ██ ██   ▀████▄   ██    ██  █████    \n  ██     ███▀▀",
+    "[vite] connecting...",
+    "[vite] connected.",
+    "aerial-exemplars",
+    "[vite] connecting...",
+    "[vite] connected.",
+    "THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead.",
+    "terrain worker did not return the standing chunk; building it on the main thread",
+    "                                                 \n▄▄▄▄▄▄  ▄▄      ▄▄   ▄▄▄▄    ▄▄▄▄▄     ▄▄   ▄▄▄ \n▀▀██▀▀  ██      ██ ▄█▀▀▀▀█   ██▀▀▀██   ██  ██▀  \n  ██    ▀█▄ ██ ▄█▀ ██▄       ██    ██  ██▄██    \n  ██     ██ ██ ██   ▀████▄   ██    ██  █████    \n  ██     ███▀▀",
+    "STARTUP cold",
+    "THREE.WebGLRenderer: Can't change size while VR device is presenting.",
+    "THREE.WebGLRenderer: Can't change size while VR device is presenting.",
+    "THREE.WebGLRenderer: Can't change size while VR device is presenting."
+  ]
+}

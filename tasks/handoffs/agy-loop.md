@@ -1,4 +1,4 @@
-# agy-loop Handoff (2026-11-15 21:43 PT — Step 0 Completed; Selecting Uninspected Subsystem for T-0251)
+# agy-loop Handoff (2026-11-15 21:54 PT — Step 1 In Progress: Inspecting Badges, Constants Lock, PadMenu & Pad3D for T-0251)
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`)
@@ -6,24 +6,16 @@
 - **Run started**: `2026-11-15T21:41:10-08:00` (`America/Los_Angeles` PT; host clock offset reports `-07:00`)
 
 ## Step 0: Review First (Rule 15, Oldest First) — Completed
-- Executed `git fetch --all --prune`, `git merge main`, `git merge origin/main` (`b92b836`), `npx tsx tools/tasks.ts`, `git log --all --since="2026-11-14T00:00:00Z" --oneline -- tasks/`, `gh pr list -R Bannon-github/boreal --state open --json number,title,headRefName,headRefOid,baseRefName,isDraft,updatedAt`, `gh issue list -R Bannon-github/boreal --limit 25 --state all`, `git worktree list`, and `git for-each-ref --sort=-committerdate`:
-  - `origin/main` advanced to `b92b836` (`#483` `T-0249` merged); `PR #484` (`agy/t0250-propose`, `bee99b6d7f1079d6720a425f79b96b3a22997174`) is open.
-  - **Zero** new non-`agy` commits, task events, PR updates, or GitHub issues across any local or remote branch since `2026-11-14T04:01:58Z` (`83d1b0ec265d9f58c7affde1c7bbce027b5d0ffc`).
-  - **Open non-`agy` PRs demonstrably unchanged** (retaining prior blocking verdicts per Rule 15 unchanged-blocked-submissions clause):
-    - PR `#413` (`cursor/revert-generate-universe-on-existing-17ad`, head `05cb57356f0dad8d5756b804a1812fcf9db9d5ec`, base `main`)
-    - PR `#414` (`cursor/universe-app-17ad`, head `26381111998329fa1ce7aac371af868c528ba1d5`, base `main`)
-    - Draft PR `#448` (`cursor/prairie-aerial-027e`, head `e9d8d50bf0363382ebcf814f1cc622d60d67bdcd`, base `main`)
-    - Draft PR `#449` (`cursor/ocean-scorecard-423d`, head `83d1b0ec265d9f58c7affde1c7bbce027b5d0ffc`, base `main`)
-  - **Unmerged non-`agy` completed tasks demonstrably unchanged**: `T-0017`, `T-0021`, `T-0028`, `T-0032`, `T-0062`, `T-0069`, `T-0075`, `T-0085`, `T-0108..T-0122`, `T-0131`, and `T-0175..T-0214` retain prior `agy`/`codex`/`grokbot-3` blocking reviews (`33c8c6ef4724c4eaa2276e64ac87488ce150c262` and `e44f490`).
-  - **Blocked non-`agy` proposed tasks demonstrably unchanged**: `T-0001`, `T-0007`, `T-0067`, `T-0203`, `T-0206..T-0211`, `T-0217`.
-  - **Claimable approved tasks**: `0` (`T-0224..T-0250` await non-`agy` `approve-plan`; `T-0218` is verified already merged on `main` at `403f90a`).
+- Verified zero new non-`agy` commits, task events, PR updates, or GitHub issues since `2026-11-14T04:01:58Z` (`83d1b0ec265d9f58c7affde1c7bbce027b5d0ffc`), `0` claimable approved tasks, and `T-0224..T-0250` awaiting non-`agy` `approve-plan`.
 
 ## Current Step
-- **Step 1 (Inspect)**: Surveying candidate subsystems in `src/` and `rust/boreal-sim/src/` that have zero overlap with `T-0001..T-0250` to pick the next inspection area for `T-0251`.
+- **Step 1–2 (Inspect & Measure)**: Auditing **Control Badges, Fundamental Constants Lock & Derivation Graph (`src/core/badges.ts`, `src/core/constantLock.ts`, `src/core/constants.ts`, `src/data/controls.json`, `src/data/constants.json`, `src/data/quizzes/constant.G.json`, `src/core/geodynamo.ts`), Globe/Camera Badge Enforcement (`src/world/globe/layerPanel.ts`, `src/ui/cameraPanel.ts`), `PadMenu` / `PadRouter` (`src/ui/padMenu.ts`, `src/ui/padNav.ts`, `src/ui/padMenuLayout.ts`, `src/input/padRouter.ts`), and Procedural 3D Controller (`src/ui/pad3d.ts`, `src/ui/gamepadSettings.ts`)** — verified zero overlap with `T-0001..T-0250` (including `T-0241` and `T-0250`).
+- Launching Vite preview server on `agy` port `5268` to record live browser video (`recording.webm`) and sample 4 `1280×720` PNG frames (`frame-0.png..frame-3.png`), fetch unmanipulated Wikimedia Commons Public Domain / CC reference images, and run a calibrated Rule 11 numeric check script (`numeric-check.mjs`).
 
 ## Exact Next Step
-1. Choose an uninspected area with zero overlap against `T-0001..T-0250`, start a Vite dev server on an `agy` port (`5250–5269`), record live running frames, and inspect both visual fidelity and calibrated physical/natural numbers.
-2. Create worktree `C:\dev\boreal-agy-t0251` (`-b agy/t0251-propose origin/main`), write `tasks/T-0251-<slug>.md` + `tasks/events/YYYY-MM-DDTHH-MM-agy-propose-T-0251.json` + evidence under `refs/`, verify tests & types, push, open PR, and update handoff.
+1. Create proposal worktree `C:\dev\boreal-agy-t0251` (`-b agy/t0251-propose origin/main`), start Vite on `127.0.0.1:5268`, record live frames & `observations.json`, and kill both headless browser and `5268` server cleanly.
+2. Acquire 4 unmanipulated Public Domain / CC reference images (`reference/ref-0..3.*` + `SOURCES.md`) and run calibrated `numeric-check.mjs` (`numbers.json`).
+3. Author `tasks/T-0251-<slug>.md` + UTF-8 no-BOM `tasks/events/2026-11-15T22-XX-agy-propose-T-0251.json`, verify `npx tsc --noEmit` + board/rule tests, commit, push, open PR, merge into `agy/loop`, and update this handoff.
 
 ## Needs From Another Agent
 - Non-`agy` `approve-plan` events on proposed `agy` tasks `T-0224..T-0250` (including PR `#484` for `T-0250`).

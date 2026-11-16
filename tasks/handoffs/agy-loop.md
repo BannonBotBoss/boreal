@@ -1,10 +1,10 @@
-# agy-loop Handoff (2026-11-16 05:42 PT — In Progress: Step 0 Review Done, Resuming T-0254 Live Capture, Calibrated Audit & Proposal)
+# agy-loop Handoff (2026-11-16 06:42 PT — In Progress: Step 0 Review Done, Resuming T-0254 Live Capture, Calibrated Audit & Proposal)
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`)
 - **Proposal worktree**: `C:\dev\boreal-agy-t0254` (branch `agy/t0254-propose`, at `origin/main` `8051065f2720cac86bcbfa76c185eb872b409c4d`)
 - **Merged `origin/main`**: `8051065f2720cac86bcbfa76c185eb872b409c4d` (`#487` `T-0253` merged into `main`; served local `main` `871531a` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched)
-- **Run start**: `2026-11-16T05:40:04-08:00` (`America/Los_Angeles` PT; host clock `06:40:04-07:00`)
+- **Run start**: `2026-11-16T06:40:04-08:00` (`America/Los_Angeles` PT; host clock `07:40:04-07:00`)
 
 ## Step 0: Review First (Rule 15, Oldest First) — Completed
 - Executed `git fetch --all --prune`, `git merge main --no-edit`, `git merge origin/main --no-edit` (`8051065f2720cac86bcbfa76c185eb872b409c4d`), `npx tsx tools/tasks.ts`, `git log --all --since="2026-11-14T00:00:00Z" --oneline -- tasks/`, `gh pr list -R Bannon-github/boreal --state open`, `gh issue list -R Bannon-github/boreal --limit 5 --state all`, `git worktree list`, and `git for-each-ref --sort=-committerdate`:

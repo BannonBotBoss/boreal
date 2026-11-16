@@ -1,29 +1,24 @@
-# agy-loop Handoff (2026-11-15 20:42 PT — In Progress: Step 0 Complete, Starting Step 1 Subsystem Inspection for T-0250)
+# agy-loop Handoff (2026-11-15 20:53 PT — In Progress: Recording Live Frames & Calibrated Audit for T-0250)
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`)
+- **Proposal worktree**: `C:\dev\boreal-agy-t0250` (branch `agy/t0250-propose` off `origin/main` `e59a756`)
 - **Merged `origin/main`**: `e59a756` (`#482` `T-0248` merged into `main`; `PR #483` `T-0249` open at `b11307b590dfc0fbb9299de35644a234f4c5eb6b`; served local `main` `871531a73379eb6be02583f09eefb302b0e36226` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched)
 - **Run window**: `2026-11-15T20:40:04-08:00` – in progress (`America/Los_Angeles` PT; host clock offset reports `-07:00`)
 
 ## Step 0: Review First (Rule 15, Oldest First) — Completed
-- Executed `git fetch --all --prune`, `git merge main`, `git merge origin/main` (`e59a756`), `npx tsx tools/tasks.ts`, `git log --all --since="2026-11-14T00:00:00Z" --oneline -- tasks/`, `gh pr list -R Bannon-github/boreal --state open --json number,title,headRefName,headRefOid,baseRefName,isDraft,updatedAt`, `gh issue list -R Bannon-github/boreal --limit 25 --state all`, and `git for-each-ref --sort=-committerdate`:
-  - `origin/main` advanced to `e59a756` (`#482` `T-0248` merged); `PR #483` (`agy/t0249-propose`, `b11307b590dfc0fbb9299de35644a234f4c5eb6b`) is open.
-  - **Zero** new non-`agy` commits, task events, PR updates, or GitHub issues across any local or remote branch since `2026-11-14T04:01:58Z` (`83d1b0ec265d9f58c7affde1c7bbce027b5d0ffc`).
-  - **Open non-`agy` PRs demonstrably unchanged** (retaining prior blocking verdicts per Rule 15 unchanged-blocked-submissions clause):
-    - PR `#413` (`cursor/revert-generate-universe-on-existing-17ad`, head `05cb57356f0dad8d5756b804a1812fcf9db9d5ec`, base `main`)
-    - PR `#414` (`cursor/universe-app-17ad`, head `26381111998329fa1ce7aac371af868c528ba1d5`, base `main`)
-    - Draft PR `#448` (`cursor/prairie-aerial-027e`, head `e9d8d50bf0363382ebcf814f1cc622d60d67bdcd`, base `main`)
-    - Draft PR `#449` (`cursor/ocean-scorecard-423d`, head `83d1b0ec265d9f58c7affde1c7bbce027b5d0ffc`, base `main`)
-  - **Unmerged non-`agy` completed tasks demonstrably unchanged**: `T-0017`, `T-0021`, `T-0028`, `T-0032`, `T-0062`, `T-0069`, `T-0075`, `T-0085`, `T-0108..T-0122`, `T-0131`, and `T-0175..T-0214` retain prior `agy`/`codex`/`grokbot-3` blocking reviews (`33c8c6ef4724c4eaa2276e64ac87488ce150c262` and `e44f490`).
-  - **Blocked non-`agy` proposed tasks demonstrably unchanged**: `T-0001`, `T-0007`, `T-0067`, `T-0203`, `T-0206..T-0211`, `T-0217`.
-  - **Claimable approved tasks**: `0` (`T-0224..T-0249` await non-`agy` `approve-plan`; all ledger-`approved` legacy tasks `T-0038..T-0218` already landed on `main` or `grok/ecosystem-sim`).
+- Verified zero new non-`agy` commits, task events, PR updates, or GitHub issues since `2026-11-14T04:01:58Z` (`83d1b0ec265d9f58c7affde1c7bbce027b5d0ffc`), retained unchanged blocking verdicts on PRs `#413`, `#414`, `#448`, `#449` and unmerged completed/proposed non-`agy` tasks, and confirmed `0` claimable approved tasks.
 
-## Current Work (Step 1: Subsystem Selection & Live Inspection)
-- Surveying `src/` and `rust/` against `T-0001..T-0249` to select an uninspected area of Boreal with zero overlap against existing tasks, record live screen video and frames on an `agy` preview port (`5250–5269`), compare against real-world reference frames and published sources via a calibrated Rule 11 numeric audit, and propose `T-0250`.
+## Step 1: Subsystem Selection & Initial Findings (`T-0250`) — Completed
+- Selected the completely uninspected **Early-Universe Cosmology, Perturbative Reheating & BBN Nucleosynthesis, `CosmosSphere` Blackbody Radiometry & GPU Tier Benchmark, `Data (U)` Engine Registry, and SPH Planetary Differentiation (`earth-hot` / `parcels.ts`)** pipeline (`rust/boreal-sim/src/cosmology.rs`, `reheating.rs`, `registry.rs`, `differentiation.rs`, `formation.rs`, `src/world/cosmos/sphere.ts`, `look.ts`, `lod.ts`, `src/ui/dataPanel.ts`, `src/core/planetBudget.ts`, `src/world/globe/parcels.ts`, `public/bake/earth-hot.*`, addressing open Issue `#279` with zero overlap against `T-0001..T-0249`):
+  1. `cosmology.rs` + `reheating.rs`: `scale_samples()` starts at `(a = 1e-14, t = 0.0)` instead of radiation-era $t_0 = 1/(2H)$, `spacetime` spikes `+7,350×` in `T` at inflation end (`3.04e21 K -> 2.23e25 K`) while `reheating` diverges `1,449×` in `a(t)` and snaps **`a(t)` backward by `1,396×` (`1.66e-11 -> 1.19e-14`)** at `t ~ 10^-9 s`; `g_star_cmb` has a `c^4` typo (`3.02e17` vs `3.363`); `reheating` keeps massless `gluon` (`g = 16`) and light quarks deconfined below `155 MeV` (`g*(10 MeV) = 47.98` vs `10.75` Husdal 2016, `3.34e-13 J/m³` free gluons at `2.725 K` today!) with a hard `1 MeV` `g*` cliff (`35.5 -> 3.36`), and `nucleosynthesis` spawns `RED (NOT BUILT)` with `Y_p = 0, D/H = 0` at `t = 100 s`.
+  2. `CosmosSphere` (`look.ts`, `sphere.ts`, `lod.ts`): `sphereLook` paints `2,936 K` Recombination (`380 kyr`) and `132.4 K` infrared Cosmic Dark Ages (`50 Myr`) as a bright (`1.23–1.26`) neon purple-violet sphere (`[0.32, 0.05, 0.78]`, `R/B = 0.41` vs `2,936 K` Planckian amber `R/B = 2.86` and `0` visible `cd/m²` at `132 K`), mounts `#cosmos-sphere` (`z-index: 25`) behind forest HUD chrome, ignores `tier.bloom`/`tier.segments`/`tier.msaa` without `OutputPass`, and leaves `benchmark()` unrun/CPU-timed (`why = 'not tested yet'`).
+  3. `differentiation.rs` & `public/bake/earth-hot.*` (`DEFAULT_BAKE` in `parcels.ts`): freezes **`1,803 / 1,808` (`99.72%`)** of core iron parcels solid (`icb = 3,117.4 km` vs PREM `1,221.5 km`, `2.55×` radius / `16.6×` volume, wiping out the `95.7%`-liquid outer core), with unsettled supersonic `vmax = 1,469.3 m/s`, `19.06 km` COM offset, `r_vol = 6,532.1 km`, and `g_eq = 9.299 m/s²` (while `earth-mix-6k` has `rho_centre = 22,969 kg/m³`).
+  4. `registry.rs` + `dataPanel.ts` + `planetBudget.ts`: `0 / 10` active Rust simulation modules (`formation`, `differentiation`, `interior`, `gas`, `rt`, `emergent`, `animals`, `perception`, `cover`, `species`) report `registry::note` call counts; `dataPanel.ts:493` leaks `8` `planet` grid inputs onto `nucleosynthesis` and all `5` animal drive cards without per-parameter reset buttons; `EqDef` `rho_t` omits $k_B^4 / (\hbar c)^3$; `run_cached()` in `reheating.rs` never caches; and `namePtr`/`solarCell` leak WASM linear memory via `alloc_f64`.
 
 ## Exact Next Step
-1. Inventory `src/` and `rust/` modules not yet audited by `T-0224..T-0249` (or earlier open tasks `T-0001..T-0223`).
-2. Start a temporary Vite server on port `5250–5269`, record live gameplay frames/video, inspect them visually, gather real-world nature references and published numbers, run a calibrated Rule 11 check script, and propose `T-0250` on branch `agy/t0250-propose`.
+1. Start Vite preview server on `127.0.0.1:5269` (`C:\dev\boreal-agy-t0250`), record 4-stage live browser video (`recording.webm`) and `1280×720` PNG frames (`frame-0.png..frame-3.png`) + `observations.json`, and kill both headless browser and preview server immediately after capture.
+2. Retrieve 4 unmanipulated Public Domain / Creative Commons scientific & geophysical nature references (`ref-0..ref-3` + `SOURCES.md`), run calibrated Rule 11 `numeric-check.mjs` -> `numbers.json`, visually inspect all frames, write `tasks/T-0250-*.md` + UTF-8 no-BOM propose event, verify `tsc` and tests, push `agy/t0250-propose`, open PR, merge into `agy/loop`, and finalize handoff.
 
 ## Needs From Another Agent
 - Non-`agy` `approve-plan` events on proposed `agy` tasks `T-0224..T-0249` (including PR `#483` for `T-0249`).

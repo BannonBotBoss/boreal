@@ -1,0 +1,166 @@
+{
+  "task": "T-0253",
+  "skill": "music-stems-psychoacoustics-cine-audit",
+  "generatedAt": "2026-11-16T08:29:49.887Z",
+  "metrics": {
+    "ratioScore": "min(a, b) / max(a, b) for strictly positive physical, power, frequency, and contrast ratios",
+    "deltaScore": "clamp01(1 - |measured - target| / fullScale) for zero-target gain/mute/bleed invariants",
+    "passThreshold": 0.95
+  },
+  "calibration": {
+    "calibrationValid": true,
+    "knownMatches": [
+      {
+        "id": "match_stems_32_bars_at_90_bpm_duration",
+        "measured": 85.33333333333333,
+        "reference": 85.33333333333333,
+        "score": 1,
+        "note": "3763200 / 44100 = 85.3333 s vs 32 bars at 90 BPM"
+      },
+      {
+        "id": "match_mixer_sound_id_trim_coverage",
+        "measured": 1,
+        "reference": 1,
+        "score": 1,
+        "note": "32 / 32 SOUND_IDS carry EBU R128 loudness trims in CLIP_TRIM_DB"
+      },
+      {
+        "id": "match_binaural_gamma_beat_frequency_difference",
+        "measured": 40,
+        "reference": 40,
+        "score": 1,
+        "note": "(300 + 20) - (300 - 20) = 40.0 Hz (Oster 1973)"
+      },
+      {
+        "id": "match_cine_narration_end_fallback_sum",
+        "measured": 8.851429,
+        "reference": 8.851429,
+        "score": 1,
+        "note": "3.0 + 5.851429 = 8.851429 s"
+      }
+    ],
+    "knownMismatches": [
+      {
+        "id": "mismatch_muted_big_bang_narration_volume",
+        "measured": 1,
+        "reference": 0,
+        "score": 0,
+        "note": "Full 1.0 volume while volume.muted = true"
+      },
+      {
+        "id": "mismatch_brown_noise_48k_bass_slope",
+        "measured": 0.729,
+        "reference": 6.021,
+        "score": 0.1211,
+        "note": "-0.729 dB/oct plateau vs -6.021 dB/oct Brownian 1/f^2 (Voss & Clarke 1978)"
+      },
+      {
+        "id": "mismatch_sharp_isochronic_negative_gain_bleed",
+        "measured": -0.1017,
+        "reference": 0,
+        "score": 0.322,
+        "note": "-0.1017 phase-inverted carrier bleed during silent off-phase"
+      },
+      {
+        "id": "mismatch_follow_world_stuck_theta_pulse",
+        "measured": 6,
+        "reference": 40,
+        "score": 0.15,
+        "note": "Daytime pulse stuck at 6 Hz after one night cycle instead of 40 Hz"
+      }
+    ]
+  },
+  "summary": {
+    "totalChecks": 12,
+    "passedChecks": 0,
+    "failedChecks": 12,
+    "meanScore": 0.1092,
+    "allPassed": false
+  },
+  "checks": [
+    {
+      "id": "big_bang_mute_master_and_no_guitar_bleed",
+      "game": "3 unmuted streams (vol=1.0) + guitarBleed=true",
+      "natureOrSpec": "0 unmuted streams when volume.muted=true; 0 guitar tracks during #cine (ITU-R BS.1770-4 / mixer bus)",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "big_bang_audiocontext_close_and_cue_sync",
+      "game": "tickCtxLeaked=true, voB7Drift=3s (54 vs 57s), hiddenSync=false",
+      "natureOrSpec": "0 leaked AudioContexts on stop(); 0.0s voB7At README drift; visibility-synced playback (W3C Web Audio)",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "globe_and_music_menu_audition_running",
+      "game": "ctx.state=\"suspended\", dt=0s / 0.8s",
+      "natureOrSpec": "ctx.state=\"running\", dt=0.80s on Globe & Menu->Music while sfx/ambience buses duck to 0",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "media_element_deck_pause_and_node_disconnect",
+      "game": "el.paused=false, disconnected=0/2",
+      "natureOrSpec": "el.paused=true when halted; old MediaElementAudioSourceNodes disconnected after fadeOut",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "guitar_crossfade_equal_power_law",
+      "game": "linearRamp midpoint power = 0.5000 (-3.010 dB)",
+      "natureOrSpec": "equal-power cos/sin midpoint power = 1.0000 (0.000 dB, Roads 1996 p. 458)",
+      "score": 0.5,
+      "pass": false
+    },
+    {
+      "id": "music_menu_safety_contrast_and_scroll",
+      "game": "contrast=1.35:1 (#f3d79a on #fdfbf6), clipped=458px",
+      "natureOrSpec": "WCAG 2.1 AA contrast >= 4.5:1 for epilepsy warning & 0 px unscrollable clipping",
+      "score": 0.1504,
+      "pass": false
+    },
+    {
+      "id": "brown_noise_bass_slope_and_loop_seam",
+      "game": "25-100Hz slope=-0.729 dB/oct (fc=151.28 Hz @48k), seam=2.47x",
+      "natureOrSpec": "-6.021 dB/oct Brownian 1/f^2 down to 20 Hz (Voss & Clarke 1978) & <=1.05x seamless loop",
+      "score": 0.263,
+      "pass": false
+    },
+    {
+      "id": "sharp_isochronic_unipolar_off_phase",
+      "game": "Biquad Q=1 dB -> minGain=-0.1017 (2664 neg samples/s)",
+      "natureOrSpec": "minGain = 0.0000 unipolar [0, 1] envelope with 0% off-phase carrier bleed (Oster 1973)",
+      "score": 0.322,
+      "pass": false
+    },
+    {
+      "id": "follow_world_pulse_restore_and_mood_pool",
+      "game": "day->night->day pulse = 40->6->6 Hz; 0/3 mood tracks",
+      "natureOrSpec": "40 Hz daytime gamma restored on day; guitar tracks never mutate pulse; non-empty mood pools",
+      "score": 0.075,
+      "pass": false
+    },
+    {
+      "id": "adaptive_stems_level_and_predator_threat",
+      "game": "masterGain(level=0)=1, hare+fox threat=0",
+      "natureOrSpec": "masterGain(level=0)=0.000 & predator threat >= 0.50 near fox/wolf (Sheriff et al. 2009; #309)",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "idle_builtin_music_loops_and_orphan_synth",
+      "game": "2 idle 60.08s music loops spinning at gain=0; orphan src/audio.ts=true",
+      "natureOrSpec": "0 idle built-in music loops when builtInMusic=false & 0 orphaned AudioContext synth files",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "species_voice_identity_and_ducking_hold",
+      "game": "species=\"deer\" bubble=\"🐺 “Hello, traveller. The forest is calm today.”\", chimeClobbered0.27Duck=true",
+      "natureOrSpec": "Cervid non-human contact cues (Atkeson et al. 1988) & uninterrupted 0.27 voice ducking across full line",
+      "score": 0,
+      "pass": false
+    }
+  ]
+}

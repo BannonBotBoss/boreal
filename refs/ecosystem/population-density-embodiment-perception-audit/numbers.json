@@ -1,0 +1,154 @@
+{
+  "task": "T-0249",
+  "evaluatedAt": "2026-11-16T04:09:09.877Z",
+  "calibrationValid": true,
+  "calibration": {
+    "metrics": {
+      "ratioScore": "min(a, b) / max(a, b) on strictly positive physical/ecological quantities (1.0 exact, >= 0.95 pass)",
+      "deltaScore": "clamp01(1 - |measured - reference| / fullScale) on bounded state/angle/elevation quantities (>= 0.95 pass)"
+    },
+    "knownMatches": {
+      "immediateNearShareSumTo1": 1,
+      "wolfCarryingCeiling40Per1000Km2": 1,
+      "issue106FixedBlock160Bytes": 1,
+      "epochOffsetOneJulianYear": 1
+    },
+    "knownMismatches": {
+      "doubleDrawnBodyPlusDensity": 0.5,
+      "twelveFoldClockYearMismatch": 0.0833,
+      "deer1PerKm2ForHare1000PerKm2": 0.001,
+      "starvedVisualSightCue": 0
+    }
+  },
+  "totalChecks": 12,
+  "passedChecks": 0,
+  "meanScore": 0.0091,
+  "runtimeObservationsLoaded": true,
+  "runtimeHighlights": {
+    "frame0Scale": "ecological",
+    "frame0CensusIndividuals": 0,
+    "frame0PictureFulls": 6,
+    "frame1MidnightOliveStainFrac": 0.529,
+    "frame1MidnightPancakeMeanRgb": [
+      82.54,
+      91.11,
+      82.56
+    ],
+    "frame2HareSpawnHeightM": 1.4287,
+    "frame2ComputedHareAgeYears": 121,
+    "frame3SightAccepted": false
+  },
+  "checks": [
+    {
+      "id": "temporal_population_body_fold_at_2000x",
+      "description": "Wild animal individual mesh opacity at 2,000x Ecological scale (where markFor().body = 0, density = 1)",
+      "gameValue": 1,
+      "natureOrSpecTarget": 0,
+      "source": "Issue #109 & src/core/coarse.ts:8 (shares.body + shares.density === 1; individuals fold into coarse field above Immediate)",
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "species_carrying_capacity_and_stateful_field",
+      "description": "Snowshoe hare coarse carrying density (hares/km^2) & live demoteFar/promoteField wiring",
+      "gameValue": "1/km^2 (deer hardcoded), liveDemote=false",
+      "natureOrSpecTarget": "1000/km^2 (10 hares/ha), liveDemote=true",
+      "source": "Keith (1990) Wildl. Monogr. 108 & Krebs, Boutin & Boonstra (2001) BioScience 51:25 (cited in HARE_NEEDS / habitat.ts:7)",
+      "score": 0.0005,
+      "passes95": false
+    },
+    {
+      "id": "density_disc_slope_and_water_conformation",
+      "description": "Downhill vertical air gap (m) of density (r=8.25m) & range (r=55.0m) flat CircleGeometry disc on a 10 deg bank slope",
+      "gameValue": 1.655,
+      "herdGapM": 0.588,
+      "extraRangeGapM": 9.898,
+      "natureOrSpecTarget": 0.08,
+      "source": "Issue #107 & terrain topography (surface density stains drape heightAt(x,z) on dry land, never cantilevering 0.59-9.90 m in mid-air)",
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "nocturnal_density_mark_radiometry",
+      "description": "Linear luminance of animalDensity ground mark under 0.001 lx New Moon astronomical night",
+      "gameValue": 0.3154,
+      "natureOrSpecTarget": 0.0016,
+      "source": "Kyba et al. (2015) Sci. Rep. 5:8409 & Johnsen et al. (2006) J. Exp. Biol. 209:789 (~0.001 lx starlight, zero ground self-emission)",
+      "score": 0.0051,
+      "passes95": false
+    },
+    {
+      "id": "set_body_share_shader_hook_preservation",
+      "description": "Preservation of custom Material.onBeforeCompile hooks (furCards, CSM, coatFinish) when setBodyShare clones materials at 0 < body < 0.98",
+      "gameValue": 0,
+      "natureOrSpecTarget": 1,
+      "source": "Three.js r180 Material.clone() specification & src/render/animalDensity.ts:243",
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "clock_year_consistency_across_subsystems",
+      "description": "Ratio of epochOffsetYr/coarseStep/stepPups years (1.00 yr) to lifespan ageYears/dayAt/tickGround years (12.00 yr) per 31,557,600 worldSec",
+      "gameValue": 12,
+      "calendarYearsElapsed": 12,
+      "natureOrSpecTarget": 1,
+      "source": "IAU Julian year (365.25 d = 31,557,600 s, src/data/constants.json) & Issue #109 (\"The ONE clock: one clock, one rate\")",
+      "score": 0.0833,
+      "passes95": false
+    },
+    {
+      "id": "biological_senescence_and_ontogeny_wiring",
+      "description": "Snowshoe hare age ceiling vs 121.0 yr immortal runtime age after 10 Julian yr & live wolfGrowth ontogeny wiring",
+      "gameValue": "121.0 yr (immortal), wolfGrowthLive=false",
+      "natureOrSpecTarget": "<= 5.0 yr maxLifespan, wolfGrowthLive=true",
+      "source": "Krebs et al. (2001) BioScience 51:25 (snowshoe hare ~5 yr max), Mech & Boitani (2003) (wolf ~13 yr), Ditchkoff (2011) (deer ~20 yr)",
+      "score": 0.0207,
+      "passes95": false
+    },
+    {
+      "id": "living_pack_dry_habitat_packmates_and_state_persistence",
+      "description": "LIVING_PACK dry-land hare spawn (y=-0.317m vs -0.25m water), spawned wolf packmate (35,0), & setPlayable state persistence",
+      "gameValue": "hareY=-0.317m (< -0.25m), wolvesInScene=1/2, persisted=0",
+      "natureOrSpecTarget": "hareY >= -0.25m (dry), wolvesInScene=2/2, persisted=1",
+      "source": "Mech & Boitani (2003) Wolves: Behavior, Ecology, and Conservation (pack size 2-15) & Issues #102/#103 (\"step into an animal already alive\")",
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "issue_106_live_perception_boundary_and_browser_safety",
+      "description": "Fraction of Issue #106 perception/physiology/threeBlocks pipeline stages wired live + browser-safe bodyFeelings imports",
+      "gameValue": "0/5",
+      "natureOrSpecTarget": "5/5",
+      "source": "tasks/RULES.md Rule 18 / Issue #106 (\"One packed perception frame in wasm memory... Embodied play uses the #106 frame\")",
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "cold_and_submersion_physiology_stress",
+      "description": "Endotherm sub-T_lc cold stress at -35 C and hypoxic submersion oxygenStress in stepBodyFeelings",
+      "gameValue": "tempStress(-35C)=0.000, oxygenSubmersion=0",
+      "natureOrSpecTarget": "tempStress(-35C) > 0.1, oxygenSubmersion=1",
+      "source": "Scholander et al. (1950) Biol. Bull. 99:237; Sheriff et al. (2009) (snowshoe hare winter T_lc ~ -10 C); Butler & Jones (1997) Physiol. Rev. 77:837",
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "signals_from_frame_visible_retention_and_bearing",
+      "description": "Retention of perception-known.bin Visible entries (salience 91 & 2) and forward (-Z) bearing accuracy in signalsFromFrame",
+      "gameValue": "retained=0/2, forwardBearingRad=3.1416",
+      "natureOrSpecTarget": "retained=2/2, forwardBearingRad=0.0000",
+      "source": "Issue #106 & rust/boreal-sim/src/perception.rs:420-448 (Visible salience & Boreal -Z forward coordinate frame)",
+      "score": 0,
+      "passes95": false
+    },
+    {
+      "id": "sense_stream_multimodal_sight_survival",
+      "description": "Survival of a 0.95-salience visual sight cue in createSenseStream when 6 sound + 3 scent cues are offered first",
+      "gameValue": 0,
+      "natureOrSpecTarget": 1,
+      "source": "Issue #106 per-modality caps (32 visual, 16 scent, 8 sound) & Mech (1970) multimodal canid predation",
+      "score": 0,
+      "passes95": false
+    }
+  ]
+}

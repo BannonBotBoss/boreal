@@ -1,0 +1,260 @@
+{
+  "capturedAt": "2026-11-16T04:06:33.669Z",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "recordingBytes": 3195149,
+  "pageErrors": [],
+  "observations": [
+    {
+      "frame": 0,
+      "label": "ecological_2000x_unfolded_statues_on_floating_density_pancakes",
+      "standX": 76.86,
+      "standZ": -16.17,
+      "yaw": -1.7795,
+      "target": {
+        "id": 6,
+        "x": 87.13249744886753,
+        "z": -13.997096972651908,
+        "state": "hop",
+        "linked": 1,
+        "knows": false
+      },
+      "statusText": "PAUSED · 12:00 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+      "densityReport": {
+        "scale": "ecological",
+        "census": {
+          "individuals": 0,
+          "density": 5,
+          "population": 5
+        },
+        "animalMarksCount": 5,
+        "sampleMarks": [
+          {
+            "species": "hare",
+            "x": 65.80660787088843,
+            "z": -42.64694054190466,
+            "body": 0,
+            "ink": 1,
+            "kind": "density"
+          },
+          {
+            "species": "hare",
+            "x": 83.4988048174645,
+            "z": -35.077648470499966,
+            "body": 0,
+            "ink": 1,
+            "kind": "density"
+          },
+          {
+            "species": "hare",
+            "x": 73.75895824370046,
+            "z": -45.92486843835195,
+            "body": 0,
+            "ink": 1,
+            "kind": "density"
+          },
+          {
+            "species": "hare",
+            "x": 54.60192809046009,
+            "z": -46.03519054060786,
+            "body": 0,
+            "ink": 1,
+            "kind": "density"
+          },
+          {
+            "species": "hare",
+            "x": 87.13249744886753,
+            "z": -13.997096972651908,
+            "body": 0,
+            "ink": 1,
+            "kind": "density"
+          }
+        ]
+      },
+      "pictureReport": {
+        "specks": 0,
+        "fulls": 6,
+        "lows": 0,
+        "bodies": 1,
+        "wolves": {
+          "near": 1,
+          "mid": 0,
+          "far": 0
+        }
+      },
+      "midgroundStats": {
+        "n": 322560,
+        "meanRgb": [
+          189.22,
+          201.15,
+          200.89
+        ],
+        "meanLumaSrgb": 0.7788,
+        "oliveStainFrac": 0.2197
+      }
+    },
+    {
+      "frame": 1,
+      "label": "midnight_new_moon_evolutionary_110m_unlit_glowing_range_pancake_over_snow_and_lake",
+      "sunElevationDeg": -60.945,
+      "dayOfYear": 19,
+      "hour": 0.16,
+      "airTempC": -5.4,
+      "snowDepthCm": null,
+      "statusText": "PAUSED · 00:09 · WALK · Snow 33.7 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+      "scale": "generational",
+      "census": {
+        "individuals": 0,
+        "density": 1,
+        "population": 1
+      },
+      "rangeMarks": 0,
+      "pictureReport": {
+        "specks": 0,
+        "fulls": 1,
+        "lows": 0,
+        "bodies": 0,
+        "wolves": {
+          "near": 1,
+          "mid": 0,
+          "far": 0
+        }
+      },
+      "nightSkyBox": {
+        "n": 147840,
+        "meanRgb": [
+          87.01,
+          88.75,
+          94.62
+        ],
+        "meanLumaSrgb": 0.3482,
+        "oliveStainFrac": 0.1999
+      },
+      "glowingPancakeBox": {
+        "n": 284032,
+        "meanRgb": [
+          82.54,
+          91.11,
+          82.56
+        ],
+        "meanLumaSrgb": 0.3477,
+        "oliveStainFrac": 0.529
+      }
+    },
+    {
+      "frame": 2,
+      "label": "living_pack_hare_below_water_and_121yr_immortal_12x_lifespan_warning",
+      "playerAfterSwap": {
+        "x": 34.00000005916454,
+        "z": 8.00000009649975,
+        "yaw": 0.55,
+        "energy": 74.88751273404773,
+        "water": 99.94838716283988,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      },
+      "hareSpawnHeightM": 1.4287,
+      "waterSurfaceLevelM": -0.25,
+      "belowWaterSurfaceM": -1.6787,
+      "computedHareAgeYears": 121,
+      "hareMaxLifespanYears": 5,
+      "rosterRecords": [
+        {
+          "handle": "4294967296",
+          "species": "wolf",
+          "archetype": "canid",
+          "speciesCode": 1,
+          "archetypeCode": 1,
+          "x": 30,
+          "y": 0,
+          "z": 0,
+          "ageYears": 2,
+          "water": 100,
+          "energy": 75,
+          "rest": 100,
+          "founder": true,
+          "parent": null,
+          "territory": "4294967296"
+        },
+        {
+          "handle": "4294967297",
+          "species": "wolf",
+          "archetype": "canid",
+          "speciesCode": 1,
+          "archetypeCode": 1,
+          "x": 35,
+          "y": 0,
+          "z": 0,
+          "ageYears": 2,
+          "water": 100,
+          "energy": 75,
+          "rest": 100,
+          "founder": true,
+          "parent": null,
+          "territory": "4294967296"
+        },
+        {
+          "handle": "4294967298",
+          "species": "hare",
+          "archetype": "leporid",
+          "speciesCode": 2,
+          "archetypeCode": 2,
+          "x": 50,
+          "y": 0,
+          "z": 0,
+          "ageYears": 1,
+          "water": 100,
+          "energy": 75,
+          "rest": 100,
+          "founder": true,
+          "parent": null,
+          "territory": "4294967298"
+        },
+        {
+          "handle": "4294967299",
+          "species": "deer",
+          "archetype": "cervid",
+          "speciesCode": 3,
+          "archetypeCode": 3,
+          "x": 30,
+          "y": 0,
+          "z": 20,
+          "ageYears": 2,
+          "water": 100,
+          "energy": 75,
+          "rest": 100,
+          "founder": true,
+          "parent": null,
+          "territory": "4294967299"
+        }
+      ],
+      "menuWarningSnippet": "Paused\n\nYour Grey wolf is 122.0 years old, near the wild maximum of about 13 years for its species.\n\nResume\nControls\nSave\nMusic\nGraphics\nMore\nQuit to menu"
+    },
+    {
+      "frame": 3,
+      "label": "disconnected_issue106_perception_buffer_in_data_panel_and_sense_stream_sight_starvation",
+      "playerWolfResetToStore": {
+        "x": 65.80660787088843,
+        "z": -35.646940189585635,
+        "yaw": 0,
+        "energy": 74.8726123685951,
+        "water": 99.94156914158734,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      },
+      "sensePicturesCap": 8,
+      "perceptionTotalFixedPlusSenseCaps": 56,
+      "sightAcceptedWhenSoundAndScentFill8": false,
+      "liveSenseBubblesDom": [
+        "sense-bubble sense-bubble-scent"
+      ],
+      "dataPanelNotInRustSnippet": "\n● NOT IN RUST src/world/globe/planet.ts\nBuilds the continents, the height of the land, and where the sea sits.\n● NOT IN RUST src/core/weather.ts\nSteps the air around the player: rain, snow, soil water, and the near wind.\n● NOT IN RUST src/core/altitudeZones.ts\nDecides the tree line and the ice line from latitude.\n● NOT IN RUST src/world/globe/coverKind.ts\nThe picture still classifies ground cover in TypeScript, a copy of the Rust cover rule.\n● NOT IN RUST src/core/needs/engine.ts\nSteps an animal's water, energy, a"
+    }
+  ]
+}

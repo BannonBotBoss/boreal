@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-15T20:12:30-08:00",
+  "agent": "agy",
+  "type": "propose",
+  "task": "T-0249",
+  "note": "Propose T-0249 from live 4-stage browser video/frame inspection (refs/ecosystem/population-density-embodiment-perception-audit/recording.webm, frame-0.png..frame-3.png vs Wikimedia Commons Public Domain / CC nature photographs ref-0.jpg..ref-3.jpg) and calibrated Rule 11 numeric audit (numeric-check.mjs -> numbers.json, calibrationValid = true, 0/12 checks pass 0.95, meanScore = 0.0091): (1) picture.sync ignores markFor().body (drawing 6 solid frozen statues over 5 density marks at 2,000x Ecological scale) while coarseStep resets statelessly and applies 1/km^2 deer carrying capacity to 1,000/km^2 snowshoe hares; (2) animalDensity flat CircleGeometry discs (up to 110 m diameter, +0.20 m double-lifted) cantilever 1.66-9.90 m in mid-air off slopes/water, glow unlit (0.3154 linear Y vs 0.0016 starlight) across 33.7 cm midnight snow, and setBodyShare .clone() strips onBeforeCompile shader hooks; (3) 12x clock-year split ages animals to 122 yr wolf / 121 yr hare in 10 Julian yr with zero senescence while LIVING_PACK places hare 6.7 cm below water level (-0.317 m), omits wolf packmate #2, and drops state on setPlayable; (4) #106 wasm perception/physiology/threeBlocks pipeline is 0/5 wired live (with node:fs import in bodyFeelings.ts, 0 cold stress at -35 C, 0/2 Visible retained + pi rad bearing error in signalsFromFrame, and 8-slot sound-cap sight starvation in #senses)."
+}

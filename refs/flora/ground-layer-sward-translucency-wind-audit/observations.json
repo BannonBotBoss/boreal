@@ -1,0 +1,232 @@
+{
+  "capturedAt": "2026-11-16T03:12:43.837Z",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "recordingBytes": 7279408,
+  "pageErrors": [],
+  "observations": [
+    {
+      "frame": 0,
+      "label": "boreal_continuous_terrain_dropped_onBeforeCompile_and_92pct_moss_overwrite",
+      "bestSite": {
+        "x": 160,
+        "z": 0,
+        "h": 3.4,
+        "biome": "boreal",
+        "spruces": 22,
+        "rock": 0.567,
+        "soil": "bedrock",
+        "feathermoss": 0.0091,
+        "lichen": 0.494,
+        "sphagnum": 0,
+        "score": 4.5622
+      },
+      "chosenLatLon": [
+        54.62,
+        -105.5
+      ],
+      "continuousHasMossGlsl": false,
+      "continuousHasPbrFloor": false,
+      "terrainMatHasMossGlsl": true,
+      "terrainMatNearCoverOverwrite": 0.92,
+      "mossRefills": 2,
+      "mossMeanShare": [
+        0.2546,
+        0.0356,
+        0.363
+      ],
+      "grassDrawnBlades": 8082,
+      "grassTiles": 96,
+      "floraVisiblePlants": 286,
+      "v2TreeCount": 110,
+      "v2NearCount": 1,
+      "nearFloorBoxStats": {
+        "n": 168448,
+        "meanRgb": [
+          179.3,
+          179.77,
+          175.3
+        ],
+        "meanLumaSrgb": 0.7033,
+        "greenDominantFrac": 0.0406,
+        "strawDominantFrac": 0.0495
+      },
+      "midCanopyFloorBoxStats": {
+        "n": 174720,
+        "meanRgb": [
+          148.39,
+          160.57,
+          151.19
+        ],
+        "meanLumaSrgb": 0.6169,
+        "greenDominantFrac": 0.3029,
+        "strawDominantFrac": 0.0223
+      },
+      "nearFloorMossToggleDiff": {
+        "n": 155008,
+        "changedFrac": 0.1651,
+        "meanAbsRgbDiff": 8.816
+      }
+    },
+    {
+      "frame": 1,
+      "label": "midnight_new_moon_self_luminous_stylized_grass_and_conifer_emissive",
+      "dayOfYear": 225,
+      "sunElevationDeg": -20.422,
+      "moonAgeDays": 0.176,
+      "moonIlluminanceLux": 0,
+      "starlightLux": 0.001,
+      "grassLiftLinearRgb": [
+        0.045,
+        0.068,
+        0.03
+      ],
+      "foliageLiftLinearRgb": [
+        0.028,
+        0.042,
+        0.018
+      ],
+      "barkLiftLinearRgb": [
+        0.032,
+        0.02,
+        0.012
+      ],
+      "v2TreeCount": 110,
+      "nocturnalSwardForegroundStats": {
+        "n": 210168,
+        "meanRgb": [
+          20.44,
+          22.23,
+          26.43
+        ],
+        "meanLumaSrgb": 0.0869,
+        "greenDominantFrac": 0.0303,
+        "strawDominantFrac": 0.0002
+      },
+      "nocturnalCanopyMidStats": {
+        "n": 238385,
+        "meanRgb": [
+          15.27,
+          20.4,
+          19.37
+        ],
+        "meanLumaSrgb": 0.0754,
+        "greenDominantFrac": 0.0803,
+        "strawDominantFrac": 0.0041
+      },
+      "nocturnalSkyZenithStats": {
+        "n": 98273,
+        "meanRgb": [
+          80.58,
+          86.59,
+          78.83
+        ],
+        "meanLumaSrgb": 0.3324,
+        "greenDominantFrac": 0.1925,
+        "strawDominantFrac": 0
+      }
+    },
+    {
+      "frame": 2,
+      "label": "spring_steppe_day156_frozen_september_straw_tufts_and_8m_ring_cutoff",
+      "drySteppe": {
+        "x": -600,
+        "z": -600,
+        "h": 2.71,
+        "tuftCount": 800
+      },
+      "dayOfYear": 156,
+      "steppeCureDay156": 0,
+      "tuftMeanLinearVertexRgb": [
+        0.5056,
+        0.4022,
+        0.1467
+      ],
+      "stipaRadiusM": 8,
+      "liveSteppeFieldCount": 796,
+      "desertMapsToUFloor": 1,
+      "forcedWindMs": 9.618,
+      "uWindAmp": 0.8691,
+      "near8mTuftZoneStats": {
+        "n": 168448,
+        "meanRgb": [
+          92.78,
+          108.25,
+          90.22
+        ],
+        "meanLumaSrgb": 0.4065,
+        "greenDominantFrac": 0.8204,
+        "strawDominantFrac": 0.0354
+      },
+      "beyond8mZoneStats": {
+        "n": 96768,
+        "meanRgb": [
+          111.53,
+          128.84,
+          118.81
+        ],
+        "meanLumaSrgb": 0.488,
+        "greenDominantFrac": 0.8441,
+        "strawDominantFrac": 0
+      },
+      "isolatedSteppeTuftWindDiff500ms": {
+        "n": 121344,
+        "changedFrac": 0.2969,
+        "meanAbsRgbDiff": 6.317
+      }
+    },
+    {
+      "frame": 3,
+      "label": "backlit_csm_shadow_unshadowed_translucency_and_canopy_horizontal_wind_shear",
+      "sunElevationDeg": 26.12,
+      "sunAzimuthDeg": 88.875,
+      "faceSunYawRad": -1.5512,
+      "targetTree": {
+        "x": 120.55,
+        "z": -52.65,
+        "height": 31.41,
+        "species": "white-spruce"
+      },
+      "camPos": [
+        108.43,
+        -52.41
+      ],
+      "forcedWindMs": 12.003,
+      "uSunColLive": [
+        0.8444,
+        0.7327,
+        0.5541
+      ],
+      "uWindAmpLive": 1.3297,
+      "shadowedForegroundWithTranslucency": {
+        "n": 180992,
+        "meanRgb": [
+          66.44,
+          77.54,
+          66.71
+        ],
+        "meanLumaSrgb": 0.2918,
+        "greenDominantFrac": 0.8215,
+        "strawDominantFrac": 0.017
+      },
+      "shadowedForegroundWithoutTranslucency": {
+        "n": 180992,
+        "meanRgb": [
+          63.67,
+          74.88,
+          64.62
+        ],
+        "meanLumaSrgb": 0.2814,
+        "greenDominantFrac": 0.7822,
+        "strawDominantFrac": 0.0156
+      },
+      "translucencyDiffInShadowedForeground": {
+        "n": 180992,
+        "changedFrac": 0.2583,
+        "meanAbsRgbDiff": 4.582
+      }
+    }
+  ]
+}

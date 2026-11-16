@@ -1,0 +1,173 @@
+{
+  "task": "T-0248",
+  "generatedAt": "2026-11-16T03:13:38.485Z",
+  "calibration": {
+    "knownMatches": [
+      {
+        "name": "pbr.ts steppeCure(227) cured August steppe = 1.0000 vs Flora of China vol. 22 post-anthesis curing 1.0000",
+        "score": 1
+      },
+      {
+        "name": "pbr.ts steppeCure(156) early-June spring growth = 0.0000 vs Flora of China vol. 22 green May-July anthesis 0.0000",
+        "score": 1
+      },
+      {
+        "name": "light.ts LUX.nightSky = 0.001 lx vs Kyba et al. (2015 Sci. Rep. 5:8409) moonless clear night sky ~0.001 lx",
+        "score": 1
+      },
+      {
+        "name": "Inextensible Euler-Bernoulli stem arc-length conservation L / H = 1.002 vs 1.000 (scale 0.25, Morgan & Cannell 1987)",
+        "score": 0.992
+      }
+    ],
+    "knownMismatches": [
+      {
+        "name": "92% pbr.ts boreal litter overwrite leaving 0.0800 Cladonia contrast inside 10.5 m vs 1.0000 un-erased lichen carpet",
+        "score": 0.08
+      },
+      {
+        "name": "STIPA_RADIUS_M = 8.0 m circular tuft cutoff vs GRASS.radius = 48.0 m continuous near-tier sward",
+        "score": 0.1667
+      },
+      {
+        "name": "Uncapped 12 m/s wind shearing 22 m trunk by 14.985 m (delta/H = 0.6811) vs Gardiner et al. (2000) ~0.1100",
+        "score": 0.1615
+      }
+    ]
+  },
+  "calibrationValid": true,
+  "summary": {
+    "totalChecks": 12,
+    "passed95": 0,
+    "meanScore": 0.0353,
+    "allPass95": false
+  },
+  "diagnostics": {
+    "cladoniaMeanLinearLuma": 0.2004,
+    "moonAgeDay196": 0.7071,
+    "midnightMoonLux": 0,
+    "grassLiftLuma": 0.06037,
+    "foliageLiftLuma": 0.03729,
+    "barkLiftLuma": 0.02197,
+    "tuftMeanLinearRgb": [
+      0.5056,
+      0.4022,
+      0.1467
+    ],
+    "peakWindDeflectionM25mTreeAt8ms": 8.6,
+    "expectedCantileverVerticalDropM25mTreeAt8ms": 1.775,
+    "actualVerticalDropM": 0,
+    "hasWindNormalRotation": false,
+    "liveBrowserTelemetryAttached": true
+  },
+  "checks": [
+    {
+      "id": "continuous_terrain_ground_subsystems_compiled",
+      "description": "Ground-surface shader subsystems (moss/lichen, uFloor/uCure, aWet/aSnow, cloudShadow) compiled onto continuousMaterial()",
+      "measured": 0,
+      "target": 4,
+      "unit": "subsystems (out of 4)",
+      "source": "Petzold & Goward (1988) Can. J. Bot. 66:2255; Lekner & Dorf (1988) Appl. Opt. 27:1278; src/render/continuousTerrain.ts:233",
+      "score": 0
+    },
+    {
+      "id": "near_boreal_cladonia_contrast_retained",
+      "description": "Fraction of Cladonia reindeer-lichen / Sphagnum reflectance contrast surviving pbr.ts near (<10.5 m) boreal floor overwrite",
+      "measured": 0.08,
+      "target": 1,
+      "unit": "contrast fraction",
+      "source": "Petzold & Goward (1988) Can. J. Bot. 66:2255 (Cladonia VIS 0.20-0.28 vs feathermoss 0.04-0.08); Bubier et al. (1997) JGR 102:29483",
+      "score": 0.08
+    },
+    {
+      "id": "gi_probe_layer1_visible_terrain",
+      "description": "Visible terrain meshes on Layer 1 contributing ground-albedo bounce to photoreal.ts SH GI probe",
+      "measured": 0,
+      "target": 1,
+      "unit": "visible Layer-1 ground meshes",
+      "source": "Ramamoorthi & Hanrahan (2001) SIGGRAPH irradiance environment maps; Oke (1987) Boundary Layer Climates",
+      "score": 0
+    },
+    {
+      "id": "midnight_starlight_grass_linear_luma",
+      "description": "Moonless clear midnight (0.001 lx starlight) grass sward linear luminance (STYLIZED.grassLift vs starlight reflectance)",
+      "measured": 0.06037,
+      "target": 0.0005,
+      "unit": "linear RGB luminance",
+      "source": "Kyba et al. (2015) Sci. Rep. 5:8409 (~0.001 lx natural night sky); Jacquemoud & Baret (1990) PROSPECT leaf reflectance",
+      "score": 0.0022
+    },
+    {
+      "id": "nocturnal_vegetation_emissive_attenuation",
+      "description": "STYLIZED emissive vegetation materials (grass, conifer bark, conifer foliage) attenuated at astronomical night",
+      "measured": 0,
+      "target": 3,
+      "unit": "materials (out of 3)",
+      "source": "Johnsen et al. (2006) J. Exp. Biol. 209:789; Kyba et al. (2015) Sci. Rep. 5:8409",
+      "score": 0
+    },
+    {
+      "id": "june_steppe_tuft_curing_state",
+      "description": "Early-June (DOY 156) Stipa feather-grass curing state (0 = green spring growth, 1 = cured September straw)",
+      "measured": 1,
+      "target": 0,
+      "unit": "curing fraction [0..1]",
+      "source": "Flora of China vol. 22 (Stipa lessingiana May-July green growth & anthesis); src/render/pbr.ts:31 steppeCure(156) = 0",
+      "score": 0
+    },
+    {
+      "id": "steppe_sward_continuous_radius_m",
+      "description": "Steppe feather-grass sward draw radius around viewer vs near-tier GRASS.radius (48 m)",
+      "measured": 8,
+      "target": 48,
+      "unit": "m",
+      "source": "Lavrenko & Karamysheva (1993) Ecosystems of the World 8B (continuous Stipa steppe sward); src/render/grass/cover.ts GRASS.radius = 48 m",
+      "score": 0.1667
+    },
+    {
+      "id": "steppe_tuft_wind_and_snow_couplings",
+      "description": "Steppe tussock shader couplings to shared WIND_UNIFORMS (wind sway) and uSnowM (snowpack burial)",
+      "measured": 0,
+      "target": 2,
+      "unit": "couplings (out of 2)",
+      "source": "de Langre (2008) Annu. Rev. Fluid Mech. 40:141; Py et al. (2006) J. Fluid Mech. 568:165 (herbaceous culm wind wave)",
+      "score": 0
+    },
+    {
+      "id": "desert_prairie_thatch_floor_flag",
+      "description": "Prairie grass-thatch floor flag (FLOOR.uFloor) applied when biome === \"desert\"",
+      "measured": 1,
+      "target": 0,
+      "unit": "uFloor flag [0 = bare mineral, 1 = prairie thatch]",
+      "source": "UNESCO (1979) Arid Regions; Peel et al. (2007) HESS 11:1633 (hyper-arid BWh/BWk lacks continuous grass thatch)",
+      "score": 0
+    },
+    {
+      "id": "shadowed_foliage_direct_translucency_leak",
+      "description": "Direct-beam solar subsurface translucency fraction leaking inside 100% occluded CSM / cloud shadows",
+      "measured": 1,
+      "target": 0,
+      "unit": "unoccluded beam fraction in shadow",
+      "source": "Jacquemoud & Baret (1990) RSE 34:75 (PROSPECT); Ross (1981) Radiation Regime of Plant Stands (L_T = 0 when E_direct = 0)",
+      "score": 0
+    },
+    {
+      "id": "beaufort5_8ms_canopy_deflection_ratio",
+      "description": "Peak crown horizontal deflection ratio (delta / H) of a 25 m mature boreal spruce at 8 m/s (Beaufort 5 fresh breeze)",
+      "measured": 0.344,
+      "target": 0.06,
+      "unit": "delta / H",
+      "source": "Gardiner, Peltola & Kellomaki (2000) Ecol. Model. 129:1; Mayer (1987) Trees 1:195 (~0.04-0.08 H deflection at 8 m/s)",
+      "score": 0.1744
+    },
+    {
+      "id": "canopy_wind_inextensible_foreshortening_and_normals",
+      "description": "Inextensible cantilever vertical tip foreshortening (-0.6 * delta^2 / H) and bent-stem normal rotation under wind sway",
+      "measured": 0,
+      "target": 1,
+      "unit": "kinematic & normal coupling fraction [0..1]",
+      "source": "Niklas (1992) Plant Biomechanics; Morgan & Cannell (1987) Tree Physiol. 3:365 (inextensible cantilever drop & tangent normal)",
+      "score": 0
+    }
+  ]
+}

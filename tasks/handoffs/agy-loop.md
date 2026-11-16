@@ -1,13 +1,13 @@
-# agy-loop Handoff (2026-11-16 06:42 PT — In Progress: Step 0 Review Done, Resuming T-0254 Live Capture, Calibrated Audit & Proposal)
+# agy-loop Handoff (2026-11-16 07:42 PT — In Progress: Step 0 Review Done, Executing T-0254 Live Capture, Calibrated Audit & Proposal)
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`)
 - **Proposal worktree**: `C:\dev\boreal-agy-t0254` (branch `agy/t0254-propose`, at `origin/main` `8051065f2720cac86bcbfa76c185eb872b409c4d`)
 - **Merged `origin/main`**: `8051065f2720cac86bcbfa76c185eb872b409c4d` (`#487` `T-0253` merged into `main`; served local `main` `871531a` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched)
-- **Run start**: `2026-11-16T06:40:04-08:00` (`America/Los_Angeles` PT; host clock `07:40:04-07:00`)
+- **Run start**: `2026-11-16T07:40:04-08:00` (`America/Los_Angeles` PT; host clock `08:40:04-07:00`)
 
 ## Step 0: Review First (Rule 15, Oldest First) — Completed
-- Executed `git fetch --all --prune`, `git merge main --no-edit`, `git merge origin/main --no-edit` (`8051065f2720cac86bcbfa76c185eb872b409c4d`), `npx tsx tools/tasks.ts`, `git log --all --since="2026-11-14T00:00:00Z" --oneline -- tasks/`, `gh pr list -R Bannon-github/boreal --state open`, `gh issue list -R Bannon-github/boreal --limit 5 --state all`, `git worktree list`, and `git for-each-ref --sort=-committerdate`:
+- Executed `git fetch --all --prune`, `git merge main --no-edit`, `git merge origin/main --no-edit` (`8051065f2720cac86bcbfa76c185eb872b409c4d`), `npx tsx tools/tasks.ts`, `git log --all --since="2026-11-14T00:00:00Z" --oneline -- tasks/`, `gh pr list -R Bannon-github/boreal --state open`, `gh issue list -R Bannon-github/boreal --limit 5 --state all`, and `git for-each-ref --sort=-committerdate`:
   - `origin/main` remains at `8051065f2720cac86bcbfa76c185eb872b409c4d` (`#487` `T-0253` merged).
   - **Zero** new non-`agy` commits, task events, PR updates, or GitHub issues across any local or remote branch since `2026-11-14T04:01:58Z` (`83d1b0ec265d9f58c7affde1c7bbce027b5d0ffc`).
   - **Open non-`agy` PRs demonstrably unchanged** (retaining prior blocking verdicts per Rule 15 unchanged-blocked-submissions clause):
@@ -20,14 +20,14 @@
   - **Claimable approved tasks**: `0` (`T-0224..T-0253` await non-`agy` `approve-plan`; all legacy `approved` ledger entries `T-0038..T-0218` are already merged on `origin/main`).
 
 ## Step 1–3: Completing `T-0254` Inspection, Live Capture, Calibrated Audit & Board Proposal — In Progress
-- Resumed from `fe13ed8` / `da7af9c` in `C:\dev\boreal-agy-t0254` (`agy/t0254-propose`, at `8051065f2720cac86bcbfa76c185eb872b409c4d`):
+- Resumed in `C:\dev\boreal-agy-t0254` (`agy/t0254-propose`, at `8051065f2720cac86bcbfa76c185eb872b409c4d`):
   1. Universe/world seed lifecycle & boot-order split-brain (`src/main.ts`, `src/core/universeSeed.ts`, `src/core/world.ts`, `src/render/buildScene.ts`, `src/world/globe/globeView.ts`, `src/core/planetWeather.ts`, `src/world/globe/coverSample.ts`, `src/world/globe/landingSite.ts`).
   2. Save/resume remote-site & mid-descent (`band`) persistence, `Play as` / `Quit to menu` / `#start-menu` canvas redraw, and `#info` Library dialog accuracy (`src/main.ts`, `src/core/events.ts`, `src/core/sitePhase.ts`, `src/ui/menu.ts`, `index.html`).
   3. GPU resource probe (`benchFrames` unclamped ANGLE `EXT_disjoint_timer_query` `gpuMs`, hardcoded `60 fps` `PROBE.budgetMs` vs `quality.target`, `10 s` `measureHardware` `settle` stall, and `tierForGpu` / `isIntegrated` Apple Silicon & Intel Arc B-series classification) (`src/core/probe.ts`, `src/render/startup.ts`, `src/core/quality.ts`).
   4. Quality ladder vs manual settings caps (`LADDER[0]` unreachable `resScale 2`, `3 cascades`, `Full` GTAO), competing dual `Menu -> Graphics` selectors & `GOVERNOR.probeCap` mutation, and `ui/loading.ts` / standalone `?view=globe` `#loading` lifecycle (`src/core/quality.ts`, `src/core/renderSettings.ts`, `src/ui/menu.ts`, `src/ui/loading.ts`, `src/world/globe/globeView.ts`).
 
 ## Exact Next Step
-1. Read target source files and inspect existing `refs/boot/startup-probe-governor-seed-resume-audit/reference/ref-0.jpg..ref-3.jpg` in `C:\dev\boreal-agy-t0254`.
+1. Read target source files and existing `refs/boot/startup-probe-governor-seed-resume-audit/reference/ref-0.jpg..ref-3.jpg`, plus `tasks/T-0253-*.md` to match the exact repository convention.
 2. Start Vite preview server on `agy` port `5269`, record live browser video (`recording.webm`), decode `frame-0.png..frame-3.png` (`1280×720`), write `reference/SOURCES.md` and `observations.json`, run calibrated `numeric-check.mjs` -> `numbers.json`, author `tasks/T-0254-startup-probe-governor-seed-resume-audit.md` + `tasks/events/2026-11-16T0X-XX-agy-propose-T-0254.json` (PT, UTF-8 no-BOM), run `npx tsc --noEmit` & `npm test`, stop server & headless browser, push `agy/t0254-propose`, and open PR `#488`.
 
 ## Needs From Another Agent

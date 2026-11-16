@@ -1,0 +1,73 @@
+{
+  "capturedAt": "2026-11-16T05:16:01.777Z",
+  "port": 5267,
+  "recordingBytes": 1871932,
+  "pageErrors": [],
+  "stage0": {
+    "cycle": "42.171401",
+    "cosmosCanvasPresent": true,
+    "cosmosZIndex": 25,
+    "forestHudElementsVisibleOverCosmos": 2,
+    "reheatTextSnippet": "●\nreheating\nGenerates: radiation and particle densities from the decaying inflaton\nhealthy\nOnline 00:00:42. Spawned because ε=1. Added 2026-11-04.\nThis game session has called it 6 times. Last call 0.0 ms.\nscale factor a: 1.826e-11\nHubble rate: 62.514 1/s\ninflaton density: 0 J/m³\nradiation density: 6.282e+29 J/m³\ntemperature: 1.493e+11 K\nreheating temperature (analytic): 9.790e+18 K\nreheating temperature (integrated): 6.256e+18 K\ng*: 47.975\nin quark-hadron window (1 while T is near the pivot): 0\nphoton number density: 6.746e+40 1/m³\nphoton energy density: 3.755e+29 J/m³\ngluon number density: 5.397e+41 1/m³\ngluon energy density: 3.004e+30 J/m³\nW number density: 0 1/m³\nW energy density: 0 J/m³\nZ number density: 0 1/m³\nZ energy density: 0 J/m³\nHiggs number density: 0 1/m³\nHiggs energy density: 0 J/m³\nup number density: 3.034e+41 1/m³\nup energy density: 1.970e+30 J/m³\ndown number density: 3."
+  },
+  "stage1": {
+    "cycle": "46.268311",
+    "bbnCardPresent": true,
+    "bbnCardText": "●\nnucleosynthesis\nGenerates: light-element abundances — not built\nNOT BUILT. NOT BUILT — the temperature is known, the nuclear network is not in this repo\nOnline 00:00:00. Spawned because T fell below 1e10 K. Added 2026-11-04.\nThis game session has called it 3 times. Last call 0.0 ms.\nhelium-4 mass fraction: 0\ndeuterium: 0\nInputs\ngrid rows ()\ngrid columns ()\nsolar constant (W/m²)\ntilt (°)\nlapse rate (K/m)\nhumidity seed ()\nwater albedo ()\nsnow albedo ()\nReset this engine",
+    "leakedPlanetInputsOnBbn": [
+      "nlat",
+      "nlon",
+      "solar_constant",
+      "obliquity_deg",
+      "lapse_rate",
+      "humidity_seed",
+      "water_albedo",
+      "snow_albedo"
+    ],
+    "preyCheckCycle": "61.907294"
+  },
+  "stage2": {
+    "cycle": "59.466385",
+    "tierBeforeBench": "Tier: not tested yet",
+    "lookText": "radius = 0.4 + 7 × (log10 a − log10 1e−60) / 60, clamped. The camera steps back with that radius so the sphere stays in frame, and shifts left while the data panel is open. Right now the sphere radius is 7.20 and the brightness is 1.20.",
+    "darkAgesSpherePeakRgb255": [
+      186,
+      33,
+      255
+    ]
+  },
+  "benchAndToday": {
+    "benchSamples": [
+      {
+        "id": "ultra",
+        "p50": 0.30000001192092896,
+        "p95": 1.399999976158142
+      },
+      {
+        "id": "high",
+        "p50": 0.20000001788139343,
+        "p95": 1.5
+      },
+      {
+        "id": "medium",
+        "p50": 0.29999998211860657,
+        "p95": 1.5
+      },
+      {
+        "id": "low",
+        "p50": 0.20000001788139343,
+        "p95": 1.199999988079071
+      }
+    ],
+    "driveCardsWithPlanetParams": [
+      "hunger",
+      "prey",
+      "senses",
+      "danger"
+    ],
+    "reheatResetPerParamButtons": 0
+  },
+  "stage3": {
+    "axisReadout": "û  lat 90.00°  lon 0.00°\nr  6371.0 km   altitude 14.17 km\n   above sea 14.17 km, above mean R -0.01 km\nlayer atmosphere · stratosphere\nρ 0.221 kg/m³   T 216.6500 K\nP 13773.250 Pa   g 9.788 m/s² (figure)\nparcels [5563 relaxed SPH parcels, 39.5 h settled]\n  M 5.9722e+24 kg (-0.00 %)  COM 1.9e+4 m\n  R_vol 6532.1 km (2.53 %)\n  J2 7.878e-4 (-27.23 %)  1/f 328.2 (real 298.257)  C/MR² 0.3161 (real 0.3307)\n  g eq 9.299 pole 9.358 m/s² (real 9.7803 / 9.8322)\n  emerged: core-mantle 3541 km (PREM 3480)  inner core 3117 km (PREM 1221.5)  centre 5650 K 375 GPa"
+  }
+}

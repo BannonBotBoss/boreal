@@ -1,0 +1,211 @@
+{
+  "task": "T-0250",
+  "calibrationValid": true,
+  "calibration": {
+    "metrics": {
+      "ratioScore": "min(a, b) / max(a, b) on strictly positive physical/cosmological/geophysical quantities (1.0 exact, >= 0.95 pass)",
+      "deltaScore": "clamp01(1 - |measured - reference| / fullScale) on bounded fractions/counts (>= 0.95 pass)"
+    },
+    "knownMatches": {
+      "cmbTemperatureFixsen2009": 0.9998,
+      "standardModelHighTGStar106_75": 1,
+      "postPositronAnnihilationGStar3_363": 1,
+      "premEmergentSurfaceRadius6371Km": 1
+    },
+    "knownMismatches": {
+      "deconfinedQuarksGluonsAt10MeV": 0.2243,
+      "purpleSphereVs2936KPlanckianAmber": 0.2207,
+      "frozen3117KmIcbVsPrem1221_5Km": 0.3918,
+      "zeroHelium4InUnbuiltBbn": 0
+    }
+  },
+  "passedCount": 0,
+  "totalChecks": 12,
+  "meanScore": 0.0922,
+  "checks": [
+    {
+      "id": "postInflationContinuityAndScaleFactorMonotonicity",
+      "measured": {
+        "maxPostInflTempJumpRatio": 7347.9,
+        "rhA1e10": 1.6612e-11,
+        "rhA1e9": 1.1902e-14,
+        "scaleRatio1e10To1e9": 0.00071644
+      },
+      "target": {
+        "maxPostInflTempJumpRatio": 1,
+        "scaleRatio1e10To1e9": 3.1623
+      },
+      "score": 0.0002,
+      "pass": false
+    },
+    {
+      "id": "qcdConfinementGStarAndZeroPostHadronFreeGluons",
+      "measured": {
+        "gStarAt12_9MeV": 47.975,
+        "freeGluonToPhotonEnergyRatioToday": 8
+      },
+      "target": {
+        "gStarAt12_9MeV": 10.76,
+        "freeGluonToPhotonEnergyRatioToday": 0
+      },
+      "score": 0.1121,
+      "pass": false
+    },
+    {
+      "id": "bbnPrimordialHeliumDeuteriumAndCmbGStar",
+      "measured": {
+        "he4MassFractionYp": 0,
+        "deuteriumToHydrogen": 0,
+        "gStarCmbDoubleC2Bug": true
+      },
+      "target": {
+        "he4MassFractionYp": 0.245,
+        "deuteriumToHydrogen": 0.00002547,
+        "gStarCmbDoubleC2Bug": false
+      },
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "recombination2936KPlanckianChromaticityRatioRB",
+      "measured": {
+        "temperatureK": 2935.7,
+        "sphereLookSrgb": [
+          0.32,
+          0.05,
+          0.78
+        ],
+        "redToBlueRatio": 0.4103
+      },
+      "target": {
+        "redToBlueRatio": 1.8589
+      },
+      "score": 0.2207,
+      "pass": false
+    },
+    {
+      "id": "cosmicDarkAges132KVisibleLuminanceSuppression",
+      "measured": {
+        "temperatureK": 132.36,
+        "wienPeakUm": 21.89,
+        "sphereLookBrightness": 1.203,
+        "renderedPeakRgb255": [
+          186,
+          33,
+          255
+        ]
+      },
+      "target": {
+        "visibleBrightness": 0
+      },
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "cosmosSphereHudIsolationTiersOutputPassAndGpuBench",
+      "measured": {
+        "hudOverlapCount": 2,
+        "hasOutputPass": false,
+        "usesTierBloom": false,
+        "usesTierMsaa": false,
+        "usesGpuTimerQuery": false,
+        "tierBootedTested": false,
+        "tierCount": 4
+      },
+      "target": {
+        "passedItems": 6
+      },
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "sphHotDifferentiationLiquidOuterCoreAndIcbRadius",
+      "measured": {
+        "icbKm": 3117.44,
+        "nLiquidIronParcels": 5,
+        "nSolidIronParcels": 1803,
+        "liquidCoreFraction": 0.00277
+      },
+      "target": {
+        "icbKm": 1221.5,
+        "liquidCoreFraction": 0.9493
+      },
+      "score": 0.1973,
+      "pass": false
+    },
+    {
+      "id": "sphHotDifferentiationHydrostaticSettlingAndFigure",
+      "measured": {
+        "vmaxMps": 1469.3,
+        "comM": 19062.7,
+        "rVolKm": 6532.1,
+        "gEqMps2": 9.299,
+        "j2": 0.00078783
+      },
+      "target": {
+        "vmaxMpsMax": 10,
+        "comMMax": 1000,
+        "rMeanKm": 6371,
+        "gEqMps2": 9.7803,
+        "j2": 0.00108263
+      },
+      "score": 0.0068,
+      "pass": false
+    },
+    {
+      "id": "sphColdBulkMixCoreDensityAndCmbRadius",
+      "measured": {
+        "rhoCentreKgM3": 22969,
+        "cmbKm": 2937,
+        "gEqMps2": 11.685
+      },
+      "target": {
+        "rhoCentreKgM3": 13088,
+        "cmbKm": 3480,
+        "gEqMps2": 9.7803
+      },
+      "score": 0.5698,
+      "pass": false
+    },
+    {
+      "id": "rustModuleRegistrySessionCallCounting",
+      "measured": {
+        "notedModules": 0,
+        "totalModules": 10
+      },
+      "target": {
+        "notedModules": 10
+      },
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "dataPanelCardParameterScopingAndPerParamReset",
+      "measured": {
+        "leakedUnrelatedCards": 5,
+        "perParamResetButtons": 0
+      },
+      "target": {
+        "leakedUnrelatedCards": 0,
+        "perParamResetButtons": 17
+      },
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "siEquationUnitsReheatMemoizationAndWasmScratchSafety",
+      "measured": {
+        "rhoTHasSiFactors": false,
+        "reheatIsMemoized": false,
+        "namePtrReusesScratch": false
+      },
+      "target": {
+        "rhoTHasSiFactors": true,
+        "reheatIsMemoized": true,
+        "namePtrReusesScratch": true
+      },
+      "score": 0,
+      "pass": false
+    }
+  ]
+}

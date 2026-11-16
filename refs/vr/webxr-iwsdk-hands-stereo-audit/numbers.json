@@ -1,0 +1,128 @@
+{
+  "task": "T-0252",
+  "evaluatedAt": "2026-11-16T07:15:07.733Z",
+  "calibration": {
+    "metrics": {
+      "ratioScore": "min(a, b) / max(a, b) on strictly positive physical, anthropometric, and timing quantities (1.0 exact, >= 0.95 pass)",
+      "deltaScore": "clamp01(1 - |measured - reference| / fullScale) on bounded biomechanical/architectural fractions (>= 0.95 pass)"
+    },
+    "knownMatches": {
+      "nistTenThousandFeetMetres": 1,
+      "carlbomPaciorekIsometricAngleDeg": 1,
+      "metaComfortSnapTurnStepDeg": 1,
+      "xrCapsDisablesHeavyScreenPasses": 1
+    },
+    "knownMismatches": {
+      "deadGlobeVrBtnAndPreSessionAlloc": 0,
+      "uniformBlackoutOverCentralFovea": 0,
+      "zeroOfSevenWorldSpaceCameraConsumers": 0,
+      "sixtyFpsGovernorOnQuest72HzDisplay": 0
+    },
+    "calibrationValid": true
+  },
+  "summary": {
+    "totalChecks": 12,
+    "passedChecks": 0,
+    "failedChecks": 12,
+    "meanScore": 0.0208,
+    "gatePass": false
+  },
+  "checks": [
+    {
+      "id": "vrEntryAcrossGlobeAndGroundViews",
+      "description": "#vr-btn mounted on standalone ?view=globe & ground/sphere views, and enterVr() verifies XR session before World.create()",
+      "measured": "0 / 2 (globe #vr-btn mounted=false; non-XR pre-alloc WebGL2=1)",
+      "reference": "2 / 2 (#vr-btn wired on all views; 0 secondary WebGL contexts allocated when XR session unsupported/declined)",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "xrSessionEndAndHandoverWebGlCleanup",
+      "description": "session.ts handles XRSession \"end\", enterForest() disposes secondary IWSDK World WebGL context, and VR re-entry succeeds",
+      "measured": "0 / 3 (session.ts end listener=false, iwsdk World disposed=false, clean re-entry=false)",
+      "reference": "3 / 3 (1 active WebGL context in stereo forest; #iwsdk-root & Quest profile cleaned up on exit)",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "journeyDarkEntryAndGestureStart",
+      "description": "Journey opens in phase=\"dark\" awaiting pinch or 0.5 s open-palm gesture rather than skipping immediately in constructor",
+      "measured": "0 / 1 (initial phase=\"sphere\", ctorCallsBegin=true)",
+      "reference": "1 / 1 (phase=\"dark\" until right pinch > 0.9 or palmOpen > 0.5 s per journey.ts spec)",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "journeyPanelPlacementLatexAndGlobeGrab",
+      "description": "Journey keeps equation panel laterally offset with formatted math, preserves OneHandGrabbable globe rotation, & requires globe hit to drop",
+      "measured": "0 / 4 (panel dx=0 m, rawLatex=true, globeRotOverwritten=true, emptyAirPinchDrops=true)",
+      "reference": "4 / 4 (>=0.25 m lateral panel offset, clean math symbols, persistent OneHandGrabbable rotation, globe-ray drop)",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "journeyBidirectionalTimeScrubPersistence",
+      "description": "Pinch-scrubbing panel updates elapsed in \"sphere\" (no release snap-back), uses head-local X, and scrubs \"globe\" <-> \"sphere\"",
+      "measured": "0 / 3 (spherePersists=false, globeToSphere=false, headLocal=false)",
+      "reference": "3 / 3 (persistent elapsed <-> cycle mapping, bidirectional era transitions, head-relative scrub axis)",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "seatedOrbitalDropDurationAndVisibleWorld",
+      "description": "Seated drop matches Issue #285 (DESCENT.sec = 14 s log-altitude glide over visible globe/terrain, no orphaned panel)",
+      "measured": "0 / 3 (fallSec=10 vs 14 s, visibleMeshesInFall=false, panelClean=false)",
+      "reference": "3 / 3 (14 s log-altitude ease to 400 m glide with visible planet/ground and clean HUD)",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "fovealClearancePeripheralComfortVignette",
+      "description": "Journey & forest comfort vignettes keep central 0-25 deg fovea 100% clear while masking >30 deg periphery (Fernandes & Feiner 2016)",
+      "measured": "0 / 2 (journey central opacity=0.633, forest central opacity=0.55)",
+      "reference": "2 / 2 radial alpha comfort vignettes (central fovea alpha = 0.0, smooth peripheral feather > 30 deg)",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "handAnthropometryScaleInvarianceAndPoseAccuracy",
+      "description": "Hand-pose classifier scales by individual hand skeleton across NASA-STD-3000 5th-95th pct hands & resists 1-frame joint dropouts",
+      "measured": "1 / 4 (50th neutral=\"open\" / iwer default=\"open\", 95th male fist=\"relaxed\", 5th female open=\"open\", dropoutSafe=false)",
+      "reference": "4 / 4 (neutral->\"relaxed\", 95th fist->\"fist\", 5th open->\"open\", 0 false grab edges on 1-frame joint loss; HAND openM=0.12, fistM=0.09)",
+      "score": 0.25,
+      "pass": false
+    },
+    {
+      "id": "headRelativeSnapTurnAndHandsOnlyForestActions",
+      "description": "Head-relative bidirectional snap-turn & full hands-only wolf actions (walk/run/stealth, forage, hunt/pounce/eat/release, 3D HUD/menu; #287)",
+      "measured": "0 / 5 (headRelSnap=false, gaitModes=false, forage=false, hunt=false, xrHud=false)",
+      "reference": "5 / 5 complete hands-only forest playability per Issue #287",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "xrOriginWorldSpaceCameraPropagation",
+      "description": "All 7 world-space scene & observation consumers read world viewer coordinates instead of local camera.position when parented to xrOrigin",
+      "measured": "0 / 7 (obs dist error=68 m from forestLanding; terrain/batch/flora/grass/sky/gi all read local camera.position)",
+      "reference": "7 / 7 systems centered on world-space XR viewer (observation, continuousTerrain, batch, flora, grass, sky/precip, GI probe)",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "embodiedSpeciesEyeHeightAndStereoOverlaySafety",
+      "description": "xrOrigin calibrates seated headset height (~1.22 m) to Canis lupus eye height (~0.72 m), removes grey ball muzzle, & guards stereo OutlinePass",
+      "measured": "0 / 3 (seated eye=1.22 m vs wolf 0.72 m, sphereMuzzle=true, outlineXrGuard=false)",
+      "reference": "3 / 3 (species eye-height calibration Mech 1974, anatomical/clean snout view, stereo-safe target highlight)",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "questRefreshRateBudgetAndXrFramebufferScale",
+      "description": "Governor targets Meta Quest 3 / 3S native 72/90 Hz frame budget (13.89 / 11.11 ms, not 60 fps = 16.67 ms) & guards presenting setPixelRatio",
+      "measured": "0 / 2 (QUEST_FPS=60, GOVERNOR.targetFps=60 vs Quest 3 90 Hz; presentingPixelRatioGuard=false)",
+      "reference": "2 / 2 (session.frameRate || 72/90 Hz per PROJECT-RULES Rule 10 & Meta Quest WebXR spec; XR framebuffer scale factor)",
+      "score": 0,
+      "pass": false
+    }
+  ]
+}

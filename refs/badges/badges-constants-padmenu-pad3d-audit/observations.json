@@ -1,0 +1,192 @@
+{
+  "capturedAt": "2026-11-16T06:16:06.294Z",
+  "port": 5268,
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "pageErrors": [],
+  "sampleTimesSec": {
+    "frame0": 4.796,
+    "frame1": 9.793,
+    "frame2": 17.163,
+    "frame3": 19.01
+  },
+  "stage0": {
+    "url": "http://127.0.0.1:5268/?view=ground&nomenu&noprobe",
+    "rows": [
+      "Credits: 0",
+      "🔒 atmospheric composition and radiation›",
+      "🔒 cloud formation and albedo›",
+      "🔒 the geodynamo and magnetosphere›",
+      "🔒 solar wind and the magnetosphere›",
+      "🔒 plate tectonics›",
+      "🔒 light, exposure and the solar spectrum›",
+      "🔒 wavelength filters (UV, EUV, X-ray)›",
+      "🔒 orbital and deep-time scales›",
+      "🔒 formation history and the Moon-forming impact›",
+      "🔒 gravity and how G is measured›"
+    ],
+    "titleBeforeClick": "Badges",
+    "titleAfterClick": "Badges",
+    "mouseClickAdvancesMenu": false,
+    "quizPageTitle": "Test · atmospheric composition and radiation",
+    "quizPageRows": [
+      "No sourced questions for this control yet. Credits still unlock it."
+    ]
+  },
+  "stage1": {
+    "balance": 0,
+    "isGUnlocked": false,
+    "camRows": [
+      {
+        "text": "Take a photo RS click›",
+        "locked": false
+      },
+      {
+        "text": "🔒 Auto exposure 🔒A: unlock",
+        "locked": true
+      },
+      {
+        "text": "🔒 Comp EV 🔒A: unlock",
+        "locked": true
+      },
+      {
+        "text": "🔒 Aperture f/ 🔒A: unlock",
+        "locked": true
+      },
+      {
+        "text": "🔒 Shutter 🔒1/A: unlock",
+        "locked": true
+      },
+      {
+        "text": "🔒 ISO 🔒A: unlock",
+        "locked": true
+      },
+      {
+        "text": "🔒 ND stops 🔒A: unlock",
+        "locked": true
+      },
+      {
+        "text": "🔒 Focal mmA: unlock",
+        "locked": true
+      },
+      {
+        "text": "🔒 Adapt speed xA: unlock",
+        "locked": true
+      },
+      {
+        "text": "🔒 Filter 🔒Visible (no filter)Red channelGreen channelBlue channelLuminance (photopic)H-alpha 656.3 nmUV 160-170 nm (absorbed by O2/O3 above ~50 km)EUV 17-30 nm (absorbed in the thermosphere)X-ray 0.1-0.8 nm (absorbed above ~70 km)A: unlock",
+        "locked": true
+      }
+    ],
+    "dataPanelInputsUnlockedWithZeroBadges": {
+      "G": true,
+      "c": true,
+      "hbar": true,
+      "k_B": true
+    },
+    "dataPanelAllowsEditingGWhileLocked": false,
+    "hRatioAt2xG": 1,
+    "setConstantSyncCheck": {
+      "tsKG": 7.4e-11,
+      "rustParamG": 6.6743e-11,
+      "synced": false
+    }
+  },
+  "stage2": {
+    "defaultSphereLayersCheck": {
+      "url": "http://127.0.0.1:5268/?start=sphere&stages=1&trees=v2&noprobe",
+      "globeLayersDomPresent": false
+    },
+    "standaloneTabOpensPadMenu": false,
+    "ungatedInLayerPanel": [
+      "clouds",
+      "atmosphere",
+      "aurora",
+      "fieldLines",
+      "plates"
+    ],
+    "padMenuLayerRows": [
+      "🔒 CloudsA: unlock",
+      "SunlightOn",
+      "🔒 AtmosphereA: unlock",
+      "🔒 AuroraA: unlock",
+      "Snow / iceOn",
+      "VegetationOn",
+      "OceanOn",
+      "🔒 Field linesA: unlock",
+      "🔒 PlatesA: unlock",
+      "VenusOn",
+      "Airglow (OI 557.7)On"
+    ],
+    "negQuestionId": "osup1-13-32",
+    "negTruth": -1.1123833333333333e-8,
+    "minVisitedFromNumberEntry": 6.6e-9,
+    "canEnterZeroOrNegative": false,
+    "negQuizRows": [
+      "Question 7 of 10: Gravitational potential energy of two 5.00-kg balls 15.0 cm apart? (answer in J)",
+      "Study: Escape speed v = √(2·G·M / r). Potential energy between two masses U = −G·m₁·m₂ / r.",
+      "Hint: This is about energy and escaping a planet's pull.",
+      "Your answer ↕ ±0.1 · ↔ ±0.01 · LB/RB ×10 · A submit9.00 × 10^-9",
+      "Hint (fewer credits, still passes) X›",
+      "Read the textbook page›"
+    ]
+  },
+  "stage3": {
+    "stickTiltWithAtomsOnly": [
+      0,
+      0
+    ],
+    "triggerFillWorldZ": -0.607,
+    "bumperWorldZ": -0.25,
+    "bodyFrontBackZ": [
+      -0.69,
+      0.14
+    ],
+    "undisposedSceneObjectsCount": {
+      "geometries": 30,
+      "textures": 6
+    },
+    "howlGrowlKeyboardClashFlagged": false,
+    "mouseClickSwitchesGpsTab": false,
+    "liveReadout": "Pressed: A · LB · LT 0.65 · RT 0.85 · LS ← 0.57 · LS ↑ 0.45"
+  },
+  "recordingBytes": 3325086,
+  "recordingMime": "video/webm;codecs=vp9",
+  "decodedVideoDurationSec": 19.397,
+  "decodedSamples": [
+    {
+      "frame": "frame-0.png",
+      "requestedSec": 4.796,
+      "actualSec": 4.796,
+      "bytes": 638154
+    },
+    {
+      "frame": "frame-1.png",
+      "requestedSec": 9.793,
+      "actualSec": 9.793,
+      "bytes": 670776
+    },
+    {
+      "frame": "frame-2.png",
+      "requestedSec": 17.163,
+      "actualSec": 17.163,
+      "bytes": 541465
+    },
+    {
+      "frame": "frame-3.png",
+      "requestedSec": 19.01,
+      "actualSec": 19.01,
+      "bytes": 466375
+    }
+  ],
+  "consoleLogs": [
+    "THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead.",
+    "terrain worker did not return the standing chunk; building it on the main thread",
+    "                                                 \n▄▄▄▄▄▄  ▄▄      ▄▄   ▄▄▄▄    ▄▄▄▄▄     ▄▄   ▄▄▄ \n▀▀██▀▀  ██      ██ ▄█▀▀▀▀█   ██▀▀▀██   ██  ██▀  \n  ██    ▀█▄ ██ ▄█▀ ██▄       ██    ██  ██▄██    \n  ██     ██ ██ ██   ▀████▄   ██    ██  ████",
+    "THREE.WebGLProgram: Program Info Log: (210,91-147): warning X4122: sum of 0.996094 and -2.98545e-017 cannot be represented accurately in double precision\n(209,41-69): warning X4122: sum of 1 and -1.49272e-017 cannot be represented accuratel",
+    "STARTUP cold",
+    "aerial-exemplars"
+  ]
+}

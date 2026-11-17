@@ -1,10 +1,10 @@
-# agy-loop Handoff (2026-11-17 04:42 PT — In Progress: Step 0 Review Done, Executing T-0254 Live Capture, Calibrated Audit & Proposal)
+# agy-loop Handoff (2026-11-17 05:42 PT — In Progress: Step 0 Review Done, Executing T-0254 Live Capture, Calibrated Audit & Proposal)
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`)
 - **Proposal worktree**: `C:\dev\boreal-agy-t0254` (branch `agy/t0254-propose`, at `origin/main` `8051065f2720cac86bcbfa76c185eb872b409c4d`)
 - **Merged `origin/main`**: `8051065f2720cac86bcbfa76c185eb872b409c4d` (`#487` `T-0253` merged into `main`; served local `main` `871531a73379eb6be02583f09eefb302b0e36226` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched)
-- **Run start**: `2026-11-17T04:40:04-08:00` (`America/Los_Angeles` PT; host clock `2026-11-17T05:40:04-07:00`)
+- **Run start**: `2026-11-17T05:40:04-08:00` (`America/Los_Angeles` PT; host clock `2026-11-17T06:40:04-07:00`)
 
 ## Step 0: Review First (Rule 15, Oldest First) — Completed
 - Executed `git fetch --all --prune`, `git merge main`, `git merge origin/main`, `npx tsx tools/tasks.ts`, `git log --all --since="2026-11-14T00:00:00Z"`, `gh pr list -R Bannon-github/boreal --state open --json number,title,headRefName,headRefOid,baseRefName,updatedAt,isDraft`, and `gh issue list -R Bannon-github/boreal --limit 5 --state all --json number,title,state,updatedAt`:
@@ -28,8 +28,8 @@
   4. Quality ladder vs manual settings caps (`LADDER[0]` unreachable `resScale 2`, `3 cascades`, `Full` GTAO), competing dual `Menu -> Graphics` selectors & `GOVERNOR.probeCap` mutation, and `ui/loading.ts` / standalone `?view=globe` `#loading` lifecycle (`src/core/quality.ts`, `src/core/renderSettings.ts`, `src/ui/menu.ts`, `src/ui/loading.ts`, `src/world/globe/globeView.ts`).
 
 ## Exact Next Step
-1. Inspect `T-0253` task/event/evidence structure and read the target `T-0254` source files + `refs/boot/` in `C:\dev\boreal-agy-t0254`.
-2. Start Vite preview server on `agy` port `5269`, record live browser video (`recording.webm`), decode `frame-0.png..frame-3.png` (`1280×720`), write `reference/SOURCES.md` and `observations.json`, run calibrated `numeric-check.mjs` -> `numbers.json`, author `tasks/T-0254-startup-probe-governor-seed-resume-audit.md` + `tasks/events/2026-11-17T04-XX-agy-propose-T-0254.json` (PT, UTF-8 no-BOM), run `npx tsc --noEmit` & `npm test`, stop server & headless browser, push `agy/t0254-propose`, open PR `#488`, merge into `agy/loop`, and update this handoff.
+1. Inspect existing `C:\dev\boreal-agy-t0254\refs\boot\`, `T-0253` template, and target `T-0254` source files.
+2. Complete live capture (`recording.webm`, `frame-0.png..frame-3.png`), `reference/SOURCES.md`, `observations.json`, calibrated `numeric-check.mjs` -> `numbers.json`, `tasks/T-0254-*.md`, and `tasks/events/2026-11-17T05-XX-agy-propose-T-0254.json`, verify `npx tsc --noEmit` & `npm test`, push `agy/t0254-propose`, open PR `#488`, merge into `agy/loop`, and update this handoff.
 
 ## Needs From Another Agent
 - Non-`agy` `approve-plan` events on proposed `agy` tasks `T-0224..T-0253`.

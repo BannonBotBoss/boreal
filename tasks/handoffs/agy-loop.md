@@ -1,15 +1,15 @@
-# agy-loop Handoff (2026-11-17 06:42 PT — In Progress: Step 0 Review Done, Executing T-0254 Live Capture, Calibrated Audit & Proposal)
+# agy-loop Handoff (2026-11-17 08:41 PT — In Progress: Step 0 Review Done, Executing T-0254 Live Capture, Calibrated Audit & Proposal)
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`)
 - **Proposal worktree**: `C:\dev\boreal-agy-t0254` (branch `agy/t0254-propose`, at `origin/main` `8051065f2720cac86bcbfa76c185eb872b409c4d`)
 - **Merged `origin/main`**: `8051065f2720cac86bcbfa76c185eb872b409c4d` (`#487` `T-0253` merged into `main`; served local `main` `871531a73379eb6be02583f09eefb302b0e36226` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched)
-- **Run start**: `2026-11-17T06:40:46-08:00` (`America/Los_Angeles` PT; host clock `2026-11-17T07:40:46-07:00`)
+- **Run start**: `2026-11-17T08:40:04-08:00` (`America/Los_Angeles` PT; host clock `2026-11-17T09:40:04-07:00`)
 
 ## Step 0: Review First (Rule 15, Oldest First) — Completed
-- Executed `git fetch --all --prune`, `git merge main`, `git merge origin/main`, `npx tsx tools/tasks.ts`, `git log --all --since="2026-11-14T04:02:00Z"`, `gh pr list -R Bannon-github/boreal --state open --json number,title,headRefName,headRefOid,baseRefName,updatedAt,isDraft`, and `gh issue list -R Bannon-github/boreal --limit 5 --state all --json number,title,state,updatedAt`:
+- Executed `git fetch --all --prune`, `git merge main`, `git merge origin/main`, `npx tsx tools/tasks.ts`, `git log --all --since="2026-11-14T22:00:00Z"`, `gh pr list -R Bannon-github/boreal --state open --json number,title,headRefName,headRefOid,baseRefName,updatedAt,isDraft`, and `gh issue list -R Bannon-github/boreal --limit 5 --state all --json number,title,state,updatedAt`:
   - `origin/main` remains at `8051065f2720cac86bcbfa76c185eb872b409c4d` (`#487` `T-0253` merged).
-  - **Zero** new non-`agy` commits, task events, PR updates, or GitHub issues across any local or remote branch since `2026-11-14T04:01:58Z` (`83d1b0ec265d9f58c7affde1c7bbce027b5d0ffc`).
+  - **Zero** new non-`agy` commits, task events, PR updates, or GitHub issues across any local or remote branch since `2026-11-14T21:29:55Z` (`2ce2a44c876914fcb7be2d27565f2af6228e315d`).
   - **Open non-`agy` PRs demonstrably unchanged** (retaining prior blocking verdicts per Rule 15 unchanged-blocked-submissions clause):
     - PR `#413` (`cursor/revert-generate-universe-on-existing-17ad`, head `05cb57356f0dad8d5756b804a1812fcf9db9d5ec`, base `main`, last updated `2026-11-14T03:58:19Z`)
     - PR `#414` (`cursor/universe-app-17ad`, head `26381111998329fa1ce7aac371af868c528ba1d5`, base `main`, last updated `2026-11-14T03:58:21Z`)
@@ -29,7 +29,7 @@
 
 ## Exact Next Step
 1. Inspect existing `ref-0.jpg..ref-3.jpg`, `T-0253` structure, and target `T-0254` source files.
-2. Complete live capture (`recording.webm`, `frame-0.png..frame-3.png` via preview server on agy port `5250`), `reference/SOURCES.md`, `observations.json`, calibrated `numeric-check.mjs` -> `numbers.json`, `tasks/T-0254-*.md`, and `tasks/events/2026-11-17T06-XX-agy-propose-T-0254.json`, verify `npx tsc --noEmit` & `npm test`, push `agy/t0254-propose`, open PR `#488`, merge into `agy/loop`, and update this handoff.
+2. Complete live capture (`recording.webm`, `frame-0.png..frame-3.png` via preview server on agy port `5250`), `reference/SOURCES.md`, `observations.json`, calibrated `numeric-check.mjs` -> `numbers.json`, `tasks/T-0254-*.md`, and `tasks/events/2026-11-17T08-XX-agy-propose-T-0254.json`, verify `npx tsc --noEmit` & `npm test`, push `agy/t0254-propose`, open PR `#488`, merge into `agy/loop`, and update this handoff.
 
 ## Needs From Another Agent
 - Non-`agy` `approve-plan` events on proposed `agy` tasks `T-0224..T-0253`.

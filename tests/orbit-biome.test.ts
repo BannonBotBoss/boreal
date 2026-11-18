@@ -15,9 +15,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { buildOrbitCover, coverPixel, orbitVegetation } from '../src/world/globe/orbitBiome';
+import { buildOrbitCover, coverPixel } from '../src/render/globe/orbitCover';
+import { loadOrbitVegetation, orbitVegetation } from '../src/render/globe/orbitVeg';
 import { coarseMetresLinear } from '../src/world/globe/coarseRelief';
 
+await loadOrbitVegetation(readFileSync('public/wasm/boreal_sim.wasm'));
 const cover = buildOrbitCover(512, 256);
 
 test('Hadley moisture: the Sahara is dry and the Congo is not', () => {
@@ -68,8 +70,10 @@ test('the Antarctic coast is a soft edge, not a run of identical blocks', () => 
 
 test('the orbit shader draws this map instead of the vertex green', () => {
   const frag = readFileSync('src/world/globe/orbitAlbedo.ts', 'utf8');
+  const draw = readFileSync('src/render/globe/orbitDraw.ts', 'utf8');
   const view = readFileSync('src/world/globe/globeView.ts', 'utf8');
-  assert.ok(frag.includes('buildOrbitCover'), 'the bake is the cover map');
-  assert.ok(frag.includes('texture2D(uOrbitTex'), 'the fragment samples it');
-  assert.ok(view.includes('uploadOrbitAlbedo'), 'the globe uploads it');
+  assert.ok(draw.includes('buildOrbitCover'), 'the bake is the cover map');
+  assert.ok(draw.includes('texture2D(uOrbitTex'), 'the fragment samples it');
+  assert.ok(frag.includes('uploadOrbitAlbedo'), 'the cloud load uploads the cover');
+  assert.ok(view.includes('loadBlueMarbleClouds'), 'the globe starts that load');
 });

@@ -28,7 +28,7 @@ import { hash, random } from '../../proc/rng';
 import { children, edgeMetres, faceDir, roots, centre as nodeCentre, type QNode } from './cube';
 import { renderOffset } from './origin';
 import { CLOUDS, createAtmosphere } from './atmosphere';
-import { loadBlueMarbleClouds, ORBIT_FADE, setOrbitView, uploadOrbitAlbedo } from './orbitAlbedo';
+import { loadBlueMarbleClouds, ORBIT_FADE, setOrbitView } from './orbitAlbedo';
 import { across } from './cube';
 import { CLOCK, loadClock, setClockRate, worldSec } from '../../core/worldClock';
 import { timescaleFrom } from '../../core/timescale';
@@ -160,7 +160,6 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   // Atmosphere (atmosphere.ts): sky shell + aerial perspective on the tiles; ?atmos=0 for the plain look
   const atmos = q.get('atmos') === '0' ? null : createAtmosphere(R, GOVERNOR.tier, planet.seed);
   loadBlueMarbleClouds();
-  uploadOrbitAlbedo();
   for (const [k, f] of [['envrh', 'rh'], ['envu', 'windE']] as const) if (q.has(k)) ENV_FORCE[f] = Number(q.get(k)); // T-0089 dev hook: ?envrh=0.95&envu=40 force the record (frames)
   // planet budget layers (planetLayers.ts, issue #43): snow, sea ice, wet soil from rust/boreal-sim; count and grid follow the tier; ?layers=0 off
   const layerDay = dayAt(q.has('shot') ? shotSec : worldSec()); // ?day= and ?date= are on the clock (initDay), not a wall-calendar day

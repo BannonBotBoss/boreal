@@ -1,65 +1,11 @@
 /**
- * Orbit land colour from the same cover classes the feet use.
- *
- * The mesh vertex colour is one boreal palette (planet.ts surfaceColour), so
- * from 23,572 km the Sahara and the Congo were the same green, and a 310 km
- * quad smeared that green into a grey wedge. This map is one texel per ~40 km.
- * The class is coverKind: ice and tundra from the lapse-rate lines, and
- * desert / prairie / forest from a moisture weight.
- *
- * Moisture is the Hadley pattern already in the orbit cloud deck (ITCZ wet,
- * subtropical descent dry, mid-latitude storm tracks wet; Holton & Hakim,
- * An Introduction to Dynamic Meteorology, the same belts ORBIT_ZONAL cites
- * via King et al. 2013). Inland of a dry belt the weight falls. Coasts keep
- * it. Thresholds are cover-density.json (0.28 desert, 0.62 prairie).
- *
- * Heights are the bilinear zoom-0 DEM. Open ocean is the flood of cells
- * below about 1 km through cells below sea level, so the Caspian (surface
- * near −28 m, not joined to that flood) stays a lake instead of a grey ocean
- * smear. The coast alpha is a short box blur, so Antarctica is not a stair
- * of the nearest DEM cell.
+ * Orbit land colour. The class is coverKind, which matches rust cover_class_at.
+ * The moisture weight is rust orbit_vegetation. This file only paints the draw.
  */
-import { coverKind, type CoverKind } from './coverKind';
-import { coarseMetresLinear } from './coarseRelief';
-import { GLOBE_COLOURS } from './planet';
-
-/** Vegetation weight at |latitude|, before the inland drying. Piecewise linear. */
-const ZONAL_VEG: [number, number][] = [
-  [0, 0.94], [8, 0.9], [14, 0.72], [22, 0.34], [28, 0.2],
-  [36, 0.48], [46, 0.8], [56, 0.74], [66, 0.4], [76, 0.16], [90, 0.04],
-];
-
-function zonalVeg(absLat: number) {
-  const a = Math.max(0, Math.min(90, absLat));
-  const z = ZONAL_VEG;
-  if (a <= z[0][0]) return z[0][1];
-  for (let i = 1; i < z.length; i++) {
-    if (a <= z[i][0]) {
-      const t = (a - z[i - 1][0]) / (z[i][0] - z[i - 1][0]);
-      return z[i - 1][1] + (z[i][1] - z[i - 1][1]) * t;
-    }
-  }
-  return z[z.length - 1][1];
-}
-
-function smooth(edge0: number, edge1: number, x: number) {
-  const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
-  return t * t * (3 - 2 * t);
-}
-
-/**
- * Moisture weight 0..1. `coastKm` is the distance to the open-ocean flood.
- * The subtropical belt dries inland on a 700 km scale (a monsoon reach).
- * Mid-latitudes dry more slowly, so a coast stays forest and the Gobi does not.
- */
-export function orbitVegetation(absLat: number, coastKm: number) {
-  const z = zonalVeg(absLat);
-  const belt = smooth(14, 22, absLat) * (1 - smooth(32, 44, absLat));
-  const inland = 1 - Math.exp(-Math.max(0, coastKm) / 700);
-  const dry = inland * (0.28 + 0.72 * belt);
-  const coastBoost = (1 - inland) * belt * 0.28;
-  return Math.max(0, Math.min(1, z * (1 - 0.7 * dry) + coastBoost));
-}
+import { coverKind, type CoverKind } from '../../world/globe/coverKind';
+import { coarseMetresLinear } from '../../world/globe/coarseRelief';
+import { GLOBE_COLOURS } from '../../world/globe/planet';
+import { orbitVegetation } from './orbitVeg';
 
 /** Linear albedo, the same exposure scale as GLOBE_COLOURS (a few percent for canopy). */
 export const BIOME_ALBEDO: Record<CoverKind, readonly [number, number, number]> = {
@@ -210,8 +156,7 @@ export function buildOrbitCover(width = 1024, height = 512): OrbitCover {
       } else if (elev < 0) {
         rgb = LAKE;
       } else {
-        const veg = orbitVegetation(Math.abs(lat), coast[p]);
-        const kind = coverKind(lat, elev, veg, false, coast[p] * 1000);
+        const kind = coverKind(lat, elev, orbitVegetation(Math.abs(lat), coast[p]), false, coast[p] * 1000);
         rgb = BIOME_ALBEDO[kind];
       }
       rgba[o] = byte(rgb[0]); rgba[o + 1] = byte(rgb[1]); rgba[o + 2] = byte(rgb[2]); rgba[o + 3] = a;

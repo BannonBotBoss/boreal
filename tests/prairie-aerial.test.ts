@@ -59,6 +59,8 @@ test('open land replaces the conifer crop and the crown floor', () => {
   assert.ok(tile.includes('photo = mix(photo, openC, clamp(uOpenLand, 0.0, 1.0) * landMask)'));
   assert.ok(tile.includes('uCrownFloor > 0.5 && landMask > 0.5 && uOpenLand < 0.5'));
   assert.ok(page.includes("biome === 'prairie' || biome === 'desert'"), 'the weight follows coverSampleAt');
+  const view = readFileSync('src/world/globe/globeView.ts', 'utf8');
+  assert.ok(view.includes('uOpenLand'), 'the standalone globe uses the same open-land weight');
   assert.ok(crowns.includes("cover.biome === 'prairie' || cover.biome === 'desert'"), 'prairie does not draw conifer cards');
 });
 

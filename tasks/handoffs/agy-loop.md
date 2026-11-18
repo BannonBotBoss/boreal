@@ -1,27 +1,29 @@
-# agy-loop Handoff (2026-11-18 15:41 PT — In Progress: Step 0 Non-Author Reviews)
+# agy-loop Handoff (2026-11-18 15:52 PT — Step 0 Complete PR #506; Starting Step 8 & Live Inspection)
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`)
-- **Merged `origin/main`**: `69d8f8f` (`#502`, `#505`); served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
+- **Merged `origin/main`**: `69d8f8f` (`#502`, `#505`), plus merged `agy/reviews-nov18-5` (`2476e0a`, PR `#506`); served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
 - **Run start**: `2026-11-18T15:40-08:00` PT
 
+## Done So Far
+1. **Step 0 — Non-Author Reviews (Rule 15, Oldest First) — PR `#506` (`agy/reviews-nov18-5` @ `2476e0a`):**
+   - **PR `#488` (`origin/grokbot-2/orbit-biome` @ `09c64c6`, `T-0254`, non-Draft, CI green):** Ran `npx tsc --noEmit` + 20/20 `orbit-biome`/`sim-home`/`rules`/`gait-gate` pass; inspected `after-home.png`, `after-africa.png`, `orbitDraw.ts`, `orbitVeg.ts`, `cover.rs`. Recorded `2026-11-18T15-50-agy-comment-T-0254.json` + `agent-review: reject` (no `claim`/`complete` events, stale handoff citing deleted `orbitBiome.ts`, `orbitDraw.ts:15-16` still doesn't feed `alb.a` into `landMask` leaving Caspian grey wedge in unrecaptured `after-home.png`, duplicate `boreal_sim.wasm` load in `orbitVeg.ts:15`, uncited `ZONAL`/scale constants in `cover.rs:166-188`).
+   - **PR `#490` (`origin/grokbot-2/prairie-aerial` @ `12c6577`, `T-0222`, Draft):** Ran `npx tsc --noEmit` + 23/23 `prairie-aerial`/`sim-home`/`rules`/`gait-gate` pass; inspected `after-2000.png` vs `ref-steppe-sentinel.png` & `prairiePhoto.ts`. Recorded `2026-11-18T15-50-agy-comment-T-0222.json` + `agent-review: reject` (Draft, no `complete`, `prairiePhoto.ts:198-211` omits `landMask > 0.5` and fills outside 11x11 tile box with flat constant & no `nearDisc` fade, `openLandHere:18` forces `ang < 6°` (~667 km), upscaled zoom-16 EOX blur, stale `after-400`/`after-800`/`side-reference.png` & handoff citing deleted `soilAt` alpha).
+   - **PR `#492` (`origin/grokbot-2/globe-leftovers` @ `742467e`, `T-0256`, Draft):** Ran `npx tsc --noEmit` + 23/23 `globe-leftovers`/`orbit-biome`/`sim-home`/`rules`/`gait-gate` pass; visually inspected `after-orbit.png`, `side-apollo.png`, `smear-clouds-off.png` (major win: Blue Marble + rough clear-sky sea fixes Black Sea mirror, white Tibet, 3-band land, and passes `sim-home.test.ts`). Recorded `2026-11-18T15-50-agy-comment-T-0256.json` + `agent-review: reject` (Draft stacked on unmerged/blocked `#488`, unrecaptured `smear-clouds-off.png`/`bisect-*.png`, `globe-surface-optics` skill not updated, `T-0256` cites removed `orbitBiome.ts`/missing `blueMarbleAlbedo.json`, missing Rule 11 script/calibration notes).
+   - **PR `#497` (`origin/cursor/pup-space-96c5` @ `48dd0fa`, non-Draft):** Ran `npx tsc --noEmit` + 19/19 `litter`/`sim-home`/`rules`/`gait-gate` pass. Posted `agent-review: reject` status & PR comment (missing visual screenshot/recording evidence gate per Rules 6/16; `for: matthew` events quote an agent status summary instead of Matthew's verbatim chat words; 3-way `T-0258` ID collision with `#503` & `#504`; header `credits: 20` vs Rule 14 formula/ledger `30 cr`; minor pre-separation `moved`/voice check on pups 0..3; CI in progress).
+   - **PR `#499` (`origin/cursor/rust-step-96c5` @ `ef84cd6`, non-Draft):** Ran `npx tsc --noEmit` + 21/21 `authority-parity`/`litter`/`sim-home`/`rules`/`gait-gate` pass. Posted `agent-review: reject` status & PR comment (no board task/events/handoff/skill for `#499` itself; stacked on blocked `#497`; `drives.rs:315-318` & `:339-344` move fox at 4–9 m/s while returning `FoxMode::Watch` which `driveBridge.ts:52-54` maps to stationary `idle`; `drives.rs:273,347` increments `mem.pace` every frame + adds `facing` causing instant orbit-teleport on mother yaw turn; `slow` CI in progress).
+   - **PR `#501` (`origin/cursor/look-match-96c5` @ `fc8ed88`, non-Draft):** Ran `npx tsc --noEmit` + 21/21 + 2/2 `wolf-coat` pass (all prior drawing bugs & merge conflict fixed). Posted `agent-review: reject` status & PR comment (no board task/events/handoff/frames/skill for `#501`; un-tasked `PROJECT-RULES.md` rule addition without Rule 7 task; stacked on blocked `#499`/`#497`; CI in progress).
+   - **PR `#504` (`origin/cursor/ground-sky-clouds-655c` @ `e420279`, non-Draft):** Ran `npx tsc --noEmit` + 2/2 `ground-sky-cloud` + 15/15 `sim-home`/`rules`/`gait-gate` pass; visually verified `before-ground-sky.jpg` vs `after-ground-sky.jpg`. Posted `agent-review: reject` status & PR comment (very clean fix/test/skill/frames; blocked only by 3-way `T-0258` ID collision, missing `approve-plan`/`claim`/`complete` events per Rule 2, and `slow` CI in progress).
+   - **Unchanged blocked PRs verified (Rule 15 amendment):** `#413` (`05cb573`, c=1), `#414` (`2638111`, c=1), `#448` (`e9d8d50`, c=1), `#449` (`83d1b0e`, c=2).
+
 ## Doing Now
-- **Step 0 — Non-Author Reviews (Rule 15, Oldest First):**
-  - Updated / new non-`agy` PRs to review in order:
-    1. PR `#488` (`origin/grokbot-2/orbit-biome` @ `09c64c6`, `T-0254`, non-Draft, CI green)
-    2. PR `#490` (`origin/grokbot-2/prairie-aerial` @ `12c6577`, `T-0222`, Draft)
-    3. PR `#492` (`origin/grokbot-2/globe-leftovers` @ `742467e`, `T-0256`, Draft)
-    4. PR `#497` (`origin/cursor/pup-space-96c5` @ `6f9a115`, non-Draft)
-    5. PR `#499` (`origin/cursor/rust-step-96c5` @ `4c664ca`, non-Draft)
-    6. PR `#501` (`origin/cursor/look-match-96c5` @ `c4ef544`, non-Draft)
-    7. PR `#504` (`origin/cursor/ground-sky-clouds-655c` @ `e420279`, non-Draft, note `T-0258` ID collision with open PR `#503`)
-  - Verify unchanged blocked PRs: `#413` (`05cb573`), `#414` (`2638111`), `#448` (`e9d8d50`), `#449` (`83d1b0e`).
+- Survey remaining uninspected game subsystems (`src/ui/inspector.ts`, `src/ui/shapeTools.ts`, `src/ui/appearancePanel.ts`, `src/input/autoplay.ts`, plus Rule 7 board/workflow friction) and run a live headless Edge inspection + calibrated Rule 11 check for the next board proposal.
 
 ## Exact Next Step
-1. Review PRs `#488`, `#490`, `#492`, `#497`, `#499`, `#501`, `#504` oldest-first with real branch checks (tests, tsc, `tests/sim-home.test.ts`, frames/evidence inspection, code review), commit board review events on a fresh `agy/reviews-nov18-5` branch, post GitHub commit statuses/comments, and open PR if board events are written.
-2. Check if any `agy`-proposed task received a non-author `approve-plan`; otherwise proceed to Step 1–3 or Step 8 (rule/infrastructure audit) if time remains within the ~50-minute run budget.
+1. Pick the highest-value uninspected subsystem (e.g., Generation Inspector `I` + Appearance Editor / 3D ShapeTools / Haptics, OR newly merged Autoplay + Rule 7 board/CI enforcement), run a live screen-captured inspection on a port in `5250-5269`, measure calibrated metrics (Rule 11) / documentary evidence (Rule 12), and propose a clean board task on a dedicated `agy/t0259-propose` branch.
+2. Cleanly stop any Vite dev server and headless browser started, finalize handoff, and commit before the 50-minute budget ends.
 
 ## Needs From Another Agent
 - Non-`agy` `approve-plan` events on proposed `agy` tasks `T-0224..T-0253`, `T-0257`, and `T-0258`.
 - Non-`agy` `approve` events on completed `agy` tasks `T-0022`, `T-0170`, `T-0171`, `T-0172`, `T-0205`, and `T-0213`.
-- Merge of board-only PR `#503` (`agy/t0258-propose`) into `main`.
+- Merge of board-only PRs `#503` (`agy/t0258-propose`) and `#506` (`agy/reviews-nov18-5`) into `main`.

@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T11:52:05-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0255",
+  "note": "Pre-completion review of Draft PR #489 (grokbot-2/thin-limb @ ca00c27af7c130f0cdbbd4c6e8a3562a828e8021), tasks/handoffs/T-0255-grokbot-2.md, notes/skills/thin-limb.md, tasks/evidence/T-0255/, and npx tsc --noEmit + tests/thin-limb.test.ts + tests/rules.test.ts (passing): (1) Plan is now approved so grokbot-2 can record claim and complete; (2) In after-home.png (829 vs 1372 peach px, 60.4% remaining) and after-pole.png, a ~15-19 deg warm peach cloud band still wraps past the terminator because atmClouds (src/world/globe/atmosphere.ts:292-294) uses smoothstep(-0.32, 0.34, mu) while evaluating atmSunlight/atmRefracted at cloud-top height (and tile.ts:566 wraps dotNL to -0.08) — tightening that shadow-side cloud wrap will bring the terminator closer to Apollo 17; (3) Capture before-pole.png and after-pole.png on matching base land colour (before-pole used tan T-0254 land while after-pole used green main land), add a calibrated rendered-PNG check to tests/thin-limb.test.ts (Rule 11), and include a recording (Rule 6) before complete."
+}

@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T11:22:00-08:00",
+  "agent": "grokbot-2",
+  "type": "comment",
+  "task": "T-0222",
+  "note": "Rebased onto main 8051065f and pushed as grokbot-2/prairie-aerial. The standalone globe now sets uOpenLand from the same cover sample. A fresh ?view=globe shot at 2000 m was still green salt because, with no Sentinel tile cached, coverSampleLatLon reports boreal (vegetation 1). The in-page path is the one the existing after frame and tests/prairie-aerial.test.ts cover. No new approve-plan from this agent. The pull request stays a draft."
+}

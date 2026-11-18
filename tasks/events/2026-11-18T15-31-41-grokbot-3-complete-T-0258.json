@@ -6,5 +6,5 @@
   "skill": "pup-personal-space",
   "handoff": "tasks/handoffs/T-0258-grokbot-3.md",
   "note": "Shared wasm instance, calibration tags, wasm separation test.",
-  "at": "2026-11-18T15:31:41-8:00"
+  "at": "2026-11-18T15:31:41-08:00"
 }

@@ -1,0 +1,146 @@
+{
+  "task": "T-0257",
+  "calibrationValid": true,
+  "knownMatches": [
+    {
+      "id": "match_unit_vector_toLatLon_roundtrip",
+      "measured": 49.77,
+      "reference": 49.77,
+      "score": 1,
+      "note": "Normalized unit direction round-trips 49.77 deg exactly"
+    },
+    {
+      "id": "match_rtx_gpu_string_initial_tier",
+      "measured": 0,
+      "reference": 0,
+      "score": 1,
+      "note": "Discrete RTX GPU maps to tier 0 (Ultra)"
+    },
+    {
+      "id": "match_probe_median_even_array",
+      "measured": 25,
+      "reference": 25,
+      "score": 1,
+      "note": "median([10,20,30,40]) === 25.0"
+    },
+    {
+      "id": "match_warm_startup_route_and_chunk_index",
+      "measured": 1,
+      "reference": 1,
+      "score": 1,
+      "note": "Matching warm stamp routes warm; (64.6,-16.5) maps to chunk (1,-1)"
+    }
+  ],
+  "knownMismatches": [
+    {
+      "id": "mismatch_unnormalized_orbit_lat_polar_clamp",
+      "measured": 90,
+      "reference": 49.77,
+      "score": 0.553,
+      "note": "Unnormalized cam vector clamps 49.77N to +90.00N"
+    },
+    {
+      "id": "mismatch_vsync_gpu_bound_fps_illusion",
+      "measured": 333.3,
+      "reference": 63.3,
+      "score": 0.1899,
+      "note": "workMs=3ms reported as 333 fps when gpuMs=15.8ms"
+    },
+    {
+      "id": "mismatch_grazed_cap_eviction",
+      "measured": 0,
+      "reference": 1,
+      "score": 0,
+      "note": "Freshly grazed patch evicted first (strength*0=0)"
+    },
+    {
+      "id": "mismatch_estSlice_spike_deferral",
+      "measured": 9,
+      "reference": 0,
+      "score": 0,
+      "note": "9/9 frames deferred after single 40ms spike"
+    }
+  ],
+  "passingCount": 0,
+  "totalChecks": 11,
+  "meanScore": 0.0511,
+  "checks": [
+    {
+      "id": "c01_globe_resume_unnormalized_lat",
+      "measured": 90,
+      "target": 49.77,
+      "score": 0.553,
+      "detail": "toLatLon([cam.x,cam.y,cam.z]) clamps 22.86e6 m to +90.00 deg North Pole (err 40.23 deg)"
+    },
+    {
+      "id": "c02_seed_parseContext_and_clearWorldSaves",
+      "measured": 5,
+      "target": 0,
+      "score": 0,
+      "detail": "parseContext accepts cross-seed WORLD_SEED=1400; clearWorldSaves leaks universeSeed=424242, clock, day={\"day\":15,\"hour\":14}, player=deer"
+    },
+    {
+      "id": "c03_releasePrey_and_pagehide_save_gaps",
+      "measured": 0,
+      "target": 2,
+      "score": 0,
+      "detail": "releasePrey commits=false; pagehide skips saveAll when !hasSeenBigBang (true)"
+    },
+    {
+      "id": "c04_graphics_menu_split_brain_and_capTier",
+      "measured": 0,
+      "target": 4,
+      "score": 0,
+      "detail": "Top Quality=0 (Ultra) leaves lower auto=true, tier=Medium, persisted=Medium, applied()=Medium"
+    },
+    {
+      "id": "c05_vsync_gpu_bound_probeCap_false_raise",
+      "measured": 333.3,
+      "target": 63.3,
+      "score": 0,
+      "detail": "gpuMs=15.8ms, workMs=3.0ms, frameMs=16.67ms -> reported 333.3 fps, stepped=-1, probeCap raised to High"
+    },
+    {
+      "id": "c06_startup_probe_budget_jobFirst_jsonStringify",
+      "measured": 0,
+      "target": 4,
+      "score": 0,
+      "detail": "measureCapGuard=false, probeTargetFps=false, clearJobFirst=false, perFrameJsonStringify=true"
+    },
+    {
+      "id": "c07_deltas_cap_evicts_empty_grazed_first",
+      "measured": 0,
+      "target": 1,
+      "score": 0,
+      "detail": "Freshly grazed patch (m=0, strength=1) has strength*m=0 -> evicted first at cap=1500 (survived=false)"
+    },
+    {
+      "id": "c08_deltas_prune_throws_on_unknown_kind",
+      "measured": 0,
+      "target": 1,
+      "score": 0,
+      "detail": "loadDeltas unknown kind -> prune() throws TypeError: Cannot read properties of undefined (reading 'until')"
+    },
+    {
+      "id": "c09_deltas_nonmonotonic_wet_and_interval_canid",
+      "measured": 0.0183,
+      "target": 1,
+      "score": 0,
+      "detail": "2d track drops 54.6x on 1-min rain & rebounds on dry; hardcodedCanid=true, intervalFootprint=true"
+    },
+    {
+      "id": "c10_interest_estSlice_spike_deferral",
+      "measured": 9,
+      "target": 0,
+      "score": 0,
+      "detail": "1x 40ms spike deferred 9/9 subsequent 0.05ms frames (only 10/30 steps ran, estSlice=15.50ms)"
+    },
+    {
+      "id": "c11_snapshot_rewind_wipe_and_missing_sources",
+      "measured": 1,
+      "target": 26,
+      "score": 0.0096,
+      "detail": "Rewind 50->25 + 1 tick wipes ring to 1; needs=false, modes=false, clock=false"
+    }
+  ]
+}

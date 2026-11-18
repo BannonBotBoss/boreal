@@ -1,0 +1,62 @@
+{
+  "capturedAt": "2026-11-18T21:55:50.837Z",
+  "port": 5268,
+  "pageErrors": [],
+  "consoleErrors": [],
+  "stage0_globeResume": {
+    "hasSeenBigBang": true,
+    "resume": {
+      "mode": "game",
+      "x": 64.655266107714,
+      "z": -16.50156844996294,
+      "yaw": 5.942151607679358
+    },
+    "worldSeedInSave": 1400,
+    "recordingBytes": 110
+  },
+  "stage1_graphicsSplitBrain": {
+    "infoText": "Probe: safe maximum Ultra. Now: Auto, Minimum.",
+    "topSelectValueAfterPick": "0",
+    "lowerAutoCheckedAfterTopPick": true,
+    "lowerTierValueAfterTopPick": "Medium",
+    "persistedAutoBefore": true,
+    "persistedAutoAfter": true,
+    "persistedTierBefore": "Medium",
+    "persistedTierAfter": "Medium"
+  },
+  "stage2_seedAndClearLeaks": {
+    "requestedLegacySeed": 7777,
+    "storedLegacySeedKey": "7777",
+    "survivingUniverseSeedKey": "424242",
+    "survivingClockKey": "{\"worldSec\":106.54430000003443,\"wallMs\":1795039098779,\"rate\":1,\"dial\":0.01,\"exp\":1,\"expVel\":0,\"parked\":null,\"curve\":2}",
+    "survivingDayKey": "{\"day\":15,\"hour\":14}",
+    "survivingPlayerKey": "deer"
+  },
+  "stage3_photoRewind": {
+    "beforePhoto": {
+      "status": "08:30 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+      "shaderTime": 153.95730000002953,
+      "player": {
+        "x": 29.999999434635356,
+        "z": 20.00000154882302,
+        "yaw": -0.35,
+        "energy": 74.85456403861022,
+        "water": 99.81483498673039,
+        "mode": "walk",
+        "handle": "4294967299",
+        "embodied": "4294967299",
+        "species": "deer"
+      }
+    },
+    "inPhoto": {
+      "photoActive": true,
+      "scrubFound": false,
+      "scrubMin": null,
+      "scrubMax": null,
+      "scrubBefore": null,
+      "afterScrubStatus": "PHOTO · 08:30 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+      "beforeStatus": "PHOTO · 08:30 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+      "shaderTimeAfterScrub": 154.92500000002795
+    }
+  }
+}

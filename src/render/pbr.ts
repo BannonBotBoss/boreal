@@ -36,8 +36,14 @@ export function steppeCure(day: number) {
 
 /** 1 = prairie thatch, 0 = boreal litter. `uCure` is `steppeCure(day)`. A cured dry stand stays straw out past a 40 m eye. */
 export const FLOOR = { uFloor: { value: 0 }, uCure: { value: 0 } };
-export function setGroundFloor(biome: string, day = 227) {
-  FLOOR.uFloor.value = biome === 'prairie' || biome === 'desert' ? 1 : 0;
+/** Ease the floor. `dt` is sim seconds. A call with no `dt` finishes, so a test or a first paint is the right biome. */
+export function setGroundFloor(biome: string, day = 227, dt?: number) {
+  const target = biome === 'prairie' || biome === 'desert' ? 1 : 0;
+  if (dt == null) FLOOR.uFloor.value = target;
+  else {
+    const step = 0.08 * Math.max(0, dt);
+    FLOOR.uFloor.value += Math.max(-step, Math.min(step, target - FLOOR.uFloor.value));
+  }
   FLOOR.uCure.value = steppeCure(day);
 }
 let terrain: THREE.MeshStandardMaterial | undefined;
@@ -78,7 +84,9 @@ export function terrainMaterial() {
         vec3 litter = vec3(0.14, 0.08, 0.04);
         vec3 mossC = vec3(0.045, 0.09, 0.028);
         vec3 boreal = mix(litter, mossC, smoothstep(0.40, 0.75, n1));
-        vec3 floorC = mix(boreal, prairie, clamp(uFloor, 0.0, 1.0));
+        // A noisy edge, not a hard line. n1 is the same fbm the litter already uses.
+        float blend = smoothstep(0.22, 0.78, clamp(uFloor + (n1 - 0.5) * 0.85, 0.0, 1.0));
+        vec3 floorC = mix(boreal, prairie, blend);
         float cover = floorNear * (1.0 - snow) * mix(0.92, 1.0, uCure * clamp(uFloor, 0.0, 1.0));
         diffuseColor.rgb = mix(diffuseColor.rgb, floorC, cover);`)
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>

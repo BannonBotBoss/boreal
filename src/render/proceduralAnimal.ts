@@ -162,7 +162,7 @@ function redFox(): ProceduralAnimal {
     const p = quadrupedPose(motion, phase, 0, L, speed);
     hips.forEach((hip, i) => { hip.rotation.x = p.legs[i]; });
     knees.forEach((knee, i) => { knee.rotation.x = p.knees[i]; });
-    body.position.y = bodyBase + p.bob;
+    body.position.y = bodyBase + (motion === 'run' ? p.bob : 0);
   };
   root.scale.setScalar(1.7);
   poseAt('idle', 0, 0, 0);

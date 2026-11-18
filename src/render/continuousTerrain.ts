@@ -18,6 +18,7 @@ import { steppeCure } from './pbr';
 import { curvatureDrop, horizonMetres } from '../world/globe/horizonSkirt';
 import { BAND_COLOR, groundColor, isStaged } from './terrainCore';
 import { terrainMaterial } from './pbr';
+import { chunkAction } from './groundHold';
 import { addAerialPerspective } from './aerial';
 import type { SoilKind } from '../core/stages/soils';
 
@@ -263,20 +264,27 @@ export function createContinuousTerrain(): ContinuousTerrain {
     const snap = Math.max(24, minLeaf(eye));
     const biome = coverSampleAt(camX, camZ).biome;
     const next = `${Math.round(camX / snap)}:${Math.round(camZ / snap)}:${Math.round(Math.log2(eye) * 4)}:${biome}`;
-    if (next === key && geo.getAttribute('position')) return false;
+    if (next === key && geo.getAttribute('position')?.count) return false;
+    let data: ContinuousMesh;
+    try { data = buildContinuousMesh(camX, camZ, eye, heightAt); }
+    catch { return false; }
+    // The mesh that is on screen stays until this buffer is filled. An empty
+    // geometry is never assigned, so a biome rebuild cannot open a hole.
+    if (chunkAction(true, false, data.triangles > 0) !== 'swap') return false;
+    const nextGeo = new THREE.BufferGeometry();
+    nextGeo.setAttribute('position', new THREE.BufferAttribute(data.position, 3));
+    nextGeo.setAttribute('normal', new THREE.BufferAttribute(data.normal, 3));
+    nextGeo.setAttribute('color', new THREE.BufferAttribute(data.color, 3));
+    nextGeo.setAttribute('uv', new THREE.BufferAttribute(data.uv, 2));
+    nextGeo.setAttribute('aWet', new THREE.BufferAttribute(data.wet, 1));
+    nextGeo.setAttribute('aSnow', new THREE.BufferAttribute(data.snow, 1));
+    nextGeo.setIndex(new THREE.BufferAttribute(data.index, 1));
+    nextGeo.computeBoundingSphere();
+    const previous = geo;
+    geo = nextGeo;
+    mesh.geometry = nextGeo;
     key = next;
-    const data = buildContinuousMesh(camX, camZ, eye, heightAt);
-    geo.dispose();
-    geo = new THREE.BufferGeometry();
-    mesh.geometry = geo;
-    geo.setAttribute('position', new THREE.BufferAttribute(data.position, 3));
-    geo.setAttribute('normal', new THREE.BufferAttribute(data.normal, 3));
-    geo.setAttribute('color', new THREE.BufferAttribute(data.color, 3));
-    geo.setAttribute('uv', new THREE.BufferAttribute(data.uv, 2));
-    geo.setAttribute('aWet', new THREE.BufferAttribute(data.wet, 1));
-    geo.setAttribute('aSnow', new THREE.BufferAttribute(data.snow, 1));
-    geo.setIndex(new THREE.BufferAttribute(data.index, 1));
-    geo.computeBoundingSphere();
+    if (previous !== nextGeo) previous.dispose();
     mesh.userData.triangles = pub.triangles = data.triangles;
     mesh.userData.leaves = pub.leaves = data.leaves;
     mesh.userData.outerM = pub.outerM = data.outerM;

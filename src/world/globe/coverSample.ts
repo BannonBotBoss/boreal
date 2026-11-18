@@ -62,22 +62,7 @@ export function coverSampleLatLon(lat: number, lon: number, dir?: Vec3, planet: 
     scaleMul,
   };
 }
-
-/**
- * Overhead of the staged home with no Sentinel tile yet. The seeded vegetation weight
- * is a closed stand, so the globe painted boreal salt. The home is the steppe: within
- * 6° of it, a missing photograph is prairie, not that stand.
- */
-export function openLandHere(lat: number, lon: number, dir: Vec3, planet: Planet) {
-  const cover = coverSampleLatLon(lat, lon, dir, planet);
-  if (!cover.water && (cover.biome === 'prairie' || cover.biome === 'desert')) return true;
-  // The staged home is the steppe. Its nadir pixel can be a lake, and a coarse
-  // Sentinel sample can still score as a closed stand. Either one painted boreal salt.
-  const h = planet.home;
-  const ang = Math.acos(Math.max(-1, Math.min(1, dir[0] * h[0] + dir[1] * h[1] + dir[2] * h[2])));
-  return ang < 6 * Math.PI / 180;
-}
-
+export { openLandHere } from '../../render/globe/prairiePhoto';
 /** The sample under a game-local point, the same frame landingContext uses. */
 export function coverSampleAt(x: number, z: number): CoverSample {
   const planet = planetFor(WORLD_SEED, undefined, '', true);

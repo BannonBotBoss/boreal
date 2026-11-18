@@ -24,7 +24,7 @@
  */
 import { GLOBE_LAYERS, LAYERS_FRAG, LAYERS_PARS } from './planetLayers';
 import { ORBIT_DRAW, ORBIT_FRAG, ORBIT_PARS } from './orbitAlbedo';
-import * as THREE from 'three';
+import * as THREE from 'three'; import { prairieNearGlsl, prairieFarGlsl } from '../../render/globe/prairiePhoto';
 import { withLogDepth } from './logDepth';
 import { bounds, edgeMetres, faceDir, type QNode } from './cube';
 import { GLOBE_COLOURS, coverWeights, surfaceColour, type Planet, type Vec3 } from './planet';
@@ -452,50 +452,10 @@ vAerial = vDetW - uMorphCam; vCover = mix(aCover, aCoarseK, gMorph);
       // Reference open water is near-black and slightly green (about sRGB 12, 20, 16), not navy.
       vec3 waterCol = waterC * vec3(0.16, 0.22, 0.15);
       vec3 photo = mix(waterCol, landEx, landMask) * uExGain;
-      // Prairie and desert are not this conifer crop. meta.json: the crop is 1.6 m GSD
-      // NAIP of northern Minnesota. At 400–2000 m a pixel is metres wide, so that crop
-      // aliases into salt (the 2026-11-12 path frames). uOpenLand is coverSampleAt,
-      // the same class the HUD reports. Thatch and straw match the standing ground
-      // (render/pbr.ts). Oke 1987, Boundary Layer Climates, Table 1.1: short grass
-      // albedo 0.16–0.26, coniferous forest 0.05–0.15. Day 227 is cured Stipa
-      // (Flora of China 22; pbr.ts steppeCure). The 90 m and 420 m waves are
-      // tussocks and stands, not the 1.6 m crown.
-      float clump = detN(vDetW / 420.0, uDetail.w + 4.0);
-      float fleck = detN(vDetW / 90.0, uDetail.w + 6.0);
-      vec3 soilC = vec3(0.22, 0.13, 0.06);
-      vec3 thatchC = vec3(0.42, 0.30, 0.11);
-      vec3 strawC = vec3(0.50, 0.34, 0.11);
-      vec3 openC = mix(soilC, mix(thatchC, strawC, fleck), 0.45 + 0.55 * clump);
-      vec3 nrmO = normalize(vNormal);
-      float hillO = clamp(dot(nrmO, normalize(vec3(-0.45, 0.72, 0.35))), 0.0, 1.0);
-      float steepO = smoothstep(0.04, 0.55, length(vec2(dFdx(nrmO.x), dFdy(nrmO.y))));
-      if (uSteppeBox.w > 0.5) {
-        vec3 pdO = normalize(vDetW + uCamP);
-        float latO = degrees(asin(clamp(pdO.y, -1.0, 1.0)));
-        float lonO = degrees(atan(pdO.z, pdO.x));
-        float nTilesO = exp2(uSteppeBox.z);
-        float mxO = (lonO + 180.0) / 360.0 * nTilesO;
-        float latcO = radians(clamp(latO, -85.0, 85.0));
-        float myO = (1.0 - log(tan(latcO) + 1.0 / cos(latcO)) / ${Math.PI.toFixed(8)}) * 0.5 * nTilesO;
-        vec2 uvO = vec2(mxO - uSteppeBox.x, myO - uSteppeBox.y) / max(uSteppeBox.w, 1.0);
-        // Outside the atlas, clamp-to-edge smears one texel into bands. Keep the thatch there.
-        if (uvO.x > 0.001 && uvO.y > 0.001 && uvO.x < 0.999 && uvO.y < 0.999) {
-          vec3 picO = texture2D(uSteppe, uvO).rgb;
-          openC = picO * (0.82 + 0.28 * hillO) * (1.0 - 0.16 * steepO);
-        } else {
-          openC *= 0.72 + 0.4 * hillO;
-          openC *= 1.0 - 0.2 * steepO;
-        }
-      } else {
-        openC *= 0.58 + 0.55 * hillO;
-        openC *= 1.0 - 0.32 * steepO;
-      }
-      photo = mix(photo, openC, clamp(uOpenLand, 0.0, 1.0) * landMask);
+      ${prairieNearGlsl(Math.PI.toFixed(8))}
       diffuseColor.rgb = mix(diffuseColor.rgb, photo, aerial * (1.0 - clamp(vCover.w, 0.0, 1.0)));
-      // Impostors own the crowns. The tiled NAIP crop underneath becomes a smooth
-      // moss, shrub and litter floor. Feathermoss albedo ~0.09 (Bubier et al. 1997)
-      // renders near-black under this sun. These values are the albedo that lands
-      // near the NAIP gap, about sRGB (99, 115, 82), once the globe light hits them.
+      // Impostors own the crowns. The tiled NAIP crop becomes a moss and litter floor.
+      // Feathermoss albedo ~0.09 (Bubier et al. 1997) renders near-black under this sun.
       // Water is left alone.
       if (uCrownFloor > 0.5 && landMask > 0.5 && uOpenLand < 0.5) {
         float slow = detN(vDetW / 90.0, uDetail.w + 4.0);
@@ -508,48 +468,7 @@ vAerial = vDetW - uMorphCam; vCover = mix(aCover, aCoarseK, gMorph);
         diffuseColor.rgb = floorC;
       }
     }
-    // Past 20 km the aerial crop fades and the vertex colour is spruce. From 2000 m
-    // the limb is that far, so the frame kept green salt around a tan nadir.
-    // The orbit disc is hundreds of thousands of metres out and stays as it was.
-    if (uOpenLand > 0.5 && landMask > 0.5 && uSteppeBox.w < 0.5) {
-      float eyeFar = length(vViewPosition);
-      float nearDisc = 1.0 - smoothstep(80000.0, 400000.0, eyeFar);
-      vec3 nrmF = normalize(vNormal);
-      float hillF = clamp(dot(nrmF, normalize(vec3(-0.45, 0.72, 0.35))), 0.0, 1.0);
-      float steepF = smoothstep(0.04, 0.55, length(vec2(dFdx(nrmF.x), dFdy(nrmF.y))));
-      vec3 openFar = vec3(0.40, 0.29, 0.11) * (0.58 + 0.55 * hillF) * (1.0 - 0.32 * steepF);
-      diffuseColor.rgb = mix(diffuseColor.rgb, openFar, nearDisc);
-    } else if (uOpenLand > 0.5 && uSteppeBox.w > 0.5) {
-      // The coarse lake mask was painting teal holes through the steppe. The
-      // photograph already holds the drainage. A per-channel lift around 0.38
-      // sat above the linear green and blue and clamped them to 0, so land went red.
-      vec3 pd = normalize(vDetW + uCamP);
-      float lat = degrees(asin(clamp(pd.y, -1.0, 1.0)));
-      float lon = degrees(atan(pd.z, pd.x));
-      float nTiles = exp2(uSteppeBox.z);
-      float mx = (lon + 180.0) / 360.0 * nTiles;
-      float latc = radians(clamp(lat, -85.0, 85.0));
-      float my = (1.0 - log(tan(latc) + 1.0 / cos(latc)) / ${Math.PI.toFixed(8)}) * 0.5 * nTiles;
-      vec2 uvS = vec2(mx - uSteppeBox.x, my - uSteppeBox.y) / max(uSteppeBox.w, 1.0);
-      vec3 nrmS = normalize(vNormal);
-      float hillS = clamp(dot(nrmS, normalize(vec3(-0.45, 0.72, 0.35))), 0.0, 1.0);
-      float steepS = smoothstep(0.04, 0.55, length(vec2(dFdx(nrmS.x), dFdy(nrmS.y))));
-      vec3 steppe = vec3(0.40, 0.29, 0.11) * (0.72 + 0.4 * hillS) * (1.0 - 0.2 * steepS);
-      vec4 texS = vec4(0.0);
-      vec3 pic = vec3(0.0);
-      if (uvS.x > 0.001 && uvS.y > 0.001 && uvS.x < 0.999 && uvS.y < 0.999) {
-        texS = texture2D(uSteppe, uvS);
-        // The zoom-16 still tone-maps about 18% above the reference crop
-        // (measured 157, 122, 84 against 133, 104, 70). 0.86 brings the frame
-        // mean onto that brown. No unsharp and no luminance lift.
-        pic = texS.rgb * 0.86;
-        steppe = pic;
-        // Flow distance is in alpha: 1 on the bank, gone by 88 m, and 1 along a
-        // channel segment. The sun lifts a mild darken, so the line is 0.05.
-        steppe *= mix(1.0, 0.05, texS.a);
-      }
-      diffuseColor.rgb = steppe;
-    }
+      ${prairieFarGlsl(Math.PI.toFixed(8))}
     }${LAYERS_FRAG}
   if (uDetail.x > 0.001) { // ground detail (DETAIL): octaves fade out where a cell is under ~2 pixels (no shimmer)
     float a = 0.0;
@@ -664,6 +583,5 @@ if (uCrownFloor > 0.5 && landMask > 0.5 && uOpenLand < 0.5) {
     if (vSkirt > 0.0) gl_FragColor.rgb = vec3(1.0, 0.0, 0.0); else if (d < w) gl_FragColor.rgb = vec3(1.0, 0.9, 0.0); }
 #endif`);
   };
-  m.customProgramCacheKey = () => 'globe-steppe-photo-18';
-  return m;
+  m.customProgramCacheKey = () => 'globe-steppe-photo-21'; return m;
 }

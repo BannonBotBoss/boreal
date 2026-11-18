@@ -25,9 +25,7 @@ import { FALL_END_M, ISO_BELOW_HORIZON, freeFallVy, flightPrompt, type EntryPhas
 import { canEmbody, descentFrameDt, landingJobBudget, landingPatchReady } from './landingStream';
 import { ANIMAL_LADDER, arrestGlide, descentFloorY, playerDiving } from '../../render/animalLadder';
 import { dryNear, engageLanding } from './landingSite';
-import { openLandHere } from './coverSample';
-import { AERIAL, bindOverheadPhoto } from './aerialExemplar';
-import { warmDemTiles, warmOverheadTiles, warmPhotoTiles, demCoverage, photoCoverage } from './openTiles';
+import { demCoverage, photoCoverage } from './openTiles'; import { stepPrairieOverhead } from '../../render/globe/prairiePhoto';
 import { dropStand, forestLanding } from './forestLanding';
 import { cineTrace } from '../cosmos/cineReady';
 import { TRANSITION, gameBasis, globePitch, descentPitch, transitionPath, globeCameraFrom, patchFade, inputOwner, createGovernorHold, viewpointPose, handoverBlend, type TransitionMode } from './transition';
@@ -41,14 +39,13 @@ import { AO_BLEND } from '../../render/post';
 import { LOG_DEPTH } from './logDepth';
 import { GOVERNOR, resetGovernor } from '../../core/quality';
 import { INTEREST, JOB_FIRST, pending, queued, STATS as JOBS } from '../../core/interest';
-import { CHUNK_SIZE, heightAt } from '../../core/world';
+import { CHUNK_SIZE, heightAt, WORLD_SEED } from '../../core/world';
 import { bandCloudOpacity, toGameFrame, keptCloudFade, boxEdgeSin, LOCAL_CLOUDS } from './localClouds';
 import { createHorizonSkirt, type HorizonSkirt } from '../../render/horizonMesh';
 import { createHorizonCover } from '../../render/horizonCover';
 import { DRONE_GRADE, droneExposureScale } from '../../render/droneGrade';
 import { horizonMetres, patchDiscRadius, skirtLatLon, skirtOrigin } from './horizonSkirt';
 import { SITE, siteDirection } from '../../core/sitePhase';
-import { WORLD_SEED } from '../../core/world';
 import { STAGES, lakeAt } from '../../core/stages/elevation';
 import { pondAt } from '../../core/stages/rivers';
 import { LEVEL } from '../../core/tuning';
@@ -377,18 +374,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
     ownsInput: () => mode !== 'game',
     /** main's draw slot: globe mode draws the globe to the screen; band and game draw the game (buildScene calls the hooks). */
     frame(drawGame: () => void) {
-      frameNo++;
-      // The aerial crop is boreal canopy. Prairie and desert keep the thatch the feet use.
-      try {
-        const here = host.player();
-        const planet = planetFor(WORLD_SEED, undefined, '', true);
-        const dir = Number.isFinite(SITE.latDeg) ? siteDirection(here.x, here.z, PLANET.radius) : planet.fromLocal(here.x, here.z);
-        const ll = toLatLon(dir);
-        const latD = ll.lat * 180 / Math.PI, lonD = ll.lon * 180 / Math.PI;
-        const open = openLandHere(latD, lonD, dir, planet);
-        AERIAL.uOpenLand.value = open ? 1 : 0;
-        if (open) { warmPhotoTiles(latD, lonD); warmDemTiles(latD, lonD); warmOverheadTiles(latD, lonD); bindOverheadPhoto(latD, lonD); }
-      } catch { /* cover sample before the planet is ready */ }
+      frameNo++; try { const here = host.player(); const planet = planetFor(WORLD_SEED, undefined, '', true); const dir = Number.isFinite(SITE.latDeg) ? siteDirection(here.x, here.z, PLANET.radius) : planet.fromLocal(here.x, here.z); const ll = toLatLon(dir); stepPrairieOverhead(ll.lat * 180 / Math.PI, ll.lon * 180 / Math.PI, dir, planet, 0); } catch { /* cover sample before the planet is ready */ }
       if (next) { if (next === 'game') toGame(); else toGlobe(next === 'sphere'); next = null; }
       if (mode === 'globe' && globe) {
         cameraTouched = true; // orbit clip is on the forest camera; game mode puts 0.2 / 700 back

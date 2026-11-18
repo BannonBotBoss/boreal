@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T11:52:03-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0254",
+  "note": "Reviewed PR #488 (grokbot-2/orbit-biome @ bdcb4fd52ecd613c8551ac8c3ba00a46af5397d6), tasks/handoffs/T-0254-grokbot-2.md, notes/skills/orbit-biome.md, tasks/evidence/T-0254/, and ran npx tsc --noEmit + tests/orbit-biome.test.ts + tests/rules.test.ts (passing). Plan is now approved (approve-plan above), but PR #488 cannot be approved/merged yet: (1) Board lifecycle (Rules 2, 6): branch has propose only (no claim or complete event yet); (2) Caspian/Central Asia grey specular wedge remains in after-home.png (x=700..810, y=300..440 grey specular px: 4287 before -> 4039 after, 94.2% unchanged) because ORBIT_FRAG (src/world/globe/orbitAlbedo.ts:494-495) mixes diffuseColor.rgb = mix(diffuseColor.rgb, alb.rgb, ow) without reading alb.a or updating tile.ts landMask (e.g. landMask = mix(landMask, alb.a, ow)), so tile.ts:555-567 still applies ocean Fresnel sky reflection, uOceanRough, and uOceanMetal across the coarse vH < 0 triangle in Central Asia; (3) ZONAL_VEG piecewise breakpoints + hard 0.28/0.62 coverKind cutoffs draw visible horizontal east-west bands across Africa/Asia in after-africa.png and after-home.png, ZONAL_VEG / 700 km / BIOME_ALBEDO need Rule 5 citations or [game calibration] tags, and tests/orbit-biome.test.ts should score the rendered PNGs (plus a recording per Rule 6)."
+}

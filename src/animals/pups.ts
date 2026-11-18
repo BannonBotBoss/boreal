@@ -3,8 +3,8 @@
  * They stand on the trail beside her. The meshes are the wolf skin with a woolly coat, scaled to a four-week pup.
  */
 import * as THREE from 'three';
-import { ageAfter, besideMother, growthStage, pupAim, pupCall, pupGap, pupScale, PUP_VOICE, stepHz, type PupCall, type PupPlace } from '../core/litter';
-import { herdStep } from '../render/litterBridge';
+import { besideMother, growthStage, pupAim, pupCall, pupGap, pupScale, PUP_VOICE, stepHz, type PupCall, type PupPlace } from '../core/litter';
+import { adoptLitter } from '../render/litterBridge';
 import { livingRoster } from '../core/enterLiving';
 import { heightAt } from '../core/world';
 import { createPlayerWolf } from '../render/playerWolf';
@@ -73,21 +73,21 @@ export function createLitter(scene: THREE.Scene) {
         }
       }
       for (const row of live) {
-        row.pup.ageYears = ageAfter(row.pup.ageYears, gameSeconds);
+        const threatened = mood.threatened === true;
+        const stepped = adoptLitter(live, row.pup, dt, gameSeconds, motherX, motherZ, motherYaw, clock, motherMoved, threatened);
+        row.pup.ageYears = stepped.age;
         row.pup.stage = growthStage(row.pup.ageYears);
-        const grown = pupScale(row.pup.ageYears);
+        const grown = stepped.scale;
         const bulk = 0.88 + ((row.pup.slot * 3 + 1) % 5) * 0.05;
         row.holder.scale.set(grown * 1.1 * bulk, grown * bulk, grown * 1.12 * bulk);
         const prevX = row.pup.x, prevZ = row.pup.z;
         const dist = Math.hypot(prevX - motherX, prevZ - motherZ);
-        const threatened = mood.threatened === true;
         const aim = pupAim(row.pup.slot, motherX, motherZ, motherYaw, clock, motherMoved, row.pup.ageYears, threatened);
-        const next = herdStep(live, row.pup, motherX, motherZ, motherYaw, dt, clock, motherMoved, threatened);
-        row.pup.x = next.x;
-        row.pup.z = next.z;
+        row.pup.x = stepped.x;
+        row.pup.z = stepped.z;
         row.pup.yaw = aim.yaw;
         row.pup.act = aim.act;
-        const moved = Math.hypot(next.x - prevX, next.z - prevZ) > 0.004;
+        const moved = Math.hypot(stepped.x - prevX, stepped.z - prevZ) > 0.004;
         const speed = moved ? 0.6 : 0;
         const motion = aim.act === 'pounce' || aim.act === 'tumble' ? 'jump' : aim.act === 'sit' || aim.act === 'sniff' || !moved ? 'idle' : 'walk';
         row.wolf.brain.motion = motion;

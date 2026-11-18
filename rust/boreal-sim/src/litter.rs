@@ -269,6 +269,44 @@ pub fn follow_step_vel(
     (x + vx * dt, z + vz * dt, vx, vz)
 }
 
+/// One pup the page is drawing. Unseeded until the first tick places it.
+#[derive(Clone, Copy, Debug)]
+pub struct PupLive {
+    pub x: f64,
+    pub z: f64,
+    pub vx: f64,
+    pub vz: f64,
+    pub age: f64,
+    pub seeded: bool,
+}
+
+impl Default for PupLive {
+    fn default() -> Self { Self { x: 0.0, z: 0.0, vx: 0.0, vz: 0.0, age: EMERGE_YEARS, seeded: false } }
+}
+
+/// Age, size, and the follow step for the five pups. Returns x, z, age, scale for each slot.
+pub fn litter_tick(pups: &mut [PupLive; 5], dt: f64, game_seconds: f64, mother_x: f64, mother_z: f64, yaw: f64, time: f64, moving: bool, threatened: bool) -> [(f64, f64, f64, f64); 5] {
+    let mut out = [(0.0, 0.0, 0.0, 0.0); 5];
+    for slot in 0..5 {
+        let pup = &mut pups[slot];
+        if !pup.seeded {
+            let (x, z, _, _) = pup_aim(slot as u32, mother_x, mother_z, yaw, 0.0, true, EMERGE_YEARS, false);
+            pup.x = x; pup.z = z; pup.age = EMERGE_YEARS; pup.seeded = true;
+        }
+        pup.age = age_after(pup.age, game_seconds);
+        let (x, z, vx, vz) = follow_step_vel(pup.x, pup.z, slot as u32, mother_x, mother_z, yaw, dt, pup.age, time, moving, threatened, pup.vx, pup.vz);
+        pup.x = x; pup.z = z; pup.vx = vx; pup.vz = vz;
+    }
+    let bodies: Vec<(f64, f64, f64)> = pups.iter().map(|p| (p.x, p.z, body_radius(p.age))).collect();
+    let cleared = separate_herd(&bodies, mother_x, mother_z);
+    for slot in 0..5 {
+        pups[slot].x = cleared[slot].0;
+        pups[slot].z = cleared[slot].1;
+        out[slot] = (pups[slot].x, pups[slot].z, pups[slot].age, body_scale(pups[slot].age));
+    }
+    out
+}
+
 /// One follow step from rest, toward the aim at time 0.
 pub fn follow_step(x: f64, z: f64, slot: u32, mother_x: f64, mother_z: f64, yaw: f64, dt: f64, age_years: f64) -> (f64, f64) {
     let (nx, nz, _, _) = follow_step_vel(x, z, slot, mother_x, mother_z, yaw, dt, age_years, 0.0, true, false, 0.0, 0.0);

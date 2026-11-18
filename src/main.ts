@@ -17,7 +17,7 @@ import { WAKES, sampleSurface, hipsFor, pawArea, waterline, travelSpeed } from '
 import { catalog } from './core/catalog';
 import { heightAt, type Entity } from './core/world';
 import { forestHandsOn, readForestHands } from './vr/forestSession';
-import { foxPlace, stepDrives } from './core/drives';
+import { driveFrame, drivePose } from './render/driveBridge';
 import { pupCloud } from './animals/pups';
 import { BorealSound, mealChews } from './audio/borealSound';
 import { createMusic } from './audio/music';
@@ -668,14 +668,14 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
       player.x = pose.x; player.z = pose.z; yaw = pose.heading; player.heading = yaw;
       if (view.playable.id === 'wolf') {
         const yip = pupHeard.some(call => call.kind === 'yip');
-        const foxAt = foxPlace();
+        const foxAt = drivePose();
         const ox = foxAt?.x ?? player.x, oz = foxAt?.z ?? player.z;
         let pupX = player.x, pupZ = player.z, best = Infinity;
         for (const pup of pupCloud()) {
           const d = Math.hypot(pup.x - ox, pup.z - oz);
           if (d < best) { best = d; pupX = pup.x; pupZ = pup.z; }
         }
-        const now = stepDrives(player.x, player.z, yaw, pupX, pupZ, yip, 1 / 30);
+        const now = driveFrame(player.x, player.z, yaw, pupX, pupZ, yip, 1 / 30);
         if (now.hold) {
           player.x = now.mamaX; player.z = now.mamaZ;
           yaw = now.mamaYaw + Math.PI; player.heading = yaw;

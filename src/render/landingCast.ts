@@ -24,7 +24,7 @@ import { PLANET, fromLatLon, planetFor, toLatLon } from '../world/globe/planet';
 import { nearestShore } from '../core/landingShore';
 import { coverSampleLatLon } from '../world/globe/coverSample';
 import { createProceduralAnimal, type ProceduralAnimal } from './proceduralAnimal';
-import { foxPlace } from '../core/drives';
+import { drivePose } from './driveBridge';
 import type { PictureBody } from './animalPicture';
 
 export interface LandingReport {
@@ -251,7 +251,7 @@ export function createLandingCast(scene: THREE.Scene) {
   }
 
   function ensureDriveFox() {
-    const pose = foxPlace();
+    const pose = drivePose();
     if (!pose) return;
     const count = census.find(row => row.species === 'red_fox')?.count ?? 0;
     const already = placed.find(animal => animal.key === 'red_fox');
@@ -299,7 +299,7 @@ export function createLandingCast(scene: THREE.Scene) {
       for (const animal of placed) {
         const proc = procs.get(`${animal.key}:${animal.index}`);
         if (!proc) continue;
-        const driven = animal.key === 'red_fox' ? foxPlace() : null;
+        const driven = animal.key === 'red_fox' ? drivePose() : null;
         if (driven) { animal.x = driven.x; animal.z = driven.z; animal.yaw = driven.yaw; }
         const motion: Motion = driven?.motion === 'run' ? 'run' : driven?.motion === 'idle' ? 'idle' : 'walk';
         const speed = driven?.speed ?? 1.2;

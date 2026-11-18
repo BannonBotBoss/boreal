@@ -189,6 +189,173 @@ fn forward(x: f64, z: f64, yaw: f64, dist: f64) -> (f64, f64) {
     (x + yaw.sin() * dist, z + yaw.cos() * dist)
 }
 
+/// How far the mother charges toward the fox before she turns back. The page uses this.
+pub const CHARGE_M: f64 = 4.5;
+
+/// Hidden state of the live drive step. The same fields the page keeps between frames.
+#[derive(Clone, Debug)]
+pub struct PageDrive {
+    pub hunger: f64,
+    pub protect: f64,
+    pub fox_x: f64,
+    pub fox_z: f64,
+    pub fox_yaw: f64,
+    pub seeded: bool,
+    pub pace: f64,
+    /// 0 watch, 1 charge, 2 return.
+    pub phase: u8,
+    pub home_x: f64,
+    pub home_z: f64,
+    pub home_yaw: f64,
+}
+
+impl Default for PageDrive {
+    fn default() -> Self {
+        Self {
+            hunger: 0.75, protect: 0.0, fox_x: f64::NAN, fox_z: f64::NAN, fox_yaw: 0.0,
+            seeded: false, pace: 0.0, phase: 0, home_x: f64::NAN, home_z: f64::NAN, home_yaw: 0.0,
+        }
+    }
+}
+
+/// One live step, including the charge and the walk home. Matches `stepDrives`.
+#[derive(Clone, Debug)]
+pub struct PageNow {
+    pub hunger: f64,
+    pub effort_pup: f64,
+    pub effort_mama: f64,
+    pub scent: f64,
+    pub danger: f64,
+    pub protect: f64,
+    pub threat: f64,
+    pub approach: f64,
+    pub mode: FoxMode,
+    pub committed: bool,
+    pub hold: bool,
+    pub returning: bool,
+    pub fox_x: f64,
+    pub fox_z: f64,
+    pub fox_yaw: f64,
+    pub mama_x: f64,
+    pub mama_z: f64,
+    pub mama_yaw: f64,
+    pub pup_x: f64,
+    pub pup_z: f64,
+    pub yip: bool,
+}
+
+pub fn page_reset(mem: &mut PageDrive, at: Option<(f64, f64)>, hunger: Option<f64>, protect: Option<f64>) {
+    *mem = PageDrive::default();
+    if let Some(h) = hunger { mem.hunger = h; }
+    if let Some(p) = protect { mem.protect = p; }
+    if let Some((x, z)) = at { mem.fox_x = x; mem.fox_z = z; mem.seeded = true; }
+}
+
+/// The page's drive step. Hunger, the fox's approach, linger and flee, and the mother's protect.
+pub fn page_step(mem: &mut PageDrive, mama_x: f64, mama_z: f64, game_yaw: f64, pup_x: f64, pup_z: f64, yip: bool, dt: f64) -> PageNow {
+    let facing = game_yaw + std::f64::consts::PI;
+    if !mem.seeded {
+        mem.fox_x = mama_x + facing.sin() * LINGER_RING;
+        mem.fox_z = mama_z + facing.cos() * LINGER_RING;
+        mem.fox_yaw = facing + std::f64::consts::PI;
+        mem.seeded = true;
+    }
+    let step = dt.max(0.0);
+    mem.pace += step;
+    let hunger = hunger_step(mem.hunger, "Red Fox", step);
+    let pup_d = hypot(pup_x - mem.fox_x, pup_z - mem.fox_z);
+    let mama_d = hypot(mama_x - mem.fox_x, mama_z - mem.fox_z);
+    let pup_from_mama = hypot(pup_x - mama_x, pup_z - mama_z);
+    let scent = scent(pup_d);
+    let focused = in_focus(pup_d, yip);
+    let effort_pup = effort(body_kg("Red Fox"), body_kg("pup"));
+    let effort_mama = effort(body_kg("Red Fox"), body_kg("Gray Wolf"));
+    let stray = pup_from_mama > STRAY_M;
+    let near = mama_d < LINGER_RING + 2.0 || pup_d < PROTECT_M;
+    let protect = protect_step(mem.protect, near && mem.phase != 2, step);
+    let guarding = protect >= PROTECT_COMMIT && mem.phase != 2;
+    if guarding && mem.phase == 0 {
+        mem.phase = 1;
+        mem.home_x = mama_x;
+        mem.home_z = mama_z;
+        mem.home_yaw = game_yaw;
+    }
+    if mem.phase == 1 && mama_d > 18.0 { mem.phase = 2; }
+    let steered = mem.phase != 0;
+    let danger = danger(mama_d, mem.phase == 1);
+    let use_effort = if stray { effort_pup } else { effort_pup.max(0.35) };
+    let approach = approach(hunger, use_effort, if focused { scent.max(0.35) } else { scent });
+    let mut mode = FoxMode::Watch;
+    let mut yaw = mem.fox_yaw;
+    let mut fox_x = mem.fox_x;
+    let mut fox_z = mem.fox_z;
+    let mut out_mx = mama_x;
+    let mut out_mz = mama_z;
+    let mut out_myaw = facing;
+    if mem.phase == 1 {
+        mode = FoxMode::Flee;
+        yaw = away(mem.fox_x, mem.fox_z, mama_x, mama_z);
+        let pushed = push_out(mem.fox_x, mem.fox_z, mama_x, mama_z, mama_d + FLEE_MPS * step);
+        fox_x = pushed.0; fox_z = pushed.1;
+        let face = toward(mama_x, mama_z, mem.fox_x, mem.fox_z);
+        let from_home = hypot(mama_x - mem.home_x, mama_z - mem.home_z);
+        let room = (CHARGE_M - from_home).max(0.0);
+        let stepped = forward(mama_x, mama_z, face, (3.4 * step).min(room));
+        out_mx = stepped.0; out_mz = stepped.1; out_myaw = face;
+    } else if mem.phase == 2 {
+        mode = FoxMode::Watch;
+        let pushed = push_out(mem.fox_x, mem.fox_z, mama_x, mama_z, (26.0_f64).min(mama_d + FLEE_MPS * step));
+        fox_x = pushed.0; fox_z = pushed.1;
+        yaw = away(fox_x, fox_z, mama_x, mama_z);
+        let face = toward(mama_x, mama_z, mem.home_x, mem.home_z);
+        let d_home = hypot(mem.home_x - mama_x, mem.home_z - mama_z);
+        if d_home < 0.4 {
+            mem.phase = 0;
+            out_mx = mem.home_x; out_mz = mem.home_z; out_myaw = mem.home_yaw + std::f64::consts::PI;
+            mem.home_x = f64::NAN; mem.home_z = f64::NAN;
+        } else {
+            let stepped = forward(mama_x, mama_z, face, (2.6 * step).min(d_home));
+            out_mx = stepped.0; out_mz = stepped.1; out_myaw = face;
+        }
+    } else if stray && approach > danger && mama_d > LINGER_RING {
+        mode = FoxMode::Approach;
+        yaw = toward(mem.fox_x, mem.fox_z, pup_x, pup_z);
+        let stepped = forward(mem.fox_x, mem.fox_z, yaw, (1.1 + hunger) * step);
+        fox_x = stepped.0; fox_z = stepped.1;
+    } else if mama_d < LINGER_RING - 0.4 {
+        mode = FoxMode::Linger;
+        let pushed = push_out(mem.fox_x, mem.fox_z, mama_x, mama_z, LINGER_RING);
+        fox_x = pushed.0; fox_z = pushed.1;
+        yaw = toward(fox_x, fox_z, mama_x, mama_z);
+    } else if mama_d > LINGER_RING + 1.2 {
+        mode = FoxMode::Watch;
+        let pushed = push_out(mem.fox_x, mem.fox_z, mama_x, mama_z, LINGER_RING.max(mama_d - 4.0 * step));
+        fox_x = pushed.0; fox_z = pushed.1;
+        yaw = toward(fox_x, fox_z, mama_x, mama_z);
+    } else {
+        mode = FoxMode::Linger;
+        let ang = facing + (mem.pace * 0.65).sin() * 0.75;
+        fox_x = mama_x + ang.sin() * LINGER_RING;
+        fox_z = mama_z + ang.cos() * LINGER_RING;
+        yaw = ang + std::f64::consts::PI;
+    }
+    mem.hunger = hunger;
+    mem.protect = protect;
+    mem.fox_x = fox_x;
+    mem.fox_z = fox_z;
+    mem.fox_yaw = yaw;
+    PageNow {
+        hunger, effort_pup, effort_mama, scent, danger, protect,
+        threat: if near { 1.0 } else { 0.0 },
+        approach, mode,
+        committed: mem.phase == 1,
+        hold: steered || mem.phase != 0,
+        returning: mem.phase == 2,
+        fox_x, fox_z, fox_yaw: yaw, mama_x: out_mx, mama_z: out_mz, mama_yaw: out_myaw,
+        pup_x, pup_z, yip,
+    }
+}
+
 pub fn mode_name(mode: FoxMode) -> &'static str {
     match mode {
         FoxMode::None => "none",

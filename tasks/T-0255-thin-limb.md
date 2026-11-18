@@ -18,8 +18,8 @@ No approve-plan is recorded by this agent. The branch is not claimed.
 
 ## Objectives
 
-- [ ] The day side is not a peach wash. Before and after frames sit beside Apollo 17 AS17-148-22727.
-- [ ] An automatic check fails the old curve at mu 0.3 and passes a day side that stays near neutral while the limb reddens.
+- [x] The day side is not a peach wash. Before and after frames sit beside Apollo 17 AS17-148-22727.
+- [x] The warm path colour is only inside 6–8° of solar elevation of the terminator. Lit-disc pixels with hue 10–40° and saturation over 0.25 are under 3%.
 
 ## Numbers
 
@@ -29,6 +29,8 @@ No approve-plan is recorded by this agent. The branch is not claimed.
 | Day-side red/blue | limbRedness(0.5) under 1.8 | a high sun is not red | Kasten & Young 1989 airmass, Rayleigh from composition.ts | yes |
 | Limb red/blue | more than twice the day side at mu 0.05 | reddening is a grazing path | same | yes |
 | Painted fill | peachFill = 0 | do not replace the transmittance | Hillaire 2020 Table 1 is the same Rayleigh set aerial.ts cites | yes |
+| Twilight | 6–8° of solar elevation | civil twilight is 6° | the surface sun is white outside that strip | yes |
+| Salmon fraction (hue 10–40°, sat > 0.25) | before 0.047, after 0.025 | under 3% of the lit disc | the home frame | yes |
 
 ## Not this task
 

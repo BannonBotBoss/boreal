@@ -97,6 +97,9 @@ export const CLOUDS = { heightKm: 2.5, cellKm: 900, albedo: .95, /** cumulus/cum
  * tests/thin-limb.test.ts.
  */
 export function peachFill(_mu: number) { return 0; }
+/** The warm path colour is only this close to the terminator, on either side.
+ *  6° is civil twilight; by 8° the surface sun is white. Apollo 17 shows that strip, not a day-side wash. */
+export const TWILIGHT = { innerDeg: 6, outerDeg: 8 };
 /** The old curve, kept so the test can show what the wide band did. Not used by the shader. */
 export function retiredPeachFill(mu: number) {
   const t = Math.max(0, Math.min(1, (mu - 0.52) / (-0.04 - 0.52)));
@@ -200,12 +203,15 @@ vec3 atmScatter(vec3 rd, float tEnd, int n, int nl, out vec3 trans) {
 }
 // sunlight colour reaching x (transmittance), 0 in the planet's shadow
 vec3 atmSunlight(vec3 x, int nl) { vec2 l = atmSunDepth(x, nl); return l.x < 0.0 ? atmRefracted(x) : exp(-((BR + BO) * l.x + BME * l.y)); }
-// sunT is atmSunlight: Rayleigh, ozone Chappuis, and Mie along the sun path
-// (composition.ts). It stays nearly white until the path is long, which is a
-// thin reddening at the terminator, not a peach wash of the day side.
-// The sky limb is atmScatter on the shell (the blue halo). mu is unused.
+// sunT is atmSunlight: Rayleigh, ozone and Mie along the sun path. That path is
+// already red well above the horizon, and painting it on the surface made a
+// salmon band across the day side. The warm colour stays inside TWILIGHT
+// (6–8° of solar elevation, either side of the terminator). Above that the
+// surface sun is white. The blue limb is atmScatter on the shell.
 vec3 atmWarmSun(vec3 sunT, float mu) {
-  return sunT + vec3(0.0) * mu;
+  float elev = degrees(asin(clamp(mu, -1.0, 1.0)));
+  float band = 1.0 - smoothstep(${TWILIGHT.innerDeg.toFixed(1)}, ${TWILIGHT.outerDeg.toFixed(1)}, abs(elev));
+  return mix(vec3(1.0), sunT, band);
 }
 // Local sky (diffuse) light relative to clear noon, from the Sun's altitude h at a point (mu = sin h): the hemisphere light stands
 // for the clear-noon diffuse sky (~20 klx, CIE); sin h / sin 30 deg by day [approx], floor 960/20000 at h = 0 and Schaefer's 0.4 dex

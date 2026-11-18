@@ -4,6 +4,7 @@
  * Until that wasm is loaded, the existing TypeScript follow is the fallback.
  */
 import { ageAfter, followStep, pupScale, type PupPlace } from '../core/litter';
+import { wasmInstance } from './simWasm';
 
 interface LitterWasm {
   memory: WebAssembly.Memory;
@@ -18,20 +19,12 @@ let cache: { x: number; z: number; age: number; scale: number }[] | null = null;
 
 function boot() {
   if (wasm || loading) return;
-  loading = (async () => {
-    try {
-      const base = (import.meta as unknown as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
-      const response = await fetch(`${base}wasm/boreal_sim.wasm`);
-      if (!response.ok) return null;
-      const { instance } = await WebAssembly.instantiate(await response.arrayBuffer(), {});
-      const exports = instance.exports as unknown as LitterWasm;
-      if (!exports.litter_frame || !exports.litter_scratch) return null;
-      wasm = exports;
-      return exports;
-    } catch {
-      return null;
-    }
-  })();
+  loading = wasmInstance().then(instance => {
+    const exports = instance?.exports as LitterWasm | undefined;
+    if (!exports?.litter_frame || !exports.litter_scratch) return null;
+    wasm = exports;
+    return exports;
+  });
 }
 
 /** Where this pup is after Rust has stepped the litter. The first pup of the frame runs the step. */

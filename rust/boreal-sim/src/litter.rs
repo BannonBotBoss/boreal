@@ -28,11 +28,11 @@ const LATERAL_M: f64 = 1.15;
 const VIEW_BACK_M: f64 = 1.55;
 /// Further than this in one step is a drop, not a walk. The pup is on the trail at once.
 const REJOIN_M: f64 = 4.0;
-/// Disc around mama that a pup body may not enter. Chest plus a planted foreleg.
+/// Disc around mama that a pup body may not enter. [game calibration] Chest plus a planted foreleg, not a measured shoulder width.
 const MAMA_BODY_M: f64 = 0.42;
-/// Four-week pup body radius. It grows with body_scale.
+/// Four-week pup body radius. [game calibration] It grows with body_scale.
 const PUP_BODY_M: f64 = 0.18;
-/// Seconds for the steering velocity to catch a new direction.
+/// Seconds for the steering velocity to catch a new direction. [game calibration]
 const STEER_TAU: f64 = 0.28;
 
 fn growth_u(age_years: f64) -> f64 {

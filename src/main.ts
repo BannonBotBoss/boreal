@@ -71,6 +71,7 @@ import { createMenu } from './ui/menu';
 import { globeUrl } from './world/globe/handoff';
 import { toLatLon } from './world/globe/planet';
 import { createPadRouter } from './input/padRouter'; // Grok Bot: pad menu, help, camera mode, filter wheel, globe pad
+import { startAutoplay } from './input/autoplay';
 import { SPHERE_START, startView } from './world/globe/startView';
 import { mintUniverseSeed, normalizeUniverseSeed, readUniverseSeed, worldSeedFromUniverse, writeUniverseSeed } from './core/universeSeed';
 import { createOpening, type Opening } from './world/cosmos/opening';
@@ -812,3 +813,4 @@ if (new URLSearchParams(location.search).has('bench')) void (async () => {
   for (const k of ['ssao', 'shadows', 'pcss', 'contact', 'rays', 'gi', 'ibl', 'clouds']) { M[k] = 0; await sample(`ultra-without-${k}`); delete M[k]; }
   console.log('BENCH done');
 })();
+startAutoplay();

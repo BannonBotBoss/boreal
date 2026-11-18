@@ -4,6 +4,7 @@
  * Until that wasm is loaded, the existing TypeScript step is the fallback.
  */
 import { foxPlace, stepDrives, type DriveNow, type FoxMode } from '../core/drives';
+import { wasmInstance } from './simWasm';
 
 const MODES: FoxMode[] = ['none', 'approach', 'linger', 'watch', 'flee'];
 
@@ -20,20 +21,12 @@ let usingRust = false;
 
 function boot() {
   if (wasm || loading) return;
-  loading = (async () => {
-    try {
-      const base = (import.meta as unknown as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
-      const response = await fetch(`${base}wasm/boreal_sim.wasm`);
-      if (!response.ok) return null;
-      const { instance } = await WebAssembly.instantiate(await response.arrayBuffer(), {});
-      const exports = instance.exports as unknown as DriveWasm;
-      if (!exports.drives_tick || !exports.litter_scratch) return null;
-      wasm = exports;
-      return exports;
-    } catch {
-      return null;
-    }
-  })();
+  loading = wasmInstance().then(instance => {
+    const exports = instance?.exports as DriveWasm | undefined;
+    if (!exports?.drives_tick || !exports.litter_scratch) return null;
+    wasm = exports;
+    return exports;
+  });
 }
 
 function read(out: Float64Array): DriveNow {
@@ -56,9 +49,9 @@ export function driveView(): DriveNow | null { return usingRust ? last : null; }
 export function drivePose() {
   const now = usingRust ? last : null;
   if (!now) return foxPlace();
-  const moving = now.mode !== 'none';
-  const motion = now.mode === 'flee' || now.mode === 'approach' ? 'run' : now.mode === 'none' ? 'idle' : 'walk';
-  const speed = now.mode === 'flee' ? 9 : now.mode === 'linger' ? 0.8 : now.mode === 'approach' ? 1.6 : 0.6;
+  const moving = now.mode === 'approach' || now.mode === 'flee' || now.mode === 'linger';
+  const motion = now.mode === 'flee' || now.mode === 'approach' ? 'run' : now.mode === 'linger' ? 'walk' : 'idle';
+  const speed = now.mode === 'flee' ? 9 : now.mode === 'linger' ? 0.8 : now.mode === 'approach' ? 1.6 : 0;
   return { x: now.foxX, z: now.foxZ, yaw: now.foxYaw + Math.PI, moving, motion, speed };
 }
 

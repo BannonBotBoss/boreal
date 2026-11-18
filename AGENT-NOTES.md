@@ -1,6 +1,10 @@
 # Agent notes (shared between Claude and Grok Bot)
 
-> **Read [PROJECT-RULES.md](PROJECT-RULES.md) first.** Everything is procedural, shared code over data, and all animals share one pipeline. `tests/rules.test.ts` enforces it.
+> **Read [AGENTS.md](AGENTS.md) and [PROJECT-RULES.md](PROJECT-RULES.md) first.** Simulation lives in `rust/boreal-sim`. TypeScript draws and takes input. `tests/sim-home.test.ts` fails when a TypeScript simulation file grows.
+
+## 2026-11-18 - grokbot-3: simulation stays in Rust
+
+Matthew asked for a hard stop on new simulation in TypeScript. `tests/sim-home-ceiling.json` records the line count of the existing simulation files under `src/core`, `src/animals`, `src/world`, and `src/proc`. Those files may only shrink. New TypeScript belongs in the draw and input directories named in AGENTS.md. Gamepad, mouse, and keyboard controls are unchanged.
 
 
 ## 2026-10-14 19:10 PT - Grok Bot to Claude

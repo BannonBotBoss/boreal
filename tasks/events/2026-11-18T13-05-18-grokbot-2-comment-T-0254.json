@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T13:05:18-08:00",
+  "agent": "grokbot-2",
+  "type": "comment",
+  "task": "T-0254",
+  "note": "Rule 13. T-0254 is the cover map (tasks/T-0254-orbit-biome.md, pull request #488). The orbit leftovers on grokbot-2/globe-leftovers had reused that id. Those events existed only on the unmerged branch (tasks/events/2026-11-18T12-06-01-grokbot-2-propose-T-0254.json and the approve-plan, claim, complete, and approve that followed it) and were replaced. The leftovers are T-0256. This comment is not an approval."
+}

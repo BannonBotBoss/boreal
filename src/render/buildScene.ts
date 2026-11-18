@@ -61,6 +61,7 @@ import { planetFor } from '../world/globe/planet';
 import { horizonMetres, skirtLatLon } from '../world/globe/horizonSkirt';
 import { warmDemTiles, warmPhotoTiles } from '../world/globe/openTiles';
 import { createContinuousTerrain } from './continuousTerrain';
+import { chunkAction } from './groundHold';
 import { updateTreeUniforms } from './trees';
 import { createGrass } from './grass/grass';
 import { createFlora } from './flora/flora';
@@ -237,16 +238,26 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       const d = squareDistance(a * CHUNK_SIZE, b * CHUNK_SIZE, CHUNK_SIZE), own = a === cx && b === cz;
       if (d <= INTEREST.mid || own) needed.set(`${a}:${b}`, (needed.get(`${a}:${b}`) ?? false) || d <= INTEREST.near || own);
     }
-    // Far = math only: dispose everything outside the radius (and re-instantiate when a chunk changes tier).
-    for (const [key, chunk] of chunks) if (changed || !needed.has(key) || needed.get(key) !== chunk.near) {
+    // Out of range goes now. A chunk that is still under the animals stays until its replacement is in the scene.
+    const release = (key: string) => {
+      const chunk = chunks.get(key); if (!chunk) return;
       scene.remove(chunk.root); disposeObject(chunk.root); for (const c of chunk.contacts) CONTACTS.end(c.a, c.b); chunks.delete(key);
+    };
+    for (const [key, chunk] of chunks) {
+      const action = chunkAction(needed.has(key), !changed && needed.get(key) === chunk.near, false);
+      if (action === 'drop') release(key);
     }
     for (const key of [...chunkJobs]) if (tierChanged || !needed.has(key)) { cancel(`chunk:${key}`); chunkJobs.delete(key); }
-    for (const [key, near] of needed) if (!chunks.has(key) && !pending(`chunk:${key}`)) {
+    for (const [key, near] of needed) {
+      const held = chunks.get(key);
+      const stale = !held || changed || held.near !== near;
+      if (!stale || pending(`chunk:${key}`)) continue;
       const [a, b] = key.split(':').map(Number); chunkJobs.add(key);
       enqueue(`chunk:${key}`, squareDistance(a * CHUNK_SIZE, b * CHUNK_SIZE, CHUNK_SIZE), createChunk(a, b, context, near), c => {
         chunkJobs.delete(key);
-        if (c.epoch !== chunkEpoch) { scene.remove(c.root); disposeObject(c.root); return; }
+        if (c.epoch !== chunkEpoch) { if (c.root.parent) scene.remove(c.root); disposeObject(c.root); return; }
+        const prev = chunks.get(key);
+        if (prev && prev.root !== c.root) release(key);
         chunks.set(key, c);
       });
     }

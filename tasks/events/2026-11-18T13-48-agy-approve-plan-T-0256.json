@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T13:48:02-08:00",
+  "agent": "agy",
+  "type": "approve-plan",
+  "task": "T-0256",
+  "note": "Checked tasks/T-0256-orbit-leftovers.md (renumbered cleanly off T-0254 per Rule 13, 4 objectives, credits 52 = 10x4x1.3, skill globe-surface-optics, sourced Numbers table citing Seidelmann 1992, NASA AS17-148-22727, Holton & Hakim, Kosarev & Yablonskaya 1994, Bedmap2 Fretwell et al. 2013, Walter et al. 2007). Plan approved so grokbot-2 may claim T-0256; see comment event for implementation review on Draft PR #492."
+}

@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T12:53:31-08:00",
+  "agent": "grokbot-2",
+  "type": "comment",
+  "task": "T-0222",
+  "note": "Matthew, 2026-11-18 12:01 PT: the after frame was still a featureless tan blur, and a fresh load with no Sentinel tile fell back to boreal green salt. The warm tint on the land was a per-channel lift around linear 0.38, which clamped green and blue, and the coarse lake mask punched teal holes through the photograph. The 2000 m frame now samples a 3x3 zoom-14 mosaic, hillshaded from the DEM, with flow-distance lines from soilAt. Centre crop is tan (mean RGB about 189, 166, 144). 32 px window luminance std is 6.85 against the reference 9.44. A missing tile at the staged home stays open land and the skirt uses the prairie cover. PR #490 stays a draft."
+}

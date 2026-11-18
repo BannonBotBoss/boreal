@@ -45,6 +45,8 @@ export const AERIAL = {
   uExOn: { value: 0 },
   uExMetres: { value: AERIAL_EXEMPLAR.metres },
   uExGain: { value: AERIAL_EXEMPLAR.gain },
+  /** 1 on prairie or desert from coverSampleAt. The conifer crop is the wrong photograph there. */
+  uOpenLand: { value: 0 },
   /** 1 while overhead impostors cover this view. The tiled canopy photo is replaced by a smooth floor. */
   uCrownFloor: { value: 0 },
 };

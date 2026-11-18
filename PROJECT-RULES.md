@@ -1,5 +1,16 @@
 # Boreal project rules (read first)
 
+## Simulation lives in Rust
+
+This section binds every agent, including agy. All simulation lives in the Rust crate `rust/boreal-sim`. TypeScript and Three.js only draw, and they handle input.
+
+Simulation means animal drives, hunger and energy, behavior, steering and following, separation, senses, predator and prey, growth, time and season and sun, and terrain and biome generation.
+
+- New simulation is written in Rust and called from TypeScript through the wasm exports. It is not added to TypeScript.
+- TypeScript files that already contain simulation are listed in `tests/sim-home-ceiling.json`. Those files may only shrink, never grow. `tests/sim-home.test.ts` fails when one grows, and when a new simulation file appears outside Rust.
+- New TypeScript may be added only under the draw and input directories: `src/render`, `src/input`, `src/ui`, `src/audio`, `src/photo`, `src/vr`, `src/camera`, `src/dev`, `src/config`, `src/data`, plus `src/main.ts` and `src/audio.ts`.
+- Gamepad, mouse, and keyboard controls and their hints stay. This rule does not remove or replace them.
+
 The last twenty GitHub issues take precedence. Where they conflict with each other, with older issues, or with these rules, plans, tasks, notes, or code, the latest issue wins: a higher number wins, so #109 overrides #108 overrides #107. The twenty are #99, #100, #101, #102, #103, #104, #105, #106, #107, #108, #109, #110, #111, #112, #113, #115, #116, #117, #118 and #119. An issue opened after these wins over them the same way. This replaces the 2026-10-25 7:17 PM line that stopped at #100–#109. The resolutions are tasks/RULES.md rule 18. (Matthew, 2026-10-26, in chat: "i want the last 20 issues to take precedence, any conflict, the latest issue wins.")
 
 ## Talking to Matthew

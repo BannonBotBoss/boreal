@@ -124,9 +124,9 @@ pub fn pup_aim(slot: u32, mother_x: f64, mother_z: f64, yaw: f64, time: f64, mov
     if act == "sniff" { side += 0.18 * (time * 1.7 + phase).sin(); }
     if act == "sit" { back *= 0.75; side *= 0.75; }
     if act == "pounce" {
-        let sib = PUP_HOME[((slot + 1) % LITTER_COUNT) as usize];
-        back = (back + sib.0 * cluster * age_pull) * 0.5;
-        side = (side + sib.1 * cluster * age_pull) * 0.5;
+        // A pounce is its own little leap, not a step toward a sibling. Averaging homes lined them up.
+        back += (time * 3.1 + phase).sin() * 0.1;
+        side += 0.12 * (phase * 1.7).cos();
     }
     if act == "tumble" {
         back += (time * 2.2 + phase).sin() * 0.12;
@@ -284,9 +284,15 @@ impl Default for PupLive {
     fn default() -> Self { Self { x: 0.0, z: 0.0, vx: 0.0, vz: 0.0, age: EMERGE_YEARS, seeded: false } }
 }
 
-/// Age, size, and the follow step for the five pups. Returns x, z, age, scale for each slot.
-pub fn litter_tick(pups: &mut [PupLive; 5], dt: f64, game_seconds: f64, mother_x: f64, mother_z: f64, yaw: f64, time: f64, moving: bool, threatened: bool) -> [(f64, f64, f64, f64); 5] {
-    let mut out = [(0.0, 0.0, 0.0, 0.0); 5];
+fn act_code(act: &str) -> f64 {
+    match act { "sniff" => 1.0, "sit" => 2.0, "pounce" => 3.0, "tumble" => 4.0, "straggle" => 5.0, _ => 0.0 }
+}
+
+/// Age, size, follow, and what the pup is doing. Returns x, z, age, scale, yaw, act.
+pub fn litter_tick(pups: &mut [PupLive; 5], dt: f64, game_seconds: f64, mother_x: f64, mother_z: f64, yaw: f64, time: f64, moving: bool, threatened: bool) -> [(f64, f64, f64, f64, f64, f64); 5] {
+    let mut out = [(0.0, 0.0, 0.0, 0.0, 0.0, 0.0); 5];
+    let mut faces = [0.0; 5];
+    let mut acts = [0.0; 5];
     for slot in 0..5 {
         let pup = &mut pups[slot];
         if !pup.seeded {
@@ -294,6 +300,9 @@ pub fn litter_tick(pups: &mut [PupLive; 5], dt: f64, game_seconds: f64, mother_x
             pup.x = x; pup.z = z; pup.age = EMERGE_YEARS; pup.seeded = true;
         }
         pup.age = age_after(pup.age, game_seconds);
+        let (_, _, face, act) = pup_aim(slot as u32, mother_x, mother_z, yaw, time, moving, pup.age, threatened);
+        faces[slot] = face;
+        acts[slot] = act_code(act);
         let (x, z, vx, vz) = follow_step_vel(pup.x, pup.z, slot as u32, mother_x, mother_z, yaw, dt, pup.age, time, moving, threatened, pup.vx, pup.vz);
         pup.x = x; pup.z = z; pup.vx = vx; pup.vz = vz;
     }
@@ -302,7 +311,7 @@ pub fn litter_tick(pups: &mut [PupLive; 5], dt: f64, game_seconds: f64, mother_x
     for slot in 0..5 {
         pups[slot].x = cleared[slot].0;
         pups[slot].z = cleared[slot].1;
-        out[slot] = (pups[slot].x, pups[slot].z, pups[slot].age, body_scale(pups[slot].age));
+        out[slot] = (pups[slot].x, pups[slot].z, pups[slot].age, body_scale(pups[slot].age), faces[slot], acts[slot]);
     }
     out
 }

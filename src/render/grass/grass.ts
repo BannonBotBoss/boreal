@@ -119,6 +119,7 @@ const VERT_BODY = `
   float curveAmount = -randomLean * easedHeight;
   mat3 face = rotateYG(aBlade.x);
   vec3 p = face * (rotateXG(curveAmount) * vec3(x, y, 0.0));
+  if (zSide < 0.0) p = rotateYG(1.5707963) * p; // a second blade across the first, so the clump is not a card
   p = rotA(rotA(p, windAxis, windLeanAngle), playerAxis, playerLeanAngle);
   vec3 n0 = rotateXG(curveAmount) * vec3(0.0, 0.0, 1.0);
   vec3 nb = face * (rotateYG(3.14159 * 0.3 * (xSide * 2.0 - 1.0) * zSide) * n0) * zSide; // rounded normal (upstream normal1/normal2)
@@ -130,13 +131,12 @@ const VERT_BODY = `
   float fallT = smoothstep(hs - 0.3, hs + 0.3, uColour);
   vec3 tip = mix(uTip[k], uFall[k], fallT), base = mix(uBase[k], uFall[k] * 0.6, fallT * 0.5);
   float tipMix = sh.y > 1.5 ? step(sh.z, heightPercent) : easeInG(heightPercent, 4.0);
-  vGrassColour = mix(base, tip, mix(tipMix, heightPercent, highLODOut)) * shade * mix(0.35, 1.0, easeInG(heightPercent, 2.0));
+  vGrassColour = mix(base, tip, mix(tipMix, heightPercent, highLODOut)) * shade * mix(0.22, 1.0, easeInG(heightPercent, 2.0));
+  vGrassColour = mix(vGrassColour, vec3(0.45, 0.32, 0.12), 0.28 * hs); // mixed green and tan in one clump
   float snowCover = clamp(uSnowM / max(aBlade.y, 1e-3), 0.0, 1.0); // share of the blade under the snow; 0.8 is the terrain snow albedo (render/pbr.ts, Oke 1987)
   vGrassColour = mix(vGrassColour, vec3(0.8), snowCover);
   float toGround = smoothstep(uGrass.z * 0.5, uGrass.z * 0.85, dist); if (toGround > 0.0) vGrassColour = mix(vGrassColour, groundLayer(soilGround(root.xz), root.xz), toGround); // toward the grass radius blades take the terrain's soil colour + moss layer (render/flora/moss) (far normals are already up): no edge where the field ends
   vec3 grassPos = root + p;
-  float viewDotNormal = clamp(abs(dot(face * vec3(0.0, 0.0, 1.0), normalize(vec3(cameraPosition.x - root.x, 0.0, cameraPosition.z - root.z)))), 0.0, 1.0); // one face, seen from both sides
-  float viewSpaceThickenFactor = easeOutG(1.0 - viewDotNormal, 4.0) * smoothstep(0.0, 0.2, viewDotNormal);
 `;
 const materials = new Map<number, THREE.MeshStandardMaterial>();
 function grassMaterial(segments: number) {
@@ -150,13 +150,10 @@ function grassMaterial(segments: number) {
     addPatchFade(shader); m!.userData.patchFade = true; // render/fade (in-page transition): uniform only, same key; BEFORE the project_vertex swap below so its world-xz line follows the custom projection
     shader.vertexShader = VERT_HEAD + shader.vertexShader
       .replace('#include <beginnormal_vertex>', `vec3 objectNormal; ${VERT_BODY}`)
-      .replace('#include <begin_vertex>', 'vec3 transformed = grassPos;')
-      .replace('#include <project_vertex>', `vec4 mvPosition = modelViewMatrix * vec4(transformed, 1.0);
-        mvPosition.x += viewSpaceThickenFactor * (xSide - 0.5) * grassTotalWidth * 0.5 * zSide; // upstream "HACK"
-        gl_Position = projectionMatrix * mvPosition;`);
+      .replace('#include <begin_vertex>', 'vec3 transformed = grassPos;');
     shader.fragmentShader = 'varying vec3 vGrassColour;\n' + shader.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\n diffuseColor.rgb = vGrassColour;');
   };
-  m.customProgramCacheKey = () => `boreal-grass-clear-${segments}`;
+  m.customProgramCacheKey = () => `boreal-grass-crossed-${segments}`;
   materials.set(segments, m); return m;
 }
 /** Blade template: vertex IDs + index for ONE face (upstream #CreateGeometry_ built front + back faces for FrontSide; drawn
@@ -165,8 +162,8 @@ const templates = new Map<number, { id: THREE.BufferAttribute; index: THREE.Buff
 function template(segments: number) {
   let t = templates.get(segments); if (t) return t;
   const V = (segments + 1) * 2, idx: number[] = [];
-  for (let i = 0; i < segments; i++) { const vi = i * 2; idx.push(vi, vi + 1, vi + 2, vi + 2, vi + 1, vi + 3); }
-  t = { id: new THREE.BufferAttribute(Float32Array.from({ length: V }, (_, i) => i), 1), index: new THREE.BufferAttribute(new Uint16Array(idx), 1) };
+  for (let copy = 0; copy < 2; copy++) for (let i = 0; i < segments; i++) { const vi = copy * V + i * 2; idx.push(vi, vi + 1, vi + 2, vi + 2, vi + 1, vi + 3); }
+  t = { id: new THREE.BufferAttribute(Float32Array.from({ length: V * 2 }, (_, i) => i), 1), index: new THREE.BufferAttribute(new Uint16Array(idx), 1) };
   templates.set(segments, t); return t;
 }
 /** ONE instanced mesh per blade LOD for the whole field (perf audit: was 2 meshes per 10 m tile, ~92 objects): kept blades of

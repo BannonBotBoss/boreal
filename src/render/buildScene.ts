@@ -61,6 +61,8 @@ import { planetFor } from '../world/globe/planet';
 import { horizonMetres, skirtLatLon } from '../world/globe/horizonSkirt';
 import { warmDemTiles, warmPhotoTiles } from '../world/globe/openTiles';
 import { createContinuousTerrain } from './continuousTerrain';
+import { createContactShadows } from './contactShadow';
+import { drivePose } from './driveBridge';
 import { updateTreeUniforms } from './trees';
 import { createGrass } from './grass/grass';
 import { createFlora } from './flora/flora';
@@ -104,6 +106,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   // One surface to the horizon. The old skirt was a second mesh, and the chunk
   // grounds were the floating plates on top of it. Both stay out of the scene.
   const terrain = createContinuousTerrain(); scene.add(terrain.mesh);
+  const contacts = createContactShadows(scene);
   // The skirt used to request the DEM and the photograph. The continuous mesh does not.
   // Without that request the cover sample stays the seeded forest and a prairie home draws spruce.
   const coverPlanet = planetFor(STAGES.seed, (x, z) => heightAt(x, z), 'ground-cover');
@@ -553,6 +556,13 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     }
     const fx = bandFx(photoreal.tier); // world/globe/inpage: no god rays over the far layer, AO once the patch is in (= tier otherwise)
     litter.place();
+    {
+      const spots = [{ x: wolf.root.position.x, y: wolf.root.position.y, z: wolf.root.position.z, s: 1.15 }];
+      for (const pup of litter.pups()) spots.push({ x: pup.x, y: heightAt(pup.x, pup.z), z: pup.z, s: 0.48 });
+      const fox = drivePose();
+      if (fox) spots.push({ x: fox.x, y: heightAt(fox.x, fox.z), z: fox.z, s: 0.7 });
+      contacts.set(spots);
+    }
     for (const child of scene.children) {
       const picture = child.userData.animalPicture || child.userData.wolfLod || child.name.startsWith('pup:');
       if (picture || child === wolf.root) coatNight(child, darkness);

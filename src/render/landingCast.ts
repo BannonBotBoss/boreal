@@ -301,10 +301,20 @@ export function createLandingCast(scene: THREE.Scene) {
         if (!proc) continue;
         const driven = animal.key === 'red_fox' ? drivePose() : null;
         if (driven) { animal.x = driven.x; animal.z = driven.z; animal.yaw = driven.yaw; }
-        const motion: Motion = driven?.motion === 'run' ? 'run' : driven?.motion === 'idle' ? 'idle' : 'walk';
         const speed = driven?.speed ?? 1.2;
+        let motion: Motion = driven?.motion === 'run' ? 'run' : driven?.motion === 'idle' ? 'idle' : 'walk';
+        let stepPhase = phase;
+        if (driven) {
+          const fox = proc.root.userData as { phase?: number; px?: number; pz?: number };
+          const stride = speed > 3.2 ? 1.35 : speed > 1.15 ? 0.72 : 0.45;
+          const moved = fox.px == null || fox.pz == null ? 0 : Math.hypot(driven.x - fox.px, driven.z - fox.pz);
+          fox.phase = ((fox.phase ?? 0) + (driven.moving ? moved / stride : 0)) % 1;
+          fox.px = driven.x; fox.pz = driven.z;
+          motion = !driven.moving || speed < 0.05 ? 'idle' : speed > 3.2 ? 'run' : 'walk';
+          stepPhase = fox.phase;
+        }
         const y = landingStandY(heightAt(animal.x, animal.z));
-        proc.pose(motion, phase, speed);
+        proc.pose(motion, stepPhase, driven ? (driven.moving ? speed : 0) : speed);
         proc.root.position.set(animal.x, y, animal.z);
         proc.root.rotation.y = animal.yaw;
         bodies.push({
@@ -312,8 +322,8 @@ export function createLandingCast(scene: THREE.Scene) {
           species: animal.display,
           x: animal.x, y, z: animal.z,
           yaw: animal.yaw,
-          moving: speed > 0.05,
-          motion, phase, speed,
+          moving: driven ? !!driven.moving && speed > 0.05 : speed > 0.05,
+          motion, phase: stepPhase, speed: driven?.moving ? speed : 0,
           root: proc.root,
         });
       }

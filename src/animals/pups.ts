@@ -85,8 +85,8 @@ export function createLitter(scene: THREE.Scene) {
         const aim = pupAim(row.pup.slot, motherX, motherZ, motherYaw, clock, motherMoved, row.pup.ageYears, threatened);
         row.pup.x = stepped.x;
         row.pup.z = stepped.z;
-        row.pup.yaw = aim.yaw;
-        row.pup.act = aim.act;
+        row.pup.yaw = stepped.yaw;
+        row.pup.act = stepped.act;
         const moved = Math.hypot(stepped.x - prevX, stepped.z - prevZ) > 0.004;
         const speed = moved ? 0.6 : 0;
         const motion = aim.act === 'pounce' || aim.act === 'tumble' ? 'jump' : aim.act === 'sit' || aim.act === 'sniff' || !moved ? 'idle' : 'walk';

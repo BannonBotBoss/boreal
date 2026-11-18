@@ -16,6 +16,7 @@ import { CONTACTS } from './core/contactBus';
 import { WAKES, sampleSurface, hipsFor, pawArea, waterline, travelSpeed } from './core/waterWake';
 import { catalog } from './core/catalog';
 import { heightAt, type Entity } from './core/world';
+import { Vector3 } from 'three';
 import { forestHandsOn, readForestHands } from './vr/forestSession';
 import { driveFrame, drivePose } from './render/driveBridge';
 import { pupCloud } from './animals/pups';
@@ -90,6 +91,22 @@ import { controlsScreen } from './ui/controls';
 import { ACTION, ACTIVE, BINDINGS_KEY, atomValues, bindingLabel, comboLabel, groupLabel, loadBindings, resolveInput, saveBindings, type Bindings } from './core/bindings';
 
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+const promptAt = new Vector3();
+/** Words sit beside mama, above the pups, so the labels do not cover their bodies. */
+function placeAnimalPrompt() {
+  const node = element<HTMLElement>('interaction');
+  const cam = view?.camera;
+  if (!node || !cam) return;
+  const side = yaw + Math.PI / 2;
+  promptAt.set(player.x + Math.cos(side) * 1.35, heightAt(player.x, player.z) + 1.35, player.z + Math.sin(side) * 1.35);
+  promptAt.project(cam);
+  if (promptAt.z > 1) { node.style.visibility = 'hidden'; return; }
+  node.style.visibility = 'visible';
+  node.style.left = `${(promptAt.x * 0.5 + 0.5) * window.innerWidth}px`;
+  node.style.top = `${(-promptAt.y * 0.5 + 0.5) * window.innerHeight}px`;
+  node.style.bottom = 'auto';
+  node.style.transform = 'translate(-20%, -120%)';
+}
 const canvas = element<HTMLCanvasElement>('world'), status = element('status'), actionButton = element<HTMLButtonElement>('act');
 const dialog = element<HTMLDialogElement>('info');
 const SAVE_KEY = 'boreal.events.v1', NEEDS_KEY = 'boreal.needs.v1'; // T-0036: the embodied animal's needs (water, rest, energy)
@@ -716,6 +733,7 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
   target = view.entities().filter(e => availableActions(player, e, context).length).sort((a, b) => Math.hypot(player.x - a.x, player.z - a.z) - Math.hypot(player.x - b.x, player.z - b.z))[0];
   const action = target && availableActions(player, target, context)[0];
   element('target').textContent = target ? catalog[target.kind].title : 'Explore';
+  placeAnimalPrompt();
   const canDrink = (!action || action === 'forage') && waterAhead(player.x, player.z, yaw);
   const actionLabel = canDrink ? `${pad ? 'A / E' : 'E / click'} · ${drinking ? 'stop drinking' : 'drink'}` : action ? `${pad ? 'A / E' : 'E / click'} · ${action}` : 'Approach an individual';
   if (actionButton.textContent !== actionLabel) actionButton.textContent = actionLabel;

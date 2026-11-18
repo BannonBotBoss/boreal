@@ -197,14 +197,14 @@ pub extern "C" fn litter_reset() {
     LITTER_PAGE.with(|p| *p.borrow_mut() = [litter::PupLive::default(); 5]);
 }
 
-/// One frame of age, size, follow, and personal space. `out` is 5 pups × (x, z, age, scale).
+/// One frame of age, size, follow, and personal space. `out` is 5 pups × (x, z, age, scale, yaw, act).
 #[no_mangle]
 pub extern "C" fn litter_frame(dt: f64, game_seconds: f64, mother_x: f64, mother_z: f64, yaw: f64, time: f64, moving: u32, threatened: u32, out: *mut f64) {
     if out.is_null() { return; }
     let stepped = LITTER_PAGE.with(|p| litter::litter_tick(&mut p.borrow_mut(), dt, game_seconds, mother_x, mother_z, yaw, time, moving != 0, threatened != 0));
-    let o = unsafe { std::slice::from_raw_parts_mut(out, 20) };
+    let o = unsafe { std::slice::from_raw_parts_mut(out, 30) };
     for (i, row) in stepped.iter().enumerate() {
-        o[i * 4] = row.0; o[i * 4 + 1] = row.1; o[i * 4 + 2] = row.2; o[i * 4 + 3] = row.3;
+        o[i * 6] = row.0; o[i * 6 + 1] = row.1; o[i * 6 + 2] = row.2; o[i * 6 + 3] = row.3; o[i * 6 + 4] = row.4; o[i * 6 + 5] = row.5;
     }
 }
 /// Scratch for the litter calls. Valid until the next scratch request. Does not allocate every frame once it has grown.

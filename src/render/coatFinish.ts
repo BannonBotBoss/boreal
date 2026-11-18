@@ -17,8 +17,8 @@ float wrap = clamp(dot(nrm, normalize(vec3(-0.2, 0.86, 0.32))), 0.0, 1.0);
 // only modulates shade. The result is capped so daylight cannot clip the body to white.
 float lum = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
 float shade = clamp(lum, 0.35, 1.0);
-vec3 saddle = vec3(0.16, 0.14, 0.12);
-vec3 belly = vec3(0.46, 0.40, 0.30);
+vec3 saddle = vec3(0.24, 0.16, 0.11);
+vec3 belly = vec3(0.50, 0.40, 0.28);
 vec3 coat = mix(belly, saddle, smoothstep(0.58, 0.92, agoutiUp));
 coat *= shade * (0.62 + 0.55 * wrap);
 vec3 light = outgoingLight / max(diffuseColor.rgb, vec3(0.05));

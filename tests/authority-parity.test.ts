@@ -82,13 +82,13 @@ test('the rust drive step matches the page step', async () => {
 test('pup age and size match, and the rust litter keeps a body gap', async () => {
   const x = await load();
   x.litter_reset();
-  const ptr = x.litter_scratch(20);
+  const ptr = x.litter_scratch(30);
   x.litter_frame(1 / 30, 7200, 0, 0, 0, 0, 1, 0, ptr);
-  const o = new Float64Array(x.memory.buffer, ptr, 20);
+  const o = new Float64Array(x.memory.buffer, ptr, 30);
   const age = ageAfter(LITTER.emergeYears, 7200);
   assert.ok(Math.abs(o[2] - age) < 1e-9, `age ${o[2]} vs ${age}`);
   assert.ok(Math.abs(o[3] - pupScale(age)) < 1e-9, `scale ${o[3]}`);
-  const pts = [0, 1, 2, 3, 4].map(i => ({ x: o[i * 4], z: o[i * 4 + 1] }));
+  const pts = [0, 1, 2, 3, 4].map(i => ({ x: o[i * 6], z: o[i * 6 + 1] }));
   for (let i = 0; i < pts.length; i++) {
     assert.ok(Math.hypot(pts[i].x, pts[i].z) > 0.4, `pup ${i} is inside mama`);
     for (let j = i + 1; j < pts.length; j++) assert.ok(Math.hypot(pts[i].x - pts[j].x, pts[i].z - pts[j].z) > 0.3, `pups ${i} and ${j} overlap`);

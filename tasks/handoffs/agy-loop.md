@@ -1,13 +1,13 @@
-# agy-loop Handoff (2026-11-17 14:41 PT — In Progress: Step 0 Review Done, Executing T-0254 Live Capture, Calibrated Audit & Proposal)
+# agy-loop Handoff (2026-11-17 16:41 PT — In Progress: Step 0 Review Done, Executing T-0254 Live Capture, Calibrated Audit & Proposal)
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`)
 - **Proposal worktree**: `C:\dev\boreal-agy-t0254` (branch `agy/t0254-propose`, at `origin/main` `8051065f2720cac86bcbfa76c185eb872b409c4d`)
 - **Merged `origin/main`**: `8051065f2720cac86bcbfa76c185eb872b409c4d` (`#487` `T-0253` merged into `main`; served local `main` `871531a73379eb6be02583f09eefb302b0e36226` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched)
-- **Run start**: `2026-11-17T14:40:05-08:00` (`America/Los_Angeles` PT; host clock `2026-11-17T15:40:05-07:00`)
+- **Run start**: `2026-11-17T16:40:04-08:00` (`America/Los_Angeles` PT; host clock `2026-11-17T17:40:04-07:00`)
 
 ## Step 0: Review First (Rule 15, Oldest First) — Completed
-- Executed `git fetch --all --prune`, `git merge main`, `git merge origin/main`, `npx tsx tools/tasks.ts`, `git log --all --since="2026-11-14T21:00:00Z" --oneline`, `gh pr list -R Bannon-github/boreal --state open --json number,title,headRefName,headRefOid,baseRefName,updatedAt,isDraft`, and `gh issue list -R Bannon-github/boreal --limit 5 --state all --json number,title,state,updatedAt`:
+- Executed `git fetch origin --prune`, `git merge main`, `git merge origin/main`, `npx tsx tools/tasks.ts`, `git log --all --since="2026-11-14T21:00:00Z" --oneline --decorate`, `gh pr list -R Bannon-github/boreal --state open --json number,title,headRefName,headRefOid,baseRefName,updatedAt,isDraft`, and `gh issue list -R Bannon-github/boreal --limit 5 --state all --json number,title,state,updatedAt`:
   - `origin/main` remains at `8051065f2720cac86bcbfa76c185eb872b409c4d` (`#487` `T-0253` merged).
   - **Zero** new non-`agy` commits, task events, PR updates, or GitHub issues across any local or remote branch since `2026-11-14T21:29:55Z` (`2ce2a44c876914fcb7be2d27565f2af6228e315d`).
   - **Open non-`agy` PRs demonstrably unchanged** (retaining prior blocking verdicts per Rule 15 unchanged-blocked-submissions clause):
@@ -28,8 +28,8 @@
   4. Quality ladder vs manual settings caps (`LADDER[0]` unreachable `resScale 2`, `3 cascades`, `Full` GTAO), competing dual `Menu -> Graphics` selectors & `GOVERNOR.probeCap` mutation, and `ui/loading.ts` / standalone `?view=globe` `#loading` lifecycle (`src/core/quality.ts`, `src/core/renderSettings.ts`, `src/ui/menu.ts`, `src/ui/loading.ts`, `src/world/globe/globeView.ts`).
 
 ## Exact Next Step
-1. Inspect `T-0253` commit `8051065` for artifact layout, inspect existing `ref-0.jpg..ref-3.jpg`, and read target `T-0254` source files in `C:\dev\boreal-agy-t0254`.
-2. Run headless live capture (`recording.webm`, `frame-0.png..frame-3.png` via preview server on agy port `5250`), write `reference/SOURCES.md`, `observations.json`, calibrated `numeric-check.mjs` -> `numbers.json`, `tasks/T-0254-*.md`, and `tasks/events/2026-11-17T14-XX-agy-propose-T-0254.json`, verify `npx tsc --noEmit` & `npm test`, push `agy/t0254-propose`, open PR `#488`, merge into `agy/loop`, and finalize this handoff.
+1. Read `T-0253` template files and target `T-0254` source files in `C:\dev\boreal-agy-t0254`, and inspect `ref-0.jpg..ref-3.jpg`.
+2. Run headless live capture (`recording.webm`, `frame-0.png..frame-3.png` via preview server on agy port `5250`), write `reference/SOURCES.md`, `observations.json`, calibrated `numeric-check.mjs` -> `numbers.json`, `tasks/T-0254-*.md`, and `tasks/events/2026-11-17T16-XX-agy-propose-T-0254.json`, verify `npx tsc --noEmit` & `npm test`, push `agy/t0254-propose`, open PR `#488`, merge into `agy/loop`, and finalize this handoff.
 
 ## Needs From Another Agent
 - Non-`agy` `approve-plan` events on proposed `agy` tasks `T-0224..T-0253`.

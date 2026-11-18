@@ -20,6 +20,15 @@ export const LITTER = {
   viewBackM: 1.55,
   /** A step longer than a walk is the drop. She does not leave the litter at the old spot. */
   rejoinM: 4,
+  /**
+   * Disc around mama that a pup body may not enter (m). Chest plus a planted
+   * foreleg: a center inside this is standing in her legs.
+   */
+  mamaBodyM: 0.42,
+  /** Four-week pup body radius (m). It grows with pupScale. */
+  pupBodyM: 0.18,
+  /** Seconds for the steering velocity to catch a new direction. A frame cannot reverse it. */
+  steerTau: 0.28,
   /** Game seconds for one year of pup growth. Ten real minutes at the default clock (×12) is half a year. */
   growthGameSPerYear: 14400,
   youngStepHz: 2.6,
@@ -165,6 +174,61 @@ export function trailSlot(slot: number, motherX: number, motherZ: number, yaw: n
   return { x: at.x, z: at.z };
 }
 
+/** Ground radius of one pup. Four weeks is pupBodyM. A yearling is the adult share of that disc. */
+export function bodyRadius(ageYears: number) {
+  const young = pupScale(LITTER.emergeYears);
+  return LITTER.pupBodyM * pupScale(ageYears) / young;
+}
+
+export interface HerdBody { x: number; z: number; r: number }
+
+/**
+ * Personal space. Each pup is a disc, and mama is a disc they cannot enter.
+ * Overlap is pushed out along the line between the centers. A few passes
+ * settle a pile so the last pup is not left inside her.
+ */
+export function separateHerd(pups: readonly HerdBody[], motherX: number, motherZ: number, mamaR = LITTER.mamaBodyM): HerdBody[] {
+  const out = pups.map(p => ({ x: p.x, z: p.z, r: p.r }));
+  const clearMama = (p: HerdBody) => {
+    let dx = p.x - motherX, dz = p.z - motherZ;
+    let d = Math.hypot(dx, dz);
+    const need = mamaR + p.r;
+    if (d >= need) return;
+    if (d < 1e-6) { dx = 0; dz = 1; d = 1; }
+    p.x = motherX + dx / d * need;
+    p.z = motherZ + dz / d * need;
+  };
+  const splitPairs = () => {
+    for (let i = 0; i < out.length; i++) for (let j = i + 1; j < out.length; j++) {
+      const dx = out[j].x - out[i].x, dz = out[j].z - out[i].z;
+      let d = Math.hypot(dx, dz);
+      const need = out[i].r + out[j].r + 1e-4;
+      if (d >= need) continue;
+      // A shared point has no line between the centers. A fixed angle per pair still splits them.
+      const ux = d < 1e-6 ? Math.cos(i + j) : dx / d;
+      const uz = d < 1e-6 ? Math.sin(i + j) : dz / d;
+      if (d < 1e-6) d = 0;
+      const push = (need - d) / 2;
+      out[i].x -= ux * push; out[i].z -= uz * push;
+      out[j].x += ux * push; out[j].z += uz * push;
+    }
+  };
+  for (let n = 0; n < 8; n++) {
+    for (const p of out) clearMama(p);
+    splitPairs();
+  }
+  // The last moves are between pups. Mama was cleared with a little extra so
+  // this pass cannot put a body back inside her legs.
+  for (const p of out) {
+    const keep = p.r;
+    p.r += 0.004;
+    clearMama(p);
+    p.r = keep;
+  }
+  for (let n = 0; n < 4; n++) splitPairs();
+  return out;
+}
+
 /** How fast this activity moves. Sitting and sniffing linger. A pounce is quicker. */
 export function actMps(act: PupAct, ageYears: number) {
   const walk = walkMps(ageYears);
@@ -176,17 +240,24 @@ export function actMps(act: PupAct, ageYears: number) {
 }
 
 /** One follow step. The pup walks toward its aim and does not overshoot it.
- *  While she is walking, a pup that is off its home steps onto that home, so the
- *  loose clump stays beside her in the chase view instead of dragging under the camera. */
-export function followStep(x: number, z: number, slot: number, motherX: number, motherZ: number, yaw: number, dt: number, ageYears = LITTER.emergeYears, time = 0, moving = true, threatened = false) {
+ *  The velocity eases onto the new direction (steerTau), so one frame cannot
+ *  flip it. A gap longer than rejoinM is still the drop onto the trail. */
+export function followStep(x: number, z: number, slot: number, motherX: number, motherZ: number, yaw: number, dt: number, ageYears = LITTER.emergeYears, time = 0, moving = true, threatened = false, vel?: { vx: number; vz: number }) {
   const act = pupAct(slot, time);
   const slotAt = trailSlot(slot, motherX, motherZ, yaw, ageYears, time, moving, threatened);
   const dx = slotAt.x - x, dz = slotAt.z - z;
   const d = Math.hypot(dx, dz);
-  if (d < 1e-6 || dt <= 0) return { x, z };
-  if (d > LITTER.rejoinM || (moving && d > 0.2)) return { x: slotAt.x, z: slotAt.z };
-  const step = Math.min(actMps(act, ageYears) * dt, d);
-  return { x: x + dx / d * step, z: z + dz / d * step };
+  if (d < 1e-6 || dt <= 0) return { x, z, vx: 0, vz: 0 };
+  if (d > LITTER.rejoinM) return { x: slotAt.x, z: slotAt.z, vx: 0, vz: 0 };
+  const speed = actMps(act, ageYears);
+  const want = Math.min(speed, d / dt);
+  const wantVx = dx / d * want, wantVz = dz / d * want;
+  const k = 1 - Math.exp(-dt / LITTER.steerTau);
+  const vx0 = vel?.vx ?? 0, vz0 = vel?.vz ?? 0;
+  let vx = vx0 + (wantVx - vx0) * k, vz = vz0 + (wantVz - vz0) * k;
+  const step = Math.hypot(vx, vz) * dt;
+  if (step > d) { const s = d / step; vx *= s; vz *= s; }
+  return { x: x + vx * dt, z: z + vz * dt, vx, vz };
 }
 
 export type PupCall = 'yip' | 'whimper' | 'huff' | 'call';

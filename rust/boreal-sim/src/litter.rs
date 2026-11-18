@@ -28,6 +28,12 @@ const LATERAL_M: f64 = 1.15;
 const VIEW_BACK_M: f64 = 1.55;
 /// Further than this in one step is a drop, not a walk. The pup is on the trail at once.
 const REJOIN_M: f64 = 4.0;
+/// Disc around mama that a pup body may not enter. Chest plus a planted foreleg.
+const MAMA_BODY_M: f64 = 0.42;
+/// Four-week pup body radius. It grows with body_scale.
+const PUP_BODY_M: f64 = 0.18;
+/// Seconds for the steering velocity to catch a new direction.
+const STEER_TAU: f64 = 0.28;
 
 fn growth_u(age_years: f64) -> f64 {
     (age_years.max(0.0) / 1.0).min(1.0)
@@ -152,6 +158,75 @@ pub fn trail_slot(slot: u32, mother_x: f64, mother_z: f64, yaw: f64, age_years: 
     (x, z)
 }
 
+/// Ground radius of one pup. Four weeks is `PUP_BODY_M`.
+pub fn body_radius(age_years: f64) -> f64 {
+    let young = body_scale(EMERGE_YEARS);
+    PUP_BODY_M * body_scale(age_years) / young
+}
+
+/// Personal space. Each pup is a disc, and mama is a disc they cannot enter.
+pub fn separate_herd(pups: &[(f64, f64, f64)], mother_x: f64, mother_z: f64) -> Vec<(f64, f64, f64)> {
+    let mut out: Vec<(f64, f64, f64)> = pups.to_vec();
+    let clear_mama = |p: &mut (f64, f64, f64)| {
+        let mut dx = p.0 - mother_x;
+        let mut dz = p.1 - mother_z;
+        let mut d = (dx * dx + dz * dz).sqrt();
+        let need = MAMA_BODY_M + p.2;
+        if d >= need {
+            return;
+        }
+        if d < 1e-6 {
+            dx = 0.0;
+            dz = 1.0;
+            d = 1.0;
+        }
+        p.0 = mother_x + dx / d * need;
+        p.1 = mother_z + dz / d * need;
+    };
+    let split_pairs = |out: &mut Vec<(f64, f64, f64)>| {
+        for i in 0..out.len() {
+            for j in (i + 1)..out.len() {
+                let dx = out[j].0 - out[i].0;
+                let dz = out[j].1 - out[i].1;
+                let mut d = (dx * dx + dz * dz).sqrt();
+                let need = out[i].2 + out[j].2 + 1e-4;
+                if d >= need {
+                    continue;
+                }
+                let (ux, uz) = if d < 1e-6 {
+                    (((i + j) as f64).cos(), ((i + j) as f64).sin())
+                } else {
+                    (dx / d, dz / d)
+                };
+                if d < 1e-6 {
+                    d = 0.0;
+                }
+                let push = (need - d) / 2.0;
+                out[i].0 -= ux * push;
+                out[i].1 -= uz * push;
+                out[j].0 += ux * push;
+                out[j].1 += uz * push;
+            }
+        }
+    };
+    for _ in 0..8 {
+        for p in out.iter_mut() {
+            clear_mama(p);
+        }
+        split_pairs(&mut out);
+    }
+    for p in out.iter_mut() {
+        let keep = p.2;
+        p.2 += 0.004;
+        clear_mama(p);
+        p.2 = keep;
+    }
+    for _ in 0..4 {
+        split_pairs(&mut out);
+    }
+    out
+}
+
 fn act_mps(act: &str, age_years: f64) -> f64 {
     let walk = walk_mps(age_years);
     match act {
@@ -176,8 +251,19 @@ pub fn follow_step(x: f64, z: f64, slot: u32, mother_x: f64, mother_z: f64, yaw:
     if d > REJOIN_M {
         return (tx, tz);
     }
-    let step = (act_mps(act, age_years) * dt).min(d);
-    (x + dx / d * step, z + dz / d * step)
+    // Same ease as the page: velocity starts at rest and catches the aim over STEER_TAU.
+    let speed = act_mps(act, age_years);
+    let want = speed.min(d / dt);
+    let k = 1.0 - (-dt / STEER_TAU).exp();
+    let mut vx = (dx / d * want) * k;
+    let mut vz = (dz / d * want) * k;
+    let step = (vx * vx + vz * vz).sqrt() * dt;
+    if step > d {
+        let s = d / step;
+        vx *= s;
+        vz *= s;
+    }
+    (x + vx * dt, z + vz * dt)
 }
 
 /// Past the trail, not yet the rejoin. A short separation.
@@ -341,6 +427,25 @@ mod tests {
         let far = (x * x + z * z).sqrt();
         let near = (tx * tx + tz * tz).sqrt();
         assert!(near < far, "threatened {near} should be closer than {far}");
+    }
+
+    #[test]
+    fn a_pile_keeps_a_body_gap() {
+        let r = body_radius(EMERGE_YEARS);
+        let piled: Vec<(f64, f64, f64)> = (0..5).map(|i| (0.04 * i as f64, 0.03 * i as f64, r)).collect();
+        let out = separate_herd(&piled, 0.0, 0.0);
+        let mama = MAMA_BODY_M + r;
+        for p in &out {
+            let d = (p.0 * p.0 + p.1 * p.1).sqrt();
+            assert!(d >= mama - 1e-6, "inside mama at {d}");
+        }
+        for i in 0..out.len() {
+            for j in (i + 1)..out.len() {
+                let d = ((out[i].0 - out[j].0).powi(2) + (out[i].1 - out[j].1).powi(2)).sqrt();
+                assert!(d >= r * 2.0 - 1e-6, "overlap at {d}");
+            }
+        }
+        assert!(body_radius(1.0) > r);
     }
 
     #[test]

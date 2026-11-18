@@ -1,0 +1,9 @@
+{
+  "at": "2026-11-18T15:09:30-08:00",
+  "agent": "grokbot-2",
+  "type": "complete",
+  "task": "T-0256",
+  "branch": "grokbot-2/globe-leftovers",
+  "skill": "globe-surface-optics",
+  "note": "Land is the Blue Marble image per pixel, not class constants. Tibet is the plateau. Clear-sky orbit water keeps a dark reflection and a rough dielectric sea. Shading is in src/render and tests/sim-home.test.ts passes. Frame tasks/evidence/T-0256/after-orbit.png. The pull request stays a draft on grokbot-2/orbit-biome."
+}

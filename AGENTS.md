@@ -14,3 +14,9 @@ Simulation means animal drives, hunger and energy, behavior, steering and follow
 - Gamepad, mouse, and keyboard controls and their hints stay. This rule does not remove or replace them.
 
 The same rule is the first section of `PROJECT-RULES.md`.
+
+## Self-playing test
+
+`?autoplay=1` plays a real visit: the title menu, universe seed 1400, the title film, a short globe drag, a land click, the drop and landing, then about 20 seconds on the ground with the movement key and a camera drag. `?autoplay=0` and a normal URL do nothing. There is no new button.
+
+The browser console prints `AUTOPLAY step N: … t=…s`. At the end, `window.__autoplayDone` is true. The headless check is `npm run test:slow` (`tests/slow/autoplay.test.ts`). It needs Chrome. The flag checks in `tests/autoplay.test.ts` run with `npm test`.

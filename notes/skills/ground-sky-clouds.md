@@ -17,7 +17,7 @@ Use when the player is on the ground under a clear blue sky while the weather ce
 ## Checks
 
 - `tests/ground-sky-cloud.test.ts` resamples the field. It fails the old `0.62 - 0.4·C` line at cloud 0.32 (about 6 percent visible) and fails if the dome stops calling `domeCoverThreshold`.
-- Same camera before and after: `?nomenu&stages=1&trees=v2&at=65.4,-18.6,2.054&hour=8`. The sky band goes from a clear blue to streaky cirrus. Frames in `tasks/evidence/T-0258/`.
+- Same camera before and after: `?nomenu&stages=1&trees=v2&at=65.4,-18.6,2.054&hour=8`. The sky band goes from a clear blue to streaky cirrus. Frames in `tasks/evidence/T-0259/`.
 
 ## Mistakes to avoid
 

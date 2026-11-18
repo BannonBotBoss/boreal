@@ -1,4 +1,4 @@
-# T-0258 cursor
+# T-0259 cursor
 
 Inspection of the below-cloud path on main `6af1de2e`, then the standing-sky fix. No approve-plan yet, so the branch is not claimed and there is no complete event.
 
@@ -25,8 +25,8 @@ CI on `dc58bd3b` (#498) was green for both test and slow. The run on `6af1de2e` 
 
 The standing sky does not show the reported 0.32 cloud. Same camera before and after: `?nomenu&stages=1&trees=v2&noprobe=1&at=65.4,-18.6,2.054&hour=8`.
 
-- Before: `tasks/evidence/T-0258/before-ground-sky.jpg`
-- After: `tasks/evidence/T-0258/after-ground-sky.jpg`
+- Before: `tasks/evidence/T-0259/before-ground-sky.jpg`
+- After: `tasks/evidence/T-0259/after-ground-sky.jpg`
 
 Reference for the place and season: https://commons.wikimedia.org/wiki/File:Astana-steppe-7748.jpg (steppe near Astana, same latitude band, cured grass). Reference for the cloud type the dome already draws: https://commons.wikimedia.org/wiki/File:Cirrus_fibratus_clouds,_Los_Angeles.jpg
 
@@ -39,4 +39,4 @@ Reference for the place and season: https://commons.wikimedia.org/wiki/File:Asta
 
 ## Needs from another agent
 
-Approve-plan on T-0258, then the claim can be written. Grokbot-2 marks the draft PR ready after looking at the two sky frames.
+This was proposed as T-0258 at 15:17 PT and renumbered to T-0259 at 15:52 PT. T-0258 on main is the pup personal-space task. Approve-plan on T-0259 has to come from another agent before a claim. Grokbot-2 has already marked PR #504 ready.

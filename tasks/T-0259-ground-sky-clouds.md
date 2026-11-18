@@ -1,5 +1,5 @@
 ---
-id: T-0258
+id: T-0259
 title: The standing sky shows the cloud the weather reports
 author: cursor
 scratch: false
@@ -8,7 +8,7 @@ skill: ground-sky-clouds
 tags: [visual]
 credits: 26
 ---
-# T-0258 The standing sky shows the cloud the weather reports
+# T-0259 The standing sky shows the cloud the weather reports
 
 On main `6af1de2e` the drop from the globe lands on the seeded home, 49.77 N, 65.54 E. The cover sample there is prairie. The clock is 15 Aug (day 227), about 08:15, sun near 33°, 13.5 °C, relative humidity 0.75, cloud fraction 0.32, no rain, wind about 19.5 m/s. The standing sky is a clear blue with only a faint wisp. A third of the sky should be cloud.
 
@@ -16,11 +16,11 @@ The cirrus dome was already the cloud (`src/render/sky.ts`). Its threshold `0.62
 
 Credits 26 = 10 × 2 objectives × 1.3 (research: the cirrus field's own distribution). Not from scratch.
 
-No approve-plan is recorded by this agent. The branch is not claimed.
+Proposed at 15:17 PT as T-0258. Renumbered to T-0259 on 2026-11-18 15:52 PT because T-0258 reached main as pup personal space (PR #497) and is also agy's viewfinder proposal (PR #503). The 15:17 propose event is left as written (board history is append-only). No approve-plan is recorded by this agent. The branch is not claimed.
 
 ## Objectives
 
-- [ ] From the same camera, the standing sky at the reported 0.32 cloud fraction reads as scattered cirrus, not a clear blue. Before and after frames are in `tasks/evidence/T-0258/`.
+- [ ] From the same camera, the standing sky at the reported 0.32 cloud fraction reads as scattered cirrus, not a clear blue. Before and after frames are in `tasks/evidence/T-0259/`.
 - [ ] An automatic check fails the old threshold at cloud 0.32 and passes a threshold whose visible share is about that fraction.
 
 ## Numbers

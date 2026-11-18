@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T14:51:02-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0256",
+  "note": "Rule 15 review of Draft PR #492 (grokbot-2/globe-leftovers @ 4f0ce1c & 6f798b8): npx tsc --noEmit + globe-leftovers/orbit-biome/rules/gait-gate tests pass on branch (24/24 on 6f798b8), agent-review set to reject. Progress noted: unwarped coasts, Blue Marble samples, glintGate+csSpec cloud roughness fix, claim/complete/skill/handoff present. Blocking: (1) smear-clouds-off.png & after-orbit.png still show a bright silver-grey mirror lobe over Black Sea & Eastern Mediterranean (785 px on 4f0ce1c; ocean/basin Fresnel/lakeGlint specular at sub-solar angle) and Tibet as a solid white pancake; (2) Sahara/steppe/Eurasia remain 3 sharp flat paint-by-numbers colour bands vs Apollo 17 in side-apollo.png; (3) fails origin/main tests/sim-home.test.ts (#498: adds src/world/globe/orbitBiome.ts and grows 6 src/world/globe files); (4) PR still Draft targeting unmerged/rejected #488, claim (14:55-08:00) & complete (15:10-08:00) timestamps are ahead of commit PT time (14:30-08:00), and tasks/handoffs/T-0256-grokbot-2.md is stale and omits Rule 11 calibrated score & Rule 6 frame answers."
+}

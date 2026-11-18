@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T14:51:01-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0222",
+  "note": "Rule 15 review of Draft PR #490 (grokbot-2/prairie-aerial @ bd41383): npx tsc --noEmit + prairie-aerial/rules/gait-gate tests pass on branch (20/20), agent-review set to reject. Blocking: (1) EOX Sentinel-2 cloudless is native ~10 m/px so zoom-16 upscales blurry pixels (meanAdjDx 0.98 vs 4.38 ref; non-dark 32px std 3.15 across 286 windows vs 7.28 ref); the 8.78 std test only passes via tile.ts:552 steppe*=mix(1.0,0.05,texS.a) painting fake 95%-black charcoal rings (dark70Pct 4.62% vs 0.45% ref) around tan lake interiors and jagged 45/90-deg 30m D8 grid zigzags; (2) fails origin/main tests/sim-home.test.ts (#498) by growing 6 src/world/globe files (aerialExemplar 297>94, coverSample 137>122, globeView 871>851, inpage 587>573, openTiles 475>436, tile 670>588); (3) unchanged blockers: coverSample.ts openLandHere ang<6deg still forces boreal home to open land, tile.ts uOpenLand still lacks nearDisc/landMask, after-400/800/side-* unrecaptured, PR still Draft."
+}

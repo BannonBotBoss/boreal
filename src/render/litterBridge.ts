@@ -4,6 +4,7 @@
  * TypeScript follow, which does not add a second copy of the new rule.
  */
 import { followStep, type PupPlace } from '../core/litter';
+import { wasmInstance } from './simWasm';
 
 interface LitterWasm {
   memory: WebAssembly.Memory;
@@ -19,20 +20,12 @@ const vel = new Map<number, { vx: number; vz: number }>();
 
 function boot() {
   if (wasm || loading) return;
-  loading = (async () => {
-    try {
-      const base = (import.meta as unknown as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
-      const response = await fetch(`${base}wasm/boreal_sim.wasm`);
-      if (!response.ok) return null;
-      const { instance } = await WebAssembly.instantiate(await response.arrayBuffer(), {});
-      const exports = instance.exports as unknown as LitterWasm;
-      if (!exports.litter_follow || !exports.litter_separate || !exports.litter_scratch) return null;
-      wasm = exports;
-      return exports;
-    } catch {
-      return null;
-    }
-  })();
+  loading = wasmInstance().then(instance => {
+    const exports = instance?.exports as LitterWasm | undefined;
+    if (!exports?.litter_follow || !exports.litter_separate || !exports.litter_scratch) return null;
+    wasm = exports;
+    return exports;
+  });
 }
 
 /** One pup's eased step. On the last pup of the litter, Rust also separates the bodies. */

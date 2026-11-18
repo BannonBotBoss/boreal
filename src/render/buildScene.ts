@@ -561,7 +561,8 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       for (const pup of litter.pups()) spots.push({ x: pup.x, y: heightAt(pup.x, pup.z), z: pup.z, s: 0.48 });
       const fox = drivePose();
       if (fox) spots.push({ x: fox.x, y: heightAt(fox.x, fox.z), z: fox.z, s: 0.7 });
-      contacts.set(spots);
+      const sun = 1 - Math.min(1, Math.max(0, darkness));
+      contacts.set(spots, { stretch: 0.85 + sun * 0.7, opacity: 0.22 + sun * 0.5 });
     }
     for (const child of scene.children) {
       const picture = child.userData.animalPicture || child.userData.wolfLod || child.name.startsWith('pup:');

@@ -20,7 +20,7 @@
  */
 import * as THREE from 'three';
 import { GLSL_NOISE } from '../../proc/glsl';
-import { addCloudShadow, addTranslucency } from '../pbr';
+import { addCloudShadow, addTranslucency, FLOOR } from '../pbr';
 import { addPatchFade } from '../fade';
 import { WIND_UNIFORMS } from '../trees';
 import { enqueue, cancel, pending } from '../../core/interest';
@@ -55,6 +55,7 @@ uniform float uWind, uWindAmp, uColour; uniform vec2 uWindDir; uniform vec4 uGra
 uniform vec4 uClear[5]; uniform float uClearN;
 uniform vec4 uSight[5]; uniform vec2 uSightR[5]; uniform float uSightN;
 uniform vec4 uShape[GRASS_K]; uniform vec3 uBase[GRASS_K]; uniform vec3 uTip[GRASS_K]; uniform vec3 uFall[GRASS_K];
+uniform float uFloor;
 varying vec3 vGrassColour;
 ${GLSL_NOISE}
 ${MOSS_GLSL}
@@ -103,7 +104,7 @@ const VERT_BODY = `
              : sh.y < 1.5 ? 1.0 - heightPercent * 0.9
              : GRASS_SEGMENTS < 3.0 ? 0.6 * (1.0 - heightPercent * 0.8)
              : heightPercent < sh.z ? 0.15 : pow(max(sin(3.14159 * (heightPercent - sh.z) / (1.0 - sh.z)), 0.0), 0.7);
-  float grassTotalHeight = aBlade.y * alive * (1.0 - 0.6 * smoothstep(uGrass.z * 0.6, uGrass.z, dist)); // blades settle toward the radius (no rim where the field ends)
+  float grassTotalHeight = aBlade.y * alive * mix(1.0, 0.72, clamp(uFloor, 0.0, 1.0)) * (1.0 - 0.6 * smoothstep(uGrass.z * 0.6, uGrass.z, dist)); // blades settle toward the radius; dry cover shortens them as the ground eases, it does not pop
   float grassTotalWidth = max(sh.x, 1.5 * uPx * dist) * prof * alive * min(3.0, inversesqrt(max(keep, 0.05))); // ≥ 1.5 px wide (real widths alias away), thinned blades widen to keep the coverage
   float x = (xSide - 0.5) * grassTotalWidth, y = heightPercent * grassTotalHeight;
   // wind: shared field direction + upstream's noise gusts; strength from the shared drag amplitude (trees: (U/4)²)
@@ -133,6 +134,7 @@ const VERT_BODY = `
   float tipMix = sh.y > 1.5 ? step(sh.z, heightPercent) : easeInG(heightPercent, 4.0);
   vGrassColour = mix(base, tip, mix(tipMix, heightPercent, highLODOut)) * shade * mix(0.22, 1.0, easeInG(heightPercent, 2.0));
   vGrassColour = mix(vGrassColour, vec3(0.45, 0.32, 0.12), 0.28 * hs); // mixed green and tan in one clump
+  vGrassColour = mix(vGrassColour, vec3(0.46, 0.32, 0.11), clamp(uFloor, 0.0, 1.0) * 0.7); // the same slow cover blend as the ground
   float snowCover = clamp(uSnowM / max(aBlade.y, 1e-3), 0.0, 1.0); // share of the blade under the snow; 0.8 is the terrain snow albedo (render/pbr.ts, Oke 1987)
   vGrassColour = mix(vGrassColour, vec3(0.8), snowCover);
   float toGround = smoothstep(uGrass.z * 0.5, uGrass.z * 0.85, dist); if (toGround > 0.0) vGrassColour = mix(vGrassColour, groundLayer(soilGround(root.xz), root.xz), toGround); // toward the grass radius blades take the terrain's soil colour + moss layer (render/flora/moss) (far normals are already up): no edge where the field ends
@@ -145,7 +147,7 @@ function grassMaterial(segments: number) {
   m.emissive.setRGB(STYLIZED.grassLift[0], STYLIZED.grassLift[1], STYLIZED.grassLift[2]); // stylized fill: blades stay readable when the landed key light is dim (#192)
   (m as unknown as { defines: Record<string, string> }).defines = { GRASS_SEGMENTS: segments.toFixed(1), TRANSLUCENCY_MASK: '1.0' };
   m.onBeforeCompile = shader => {
-    Object.assign(shader.uniforms, U, MOSS_UNIFORMS, { uWind: WIND_UNIFORMS.uWind, uWindDir: WIND_UNIFORMS.uWindDir, uWindAmp: WIND_UNIFORMS.uWindAmp, uColour: WIND_UNIFORMS.uColour });
+    Object.assign(shader.uniforms, U, MOSS_UNIFORMS, FLOOR, { uWind: WIND_UNIFORMS.uWind, uWindDir: WIND_UNIFORMS.uWindDir, uWindAmp: WIND_UNIFORMS.uWindAmp, uColour: WIND_UNIFORMS.uColour });
     addTranslucency(shader); addCloudShadow(shader);
     addPatchFade(shader); m!.userData.patchFade = true; // render/fade (in-page transition): uniform only, same key; BEFORE the project_vertex swap below so its world-xz line follows the custom projection
     shader.vertexShader = VERT_HEAD + shader.vertexShader

@@ -7,7 +7,8 @@
  * until that model is skinned. It does not edit the Rust density table.
  */
 import * as THREE from 'three';
-import type { Motion } from '../core/animalBehavior';
+import { gaitFor, type Motion } from '../core/animalBehavior';
+import { legsForSpecies } from './meshySkin';
 import {
   LANDING_CAM_BACK_M, LANDING_CENSUS_SIDE_M, LANDING_CLEAR_R_M, LANDING_DISPLAY, LANDING_YEAR, landingInFrame, landingStandY,
   pickLandingSlots, placeLandingAnimals, setLandingClear, setLandingSight,
@@ -301,16 +302,24 @@ export function createLandingCast(scene: THREE.Scene) {
         if (!proc) continue;
         const driven = animal.key === 'red_fox' ? drivePose() : null;
         if (driven) { animal.x = driven.x; animal.z = driven.z; animal.yaw = driven.yaw; }
-        const speed = driven?.speed ?? 1.2;
+        let speed = driven?.speed ?? 1.2;
         let motion: Motion = driven?.motion === 'run' ? 'run' : driven?.motion === 'idle' ? 'idle' : 'walk';
         let stepPhase = phase;
         if (driven) {
           const fox = proc.root.userData as { phase?: number; px?: number; pz?: number };
-          const stride = speed > 3.2 ? 1.35 : speed > 1.15 ? 0.72 : 0.45;
-          const moved = fox.px == null || fox.pz == null ? 0 : Math.hypot(driven.x - fox.px, driven.z - fox.pz);
-          fox.phase = ((fox.phase ?? 0) + (driven.moving ? moved / stride : 0)) % 1;
-          fox.px = driven.x; fox.pz = driven.z;
+          const legs = legsForSpecies('Red Fox')!.legs;
           motion = !driven.moving || speed < 0.05 ? 'idle' : speed > 3.2 ? 'run' : 'walk';
+          let poseSpeed = motion === 'idle' ? 0 : speed;
+          if (motion === 'walk') {
+            let v = Math.max(speed, 0.4);
+            for (let n = 0; n < 8 && gaitFor('walk', v, legs)?.name !== 'trot'; n++) v *= 1.2;
+            poseSpeed = v;
+          }
+          const stride = gaitFor(motion === 'idle' ? 'walk' : motion, Math.max(poseSpeed, 0.4), legs)?.cycle ?? 0.6;
+          const moved = fox.px == null || fox.pz == null ? 0 : Math.hypot(driven.x - fox.px, driven.z - fox.pz);
+          fox.phase = ((fox.phase ?? 0) + (motion === 'idle' ? 0 : moved / stride)) % 1;
+          fox.px = driven.x; fox.pz = driven.z;
+          speed = poseSpeed;
           stepPhase = fox.phase;
         }
         const y = landingStandY(heightAt(animal.x, animal.z));
@@ -322,8 +331,8 @@ export function createLandingCast(scene: THREE.Scene) {
           species: animal.display,
           x: animal.x, y, z: animal.z,
           yaw: animal.yaw,
-          moving: driven ? !!driven.moving && speed > 0.05 : speed > 0.05,
-          motion, phase: stepPhase, speed: driven?.moving ? speed : 0,
+          moving: driven ? !!driven.moving : speed > 0.05,
+          motion, phase: stepPhase, speed: driven ? (driven.moving ? speed : 0) : speed,
           root: proc.root,
         });
       }

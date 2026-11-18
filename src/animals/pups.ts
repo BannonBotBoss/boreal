@@ -3,7 +3,7 @@
  * They stand on the trail beside her. The meshes are the wolf skin with a woolly coat, scaled to a four-week pup.
  */
 import * as THREE from 'three';
-import { besideMother, growthStage, pupAim, pupCall, pupGap, pupScale, PUP_VOICE, stepHz, type PupCall, type PupPlace } from '../core/litter';
+import { besideMother, growthStage, pupCall, pupGap, pupScale, PUP_VOICE, stepHz, type PupCall, type PupPlace } from '../core/litter';
 import { adoptLitter } from '../render/litterBridge';
 import { livingRoster } from '../core/enterLiving';
 import { heightAt } from '../core/world';
@@ -82,14 +82,13 @@ export function createLitter(scene: THREE.Scene) {
         row.holder.scale.set(grown * 1.1 * bulk, grown * bulk, grown * 1.12 * bulk);
         const prevX = row.pup.x, prevZ = row.pup.z;
         const dist = Math.hypot(prevX - motherX, prevZ - motherZ);
-        const aim = pupAim(row.pup.slot, motherX, motherZ, motherYaw, clock, motherMoved, row.pup.ageYears, threatened);
         row.pup.x = stepped.x;
         row.pup.z = stepped.z;
         row.pup.yaw = stepped.yaw;
         row.pup.act = stepped.act;
         const moved = Math.hypot(stepped.x - prevX, stepped.z - prevZ) > 0.004;
         const speed = moved ? 0.6 : 0;
-        const motion = aim.act === 'pounce' || aim.act === 'tumble' ? 'jump' : aim.act === 'sit' || aim.act === 'sniff' || !moved ? 'idle' : 'walk';
+        const motion = stepped.act === 'pounce' || stepped.act === 'tumble' ? 'jump' : stepped.act === 'sit' || stepped.act === 'sniff' || !moved ? 'idle' : 'walk';
         row.wolf.brain.motion = motion;
         row.wolf.brain.jumpTime = motion === 'jump' ? (clock % 0.7) : 0;
         row.wolf.brain.speed = speed;

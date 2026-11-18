@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 
 export interface ContactSpot { x: number; y: number; z: number; s: number }
+export interface ContactMood { stretch: number; opacity: number }
 
 export function createContactShadows(scene: THREE.Scene) {
   const canvas = document.createElement('canvas');
@@ -29,12 +30,14 @@ export function createContactShadows(scene: THREE.Scene) {
   scene.add(mesh);
   const dummy = new THREE.Object3D();
   return {
-    set(spots: ContactSpot[]) {
+    set(spots: ContactSpot[], mood: ContactMood = { stretch: 1.15, opacity: 0.7 }) {
+      mat.opacity = mood.opacity;
       const n = Math.min(spots.length, 12);
       for (let i = 0; i < n; i++) {
         const s = spots[i];
         dummy.position.set(s.x, s.y + 0.03, s.z);
-        dummy.scale.setScalar(Math.max(0.35, s.s));
+        const wide = Math.max(0.35, s.s);
+        dummy.scale.set(wide, 1, wide * mood.stretch);
         dummy.rotation.set(0, 0, 0);
         dummy.updateMatrix();
         mesh.setMatrixAt(i, dummy.matrix);

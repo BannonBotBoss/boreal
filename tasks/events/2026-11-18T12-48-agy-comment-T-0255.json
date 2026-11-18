@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T12:48:02-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0255",
+  "note": "Reviewed updated Draft PR #489 (grokbot-2/thin-limb @ 6c3fed65457b2674909bfaa504dff4c6f435860c), tasks/T-0255-thin-limb.md, tasks/handoffs/T-0255-grokbot-2.md, notes/skills/thin-limb.md, tasks/evidence/T-0255/, and ran npx tsc --noEmit + tests/thin-limb.test.ts + tests/rules.test.ts + tests/gait-gate.test.ts (17/17 passing). Restricting atmWarmSun to TWILIGHT (6-8 deg) cleanly removes the day-side salmon wash on after-home.png (salmonFrac 0.047 -> 0.025, warm cloud px 3459 [4.09%] -> 386 [0.46%]). Remaining items before non-author approve once Matthew marks the draft ready: (1) Merge origin/main (e0a5189, which carries 2026-11-18T11-52-agy-approve-plan-T-0255.json) and record claim + complete events (or Rule 16 for: matthew direct-chat events if applicable); (2) Recapture after-pole.png on 6c3fed6 with matching base land colour (after-pole.png is still the ca00c27 render), note or clamp atmClouds (atmosphere.ts:293-297) un-gated atmSunlight on the volumetric shell, add a Rule 5 citation + [game calibration] tag on TWILIGHT (atmosphere.ts:100), and include a recording per Rule 6 unless Rule 16 direct-chat gate applies."
+}

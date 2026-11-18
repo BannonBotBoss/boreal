@@ -546,7 +546,7 @@ vAerial = vDetW - uMorphCam; vCover = mix(aCover, aCoarseK, gMorph);
     }
   }`)
       .replace('#include <normal_fragment_maps>', `#include <normal_fragment_maps>
-  if (uDetail.x > 0.001 || uOceanGlint > 0.5) { // derivative bump (Mikkelsen 2010). detH carries land detail and, on the ocean, the simplex chop.
+  if ((uDetail.x > 0.001 && uOpenLand < 0.5) || uOceanGlint > 0.5) { // derivative bump (Mikkelsen 2010). Open land keeps the photograph's shading; the detail normal was painting pale bumps.
     vec3 dpx = dFdx(-vViewPosition), dpy = dFdy(-vViewPosition); float dhx = dFdx(detH), dhy = dFdy(detH);
     vec3 r1 = cross(dpy, normal), r2 = cross(normal, dpx); float det = dot(dpx, r1);
     normal = normalize(abs(det) * normal - sign(det) * (dhx * r1 + dhy * r2)); }
@@ -583,5 +583,5 @@ if (uCrownFloor > 0.5 && landMask > 0.5 && uOpenLand < 0.5) {
     if (vSkirt > 0.0) gl_FragColor.rgb = vec3(1.0, 0.0, 0.0); else if (d < w) gl_FragColor.rgb = vec3(1.0, 0.9, 0.0); }
 #endif`);
   };
-  m.customProgramCacheKey = () => 'globe-steppe-photo-21'; return m;
+  m.customProgramCacheKey = () => 'globe-steppe-photo-28'; return m;
 }

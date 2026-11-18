@@ -127,6 +127,37 @@ function frameMean(file: string) {
   return { r: sr / n, g: sg / n, b: sb / n };
 }
 
+/** Pale grey blobs: pixels on the right half that are lifted and washed out. */
+function paleBlobFraction(file: string) {
+  const { width: W, height: H, data } = PNG.sync.read(readFileSync(file));
+  const L = (x: number, y: number) => {
+    const i = (y * W + x) * 4;
+    return 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+  };
+  const x0 = Math.floor(W * 0.55), x1 = Math.floor(W * 0.94);
+  const y0 = 40, y1 = Math.floor(H * 0.82);
+  const ls: number[] = [];
+  for (let y = y0; y < y1; y += 2) for (let x = x0; x < x1; x += 2) ls.push(L(x, y));
+  ls.sort((a, b) => a - b);
+  const med = ls[ls.length >> 1];
+  let n = 0, p = 0;
+  for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+    const i = (y * W + x) * 4;
+    const r = data[i], g = data[i + 1], b = data[i + 2];
+    const sat = (Math.max(r, g, b) - Math.min(r, g, b)) / Math.max(1, Math.max(r, g, b));
+    n++;
+    if (L(x, y) > med + 18 && sat < 0.28) p++;
+  }
+  return p / n;
+}
+
+test('the right half has no pale grey blobs', () => {
+  const frac = paleBlobFraction('tasks/evidence/T-0222/after-2000.png');
+  assert.ok(frac < 0.004, `pale blob fraction ${frac.toFixed(4)}`);
+  const layers = readFileSync('src/world/globe/planetLayers.ts', 'utf8');
+  assert.ok(layers.includes('uSteppeBox.w'), 'the coarse snow colour stays off the overhead photo');
+});
+
 test('the overhead matches the reference brown within 10%', () => {
   const ref = frameMean('tasks/evidence/T-0222/ref-steppe-sentinel.png');
   const after = frameMean('tasks/evidence/T-0222/after-2000.png');

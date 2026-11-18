@@ -23,7 +23,7 @@ import { dayAt, hourAt } from '../../core/timeOfDay';
 import { GLSL_HASH, GLSL_NOISE } from '../../proc/glsl';
 import { hash } from '../../proc/rng';
 import { smoothstep } from '../../proc/math';
-import { coverSampleLatLon } from '../../world/globe/coverSample';
+import { coverSampleLatLon, openLandHere } from '../../world/globe/coverSample';
 import { PLANET, coverWeights, planetSunDirection, toLatLon, type Planet } from '../../world/globe/planet';
 import { tangentFrame } from '../../world/globe/landingSite';
 import { AERIAL } from '../../world/globe/aerialExemplar';
@@ -297,11 +297,10 @@ export function createOverheadCrowns(_renderer: THREE.WebGLRenderer): OverheadCr
     const next = `${lat.toFixed(3)}:${lon.toFixed(3)}:${Math.round(altM / 40)}:${span.hx.toFixed(0)}`;
     if (next === key && spruce.count + aspen.count > 0) return pub.count;
     key = next;
-    const cover = coverSampleLatLon(lat, lon);
-    // Prairie and desert are grass. A 5% tree share still threw conifer cards
-    // across the 2000 m frame, and the screen-space grain read as salt.
-    // Stipa at the feet is steppeTuft, not these crowns.
-    if (cover.water || cover.treeShare <= 0 || cover.biome === 'prairie' || cover.biome === 'desert') {
+    const cover = coverSampleLatLon(lat, lon, [dir.x, dir.y, dir.z], planet);
+    // Prairie and desert are grass. The staged home is the steppe even when the
+    // nadir pixel is a lake, so the litter quad must not cover that frame.
+    if (cover.water || cover.treeShare <= 0 || cover.biome === 'prairie' || cover.biome === 'desert' || openLandHere(lat, lon, [dir.x, dir.y, dir.z], planet)) {
       AERIAL.uCrownFloor.value = 0;
       floor.visible = false; spruce.count = 0; aspen.count = 0; shadows.count = 0; pub.count = 0;
       return 0;

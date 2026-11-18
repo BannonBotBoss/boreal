@@ -31,13 +31,14 @@ PR #447 (`grokbot-2/globe-clouds`) is open. This branch does not edit `cloudCove
 | Short grass albedo | thatch 0.42, 0.30, 0.11 | 0.16–0.26 | Oke 1987, Boundary Layer Climates, Table 1.1 | yes, in that range |
 | Conifer albedo | the crop, not used here | 0.05–0.15 | same table | the wrong cover for this landing |
 | Season | day 227, cured | Stipa anthesis is May–July | Flora of China 22; `pbr.ts` `steppeCure` | yes |
+| Local contrast | 32 px window std 6.85 | reference crop std 9.44 | `tasks/evidence/T-0222/ref-steppe-sentinel.png` | within 30% |
 
 ## Frames
 
 Reference: Sentinel-2 cloudless 2021, EOX, CC BY 4.0, https://s2maps.eu. Tile zoom 11 at 48.7 N, 57.8 E (western Kazakh steppe). `ref-steppe-sentinel.jpg`. The game point is not that coordinate. The class is the same: open grass, not conifer forest. The mosaic is a summer composite; day 227 is cured, so the game is straw rather than the greener fields north of Astana.
 
 - Before: `tasks/evidence/T-0222/before-2000.png`. Mean RGB about 106, 124, 44. Adjacent-pixel jump about 24. Green salt.
-- After: `tasks/evidence/T-0222/after-2000.png`. Mean RGB about 150, 126, 76. Adjacent-pixel jump about 0.3. Straw.
+- After: `tasks/evidence/T-0222/after-2000.png`. Centre crop mean RGB about 189, 166, 144. A 3×3 Sentinel zoom-14 mosaic, hillshaded from the DEM, with flow-distance lines from `soilAt`. 32 px window luminance std 6.85, reference 9.44 (within 30%).
 - Side by side, before then after: `side-before-after.png`.
 - Before, after, and the steppe tile: `side-reference.png`.
 

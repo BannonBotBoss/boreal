@@ -29,8 +29,9 @@ import { children, edgeMetres, faceDir, roots, centre as nodeCentre, type QNode 
 import { renderOffset } from './origin';
 import { CLOUDS, createAtmosphere } from './atmosphere';
 import { loadBlueMarbleClouds, ORBIT_FADE, setOrbitView } from './orbitAlbedo';
-import { AERIAL } from './aerialExemplar';
-import { coverSampleLatLon } from './coverSample';
+import { AERIAL, bindOverheadPhoto } from './aerialExemplar';
+import { openLandHere } from './coverSample';
+import { warmDemTiles, warmPhotoTiles } from './openTiles';
 import { across } from './cube';
 import { CLOCK, loadClock, setClockRate, worldSec } from '../../core/worldClock';
 import { timescaleFrom } from '../../core/timescale';
@@ -687,8 +688,12 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
       const L = Math.hypot(camPos[0], camPos[1], camPos[2]) || 1;
       const d = [camPos[0] / L, camPos[1] / L, camPos[2] / L] as Vec3;
       const ll = toLatLon(d);
-      const biome = coverSampleLatLon(ll.lat * 180 / Math.PI, ll.lon * 180 / Math.PI, d, planet).biome;
-      AERIAL.uOpenLand.value = biome === 'prairie' || biome === 'desert' ? 1 : 0;
+      const latD = ll.lat * 180 / Math.PI, lonD = ll.lon * 180 / Math.PI;
+      const open = openLandHere(latD, lonD, d, planet);
+      AERIAL.uOpenLand.value = open ? 1 : 0;
+      const g = globalThis as { __openLand?: number; __steppeZ?: number };
+      g.__openLand = open ? 1 : 0;
+      if (open) { warmPhotoTiles(latD, lonD); warmDemTiles(latD, lonD); g.__steppeZ = bindOverheadPhoto(latD, lonD); }
     } else AERIAL.uOpenLand.value = 0;
     setGlobeDetail(camPos, alt, GLOBE_LOD[Math.min(GLOBE_LOD.length - 1, Math.max(0, worldTier()))].detail, seed); // tile.ts ground detail (uniforms)
     setGlobeMorph(morphRadius, morphSplit, morphFull, morphBoost, morphReach, camPos); // fade each leaf onto its parent before the LOD ring

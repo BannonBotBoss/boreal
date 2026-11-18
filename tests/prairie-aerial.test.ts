@@ -14,6 +14,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { PNG } from 'pngjs';
+import { clearCachedTiles, samplePhoto } from '../src/world/globe/openTiles';
+import { openLandHere } from '../src/world/globe/coverSample';
+import { planetFor, toLatLon } from '../src/world/globe/planet';
+import { STAGES } from '../src/core/stages/elevation';
 
 export function overheadCover(file: string) {
   const png = PNG.sync.read(readFileSync(file));
@@ -58,13 +62,55 @@ test('open land replaces the conifer crop and the crown floor', () => {
   assert.ok(tile.includes('uOpenLand'), 'the aerial shader has the open-land weight');
   assert.ok(tile.includes('photo = mix(photo, openC, clamp(uOpenLand, 0.0, 1.0) * landMask)'));
   assert.ok(tile.includes('uCrownFloor > 0.5 && landMask > 0.5 && uOpenLand < 0.5'));
-  assert.ok(page.includes("biome === 'prairie' || biome === 'desert'"), 'the weight follows coverSampleAt');
+  assert.ok(page.includes('openLandHere'), 'a missing tile at the steppe home stays prairie');
   const view = readFileSync('src/world/globe/globeView.ts', 'utf8');
-  assert.ok(view.includes('uOpenLand'), 'the standalone globe uses the same open-land weight');
+  assert.ok(view.includes('openLandHere'), 'the standalone globe uses the same open-land weight');
+  assert.ok(view.includes('bindOverheadPhoto'), 'the Sentinel tile is bound with mipmaps');
+  assert.equal(tile.includes('(pic - vec3(0.38))'), false, 'a per-channel lift clamps the steppe green and blue');
+  assert.ok(tile.includes('textureLod(uSteppe'), 'the overhead photograph is sampled from the mip chain');
   assert.ok(crowns.includes("cover.biome === 'prairie' || cover.biome === 'desert'"), 'prairie does not draw conifer cards');
 });
 
+/** Mean luminance standard deviation inside 32 px windows, on the central ground. */
+export function meanWindowStd(file: string, win = 32) {
+  const { width: W, height: H, data } = PNG.sync.read(readFileSync(file));
+  const x0 = Math.floor(W * 0.2), x1 = Math.floor(W * 0.8);
+  const y0 = Math.floor(H * 0.2), y1 = Math.floor(H * 0.8);
+  const luma = (x: number, y: number) => {
+    const i = (y * W + x) * 4;
+    return 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+  };
+  let n = 0, sum = 0;
+  for (let y = y0; y + win <= y1; y += win) for (let x = x0; x + win <= x1; x += win) {
+    let s = 0, s2 = 0, c = 0;
+    for (let yy = 0; yy < win; yy++) for (let xx = 0; xx < win; xx++) {
+      const L = luma(x + xx, y + yy); s += L; s2 += L * L; c++;
+    }
+    const mean = s / c;
+    sum += Math.sqrt(Math.max(0, s2 / c - mean * mean));
+    n++;
+  }
+  return sum / Math.max(1, n);
+}
+
 test('the after frame at 2000 m reads as straw, not canopy salt', () => {
   const after = overheadCover('tasks/evidence/T-0222/after-2000.png');
-  assert.equal(prairieOverheadOk(after), true, JSON.stringify(after));
+  assert.ok(after.rg > 1, JSON.stringify(after));
+  assert.ok(after.g < after.r, JSON.stringify(after));
+});
+
+test('32 px windows stay within 30% of the Sentinel crop', () => {
+  const ref = meanWindowStd('tasks/evidence/T-0222/ref-steppe-sentinel.png');
+  const after = meanWindowStd('tasks/evidence/T-0222/after-2000.png');
+  assert.ok(ref > 5, `reference std ${ref}`);
+  assert.ok(Math.abs(after - ref) / ref <= 0.3, `after ${after.toFixed(2)} reference ${ref.toFixed(2)}`);
+});
+
+test('a missing Sentinel tile at the staged home is open land, not boreal salt', () => {
+  clearCachedTiles();
+  const planet = planetFor(STAGES.seed, undefined, 't0222-fallback', true);
+  const ll = toLatLon(planet.home);
+  const lat = ll.lat * 180 / Math.PI, lon = ll.lon * 180 / Math.PI;
+  assert.equal(samplePhoto(lat, lon), null);
+  assert.equal(openLandHere(lat, lon, planet.home, planet), true);
 });

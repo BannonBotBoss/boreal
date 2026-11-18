@@ -191,6 +191,28 @@ export function sampleDem(latDeg: number, lonDeg: number): number | null {
   return v ? v[0] : null;
 }
 
+/** One cached photograph tile, or null. */
+export function photoTileAt(z: number, x: number, y: number): { z: number; x: number; y: number; rgb: Float32Array; size: number } | null {
+  const rgb = photo.get(key(z, x, y));
+  const size = OPEN_TILES.size;
+  if (!rgb || rgb.length < size * size * 3) return null;
+  return { z, x, y, rgb, size };
+}
+
+/** Finest cached Sentinel (or USGS) tile under this point, or null when nothing has arrived. */
+export function finestPhotoTile(latDeg: number, lonDeg: number): { z: number; x: number; y: number; rgb: Float32Array; size: number } | null {
+  const zooms = inConus(latDeg, lonDeg) ? [...OPEN_TILES.photoZoom, OPEN_TILES.orthoZoom] : OPEN_TILES.photoZoom;
+  for (let i = zooms.length - 1; i >= 0; i--) {
+    const z = zooms[i];
+    const s = slippy(latDeg, lonDeg, z);
+    const x = Math.floor(s.x), y = Math.floor(s.y);
+    const rgb = photo.get(key(z, x, y));
+    const size = OPEN_TILES.size;
+    if (rgb && rgb.length >= size * size * 3) return { z, x, y, rgb, size };
+  }
+  return null;
+}
+
 /** Linear RGB, or null when no photograph is cached. A USGS ortho tile wins inside the continental US. */
 export function samplePhoto(latDeg: number, lonDeg: number): [number, number, number] | null {
   if (inConus(latDeg, lonDeg)) {

@@ -353,7 +353,7 @@ vAerial = vDetW - uMorphCam; vCover = mix(aCover, aCoarseK, gMorph);
   else { float e = floor((id - n * n) / n), k = mod(id - n * n, n) / uSeg; vTileUV = e < 0.5 ? vec2(k, 0.0) : e < 1.5 ? vec2(k, 1.0) : e < 2.5 ? vec2(0.0, k) : vec2(1.0, k); } }
 #endif`);
     sh.vertexShader = sh.vertexShader.replace('varying float vH, vLake;', 'varying float vH, vLake;\n#ifdef DEBUG_SEAMS\nuniform float uSeg; centroid varying float vSkirt; varying vec2 vTileUV;\n#endif');
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + LAYERS_PARS + ORBIT_PARS + 'uniform vec3 uShallow, uDeep, uDeepSun, uLakeShallow, uLakeDeep; uniform float uLakeRough, uOceanRough, uOceanMetal;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nuniform float uSolarLayer, uQScale;\nfloat landMask;\nfloat presentW = 1.0;\nfloat oceanGlint = 0.0;\nuniform vec4 uDetail; // x strength (tier x altitude fade), y albedo amplitude, z bump scale, w seed\nuniform float uLiveMosaic;\nuniform vec3 uDetO0, uDetO1, uDetO2, uDetL, uDetAmp;\nvarying vec3 vDetW, vLoc, vAerial;\nvarying vec4 vCover;\nuniform float uHideLake;\nuniform sampler2D uExCanopy, uExFen, uExShore, uExWater, uExLut;\nuniform float uExOn, uExMetres, uExGain, uCrownFloor, uOpenLand;\nfloat aerialBand = 0.0;\n' + TILING_BLEND_GLSL + '\nuniform sampler2D uShoreTex;\nuniform vec4 uShore;\nuniform vec3 uLandTint;\nuniform vec4 uEra;\nuniform float uCrack;\nfloat eraCrack = 0.0;\nfloat eraMagma = 0.0;\nfloat detH = 0.0;\n' + DETAIL_NOISE + '\n' + SIMPLEX_NOISE + '\n// hash2u value noise with a 4096-cell periodic lattice: the camera offsets are mod 4096 cells (doubles on the CPU), so the\n// pattern stays continuous when the offset wraps and stays float32-exact near the camera\nfloat detC(vec3 c, float s) { return gd_hash2u(vec2(c.x + c.z * 4096.0, c.y), s); } // 3D cell id < 2^24: exact\nfloat detN(vec3 p, float s) { vec3 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f), a = mod(i, 4096.0), b = mod(i + 1.0, 4096.0);\n  return mix(mix(mix(detC(a, s), detC(vec3(b.x, a.yz), s), u.x), mix(detC(vec3(a.x, b.y, a.z), s), detC(vec3(b.xy, a.z), s), u.x), u.y),\n    mix(mix(detC(vec3(a.xy, b.z), s), detC(vec3(b.x, a.y, b.z), s), u.x), mix(detC(vec3(a.x, b.yz), s), detC(b, s), u.x), u.y), u.z); }\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\n' + LAYERS_PARS + ORBIT_PARS + 'uniform vec3 uShallow, uDeep, uDeepSun, uLakeShallow, uLakeDeep; uniform float uLakeRough, uOceanRough, uOceanMetal;\nvarying float vH, vLake;\nvarying float vAbsorbed;\nuniform float uSolarLayer, uQScale;\nfloat landMask;\nfloat presentW = 1.0;\nfloat oceanGlint = 0.0;\nuniform vec4 uDetail; // x strength (tier x altitude fade), y albedo amplitude, z bump scale, w seed\nuniform float uLiveMosaic;\nuniform vec3 uDetO0, uDetO1, uDetO2, uDetL, uDetAmp;\nvarying vec3 vDetW, vLoc, vAerial;\nvarying vec4 vCover;\nuniform float uHideLake;\nuniform sampler2D uExCanopy, uExFen, uExShore, uExWater, uExLut;\nuniform float uExOn, uExMetres, uExGain, uCrownFloor, uOpenLand;\nuniform sampler2D uSteppe; uniform vec4 uSteppeBox;\nfloat aerialBand = 0.0;\n' + TILING_BLEND_GLSL + '\nuniform sampler2D uShoreTex;\nuniform vec4 uShore;\nuniform vec3 uLandTint;\nuniform vec4 uEra;\nuniform float uCrack;\nfloat eraCrack = 0.0;\nfloat eraMagma = 0.0;\nfloat detH = 0.0;\n' + DETAIL_NOISE + '\n' + SIMPLEX_NOISE + '\n// hash2u value noise with a 4096-cell periodic lattice: the camera offsets are mod 4096 cells (doubles on the CPU), so the\n// pattern stays continuous when the offset wraps and stays float32-exact near the camera\nfloat detC(vec3 c, float s) { return gd_hash2u(vec2(c.x + c.z * 4096.0, c.y), s); } // 3D cell id < 2^24: exact\nfloat detN(vec3 p, float s) { vec3 i = floor(p), f = p - i, u = f * f * (3.0 - 2.0 * f), a = mod(i, 4096.0), b = mod(i + 1.0, 4096.0);\n  return mix(mix(mix(detC(a, s), detC(vec3(b.x, a.yz), s), u.x), mix(detC(vec3(a.x, b.y, a.z), s), detC(vec3(b.xy, a.z), s), u.x), u.y),\n    mix(mix(detC(vec3(a.xy, b.z), s), detC(vec3(b.x, a.y, b.z), s), u.x), mix(detC(vec3(a.x, b.yz), s), detC(b, s), u.x), u.y), u.z); }\n#ifdef DEBUG_SEAMS\ncentroid varying float vSkirt; varying vec2 vTileUV;\n#endif')
       .replace('#include <color_fragment>', `#include <color_fragment>
   { // land/water: the home shoreline mask per pixel where it is loaded (lakeMask.ts), else the per-vertex field
     vec2 suv = vLoc.xy * uShore.x + uShore.y; float sfp = length(fwidth(suv)) * uShore.w; // pixel footprint in texels
@@ -466,6 +466,30 @@ vAerial = vDetW - uMorphCam; vCover = mix(aCover, aCoarseK, gMorph);
       vec3 thatchC = vec3(0.42, 0.30, 0.11);
       vec3 strawC = vec3(0.50, 0.34, 0.11);
       vec3 openC = mix(soilC, mix(thatchC, strawC, fleck), 0.45 + 0.55 * clump);
+      vec3 nrmO = normalize(vNormal);
+      float hillO = clamp(dot(nrmO, normalize(vec3(-0.45, 0.72, 0.35))), 0.0, 1.0);
+      float steepO = smoothstep(0.04, 0.55, length(vec2(dFdx(nrmO.x), dFdy(nrmO.y))));
+      if (uSteppeBox.w > 0.5) {
+        vec3 pdO = normalize(vDetW + uCamP);
+        float latO = degrees(asin(clamp(pdO.y, -1.0, 1.0)));
+        float lonO = degrees(atan(pdO.z, pdO.x));
+        float nTilesO = exp2(uSteppeBox.z);
+        float mxO = (lonO + 180.0) / 360.0 * nTilesO;
+        float latcO = radians(clamp(latO, -85.0, 85.0));
+        float myO = (1.0 - log(tan(latcO) + 1.0 / cos(latcO)) / ${Math.PI.toFixed(8)}) * 0.5 * nTilesO;
+        vec2 uvO = vec2(mxO - uSteppeBox.x, myO - uSteppeBox.y) / max(uSteppeBox.w, 1.0);
+        // Outside the atlas, clamp-to-edge smears one texel into bands. Keep the thatch there.
+        if (uvO.x > 0.001 && uvO.y > 0.001 && uvO.x < 0.999 && uvO.y < 0.999) {
+          vec3 picO = textureLod(uSteppe, uvO, 0.0).rgb;
+          openC = picO * (0.82 + 0.28 * hillO) * (1.0 - 0.16 * steepO);
+        } else {
+          openC *= 0.72 + 0.4 * hillO;
+          openC *= 1.0 - 0.2 * steepO;
+        }
+      } else {
+        openC *= 0.58 + 0.55 * hillO;
+        openC *= 1.0 - 0.32 * steepO;
+      }
       photo = mix(photo, openC, clamp(uOpenLand, 0.0, 1.0) * landMask);
       diffuseColor.rgb = mix(diffuseColor.rgb, photo, aerial * (1.0 - clamp(vCover.w, 0.0, 1.0)));
       // Impostors own the crowns. The tiled NAIP crop underneath becomes a smooth
@@ -487,13 +511,44 @@ vAerial = vDetW - uMorphCam; vCover = mix(aCover, aCoarseK, gMorph);
     // Past 20 km the aerial crop fades and the vertex colour is spruce. From 2000 m
     // the limb is that far, so the frame kept green salt around a tan nadir.
     // The orbit disc is hundreds of thousands of metres out and stays as it was.
-    if (uOpenLand > 0.5 && landMask > 0.5) {
+    if (uOpenLand > 0.5 && landMask > 0.5 && uSteppeBox.w < 0.5) {
       float eyeFar = length(vViewPosition);
       float nearDisc = 1.0 - smoothstep(80000.0, 400000.0, eyeFar);
-      float clumpFar = detN(vDetW / 420.0, uDetail.w + 4.0);
-      float fleckFar = detN(vDetW / 90.0, uDetail.w + 6.0);
-      vec3 openFar = mix(vec3(0.22, 0.13, 0.06), mix(vec3(0.42, 0.30, 0.11), vec3(0.50, 0.34, 0.11), fleckFar), 0.45 + 0.55 * clumpFar);
+      vec3 nrmF = normalize(vNormal);
+      float hillF = clamp(dot(nrmF, normalize(vec3(-0.45, 0.72, 0.35))), 0.0, 1.0);
+      float steepF = smoothstep(0.04, 0.55, length(vec2(dFdx(nrmF.x), dFdy(nrmF.y))));
+      vec3 openFar = vec3(0.40, 0.29, 0.11) * (0.58 + 0.55 * hillF) * (1.0 - 0.32 * steepF);
       diffuseColor.rgb = mix(diffuseColor.rgb, openFar, nearDisc);
+    } else if (uOpenLand > 0.5 && uSteppeBox.w > 0.5) {
+      // The coarse lake mask was painting teal holes through the steppe. The
+      // photograph already holds the drainage. A per-channel lift around 0.38
+      // sat above the linear green and blue and clamped them to 0, so land went red.
+      vec3 pd = normalize(vDetW + uCamP);
+      float lat = degrees(asin(clamp(pd.y, -1.0, 1.0)));
+      float lon = degrees(atan(pd.z, pd.x));
+      float nTiles = exp2(uSteppeBox.z);
+      float mx = (lon + 180.0) / 360.0 * nTiles;
+      float latc = radians(clamp(lat, -85.0, 85.0));
+      float my = (1.0 - log(tan(latc) + 1.0 / cos(latc)) / ${Math.PI.toFixed(8)}) * 0.5 * nTiles;
+      vec2 uvS = vec2(mx - uSteppeBox.x, my - uSteppeBox.y) / max(uSteppeBox.w, 1.0);
+      vec3 nrmS = normalize(vNormal);
+      float hillS = clamp(dot(nrmS, normalize(vec3(-0.45, 0.72, 0.35))), 0.0, 1.0);
+      float steepS = smoothstep(0.04, 0.55, length(vec2(dFdx(nrmS.x), dFdy(nrmS.y))));
+      vec3 steppe = vec3(0.40, 0.29, 0.11) * (0.72 + 0.4 * hillS) * (1.0 - 0.2 * steepS);
+      vec4 texS = vec4(0.0);
+      vec3 softS = vec3(0.0);
+      vec3 pic = vec3(0.0);
+      float lumS = 0.0;
+      if (uvS.x > 0.001 && uvS.y > 0.001 && uvS.x < 0.999 && uvS.y < 0.999) {
+        texS = textureLod(uSteppe, uvS, 0.0);
+        softS = textureLod(uSteppe, uvS, 2.0).rgb;
+        pic = clamp(texS.rgb + (texS.rgb - softS) * 2.85, 0.0, 1.0);
+        lumS = dot(pic, vec3(0.2126, 0.7152, 0.0722));
+        pic = clamp((pic - vec3(lumS)) * 1.2 + vec3(lumS * 1.85), 0.0, 1.0);
+        steppe = pic * (0.88 + 0.2 * hillS) * (1.0 - 0.12 * steepS);
+        steppe *= mix(1.0, 0.62, texS.a);
+      }
+      diffuseColor.rgb = steppe;
     }
     }${LAYERS_FRAG}
   if (uDetail.x > 0.001) { // ground detail (DETAIL): octaves fade out where a cell is under ~2 pixels (no shimmer)
@@ -609,5 +664,6 @@ if (uCrownFloor > 0.5 && landMask > 0.5 && uOpenLand < 0.5) {
     if (vSkirt > 0.0) gl_FragColor.rgb = vec3(1.0, 0.0, 0.0); else if (d < w) gl_FragColor.rgb = vec3(1.0, 0.9, 0.0); }
 #endif`);
   };
+  m.customProgramCacheKey = () => 'globe-steppe-photo-13';
   return m;
 }

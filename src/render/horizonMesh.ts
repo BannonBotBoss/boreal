@@ -12,9 +12,29 @@ import { PLANET, type Planet } from '../world/globe/planet';
 import { HORIZON_SKIRT, buildSkirtMesh, skirtLatLon, skirtOrigin, skirtSample, type SkirtOrigin } from '../world/globe/horizonSkirt';
 import { PATCH_FAR } from './fade';
 import { biomeGrade, blendDem, blendPhoto, demSlope, elevationWins, globeMatch, openTileGeneration, sampleDem, samplePhoto, warmDemTiles, warmPhotoTiles } from '../world/globe/openTiles';
-import { coverSampleAt } from '../world/globe/coverSample';
+import { coverSampleAt, openLandHere } from '../world/globe/coverSample';
+import { fromLatLon } from '../world/globe/planet';
+import { soilAt } from '../core/stages/soils';
+import { STAGES } from '../core/stages/elevation';
 import { GLSL_NOISE } from '../proc/glsl';
 import { canopyTile } from './trees/billboardAtlas';
+
+/** Prairie colour when no Sentinel tile is cached. Slope is demSlope. Wetness and flow
+ *  distance are soilAt (TWI and distance to drainage). Dry ground stays paler. */
+function prairieGround(x: number, z: number, slope: [number, number, number] | null): [number, number, number] {
+  let wet = 0.35, drain = 0;
+  if (Math.hypot(x, z) < 4000) {
+    const so = soilAt(STAGES.seed, x, z);
+    wet = so.wet;
+    drain = 1 - Math.min(1, Math.max(0, so.dist) / 240);
+  }
+  const hill = slope ? Math.max(0, Math.min(1, -0.45 * slope[0] + 0.72 * slope[1] + 0.4 * slope[2])) : 0.65;
+  const pale = 0.16 + 0.1 * (1 - wet);
+  const shade = 0.5 + 0.65 * hill;
+  const swale = Math.max(wet * 0.65, drain);
+  const dark = 1 - 0.42 * swale;
+  return [(0.34 + pale) * shade * dark, (0.24 + pale * 0.55) * shade * dark, 0.08 * shade * dark];
+}
 
 /** Daylight horizon the ground fades toward. Brighter than the old grey so aerial perspective
  *  reads as sky, not a soot band. [game calibration] against the Wasson Lake aerial. */
@@ -22,6 +42,8 @@ const HAZE = new THREE.Color(0.78, 0.86, 0.98);
 const CANOPY = new THREE.DataTexture(canopyTile(), 32, 32);
 CANOPY.wrapS = CANOPY.wrapT = THREE.RepeatWrapping;
 CANOPY.magFilter = THREE.LinearFilter;
+CANOPY.minFilter = THREE.LinearMipmapLinearFilter;
+CANOPY.generateMipmaps = true;
 CANOPY.needsUpdate = true;
 
 function skirtMaterial() {
@@ -148,8 +170,10 @@ export function createHorizonSkirt(): HorizonSkirt {
     const next = `${originKey}:${Math.round(cx / snap)}:${Math.round(cz / snap)}:${Math.round(Math.log2(Math.max(1, eyeM)) * 8)}:${Math.round(Math.atan2(forwardZ, forwardX) * 4)}:${openTileGeneration()}`;
     made.cam.value.set(cx, cz);
     const cover = coverSampleAt(cx, cz);
-    // Closed canopy only where the same sample the HUD reads is forest. A prairie photograph does not grow one.
-    made.forest.value = cover.biome === 'boreal' || cover.biome === 'tropical' ? 1 : cover.biome === 'wetland' ? 0.45 : 0;
+    const hereDir = fromLatLon(hereLL.latDeg * Math.PI / 180, hereLL.lonDeg * Math.PI / 180);
+    const open = openLandHere(hereLL.latDeg, hereLL.lonDeg, hereDir, planet);
+    // Closed canopy only on forest. A missing Sentinel tile at the steppe home is still prairie.
+    made.forest.value = open ? 0 : cover.biome === 'boreal' || cover.biome === 'tropical' ? 1 : cover.biome === 'wetland' ? 0.45 : 0;
     if (next === key) return false;
     key = next;
     const here = origin;
@@ -170,17 +194,17 @@ export function createHorizonSkirt(): HorizonSkirt {
       const water = far.water && !elevationWins(far.kind, dem);
       if (dem != null) y = blendDem(y, (dem - here.asl) + here.gameY, dist, water);
       const picture = samplePhoto(ll.latDeg, ll.lonDeg);
+      const slope = demSlope(ll.latDeg, ll.lonDeg);
       let rgb = far.rgb;
       const finite = (c: readonly number[]) => c.length === 3 && c.every(Number.isFinite);
       const ok = !!picture && finite(picture);
       if (ok && picture && !water) {
-        const grain = 0.78 + 0.28 * Math.sin(x * 0.41 + z * 0.17) * Math.sin(x * 0.13 - z * 0.29);
-        rgb = biomeGrade(ll.latDeg, blendPhoto(picture, dist, grain));
+        rgb = open ? blendPhoto(picture, dist, 1) : biomeGrade(ll.latDeg, blendPhoto(picture, dist, 1));
       } else if (ok && picture && water) rgb = picture;
+      else if (!water && open) rgb = prairieGround(x, z, slope);
       else if (!water && far.kind === 'ocean') rgb = globeMatch([0.06, 0.09, 0.04]);
       else rgb = globeMatch(far.rgb);
       if (!finite(rgb)) rgb = [0.12, 0.16, 0.08];
-      const slope = demSlope(ll.latDeg, ll.lonDeg);
       const lit = smoothstep(200, 1600, dist);
       const normal: [number, number, number] = slope
         ? [slope[0] * lit, slope[1] * lit + (1 - lit), slope[2] * lit]

@@ -12,9 +12,9 @@ const MAMA = `
 vec3 nrm = normalize(normal);
 float agoutiUp = clamp(nrm.y * 0.5 + 0.5, 0.0, 1.0);
 float wrap = clamp(dot(nrm, normalize(vec3(-0.2, 0.86, 0.32))), 0.0, 1.0);
-// Stored Meshy albedos are near white. A grey wolf is charcoal on the saddle and
-// cream on the belly (Young and Goldman 1944; Gipson, Bangs et al. 2002). The map
-// only modulates shade. The result is capped so daylight cannot clip the body to white.
+// Stored Meshy albedos are near white. The saddle is grizzled grey-brown and the
+// belly is lighter. The map only modulates shade. The result is capped so daylight
+// cannot clip the body to white.
 float lum = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
 float shade = clamp(lum, 0.35, 1.0);
 vec3 saddle = vec3(0.24, 0.16, 0.11);

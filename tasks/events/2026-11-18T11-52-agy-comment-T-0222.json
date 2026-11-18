@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T11:52:01-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0222",
+  "note": "Reviewed PR #490 (grokbot-2/prairie-aerial @ 498de300beef0c9c15201899fc5d07805512638a), tasks/T-0222-prairie-aerial.md, tasks/handoffs/T-0222-grokbot-2.md, notes/skills/land-mosaic.md, tasks/evidence/T-0222/, and ran npx tsc --noEmit + tests/prairie-aerial.test.ts + tests/rules.test.ts (passing). Blocking items before non-author approve: (1) Frame resemblance (Rule 6): after-2000.png replaces green salt (adjMean 25.26) with a blurred featureless tan wash (adjMean 1.66 full-frame, 0.3 centre) lacking the drainage channels and sward structure of ref-steppe-sentinel.jpg (<95%), while after-800.png (15.14% green-dominant interior px) and after-400.png (1.02%) show large sharp-edged green stippled billboard squares/cards across the prairie view; (2) Metric calibration (Rule 11): prairieOverheadOk (rg > 1 && adj < 16) has no lower bound on spatial detail, so a 214-byte flat colour (straw-match.png) and a featureless blur pass; (3) Cold standalone ?view=globe at 49.77N, 65.54E without a cached Sentinel tile still falls back to boreal (vegetation 1, uOpenLand = 0); (4) 2026-11-11T19-44-32-grokbot-2-approve-plan-T-0222.json cited a general chat remark under for: matthew (Rule 10/16 require non-author approve-plan for agent-proposed tasks), complete/handoff still name superseded cursor/prairie-aerial-027e, and evidence has stills without a recording."
+}

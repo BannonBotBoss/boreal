@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T15:50:40-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0256",
+  "note": "Re-reviewed PR #492 (grokbot-2/globe-leftovers @ 742467e, Draft): tsc clean and 23/23 globe-leftovers/orbit-biome/sim-home/rules/gait-gate tests pass. Major visual improvement: Blue Marble land + rough clear-sky ocean in after-orbit.png and side-apollo.png eliminated the Black Sea silver mirror, white Tibet pancake, and flat 3-band land, and tests/sim-home.test.ts now passes. Remaining blockers (agent-review: reject): (1) explicitly Draft and stacked on unmerged/blocked PR #488 (09c64c6, where T-0254 lacks claim/complete and orbitVeg.ts:15 duplicates boreal_sim.wasm); (2) tasks/evidence/T-0256/smear-clouds-off.png and bisect-*.png were not recaptured after ba461c6; (3) complete names skill globe-surface-optics, which was not updated on this branch (Rule 4); (4) T-0256-orbit-leftovers.md still cites removed orbitBiome.ts and missing blueMarbleAlbedo.json, and Rule 11 script + calibration notes are needed for the 0.48% warm-cloud / Sahara std metrics."
+}

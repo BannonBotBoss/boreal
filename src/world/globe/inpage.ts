@@ -27,7 +27,7 @@ import { ANIMAL_LADDER, arrestGlide, descentFloorY, playerDiving } from '../../r
 import { dryNear, engageLanding } from './landingSite';
 import { openLandHere } from './coverSample';
 import { AERIAL, bindOverheadPhoto } from './aerialExemplar';
-import { warmDemTiles, warmPhotoTiles, demCoverage, photoCoverage } from './openTiles';
+import { warmDemTiles, warmOverheadTiles, warmPhotoTiles, demCoverage, photoCoverage } from './openTiles';
 import { dropStand, forestLanding } from './forestLanding';
 import { cineTrace } from '../cosmos/cineReady';
 import { TRANSITION, gameBasis, globePitch, descentPitch, transitionPath, globeCameraFrom, patchFade, inputOwner, createGovernorHold, viewpointPose, handoverBlend, type TransitionMode } from './transition';
@@ -387,7 +387,7 @@ const DEV = new URLSearchParams(location.search).has('inpagedev'); // dev hooks 
         const latD = ll.lat * 180 / Math.PI, lonD = ll.lon * 180 / Math.PI;
         const open = openLandHere(latD, lonD, dir, planet);
         AERIAL.uOpenLand.value = open ? 1 : 0;
-        if (open) { warmPhotoTiles(latD, lonD); warmDemTiles(latD, lonD); bindOverheadPhoto(latD, lonD); }
+        if (open) { warmPhotoTiles(latD, lonD); warmDemTiles(latD, lonD); warmOverheadTiles(latD, lonD); bindOverheadPhoto(latD, lonD); }
       } catch { /* cover sample before the planet is ready */ }
       if (next) { if (next === 'game') toGame(); else toGlobe(next === 'sphere'); next = null; }
       if (mode === 'globe' && globe) {

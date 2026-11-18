@@ -31,7 +31,7 @@ import { CLOUDS, createAtmosphere } from './atmosphere';
 import { loadBlueMarbleClouds, ORBIT_FADE, setOrbitView } from './orbitAlbedo';
 import { AERIAL, bindOverheadPhoto } from './aerialExemplar';
 import { openLandHere } from './coverSample';
-import { warmDemTiles, warmPhotoTiles } from './openTiles';
+import { warmDemTiles, warmOverheadTiles, warmPhotoTiles } from './openTiles';
 import { across } from './cube';
 import { CLOCK, loadClock, setClockRate, worldSec } from '../../core/worldClock';
 import { timescaleFrom } from '../../core/timescale';
@@ -693,7 +693,11 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
       AERIAL.uOpenLand.value = open ? 1 : 0;
       const g = globalThis as { __openLand?: number; __steppeZ?: number };
       g.__openLand = open ? 1 : 0;
-      if (open) { warmPhotoTiles(latD, lonD); warmDemTiles(latD, lonD); g.__steppeZ = bindOverheadPhoto(latD, lonD); }
+      if (open) {
+        warmPhotoTiles(latD, lonD); warmDemTiles(latD, lonD);
+        if (alt < 8000) warmOverheadTiles(latD, lonD);
+        g.__steppeZ = bindOverheadPhoto(latD, lonD);
+      }
     } else AERIAL.uOpenLand.value = 0;
     setGlobeDetail(camPos, alt, GLOBE_LOD[Math.min(GLOBE_LOD.length - 1, Math.max(0, worldTier()))].detail, seed); // tile.ts ground detail (uniforms)
     setGlobeMorph(morphRadius, morphSplit, morphFull, morphBoost, morphReach, camPos); // fade each leaf onto its parent before the LOD ring

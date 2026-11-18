@@ -480,7 +480,7 @@ vAerial = vDetW - uMorphCam; vCover = mix(aCover, aCoarseK, gMorph);
         vec2 uvO = vec2(mxO - uSteppeBox.x, myO - uSteppeBox.y) / max(uSteppeBox.w, 1.0);
         // Outside the atlas, clamp-to-edge smears one texel into bands. Keep the thatch there.
         if (uvO.x > 0.001 && uvO.y > 0.001 && uvO.x < 0.999 && uvO.y < 0.999) {
-          vec3 picO = textureLod(uSteppe, uvO, 0.0).rgb;
+          vec3 picO = texture2D(uSteppe, uvO).rgb;
           openC = picO * (0.82 + 0.28 * hillO) * (1.0 - 0.16 * steepO);
         } else {
           openC *= 0.72 + 0.4 * hillO;
@@ -536,17 +536,17 @@ vAerial = vDetW - uMorphCam; vCover = mix(aCover, aCoarseK, gMorph);
       float steepS = smoothstep(0.04, 0.55, length(vec2(dFdx(nrmS.x), dFdy(nrmS.y))));
       vec3 steppe = vec3(0.40, 0.29, 0.11) * (0.72 + 0.4 * hillS) * (1.0 - 0.2 * steepS);
       vec4 texS = vec4(0.0);
-      vec3 softS = vec3(0.0);
       vec3 pic = vec3(0.0);
-      float lumS = 0.0;
       if (uvS.x > 0.001 && uvS.y > 0.001 && uvS.x < 0.999 && uvS.y < 0.999) {
-        texS = textureLod(uSteppe, uvS, 0.0);
-        softS = textureLod(uSteppe, uvS, 2.0).rgb;
-        pic = clamp(texS.rgb + (texS.rgb - softS) * 2.85, 0.0, 1.0);
-        lumS = dot(pic, vec3(0.2126, 0.7152, 0.0722));
-        pic = clamp((pic - vec3(lumS)) * 1.2 + vec3(lumS * 1.85), 0.0, 1.0);
-        steppe = pic * (0.88 + 0.2 * hillS) * (1.0 - 0.12 * steepS);
-        steppe *= mix(1.0, 0.62, texS.a);
+        texS = texture2D(uSteppe, uvS);
+        // The zoom-16 still tone-maps about 18% above the reference crop
+        // (measured 157, 122, 84 against 133, 104, 70). 0.86 brings the frame
+        // mean onto that brown. No unsharp and no luminance lift.
+        pic = texS.rgb * 0.86;
+        steppe = pic;
+        // Flow distance is in alpha: 1 on the bank, gone by 88 m, and 1 along a
+        // channel segment. The sun lifts a mild darken, so the line is 0.05.
+        steppe *= mix(1.0, 0.05, texS.a);
       }
       diffuseColor.rgb = steppe;
     }
@@ -664,6 +664,6 @@ if (uCrownFloor > 0.5 && landMask > 0.5 && uOpenLand < 0.5) {
     if (vSkirt > 0.0) gl_FragColor.rgb = vec3(1.0, 0.0, 0.0); else if (d < w) gl_FragColor.rgb = vec3(1.0, 0.9, 0.0); }
 #endif`);
   };
-  m.customProgramCacheKey = () => 'globe-steppe-photo-13';
+  m.customProgramCacheKey = () => 'globe-steppe-photo-18';
   return m;
 }

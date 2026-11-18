@@ -12,10 +12,9 @@
 import * as THREE from 'three';
 import { asset } from '../../core/asset';
 import { demSlope, finestPhotoTile, photoTileAt, slippy } from './openTiles';
-import { fromLatLon } from './planet';
 import { globePlanet } from './home';
-import { soilAt } from '../../core/stages/soils';
-import { STAGES } from '../../core/stages/elevation';
+import { soilGrid, SOIL_KINDS } from '../../core/stages/soils';
+import { flowGrid, STAGES } from '../../core/stages/elevation';
 
 export const AERIAL_EXEMPLAR = {
   /** Metres of ground across one 128 px crop. Set again from public/aerial/meta.json when it loads. */
@@ -126,49 +125,112 @@ function atlasLatLon(z: number, x0: number, y0: number, span: number, dstSize: n
 }
 
 /**
- * Hillshade and slope from the cached DEM, and a drainage weight from soilAt
- * (flow distance and wetness). Alpha is that weight, 0 on dry ground.
- * The soil grid repeats every 256 cells, so it is only applied near the origin.
+ * Drainage weight from the soil flow distance. Alpha is that weight, 0 on open
+ * water (a lake is a fill, not a line) and 0 once the distance has fallen off.
+ * The photograph's own pixels stay as stored: stamping the colour in blocks was
+ * the square pattern. Distance is bilinear over the 30 m soil nodes, then the
+ * falloff is evaluated per texel, so the line follows the drainage instead of
+ * the node squares.
+ * The soil grid repeats every 256 cells, so the weight is only applied near the origin.
  */
 function bakeRelief(bytes: Uint8Array, dstSize: number, z: number, x0: number, y0: number, span: number) {
   const planet = globePlanet(STAGES.seed, true, STAGES.seed);
   const home = planet.home, east = planet.east, north = planet.north, R = planet.radius;
-  let demOn = 0;
-  // The soil cell is 30 m. A stride of 4 texels is that scale on a zoom-14 mosaic, and a
-  // full 768² walk of the DEM was stalling the frame that binds the photograph.
-  const step = 4;
-  for (let py = 0; py < dstSize; py += step) for (let px = 0; px < dstSize; px += step) {
-    const ll = atlasLatLon(z, x0, y0, span, dstSize, px, py);
-    const d = fromLatLon(ll.lat * Math.PI / 180, ll.lon * Math.PI / 180);
-    const c = d[0] * home[0] + d[1] * home[1] + d[2] * home[2];
-    const gx = c > 0.2 ? R * (d[0] * east[0] + d[1] * east[1] + d[2] * east[2]) / c : 1e9;
-    const gz = c > 0.2 ? -R * (d[0] * north[0] + d[1] * north[1] + d[2] * north[2]) / c : 1e9;
-    const nrm = demSlope(ll.lat, ll.lon, 60);
-    let hill = 0.75, steep = 0;
-    if (nrm) {
-      demOn = 1;
-      hill = Math.max(0, Math.min(1, -0.45 * nrm[0] + 0.72 * nrm[1] + 0.4 * nrm[2]));
-      steep = Math.max(0, Math.min(1, (1 - nrm[1]) / 0.06));
-    }
-    let drain = 0;
-    if (Math.hypot(gx, gz) < 3600) {
-      const so = soilAt(STAGES.seed, gx, gz);
-      // Lakes are a fill, not a line. Flow distance darkens the channels beside them.
-      if (so.kind !== 'water') drain = 1 - Math.min(1, Math.max(0, so.dist) / 120);
-    }
-    const k = (0.84 + 0.28 * hill) * (1 - 0.18 * steep);
-    const drainB = Math.round(drain * 255);
-    for (let dy = 0; dy < step; dy++) for (let dx = 0; dx < step; dx++) {
-      const yy = py + dy, xx = px + dx;
-      if (yy >= dstSize || xx >= dstSize) continue;
-      const o = (yy * dstSize + xx) * 4;
-      bytes[o] = Math.min(255, Math.max(0, Math.round(bytes[o] * k)));
-      bytes[o + 1] = Math.min(255, Math.max(0, Math.round(bytes[o + 1] * k)));
-      bytes[o + 2] = Math.min(255, Math.max(0, Math.round(bytes[o + 2] * k)));
-      bytes[o + 3] = drainB;
+  const S = soilGrid(STAGES.seed), n = S.n, cell = S.cell, water = SOIL_KINDS.indexOf('water');
+  const F = flowGrid(STAGES.seed), km2 = cell * cell / 1e6;
+  const sinLat = new Float32Array(dstSize), cosLat = new Float32Array(dstSize);
+  const sinLon = new Float32Array(dstSize), cosLon = new Float32Array(dstSize);
+  for (let i = 0; i < dstSize; i++) {
+    const row = atlasLatLon(z, x0, y0, span, dstSize, 0, Math.min(i, dstSize - 1));
+    const lat = row.lat * Math.PI / 180;
+    sinLat[i] = Math.sin(lat); cosLat[i] = Math.cos(lat);
+    const col = atlasLatLon(z, x0, y0, span, dstSize, Math.min(i, dstSize - 1), 0);
+    const lon = col.lon * Math.PI / 180;
+    sinLon[i] = Math.sin(lon); cosLon[i] = Math.cos(lon);
+  }
+  const distAt = (i: number, j: number) => S.dist[(((j % n) + n) % n) * n + ((i % n) + n) % n];
+  const wetAt = (i: number, j: number) => S.kind[(((j % n) + n) % n) * n + ((i % n) + n) % n] === water ? 1 : 0;
+  for (let py = 0; py < dstSize; py++) {
+    const dy = sinLat[py], cy = cosLat[py];
+    for (let px = 0; px < dstSize; px++) {
+      const dx = cy * cosLon[px], dz = cy * sinLon[px];
+      const c = dx * home[0] + dy * home[1] + dz * home[2];
+      let drain = 0;
+      if (c > 0.2) {
+        const gx = R * (dx * east[0] + dy * east[1] + dz * east[2]) / c;
+        const gz = -R * (dx * north[0] + dy * north[1] + dz * north[2]) / c;
+        if (gx * gx + gz * gz < 3600 * 3600) {
+          const fi = gx / cell, fj = gz / cell;
+          const i0 = Math.floor(fi), j0 = Math.floor(fj);
+          const tx = fi - i0, ty = fj - j0;
+          const dist = distAt(i0, j0) * (1 - tx) * (1 - ty) + distAt(i0 + 1, j0) * tx * (1 - ty) + distAt(i0, j0 + 1) * (1 - tx) * ty + distAt(i0 + 1, j0 + 1) * tx * ty;
+          const wet = wetAt(i0, j0) * (1 - tx) * (1 - ty) + wetAt(i0 + 1, j0) * tx * (1 - ty) + wetAt(i0, j0 + 1) * (1 - tx) * ty + wetAt(i0 + 1, j0 + 1) * tx * ty;
+          // Open water stays the photograph. Full on the bank, gone by 88 m.
+          // wet fades across the cell so the edge follows the drainage, not the node squares.
+          if (wet < 0.65) {
+            const land = wet <= 0.2 ? 1 : 1 - (wet - 0.2) / 0.45;
+            const t = dist <= 0 ? 0 : dist >= 88 ? 1 : dist / 88;
+            const s = t * t * (3 - 2 * t);
+            drain = (1 - s) * land;
+          }
+          // Channel cells join their downstream neighbour, so the line is the
+          // segment and not a dot on each node. 9 m is under half a screen pixel-row.
+          let line = 0;
+          for (let dj = 0; dj <= 1; dj++) for (let di = 0; di <= 1; di++) {
+            const ia = i0 + di, ja = j0 + dj;
+            const iaw = ((ia % n) + n) % n, jaw = ((ja % n) + n) % n;
+            const idx = jaw * n + iaw;
+            if (F.outlet[idx] || F.acc[idx] * km2 < 0.04) continue;
+            const ax = ia * cell, az = ja * cell;
+            const r = F.dir[idx];
+            let cd = Math.hypot(gx - ax, gz - az);
+            if (r >= 0) {
+              const ri = r % n, rj = (r / n) | 0;
+              const stepI = (ri - iaw + n + 1) % n - 1, stepJ = (rj - jaw + n + 1) % n - 1;
+              const bx = (ia + stepI) * cell, bz = (ja + stepJ) * cell;
+              const abx = bx - ax, abz = bz - az, denom = abx * abx + abz * abz;
+              if (denom > 0) {
+                const u = Math.max(0, Math.min(1, ((gx - ax) * abx + (gz - az) * abz) / denom));
+                cd = Math.hypot(gx - (ax + abx * u), gz - (az + abz * u));
+              }
+            }
+            if (cd < 9) {
+              const u = cd / 9, w = 1 - u * u * (3 - 2 * u);
+              if (w > line) line = w;
+            }
+          }
+          if (line > drain) drain = line;
+        }
+      }
+      bytes[(py * dstSize + px) * 4 + 3] = Math.round(drain * 255);
     }
   }
-  return demOn;
+  // The flow grid is 30 m, so an unfiltered bank is a stair. A short blur
+  // rounds that corner without lifting the line back into the brown.
+  const radius = 2, tmp = new Float32Array(dstSize * dstSize), blurred = new Uint8Array(dstSize * dstSize);
+  const spanW = radius * 2 + 1;
+  const ax = (x: number, y: number) => bytes[(y * dstSize + Math.min(dstSize - 1, Math.max(0, x))) * 4 + 3];
+  for (let y = 0; y < dstSize; y++) {
+    let sum = 0;
+    for (let k = -radius; k <= radius; k++) sum += ax(k, y);
+    tmp[y * dstSize] = sum / spanW;
+    for (let x = 1; x < dstSize; x++) {
+      sum += ax(x + radius, y) - ax(x - radius - 1, y);
+      tmp[y * dstSize + x] = sum / spanW;
+    }
+  }
+  for (let x = 0; x < dstSize; x++) {
+    const ay = (y: number) => tmp[Math.min(dstSize - 1, Math.max(0, y)) * dstSize + x];
+    let sum = 0;
+    for (let k = -radius; k <= radius; k++) sum += ay(k);
+    blurred[x] = Math.round(sum / spanW);
+    for (let y = 1; y < dstSize; y++) {
+      sum += ay(y + radius) - ay(y - radius - 1);
+      blurred[y * dstSize + x] = Math.round(sum / spanW);
+    }
+  }
+  for (let i = 0; i < dstSize * dstSize; i++) bytes[i * 4 + 3] = blurred[i];
+  return 1;
 }
 
 /** Upload a 2×2 block of the finest cached Sentinel tiles, mipmapped. One tile is smaller than the 2000 m view. Returns the zoom, or 0. */
@@ -191,15 +253,19 @@ export function bindOverheadPhoto(latDeg: number, lonDeg: number) {
     }
     return tiles;
   };
+  // Zoom 16 tiles are ~400 m. The 2000 m frame is ~3 km, so the mosaic is 11 tiles.
+  const fine = tile.z >= 16;
   const x3 = Math.floor(s.x) - 1, y3 = Math.floor(s.y) - 1;
   const x2 = Math.floor(s.x) - (fx < 0.5 ? 1 : 0);
   const y2 = Math.floor(s.y) - (fy < 0.5 ? 1 : 0);
-  const span3 = block(3, x3, y3);
-  const span2 = span3 ? null : block(2, x2, y2);
-  const span = span3 ? 3 : span2 ? 2 : 1;
-  const ox = span3 ? x3 : span2 ? x2 : tile.x;
-  const oy = span3 ? y3 : span2 ? y2 : tile.y;
-  const tiles = span3 ?? span2;
+  const xF = Math.floor(s.x) - 5, yF = Math.floor(s.y) - 5;
+  const spanF = fine ? block(11, xF, yF) : null;
+  const span3 = spanF ? null : block(3, x3, y3);
+  const span2 = spanF || span3 ? null : block(2, x2, y2);
+  const span = spanF ? 11 : span3 ? 3 : span2 ? 2 : 1;
+  const ox = spanF ? xF : span3 ? x3 : span2 ? x2 : tile.x;
+  const oy = spanF ? yF : span3 ? y3 : span2 ? y2 : tile.y;
+  const tiles = spanF ?? span3 ?? span2;
   const demReady = demSlope(latDeg, lonDeg) != null ? 1 : 0;
   const id = `${tile.z}/${ox}/${oy}/${span}/d${demReady}`;
   if (id === boundSteppe) return tile.z;

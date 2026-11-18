@@ -67,7 +67,10 @@ test('open land replaces the conifer crop and the crown floor', () => {
   assert.ok(view.includes('openLandHere'), 'the standalone globe uses the same open-land weight');
   assert.ok(view.includes('bindOverheadPhoto'), 'the Sentinel tile is bound with mipmaps');
   assert.equal(tile.includes('(pic - vec3(0.38))'), false, 'a per-channel lift clamps the steppe green and blue');
-  assert.ok(tile.includes('textureLod(uSteppe'), 'the overhead photograph is sampled from the mip chain');
+  assert.ok(tile.includes('texture2D(uSteppe'), 'the overhead photograph is sampled with the mip chain');
+  const aerial = readFileSync('src/world/globe/aerialExemplar.ts', 'utf8');
+  assert.ok(aerial.includes('LinearMipmapLinearFilter'), 'the mosaic is mipmapped');
+  assert.ok(aerial.includes('LinearFilter'), 'the mosaic is linearly filtered');
   assert.ok(crowns.includes("cover.biome === 'prairie' || cover.biome === 'desert'"), 'prairie does not draw conifer cards');
 });
 
@@ -99,11 +102,67 @@ test('the after frame at 2000 m reads as straw, not canopy salt', () => {
   assert.ok(after.g < after.r, JSON.stringify(after));
 });
 
-test('32 px windows stay within 30% of the Sentinel crop', () => {
+test('32 px windows reach the Sentinel crop contrast', () => {
   const ref = meanWindowStd('tasks/evidence/T-0222/ref-steppe-sentinel.png');
   const after = meanWindowStd('tasks/evidence/T-0222/after-2000.png');
-  assert.ok(ref > 5, `reference std ${ref}`);
+  assert.ok(ref > 8, `reference std ${ref}`);
+  assert.ok(after >= 8.5, `after std ${after.toFixed(2)}`);
   assert.ok(Math.abs(after - ref) / ref <= 0.3, `after ${after.toFixed(2)} reference ${ref.toFixed(2)}`);
+});
+
+/** Mean RGB of the ground, chrome and the black margin left out. */
+function frameMean(file: string) {
+  const { width: W, height: H, data } = PNG.sync.read(readFileSync(file));
+  const x0 = Math.floor(W * 0.12), x1 = Math.floor(W * 0.88);
+  const y0 = Math.floor(H * 0.1), y1 = Math.floor(H * 0.82);
+  let n = 0, sr = 0, sg = 0, sb = 0;
+  for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+    const i = (y * W + x) * 4;
+    sr += data[i]; sg += data[i + 1]; sb += data[i + 2]; n++;
+  }
+  return { r: sr / n, g: sg / n, b: sb / n };
+}
+
+test('the overhead matches the reference brown within 10%', () => {
+  const ref = frameMean('tasks/evidence/T-0222/ref-steppe-sentinel.png');
+  const after = frameMean('tasks/evidence/T-0222/after-2000.png');
+  for (const k of ['r', 'g', 'b'] as const) {
+    assert.ok(Math.abs(after[k] - ref[k]) / ref[k] <= 0.1, `${k} after ${after[k].toFixed(1)} reference ${ref[k].toFixed(1)}`);
+  }
+});
+
+/** A magnified mosaic spikes the gradient every block. Lag 8 must not stand out from its neighbours. */
+function gradientPeriod(file: string, lag: number) {
+  const { width: W, height: H, data } = PNG.sync.read(readFileSync(file));
+  const L = (x: number, y: number) => {
+    const i = (y * W + x) * 4;
+    return 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+  };
+  let num = 0, den = 0;
+  const y0 = Math.floor(H * 0.2), y1 = Math.floor(H * 0.8);
+  const x0 = Math.floor(W * 0.15), x1 = Math.floor(W * 0.85) - lag - 1;
+  for (let y = y0; y < y1; y += 2) for (let x = x0; x < x1; x++) {
+    const g = L(x + 1, y) - L(x, y);
+    const h = L(x + 1 + lag, y) - L(x + lag, y);
+    num += g * h; den += g * g;
+  }
+  let numR = 0, denR = 0;
+  const y1r = Math.floor(H * 0.8) - lag - 1;
+  for (let y = y0; y < y1r; y++) for (let x = x0; x < x1; x += 2) {
+    const g = L(x, y + 1) - L(x, y);
+    const h = L(x, y + 1 + lag) - L(x, y + lag);
+    numR += g * h; denR += g * g;
+  }
+  return { col: num / Math.max(den, 1), row: numR / Math.max(denR, 1) };
+}
+
+test('no 8 px block edges in the overhead', () => {
+  const p8 = gradientPeriod('tasks/evidence/T-0222/after-2000.png', 8);
+  const p7 = gradientPeriod('tasks/evidence/T-0222/after-2000.png', 7);
+  const p9 = gradientPeriod('tasks/evidence/T-0222/after-2000.png', 9);
+  const spike = (a: number, b: number, c: number) => a > Math.max(b, c) * 1.35 && a > 0.15;
+  assert.equal(spike(p8.col, p7.col, p9.col), false, `column period ${p8.col.toFixed(3)} vs ${p7.col.toFixed(3)} ${p9.col.toFixed(3)}`);
+  assert.equal(spike(p8.row, p7.row, p9.row), false, `row period ${p8.row.toFixed(3)} vs ${p7.row.toFixed(3)} ${p9.row.toFixed(3)}`);
 });
 
 test('a missing Sentinel tile at the staged home is open land, not boreal salt', () => {

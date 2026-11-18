@@ -21,6 +21,12 @@ export const OPEN_TILES = {
   demZoom: [8, 11] as const,
   /** 8 covers the horizon. 10 and 12 step in. 14 is about a Sentinel pixel (~10 m) under the drone. */
   photoZoom: [8, 10, 12, 14] as const,
+  /**
+   * Overhead only. At 50°N a zoom-14 texel is ~6 m, about three screen pixels
+   * from 2000 m with a 45° lens, so the mosaic magnified into squares.
+   * Zoom 16 is ~1.5 m, under one screen pixel (~2.3 m). EOX serves it.
+   */
+  overheadZoom: 16,
   /** Public-domain USGS orthoimage. Only the continental United States has coverage. */
   orthoZoom: 16,
   orthoUrl: (z: number, x: number, y: number) => `https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/${z}/${y}/${x}`,
@@ -201,7 +207,9 @@ export function photoTileAt(z: number, x: number, y: number): { z: number; x: nu
 
 /** Finest cached Sentinel (or USGS) tile under this point, or null when nothing has arrived. */
 export function finestPhotoTile(latDeg: number, lonDeg: number): { z: number; x: number; y: number; rgb: Float32Array; size: number } | null {
-  const zooms = inConus(latDeg, lonDeg) ? [...OPEN_TILES.photoZoom, OPEN_TILES.orthoZoom] : OPEN_TILES.photoZoom;
+  const zooms = inConus(latDeg, lonDeg)
+    ? [...OPEN_TILES.photoZoom, OPEN_TILES.overheadZoom, OPEN_TILES.orthoZoom]
+    : [...OPEN_TILES.photoZoom, OPEN_TILES.overheadZoom];
   for (let i = zooms.length - 1; i >= 0; i--) {
     const z = zooms[i];
     const s = slippy(latDeg, lonDeg, z);
@@ -350,7 +358,11 @@ function pull(kind: 'dem' | 'photo', z: number, x: number, y: number) {
   inflight.set(id, job);
   (kind === 'photo' ? photoPump : demPump).schedule(id, async () => {
     try {
-      const url = kind === 'dem' ? OPEN_TILES.demUrl(z, x, y) : (z >= 15 ? OPEN_TILES.orthoUrl(z, x, y) : OPEN_TILES.photoUrl(z, x, y));
+      const n = 2 ** z;
+      const lon = (x + 0.5) / n * 360 - 180;
+      const lat = Math.atan(Math.sinh(Math.PI * (1 - 2 * (y + 0.5) / n))) * 180 / Math.PI;
+      const ortho = z >= OPEN_TILES.orthoZoom && inConus(lat, lon);
+      const url = kind === 'dem' ? OPEN_TILES.demUrl(z, x, y) : (ortho ? OPEN_TILES.orthoUrl(z, x, y) : OPEN_TILES.photoUrl(z, x, y));
       const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
       if (!res.ok) { (kind === 'dem' ? storeTerrarium : storePhoto)(z, x, y, null); return; }
       const tile = await decode(await res.blob());
@@ -384,7 +396,7 @@ export function tileRing(kind: 'dem' | 'photo', z: number, latDeg = 50, radiusM?
   const radius = radiusM ?? (z <= 8 ? 160_000 : z <= 10 ? 40_000 : kind === 'photo' ? 14_000 : 18_000);
   const need = Math.ceil(radius / Math.max(1, tileMetres(z, latDeg)));
   // Zoom 12 stays a small valley. A 11×11 ring sat in front of the next landing's horizon tiles.
-  const cap = z >= 14 ? 1 : z >= 12 ? 2 : z >= 10 ? 1 : 2;
+  const cap = z >= 16 ? 5 : z >= 14 ? 1 : z >= 12 ? 2 : z >= 10 ? 1 : 2;
   const min = z <= 8 ? 2 : 1;
   return Math.max(min, Math.min(cap, need));
 }
@@ -450,6 +462,11 @@ export function globeMatch(albedo: readonly [number, number, number]): [number, 
 export function warmDemTiles(latDeg: number, lonDeg: number) { warm('dem', latDeg, lonDeg); }
 /** Sentinel-2 cloudless tiles. Safe to call every frame. */
 export function warmPhotoTiles(latDeg: number, lonDeg: number) { warm('photo', latDeg, lonDeg); }
+/** Zoom 16 under the camera. The horizon ring stays on the coarser zooms. */
+export function warmOverheadTiles(latDeg: number, lonDeg: number) {
+  const z = OPEN_TILES.overheadZoom;
+  for (const t of tilesAround(latDeg, lonDeg, z, tileRing('photo', z, latDeg))) void pull('photo', t.z, t.x, t.y);
+}
 
 /** Test hook. */
 export function resetOpenTiles() {

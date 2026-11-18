@@ -85,11 +85,23 @@ export const CLOUDS = { heightKm: 2.5, cellKm: 900, albedo: .95, /** cumulus/cum
    *  direct diffuse removed under full cover; specular is killed on a tighter ramp in patch() so a sharp glint cannot
    *  leak. Sky light is not multiplied. [game calibration] */
   shadow: .96, shadowMinOct: 3 };
-/** T-0169 terminator. mu = N·L. Daylight stays white only while mu is high; below whiteAt the sun keeps atmSunlight's
- *  Rayleigh colour and, as mu falls toward warmAt, an architectural orange/red (Matthew 2026-11-06). The gain is
- *  multiplied by the sun's luminance so the band does not blow out. Budget pass: earlier soft wrap + milder orange
- *  so flakes no longer light as hard peach speckles into night. [game calibration] */
-export const TERMINATOR = { whiteAt: .52, warmAt: -.04, gain: [1.05, .34, .12] as const };
+/**
+ * Architectural peach fill. Retired.
+ *
+ * T-0169 mixed a flat orange (gain 1.05, 0.34, 0.12) from mu 0.52 down to −0.04,
+ * so most of the day side went peach. Apollo 17 AS17-148-22727 has a thin blue
+ * limb and only a little reddening at the terminator. That reddening is already
+ * `atmSunlight`: Rayleigh plus ozone along the sun path (composition.ts, the
+ * same coefficients as Hillaire 2020 Table 1). `peachFill` stays 0 so the day
+ * side is not painted. A regression that brings the old smoothstep back fails
+ * tests/thin-limb.test.ts.
+ */
+export function peachFill(_mu: number) { return 0; }
+/** The old curve, kept so the test can show what the wide band did. Not used by the shader. */
+export function retiredPeachFill(mu: number) {
+  const t = Math.max(0, Math.min(1, (mu - 0.52) / (-0.04 - 0.52)));
+  return t * t * (3 - 2 * t);
+}
 
 /** Hygroscopic growth of the Mie (aerosol) term with humidity (T-0089, issue #111): f(RH) = (1 − RH)^−gamma (Hanel 1976,
  *  Adv. Geophys. 19:73, doi 10.1016/S0065-2687(08)60142-9; the one-parameter fit of Kasten 1969). gamma 0.3: continental
@@ -188,14 +200,12 @@ vec3 atmScatter(vec3 rd, float tEnd, int n, int nl, out vec3 trans) {
 }
 // sunlight colour reaching x (transmittance), 0 in the planet's shadow
 vec3 atmSunlight(vec3 x, int nl) { vec2 l = atmSunDepth(x, nl); return l.x < 0.0 ? atmRefracted(x) : exp(-((BR + BO) * l.x + BME * l.y)); }
-// T-0169: widen the warm terminator. sunT is atmSunlight (Rayleigh/Mie). White only while mu = N·L is high;
-// through the band the Rayleigh colour shows, and at the limb it is the architectural orange/red in TERMINATOR.gain.
+// sunT is atmSunlight: Rayleigh, ozone Chappuis, and Mie along the sun path
+// (composition.ts). It stays nearly white until the path is long, which is a
+// thin reddening at the terminator, not a peach wash of the day side.
+// The sky limb is atmScatter on the shell (the blue halo). mu is unused.
 vec3 atmWarmSun(vec3 sunT, float mu) {
-  float sY = max(dot(sunT, vec3(0.2126, 0.7152, 0.0722)), 1e-4);
-  float band = smoothstep(${TERMINATOR.whiteAt.toFixed(2)}, ${TERMINATOR.warmAt.toFixed(2)}, mu);
-  vec3 arch = vec3(${TERMINATOR.gain.map(v => v.toFixed(2)).join(', ')}) * sY;
-  vec3 tinted = mix(sunT, arch, band);
-  return mix(vec3(sY), tinted, band);
+  return sunT + vec3(0.0) * mu;
 }
 // Local sky (diffuse) light relative to clear noon, from the Sun's altitude h at a point (mu = sin h): the hemisphere light stands
 // for the clear-noon diffuse sky (~20 klx, CIE); sin h / sin 30 deg by day [approx], floor 960/20000 at h = 0 and Schaefer's 0.4 dex

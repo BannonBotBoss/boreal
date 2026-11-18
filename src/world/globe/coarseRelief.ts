@@ -1,14 +1,14 @@
-/**
- * Zoom-0 Mapzen terrarium relief (AWS Terrain Tiles, one 256x256 pixel).
- *
- * The same encoding as openTiles.terrariumMetres: (R*256 + G + B/256) - 32768.
- * Joerd builds this zoom from ETOPO1 (Amante and Eakins 2009, NOAA Technical Memorandum NESDIS NGDC-24;
- * Eakins and Sharman 2012 hypsometry). Sea level is 0. A negative pixel is ocean.
- *
- * Web Mercator, the same slippy mapping as openTiles.slippy. Nearest pixel, so 8.487 N, 129.334 W
- * is pixel (36, 121) at -4589 m, not a seeded mountain.
- * Little-endian int16 metres, row-major, north at row 0.
- */
+/** Zoom-0 terrarium. Antarctic cap: src/render/globe/southCap.ts (Fretwell et al. 2013). */
+import { antarcticClampLat } from '../../render/globe/southCap';
+export { antarcticClampLat };
+let capM: number | null = null;
+function southCap(lat: number): number | null {
+  if (!enabled || lat > antarcticClampLat()) return null;
+  if (capM !== null) return capM;
+  const n = COARSE_N, g = cells(), iy = n - 2; let hi = 0;
+  for (let i = 0; i < n; i++) hi = Math.max(hi, g[iy * n + i]);
+  capM = hi > 0 ? hi : 2000; return capM;
+}
 const B64 = `
 evcE+Dr4c/gA+YP5QfkT+Sz5Pfkc+dL4ufi0+B748PdH+FH4Hfhz9zb3u/cn+K33pffN9+H34vf291j4gPho+JL4V/gY+Mz3lvey9/T3OPjS+P74Hfk3+ZX5
 y/kV+j36J/oE+hf6c/qv+p/6/vnU+c75rfl/+YP5NvkU+Rr58fi4+I34hviS+KP4/PiK+f75Hvq2+kv7b/sD/NH8LP1Y/Wn9af0i/br8avwJ/ML7pPs++4v6
@@ -1484,7 +1484,7 @@ export function coarseReliefOn(v?: boolean) {
 }
 /** Metres, nearest zoom-0 pixel. Latitude is clamped to the Web Mercator range, as slippy does. */
 export function coarseMetres(latDeg: number, lonDeg: number): number {
-  const n = COARSE_N;
+  const cap = southCap(latDeg); if (cap !== null) return cap; const n = COARSE_N;
   const x = ((lonDeg + 180) / 360) * n;
   const lat = Math.max(-85, Math.min(85, latDeg)) * Math.PI / 180;
   const y = (1 - Math.log(Math.tan(lat) + 1 / Math.cos(lat)) / Math.PI) / 2 * n;
@@ -1499,7 +1499,7 @@ export function coarseMetres(latDeg: number, lonDeg: number): number {
  * the ground tiles and the hypsometry tests keep the pixel they already had.
  */
 export function coarseMetresLinear(latDeg: number, lonDeg: number): number {
-  const n = COARSE_N, g = cells();
+  const cap = southCap(latDeg); if (cap !== null) return cap; const n = COARSE_N, g = cells();
   const x = ((lonDeg + 180) / 360) * n;
   const lat = Math.max(-85, Math.min(85, latDeg)) * Math.PI / 180;
   const y = (1 - Math.log(Math.tan(lat) + 1 / Math.cos(lat)) / Math.PI) / 2 * n;

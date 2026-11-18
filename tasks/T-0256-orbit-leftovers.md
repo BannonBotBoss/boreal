@@ -25,11 +25,11 @@ Credits 52 = 10 x 4 objectives x 1.3. Not from scratch. The cover map, the Hilla
 
 `atmWarmSun` is the twilight gate (6–8°). There is no second terminator gain. Daylight sun is white. The blue limb is `atmScatter`.
 
-Land colour is `buildOrbitCover`. `zonalMoisture` is gone. At orbit, `landMask` is the cover alpha, so a negative vertex in Central Asia does not take the ocean shader. The Caspian stays an enclosed lake.
+Land colour is the Blue Marble Next Generation image itself (`public/globe/blue-marble-200408.jpg`, Stöckli et al. 2005, August 2004), sampled per pixel into `buildOrbitCover`. Class-constant bands are not the disc. Tibet is that plateau, not an ice-class white fill. The fragment samples the cover at the unwarped UV, so the coast is the land mask. `zonalMoisture` is gone. The Caspian stays an enclosed basin.
 
-The post-tonemap navy replace is gone. Ocean GGX (`oceanGlint`) is multiplied by one minus the Blue Marble deck, the same 0.08–0.55 ramp the cloud composite already uses.
+The post-tonemap navy replace is gone. At orbit the bright sky `reflectionColor` is off, roughness is at least 0.62, and metalness is 0, so clear-sky water is not a silver mirror. A cloud deck still gates the glint (`glintGate`) and the ocean keeps `uOceanRough` rather than the lake value. Orbit clouds are mixed toward their own luminance so the deck is neutral white.
 
-`southCap` runs only after `coarseReliefOn()` is true, and only south of the last Web Mercator row.
+`southCap` runs only after `coarseReliefOn()` is true, and only south of the last Web Mercator row. The new shading lives in `src/render` so `tests/sim-home.test.ts` passes.
 
 ## Numbers
 
@@ -43,7 +43,8 @@ The post-tonemap navy replace is gone. Ocean GGX (`oceanGlint`) is multiplied by
 | Bangkok 14°N 101°E | green above red | humid tropics, not a desert | same cover map. The copied zonal curve had painted this belt tan | yes |
 | Caspian 42°N 51°E | enclosed lake, alpha land, channels under 20 | surface near −28 m, not joined to the ocean | Kosarev & Yablonskaya 1994, The Caspian Sea, SPB Academic Publishing | yes |
 | Antarctic cap | one land row south of about −84.9° | the ice sheet, not a copied ocean row | the zoom-0 grid; empty-row floor 2000 m is Bedmap2 interior elevation (Fretwell et al. 2013, The Cryosphere 7:375) | yes |
-| Cloud specular | GGX times (1 − deck) | a cloud deck removes the direct sun | Walter et al. 2007, EGSR, GGX; deck thresholds already in `ORBIT_FRAG` (NASA Visible Earth Blue Marble) | yes |
+| Cloud specular | GGX times (1 − deck), ocean roughness kept | a cloud deck removes the direct sun and does not polish the sea | Walter et al. 2007, EGSR, GGX; Cox and Munk 1954, J. Opt. Soc. Am. 44:838 | yes |
+| Land reflectance | per-class mean and variance of the August 2004 composite | Sahara, Kazakh steppe, Congo, Siberian taiga, the Sudd, Taymyr, the Andean puna, Greenland | Stöckli, Vermote, Saleous, Simmon and Herring 2005, NASA Earth Observatory, Blue Marble Next Generation. https://visibleearth.nasa.gov/collection/1484/blue-marble | the table in `blueMarbleAlbedo.json` |
 
 ## Frames
 

@@ -3,7 +3,7 @@
  * Colour decisions stay in orbitCover.ts. This file only draws.
  */
 import * as THREE from 'three';
-import { buildOrbitCover } from './orbitCover';
+import { buildOrbitCover, loadMarble } from './orbitCover';
 import { loadOrbitVegetation } from './orbitVeg';
 
 export function orbitFrag(cloudAlbedo: number, invTau: string, invPi: string) {
@@ -21,6 +21,7 @@ export function orbitFrag(cloudAlbedo: number, invTau: string, invPi: string) {
     if (uOrbitDeck > 0.5) {
       float c = texture2D(uOrbitCloud, ouv).r;
       float deck = smoothstep(0.08, 0.55, c);
+      cloudDeck = max(cloudDeck, deck * ow);
       diffuseColor.rgb = mix(diffuseColor.rgb, vec3(${cloudAlbedo.toFixed(2)}), deck * ow);
     }
   }`;
@@ -31,7 +32,7 @@ let coverUploaded = false;
 export function uploadOrbitAlbedo(slot: { value: THREE.Texture }, empty: THREE.Texture) {
   if (coverUploaded || typeof document === 'undefined') return;
   coverUploaded = true;
-  void loadOrbitVegetation().then(() => {
+  void loadOrbitVegetation().then(() => loadMarble()).then(() => {
     const map = buildOrbitCover();
     const tex = new THREE.DataTexture(map.rgba, map.width, map.height);
     tex.colorSpace = THREE.NoColorSpace;

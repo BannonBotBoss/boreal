@@ -25,7 +25,7 @@ export function orbitAtmosphere(src: string) {
   );
   out = out.replace(
     'float csSpec = 1.0 - smoothstep(0.08, 0.35, coverS);',
-    'float csSpec = (1.0 - smoothstep(0.08, 0.35, coverS)) * (1.0 - cloudDeck);',
+    'float csSpec = 1.0 - smoothstep(0.08, 0.35, coverS); csSpec *= (1.0 - cloudDeck);',
   );
   out = out.replace(
     '(reflectedLight.indirectDiffuse + reflectedLight.indirectSpecular) * skyF + totalEmissiveRadiance;',

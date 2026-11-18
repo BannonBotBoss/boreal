@@ -265,7 +265,7 @@ async function play(run: Run) {
     const c = canvas();
     if (c) {
       note(run, 'orbited the camera');
-      await drag(c, 28, 40);
+      await drag(c, 10, 22);
     }
     return;
   }

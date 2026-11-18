@@ -61,6 +61,8 @@ import { planetFor } from '../world/globe/planet';
 import { horizonMetres, skirtLatLon } from '../world/globe/horizonSkirt';
 import { warmDemTiles, warmPhotoTiles } from '../world/globe/openTiles';
 import { createContinuousTerrain } from './continuousTerrain';
+import { createContactShadows } from './contactShadow';
+import { drivePose } from './driveBridge';
 import { chunkAction } from './groundHold';
 import { updateTreeUniforms } from './trees';
 import { createGrass } from './grass/grass';
@@ -105,6 +107,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   // One surface to the horizon. The old skirt was a second mesh, and the chunk
   // grounds were the floating plates on top of it. Both stay out of the scene.
   const terrain = createContinuousTerrain(); scene.add(terrain.mesh);
+  const contacts = createContactShadows(scene);
   // The skirt used to request the DEM and the photograph. The continuous mesh does not.
   // Without that request the cover sample stays the seeded forest and a prairie home draws spruce.
   const coverPlanet = planetFor(STAGES.seed, (x, z) => heightAt(x, z), 'ground-cover');
@@ -529,8 +532,9 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       }
     }
     if (time - lastFloor > 1 || time < lastFloor) {
+      const gap = time - lastFloor;
       lastFloor = time;
-      try { setGroundFloor(landingContext(x, z).biome, dayAt(worldTime ?? time)); } catch { /* keep the last floor */ }
+      try { setGroundFloor(landingContext(x, z).biome, dayAt(worldTime ?? time), gap > 0 && gap < 30 ? gap : undefined); } catch { /* keep the last floor */ }
     }
     updateTreeUniforms(); flora.update(camera, photoreal.tier.foliage, INTEREST.near); grass.update(camera, wolf.root.position, photoreal.tier.foliage, INTEREST.near);
     simulateAnimals(dt, x, z, frozen, time, mode);
@@ -564,6 +568,21 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     }
     const fx = bandFx(photoreal.tier); // world/globe/inpage: no god rays over the far layer, AO once the patch is in (= tier otherwise)
     litter.place();
+    {
+      const foot = (px: number, pz: number) => {
+        const y = heightAt(px, pz);
+        return { y, nx: heightAt(px + 0.4, pz) - y, nz: heightAt(px, pz + 0.4) - y };
+      };
+      const wolfFoot = foot(wolf.root.position.x, wolf.root.position.z);
+      const spots = [{ x: wolf.root.position.x, y: wolfFoot.y, z: wolf.root.position.z, s: 1.15, nx: wolfFoot.nx, nz: wolfFoot.nz }];
+      for (const pup of litter.pups()) { const g = foot(pup.x, pup.z); spots.push({ x: pup.x, y: g.y, z: pup.z, s: 0.48, nx: g.nx, nz: g.nz }); }
+      const fox = drivePose();
+      if (fox) { const g = foot(fox.x, fox.z); spots.push({ x: fox.x, y: g.y, z: fox.z, s: 0.7, nx: g.nx, nz: g.nz }); }
+      for (const row of animals.values()) { if (spots.length >= 24) break; const g = foot(row.entity.x, row.entity.z); spots.push({ x: row.entity.x, y: g.y, z: row.entity.z, s: 0.9, nx: g.nx, nz: g.nz }); }
+      for (const hare of hares.list()) { if (spots.length >= 24) break; const g = foot(hare.x, hare.z); spots.push({ x: hare.x, y: g.y, z: hare.z, s: 0.35, nx: g.nx, nz: g.nz }); }
+      const sun = 1 - Math.min(1, Math.max(0, darkness));
+      contacts.set(spots, { stretch: 0.85 + sun * 0.7, opacity: 0.22 + sun * 0.5, yaw: Math.atan2(lit.dir.x, lit.dir.z) });
+    }
     for (const child of scene.children) {
       const picture = child.userData.animalPicture || child.userData.wolfLod || child.name.startsWith('pup:');
       if (picture || child === wolf.root) coatNight(child, darkness);

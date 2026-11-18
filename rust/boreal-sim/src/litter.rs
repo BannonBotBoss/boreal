@@ -238,32 +238,41 @@ fn act_mps(act: &str, age_years: f64) -> f64 {
     }
 }
 
-/// One follow step toward the aim at time 0. The pup does not overshoot it.
-pub fn follow_step(x: f64, z: f64, slot: u32, mother_x: f64, mother_z: f64, yaw: f64, dt: f64, age_years: f64) -> (f64, f64) {
-    let act = pup_act(slot, 0.0);
-    let (tx, tz, _, _) = pup_aim(slot, mother_x, mother_z, yaw, 0.0, true, age_years, false);
+/// One follow step. Velocity eases onto the aim over `STEER_TAU`, so a frame cannot flip it.
+/// A gap longer than `REJOIN_M` is still the drop onto the trail. Returns x, z, vx, vz.
+pub fn follow_step_vel(
+    x: f64, z: f64, slot: u32, mother_x: f64, mother_z: f64, yaw: f64, dt: f64, age_years: f64,
+    time: f64, moving: bool, threatened: bool, vx0: f64, vz0: f64,
+) -> (f64, f64, f64, f64) {
+    let act = pup_act(slot, time);
+    let (tx, tz, _, _) = pup_aim(slot, mother_x, mother_z, yaw, time, moving, age_years, threatened);
     let dx = tx - x;
     let dz = tz - z;
     let d = (dx * dx + dz * dz).sqrt();
     if d < 1e-6 || dt <= 0.0 {
-        return (x, z);
+        return (x, z, 0.0, 0.0);
     }
     if d > REJOIN_M {
-        return (tx, tz);
+        return (tx, tz, 0.0, 0.0);
     }
-    // Same ease as the page: velocity starts at rest and catches the aim over STEER_TAU.
     let speed = act_mps(act, age_years);
     let want = speed.min(d / dt);
     let k = 1.0 - (-dt / STEER_TAU).exp();
-    let mut vx = (dx / d * want) * k;
-    let mut vz = (dz / d * want) * k;
+    let mut vx = vx0 + (dx / d * want - vx0) * k;
+    let mut vz = vz0 + (dz / d * want - vz0) * k;
     let step = (vx * vx + vz * vz).sqrt() * dt;
     if step > d {
         let s = d / step;
         vx *= s;
         vz *= s;
     }
-    (x + vx * dt, z + vz * dt)
+    (x + vx * dt, z + vz * dt, vx, vz)
+}
+
+/// One follow step from rest, toward the aim at time 0.
+pub fn follow_step(x: f64, z: f64, slot: u32, mother_x: f64, mother_z: f64, yaw: f64, dt: f64, age_years: f64) -> (f64, f64) {
+    let (nx, nz, _, _) = follow_step_vel(x, z, slot, mother_x, mother_z, yaw, dt, age_years, 0.0, true, false, 0.0, 0.0);
+    (nx, nz)
 }
 
 /// Past the trail, not yet the rejoin. A short separation.
@@ -446,6 +455,37 @@ mod tests {
             }
         }
         assert!(body_radius(1.0) > r);
+    }
+
+    #[test]
+    fn steering_does_not_flip_between_frames() {
+        let mut x = 0.0;
+        let mut z = 3.0;
+        let mut vx = 0.0;
+        let mut vz = 0.0;
+        let mut prev_ux = 0.0;
+        let mut prev_uz = 0.0;
+        for i in 0..30 {
+            let (nx, nz, nvx, nvz) = follow_step_vel(x, z, 0, 0.0, 0.0, 0.0, 1.0 / 30.0, EMERGE_YEARS, 0.0, true, false, vx, vz);
+            let mx = nx - x;
+            let mz = nz - z;
+            let m = (mx * mx + mz * mz).sqrt();
+            if m > 1e-5 && i > 0 {
+                assert!(mx / m * prev_ux + mz / m * prev_uz > 0.5, "frame {i} flipped");
+            }
+            if m > 1e-5 {
+                prev_ux = mx / m;
+                prev_uz = mz / m;
+            }
+            x = nx;
+            z = nz;
+            vx = nvx;
+            vz = nvz;
+        }
+        let (hx, hz, _, _) = pup_aim(0, 0.0, 0.0, 0.0, 0.0, true, EMERGE_YEARS, false);
+        let left = ((x - hx).powi(2) + (z - hz).powi(2)).sqrt();
+        let began = (hx * hx + (3.0 - hz).powi(2)).sqrt();
+        assert!(left < began, "the pup still walks toward the home");
     }
 
     #[test]

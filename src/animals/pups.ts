@@ -1,10 +1,10 @@
 /**
  * The mama's litter, drawn from the same rules as the Rust store.
- * They stand on the trail beside her. A drop that leaves them behind puts them back on it.
- * The meshes are the wolf skin with a woolly coat of fur cards, scaled to a four-week pup.
+ * They stand on the trail beside her. The meshes are the wolf skin with a woolly coat, scaled to a four-week pup.
  */
 import * as THREE from 'three';
-import { ageAfter, besideMother, bodyRadius, followStep, growthStage, pupAim, pupCall, pupGap, pupScale, separateHerd, PUP_VOICE, stepHz, type PupCall, type PupPlace } from '../core/litter';
+import { ageAfter, besideMother, growthStage, pupAim, pupCall, pupGap, pupScale, PUP_VOICE, stepHz, type PupCall, type PupPlace } from '../core/litter';
+import { herdStep } from '../render/litterBridge';
 import { livingRoster } from '../core/enterLiving';
 import { heightAt } from '../core/world';
 import { createPlayerWolf } from '../render/playerWolf';
@@ -29,7 +29,7 @@ let cloud: { x: number; z: number }[] = [];
 export function pupCloud() { return cloud; }
 
 export function createLitter(scene: THREE.Scene) {
-  let rows: { pup: LivePup; holder: THREE.Group; wolf: ReturnType<typeof createPlayerWolf>; vx: number; vz: number }[] | null = null;
+  let rows: { pup: LivePup; holder: THREE.Group; wolf: ReturnType<typeof createPlayerWolf> }[] | null = null;
   let clock = 0;
   let following = true;
   let motherAt = { x: 0, z: 0, seen: false };
@@ -43,7 +43,7 @@ export function createLitter(scene: THREE.Scene) {
       holder.scale.setScalar(pupScale(p.ageYears));
       holder.add(wolf.root);
       scene.add(holder);
-      return { pup: p, holder, wolf, vx: 0, vz: 0 };
+      return { pup: p, holder, wolf };
     });
     return rows;
   };
@@ -82,11 +82,9 @@ export function createLitter(scene: THREE.Scene) {
         const dist = Math.hypot(prevX - motherX, prevZ - motherZ);
         const threatened = mood.threatened === true;
         const aim = pupAim(row.pup.slot, motherX, motherZ, motherYaw, clock, motherMoved, row.pup.ageYears, threatened);
-        const next = followStep(row.pup.x, row.pup.z, row.pup.slot, motherX, motherZ, motherYaw, dt, row.pup.ageYears, clock, motherMoved, threatened, { vx: row.vx, vz: row.vz });
+        const next = herdStep(live, row.pup, motherX, motherZ, motherYaw, dt, clock, motherMoved, threatened);
         row.pup.x = next.x;
         row.pup.z = next.z;
-        row.vx = next.vx;
-        row.vz = next.vz;
         row.pup.yaw = aim.yaw;
         row.pup.act = aim.act;
         const moved = Math.hypot(next.x - prevX, next.z - prevZ) > 0.004;
@@ -103,16 +101,6 @@ export function createLitter(scene: THREE.Scene) {
         if (kind && clock >= due) {
           heard.push({ slot: row.pup.slot, kind, x: row.pup.x, z: row.pup.z, ageYears: row.pup.ageYears });
           nextVoice.set(row.pup.slot, clock + pupGap(kind));
-        }
-      }
-      if (dt > 0) {
-        const cleared = separateHerd(live.map(row => ({ x: row.pup.x, z: row.pup.z, r: bodyRadius(row.pup.ageYears) })), motherX, motherZ);
-        for (let i = 0; i < live.length; i++) {
-          const row = live[i], at = cleared[i];
-          // The shove is a position constraint. It does not become a launch speed.
-          if (Math.hypot(at.x - row.pup.x, at.z - row.pup.z) > 1e-4) { row.vx *= 0.5; row.vz *= 0.5; }
-          row.pup.x = at.x;
-          row.pup.z = at.z;
         }
       }
       cloud = live.map(row => ({ x: row.pup.x, z: row.pup.z }));

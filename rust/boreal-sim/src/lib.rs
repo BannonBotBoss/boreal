@@ -149,6 +149,49 @@ thread_local! { static GRID: RefCell<Option<Grid>> = const { RefCell::new(None) 
     n as u32
 }
 
+thread_local! {
+    static LITTER_SCRATCH: std::cell::RefCell<Vec<f64>> = const { std::cell::RefCell::new(Vec::new()) };
+}
+/// Scratch for the litter calls. Valid until the next scratch request. Does not allocate every frame once it has grown.
+#[no_mangle]
+pub extern "C" fn litter_scratch(n: u32) -> *mut f64 {
+    LITTER_SCRATCH.with(|s| {
+        let mut v = s.borrow_mut();
+        if v.len() < n as usize { v.resize(n as usize, 0.0); }
+        v.as_mut_ptr()
+    })
+}
+/// Body radius in metres for one pup of this age.
+#[no_mangle]
+pub extern "C" fn litter_body_radius(age_years: f64) -> f64 { litter::body_radius(age_years) }
+
+/// Pup follow. `out` receives x, z, vx, vz. The step eases from the previous velocity.
+#[no_mangle]
+pub extern "C" fn litter_follow(
+    x: f64, z: f64, slot: u32, mother_x: f64, mother_z: f64, yaw: f64, dt: f64, age_years: f64,
+    time: f64, moving: u32, threatened: u32, vx: f64, vz: f64, out: *mut f64,
+) {
+    if out.is_null() { return; }
+    let (nx, nz, nvx, nvz) = litter::follow_step_vel(
+        x, z, slot, mother_x, mother_z, yaw, dt, age_years, time, moving != 0, threatened != 0, vx, vz,
+    );
+    let o = unsafe { std::slice::from_raw_parts_mut(out, 4) };
+    o.copy_from_slice(&[nx, nz, nvx, nvz]);
+}
+
+/// Personal space. `data` is n triples (x, z, radius). x and z are rewritten in place.
+#[no_mangle]
+pub extern "C" fn litter_separate(n: u32, data: *mut f64, mother_x: f64, mother_z: f64) {
+    if data.is_null() || n == 0 || n > 16 { return; }
+    let slice = unsafe { std::slice::from_raw_parts_mut(data, (n * 3) as usize) };
+    let pups: Vec<(f64, f64, f64)> = (0..n as usize).map(|i| (slice[i * 3], slice[i * 3 + 1], slice[i * 3 + 2])).collect();
+    let out = litter::separate_herd(&pups, mother_x, mother_z);
+    for (i, p) in out.iter().enumerate() {
+        slice[i * 3] = p.0;
+        slice[i * 3 + 1] = p.1;
+    }
+}
+
 fn read_name(ptr: *const u8, len: u32) -> Option<String> {
     if ptr.is_null() || len > 256 { return None; }
     let bytes = unsafe { std::slice::from_raw_parts(ptr, len as usize) };

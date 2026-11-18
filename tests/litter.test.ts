@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ageAfter, besideMother, birthPlaces, bodyRadius, followStep, growthStage, LITTER, pupAct, pupAim, pupScale, separateHerd, stepHz, trailBackM, trailSlot, walkMps } from '../src/core/litter';
+import { ageAfter, besideMother, birthPlaces, followStep, growthStage, LITTER, pupAct, pupAim, pupScale, stepHz, trailBackM, trailSlot, walkMps } from '../src/core/litter';
 
 test('five pups are born on the den ring at four weeks and walk toward their mother', () => {
   const born = birthPlaces(21.5, 8.5);
@@ -72,35 +72,10 @@ test('the litter is a loose clump, not a row, and it moves', () => {
   assert.ok(Math.abs(left.x - slot.x) < 1e-9 && Math.abs(left.z - slot.z) < 1e-9);
   const nearHer = besideMother(30, 0, -0.35);
   assert.equal(nearHer.length, LITTER.count);
-  const home = pupAim(0, 0, 0, 0, 0, true);
   const caught = followStep(0, 3, 0, 0, 0, 0, 0.05, LITTER.emergeYears, 0, true);
-  const hopped = Math.hypot(caught.x, caught.z - 3);
-  assert.ok(hopped <= walkMps(LITTER.emergeYears) * 0.05 + 1e-6, 'a short step does not teleport');
-  assert.ok(Math.hypot(caught.x - home.x, caught.z - home.z) > 0.5, 'one frame does not flip the pup onto its home');
-  let px = 0, pz = 3, pvx = 0, pvz = 0, prevUx = 0, prevUz = 0;
-  for (let i = 0; i < 30; i++) {
-    const n = followStep(px, pz, 0, 0, 0, 0, 1 / 30, LITTER.emergeYears, 0, true, false, { vx: pvx, vz: pvz });
-    const mx = n.x - px, mz = n.z - pz, m = Math.hypot(mx, mz);
-    if (m > 1e-5 && i > 0) assert.ok(mx / m * prevUx + mz / m * prevUz > 0.5, `frame ${i} flipped the step`);
-    if (m > 1e-5) { prevUx = mx / m; prevUz = mz / m; }
-    px = n.x; pz = n.z; pvx = n.vx; pvz = n.vz;
-  }
-  assert.ok(Math.hypot(px - home.x, pz - home.z) < Math.hypot(home.x, home.z - 3), 'the pup still walks toward the home');
+  const home = pupAim(0, 0, 0, 0, 0, true);
+  assert.ok(Math.hypot(caught.x - home.x, caught.z - home.z) < 0.05, 'a pup behind the chase view steps back into it');
   const loose = pupAim(4, 0, 0, 0, 1, true);
   const tucked = pupAim(4, 0, 0, 0, 1, true, undefined, true);
   assert.ok(Math.hypot(tucked.x, tucked.z) < Math.hypot(loose.x, loose.z), 'a threat pulls the straggler in');
-});
-
-test('a piled litter keeps a body gap from mama and from each other', () => {
-  const r = bodyRadius(LITTER.emergeYears);
-  const piled = [0, 1, 2, 3, 4].map(i => ({ x: 0.04 * i, z: 0.03 * i, r }));
-  const out = separateHerd(piled, 0, 0);
-  const mama = LITTER.mamaBodyM + r;
-  for (const p of out) assert.ok(Math.hypot(p.x, p.z) >= mama - 1e-6, `inside mama at ${Math.hypot(p.x, p.z).toFixed(3)}`);
-  for (let i = 0; i < out.length; i++) for (let j = i + 1; j < out.length; j++) {
-    const d = Math.hypot(out[i].x - out[j].x, out[i].z - out[j].z);
-    assert.ok(d >= r * 2 - 1e-6, `pups ${i} and ${j} overlap at ${d.toFixed(3)}`);
-  }
-  const grown = bodyRadius(1);
-  assert.ok(grown > r, 'an older pup takes more room');
 });

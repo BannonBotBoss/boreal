@@ -63,6 +63,7 @@ import { warmDemTiles, warmPhotoTiles } from '../world/globe/openTiles';
 import { createContinuousTerrain } from './continuousTerrain';
 import { createContactShadows } from './contactShadow';
 import { drivePose } from './driveBridge';
+import { chunkAction } from './groundHold';
 import { updateTreeUniforms } from './trees';
 import { createGrass } from './grass/grass';
 import { createFlora } from './flora/flora';
@@ -240,16 +241,26 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       const d = squareDistance(a * CHUNK_SIZE, b * CHUNK_SIZE, CHUNK_SIZE), own = a === cx && b === cz;
       if (d <= INTEREST.mid || own) needed.set(`${a}:${b}`, (needed.get(`${a}:${b}`) ?? false) || d <= INTEREST.near || own);
     }
-    // Far = math only: dispose everything outside the radius (and re-instantiate when a chunk changes tier).
-    for (const [key, chunk] of chunks) if (changed || !needed.has(key) || needed.get(key) !== chunk.near) {
+    // Out of range goes now. A chunk that is still under the animals stays until its replacement is in the scene.
+    const release = (key: string) => {
+      const chunk = chunks.get(key); if (!chunk) return;
       scene.remove(chunk.root); disposeObject(chunk.root); for (const c of chunk.contacts) CONTACTS.end(c.a, c.b); chunks.delete(key);
+    };
+    for (const [key, chunk] of chunks) {
+      const action = chunkAction(needed.has(key), !changed && needed.get(key) === chunk.near, false);
+      if (action === 'drop') release(key);
     }
     for (const key of [...chunkJobs]) if (tierChanged || !needed.has(key)) { cancel(`chunk:${key}`); chunkJobs.delete(key); }
-    for (const [key, near] of needed) if (!chunks.has(key) && !pending(`chunk:${key}`)) {
+    for (const [key, near] of needed) {
+      const held = chunks.get(key);
+      const stale = !held || changed || held.near !== near;
+      if (!stale || pending(`chunk:${key}`)) continue;
       const [a, b] = key.split(':').map(Number); chunkJobs.add(key);
       enqueue(`chunk:${key}`, squareDistance(a * CHUNK_SIZE, b * CHUNK_SIZE, CHUNK_SIZE), createChunk(a, b, context, near), c => {
         chunkJobs.delete(key);
-        if (c.epoch !== chunkEpoch) { scene.remove(c.root); disposeObject(c.root); return; }
+        if (c.epoch !== chunkEpoch) { if (c.root.parent) scene.remove(c.root); disposeObject(c.root); return; }
+        const prev = chunks.get(key);
+        if (prev && prev.root !== c.root) release(key);
         chunks.set(key, c);
       });
     }
@@ -521,8 +532,9 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       }
     }
     if (time - lastFloor > 1 || time < lastFloor) {
+      const gap = time - lastFloor;
       lastFloor = time;
-      try { setGroundFloor(landingContext(x, z).biome, dayAt(worldTime ?? time)); } catch { /* keep the last floor */ }
+      try { setGroundFloor(landingContext(x, z).biome, dayAt(worldTime ?? time), gap > 0 && gap < 30 ? gap : undefined); } catch { /* keep the last floor */ }
     }
     updateTreeUniforms(); flora.update(camera, photoreal.tier.foliage, INTEREST.near); grass.update(camera, wolf.root.position, photoreal.tier.foliage, INTEREST.near);
     simulateAnimals(dt, x, z, frozen, time, mode);
@@ -557,12 +569,19 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
     const fx = bandFx(photoreal.tier); // world/globe/inpage: no god rays over the far layer, AO once the patch is in (= tier otherwise)
     litter.place();
     {
-      const spots = [{ x: wolf.root.position.x, y: wolf.root.position.y, z: wolf.root.position.z, s: 1.15 }];
-      for (const pup of litter.pups()) spots.push({ x: pup.x, y: heightAt(pup.x, pup.z), z: pup.z, s: 0.48 });
+      const foot = (px: number, pz: number) => {
+        const y = heightAt(px, pz);
+        return { y, nx: heightAt(px + 0.4, pz) - y, nz: heightAt(px, pz + 0.4) - y };
+      };
+      const wolfFoot = foot(wolf.root.position.x, wolf.root.position.z);
+      const spots = [{ x: wolf.root.position.x, y: wolfFoot.y, z: wolf.root.position.z, s: 1.15, nx: wolfFoot.nx, nz: wolfFoot.nz }];
+      for (const pup of litter.pups()) { const g = foot(pup.x, pup.z); spots.push({ x: pup.x, y: g.y, z: pup.z, s: 0.48, nx: g.nx, nz: g.nz }); }
       const fox = drivePose();
-      if (fox) spots.push({ x: fox.x, y: heightAt(fox.x, fox.z), z: fox.z, s: 0.7 });
+      if (fox) { const g = foot(fox.x, fox.z); spots.push({ x: fox.x, y: g.y, z: fox.z, s: 0.7, nx: g.nx, nz: g.nz }); }
+      for (const row of animals.values()) { if (spots.length >= 24) break; const g = foot(row.entity.x, row.entity.z); spots.push({ x: row.entity.x, y: g.y, z: row.entity.z, s: 0.9, nx: g.nx, nz: g.nz }); }
+      for (const hare of hares.list()) { if (spots.length >= 24) break; const g = foot(hare.x, hare.z); spots.push({ x: hare.x, y: g.y, z: hare.z, s: 0.35, nx: g.nx, nz: g.nz }); }
       const sun = 1 - Math.min(1, Math.max(0, darkness));
-      contacts.set(spots, { stretch: 0.85 + sun * 0.7, opacity: 0.22 + sun * 0.5 });
+      contacts.set(spots, { stretch: 0.85 + sun * 0.7, opacity: 0.22 + sun * 0.5, yaw: Math.atan2(lit.dir.x, lit.dir.z) });
     }
     for (const child of scene.children) {
       const picture = child.userData.animalPicture || child.userData.wolfLod || child.name.startsWith('pup:');

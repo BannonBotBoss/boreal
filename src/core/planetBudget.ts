@@ -212,16 +212,12 @@ let latestPlanet: PlanetSim | null = null;
 /** The wasm instance most recently loaded. The data panel reads this one, so it sees the same registry as the game. */
 export function latestPlanetSim() { return latestPlanet; }
 
-/** Instantiate the wasm. `bytes` is for tests and workers; in the browser it fetches `<base>wasm/boreal_sim.wasm`. Resolves null on any failure. */
+/** Instantiate the wasm. `bytes` is for tests and workers; the browser shares one instance (`render/simWasm`). Resolves null on any failure. */
 export async function loadPlanetSim(bytes?: BufferSource): Promise<PlanetSim | null> {
   try {
-    let buf = bytes;
-    if (!buf) {
-      const base = (import.meta as unknown as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
-      const r = await fetch(`${base}wasm/boreal_sim.wasm`); if (!r.ok) return null;
-      buf = await r.arrayBuffer();
-    }
-    const { instance } = await WebAssembly.instantiate(buf, {});
+    const { wasmInstance } = await import('../render/simWasm');
+    const instance = await wasmInstance(bytes);
+    if (!instance) return null;
     const x = instance.exports as unknown as Exports;
     if (x.layout_version() !== LAYOUT_VERSION || x.plane_count() !== PLANE_NAMES.length) return null; // stale build: use the fallback
     const sim = new PlanetSim(x);

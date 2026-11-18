@@ -72,6 +72,7 @@ import { createMenu } from './ui/menu';
 import { globeUrl } from './world/globe/handoff';
 import { toLatLon } from './world/globe/planet';
 import { createPadRouter } from './input/padRouter'; // Grok Bot: pad menu, help, camera mode, filter wheel, globe pad
+import { startAutoplay } from './input/autoplay';
 import { SPHERE_START, startView } from './world/globe/startView';
 import { mintUniverseSeed, normalizeUniverseSeed, readUniverseSeed, worldSeedFromUniverse, writeUniverseSeed } from './core/universeSeed';
 import { createOpening, type Opening } from './world/cosmos/opening';
@@ -102,8 +103,11 @@ function placeAnimalPrompt() {
   promptAt.project(cam);
   if (promptAt.z > 1) { node.style.visibility = 'hidden'; return; }
   node.style.visibility = 'visible';
-  node.style.left = `${(promptAt.x * 0.5 + 0.5) * window.innerWidth}px`;
-  node.style.top = `${(-promptAt.y * 0.5 + 0.5) * window.innerHeight}px`;
+  const margin = 96;
+  const rawX = (promptAt.x * 0.5 + 0.5) * window.innerWidth;
+  const rawY = (-promptAt.y * 0.5 + 0.5) * window.innerHeight;
+  node.style.left = `${Math.min(window.innerWidth - margin, Math.max(margin, rawX))}px`;
+  node.style.top = `${Math.min(window.innerHeight - margin, Math.max(margin, rawY))}px`;
   node.style.bottom = 'auto';
   node.style.transform = 'translate(-20%, -120%)';
 }
@@ -830,3 +834,4 @@ if (new URLSearchParams(location.search).has('bench')) void (async () => {
   for (const k of ['ssao', 'shadows', 'pcss', 'contact', 'rays', 'gi', 'ibl', 'clouds']) { M[k] = 0; await sample(`ultra-without-${k}`); delete M[k]; }
   console.log('BENCH done');
 })();
+startAutoplay();

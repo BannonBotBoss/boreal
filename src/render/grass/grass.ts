@@ -120,10 +120,10 @@ const VERT_BODY = `
   float curveAmount = -randomLean * easedHeight;
   mat3 face = rotateYG(aBlade.x);
   vec3 p = face * (rotateXG(curveAmount) * vec3(x, y, 0.0));
-  if (zSide < 0.0) p = rotateYG(1.5707963) * p; // a second blade across the first, so the clump is not a card
-  p = rotA(rotA(p, windAxis, windLeanAngle), playerAxis, playerLeanAngle);
   vec3 n0 = rotateXG(curveAmount) * vec3(0.0, 0.0, 1.0);
   vec3 nb = face * (rotateYG(3.14159 * 0.3 * (xSide * 2.0 - 1.0) * zSide) * n0) * zSide; // rounded normal (upstream normal1/normal2)
+  if (zSide < 0.0) { p = rotateYG(1.5707963) * p; nb = rotateYG(1.5707963) * nb; } // the crossed blade turns its normal with it
+  p = rotA(rotA(p, windAxis, windLeanAngle), playerAxis, playerLeanAngle);
   nb = rotA(rotA(nb, windAxis, windLeanAngle), playerAxis, playerLeanAngle);
   float skyFadeIn = (1.0 - highLODOut) * 0.25; // upstream SKY_RATIO: normals mostly up, so the field shades like the ground
   objectNormal = normalize(mix(vec3(0.0, 1.0, 0.0), nb, skyFadeIn));

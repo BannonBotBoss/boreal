@@ -1,5 +1,16 @@
 # Boreal project rules (read first)
 
+## Simulation lives in Rust
+
+This section binds every agent, including agy. All simulation lives in the Rust crate `rust/boreal-sim`. TypeScript and Three.js only draw, and they handle input.
+
+Simulation means animal drives, hunger and energy, behavior, steering and following, separation, senses, predator and prey, growth, time and season and sun, and terrain and biome generation.
+
+- New simulation is written in Rust and called from TypeScript through the wasm exports. It is not added to TypeScript.
+- TypeScript files that already contain simulation are listed in `tests/sim-home-ceiling.json`. Those files may only shrink, never grow. `tests/sim-home.test.ts` fails when one grows, and when a new simulation file appears outside Rust.
+- New TypeScript may be added only under the draw and input directories: `src/render`, `src/input`, `src/ui`, `src/audio`, `src/photo`, `src/vr`, `src/camera`, `src/dev`, `src/config`, `src/data`, plus `src/main.ts` and `src/audio.ts`.
+- Gamepad, mouse, and keyboard controls and their hints stay. This rule does not remove or replace them.
+
 ## References Matthew sends
 
 Do not search for, download, or add reference pictures or other art assets on your own. Use only the references Matthew has sent. For the current look work that list is `docs/look-reference.md`. Photos and footage named there are for study only. Never put them, or any AI art, into the game. If something more seems needed, say so in the report and wait.

@@ -31,11 +31,20 @@ pub fn diet(species: &str) -> &'static str {
     }
 }
 
+/// Mean mass for the prey-effort ratio only. This is not the mass of a drawn body.
+/// The drawn mass is the rig volume times the material density.
+/// Red fox 5 kg is inside 3.1–6.6 kg (Larivière & Pasitschniak-Arts 1996, Mammalian Species 506).
+/// Gray wolf 40 kg is inside 18–80 kg (Mech 1974, Mammalian Species 37).
+/// A pup at a few weeks has no mesh mass on this step. [game calibration] 2.5 kg.
+pub const FOX_EFFORT_KG: f64 = 5.0;
+pub const WOLF_EFFORT_KG: f64 = 40.0;
+pub const PUP_EFFORT_KG: f64 = 2.5;
+
 pub fn body_kg(species: &str) -> f64 {
     match species {
-        "Red Fox" => 5.0,
-        "Gray Wolf" => 40.0,
-        "pup" => 2.5,
+        "Red Fox" => FOX_EFFORT_KG,
+        "Gray Wolf" => WOLF_EFFORT_KG,
+        "pup" => PUP_EFFORT_KG,
         _ => 10.0,
     }
 }
@@ -334,7 +343,8 @@ pub fn page_step(mem: &mut PageDrive, mama_x: f64, mama_z: f64, game_yaw: f64, p
         yaw = toward(fox_x, fox_z, mama_x, mama_z);
     } else {
         mode = FoxMode::Linger;
-        let ang = facing + (mem.pace * 0.65).sin() * 0.75;
+        // He walks the ring. The angle is distance along the circle, not a clock sine. [game calibration] 0.8 m/s.
+        let ang = facing + mem.pace * 0.8 / LINGER_RING;
         fox_x = mama_x + ang.sin() * LINGER_RING;
         fox_z = mama_z + ang.cos() * LINGER_RING;
         yaw = ang + std::f64::consts::PI;

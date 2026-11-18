@@ -323,7 +323,27 @@ export function createPhotoreal(renderer: THREE.WebGLRenderer, scene: THREE.Scen
      * (render/post: the scene renders into the composer's half-float target while GTAO/contact/rays are on, a different
      * tone-mapping/colour-space variant than the canvas a plain compileAsync assumes). */
     async compile() { setupMaterials(); const via = viaTarget(tier);
-      try { await Promise.all([via, !via].map(v => compileVia(v, () => renderer.compileAsync(scene, camera)))); } catch (e) { console.warn('compileAsync', e); } },
+      // three's compileAsync throws when a material has no program yet (`program.isReady` on undefined)
+      // and then never resolves, so the loading screen stays up. Wait the same way, and skip a missing program.
+      const wait = (target: THREE.Scene, cam: THREE.Camera) => {
+        const pending = renderer.compile(target, cam) as Set<THREE.Material>;
+        const deadline = performance.now() + 180000;
+        return new Promise<void>(resolve => {
+          const check = () => {
+            for (const material of [...pending]) {
+              const props = renderer.properties.get(material) as { currentProgram?: { isReady?: () => boolean } } | undefined;
+              let ready = true;
+              try { const program = props?.currentProgram; ready = !program || program.isReady?.() !== false; }
+              catch { ready = true; }
+              if (ready) pending.delete(material);
+            }
+            if (pending.size === 0 || performance.now() > deadline) resolve();
+            else setTimeout(check, 10);
+          };
+          check();
+        });
+      };
+      try { await Promise.all([via, !via].map(v => compileVia(v, () => wait(scene, camera)))); } catch (e) { console.warn('compileAsync', e); } },
     /** Compile tier `t`'s world variant now (startup: the governor's likely first step); kept until a world change uses or replaces it. */
     async warmUp(t: Tier, maxMs = 6000) { if (variantOf(t) === variantOf(tier)) return; precompile(t); const t0 = performance.now();
       while ((warm?.queue.length || warm?.busy.length) && performance.now() - t0 < maxMs) { stepWarm(12, 6); await new Promise(r => requestAnimationFrame(r)); } },

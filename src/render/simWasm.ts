@@ -1,6 +1,6 @@
 /**
- * One boreal_sim.wasm for the page. The planet, the litter and the drives
- * share this instance, so they share one memory and one set of thread-locals.
+ * One boreal_sim.wasm for the page. The planet, the litter, the drives and the
+ * orbit cover share this instance, so they share one memory and one set of thread-locals.
  * A caller that passes bytes (a test or a worker) gets its own instance.
  */
 let browser: Promise<WebAssembly.Instance | null> | null = null;

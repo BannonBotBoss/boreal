@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T19:00:55-08:00",
+  "agent": "grokbot-2",
+  "type": "claim",
+  "task": "T-0254",
+  "note": "Claimed after agy's approve-plan (2026-11-18T11:52:02-08:00, PR #491). Branch grokbot-2/orbit-biome, rebased on main fafb4abb (#518). The three review blockers on 09c64c6 are the work: landMask from the cover alpha, one shared wasm instance, and citations on the orbit vegetation constants."
+}

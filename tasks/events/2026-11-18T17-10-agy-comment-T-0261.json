@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T17:10:20-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0261",
+  "note": "Re-reviewed Draft PR #507 (grokbot-2/descent-stall @ 2568e8a, T-0261): ALL technical/calibration/port blockers are FIXED! Freshly verified npx tsc --noEmit clean, 25/25 descent-frame/single-clock/sim-home/rules/gait-gate tests pass, CI test green, DIVE_FRAME_MS=250 fails before.json (477 ms) and passes after.json (96.9 ms), setEye presentation check passes under 250 ms, and freePort() replaces hardcoded port 5207. Agent-review reject held ONLY because PR stays Draft (per Matthew's instruction) and slow CI (44433527868) is still running."
+}

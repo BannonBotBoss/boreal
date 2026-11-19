@@ -1,18 +1,23 @@
 /**
  * Dive from 2 km to 2 m. On main 6af1de2e one height band rebuilt the whole
- * horizon mesh in 371–560 ms (SwiftShader then drew that upload in the same
- * frame). A frame here is one `update`. The picture is a software raster of
- * the mesh the draw would upload, from the isometric descent pose.
+ * horizon mesh in 371–560 ms, and `setEye` wrote the new height before that
+ * rebuild returned, so the presented picture stayed on the previous frame.
+ *
+ * The SwiftShader capture of that stall (`tasks/evidence/T-0261/before.json`)
+ * peaks at 477 ms with three different picture hashes. A 500 ms gate lets
+ * that file pass. The gate that fails it and passes the streamed capture
+ * (worst frame 96.9 ms) is 250 ms.
  *
  * Calibration: a known match is two rasters of the same settled eye (difference 0).
  * A known mismatch is a settled 1200 m frame against 300 m (about 0.06) and
- * against 28 m (about 0.11). The gate is 0.03, above the match and below
- * those mismatches. Colour channels are linear 0..1, so this is not a 0..255 count.
+ * against 28 m (about 0.11). The colour gate is 0.03. Channels are linear 0..1.
  */
+import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import { createContinuousTerrain, type ContinuousTerrain } from '../src/render/continuousTerrain';
+import { buildContinuousMesh, createContinuousTerrain, type ContinuousTerrain } from '../src/render/continuousTerrain';
+import { DIVE_FRAME_MS } from './descent-frame-gate.ts';
 import { ISO_BELOW_HORIZON } from '../src/world/globe/flight';
 import { horizonMetres } from '../src/world/globe/horizonSkirt';
 import { viewpointPose } from '../src/world/globe/transition';
@@ -96,7 +101,54 @@ function meanDiff(a: Float64Array, b: Float64Array) {
   return { diff: n ? d / n : 0, hit };
 }
 
-test('a dive from 2000 m to 2 m stays under 500 ms and the picture changes with height', () => {
+test('the recorded stall fails the frame gate and the streamed capture passes it', () => {
+  const before = JSON.parse(readFileSync('tasks/evidence/T-0261/before.json', 'utf8')) as { max: number; shots: Record<string, { hash: string }> };
+  const after = JSON.parse(readFileSync('tasks/evidence/T-0261/after.json', 'utf8')) as { max: number; shots: Record<string, { hash: string }> };
+  assert.ok(before.max > DIVE_FRAME_MS, `stall capture ${before.max.toFixed(1)} ms is under the gate, so a 500 ms check would pass it`);
+  assert.ok(after.max < DIVE_FRAME_MS, `streamed capture ${after.max.toFixed(1)} ms`);
+  const hashes = (shots: Record<string, { hash: string }>) => ['1200', '300', '28'].map(k => shots[k].hash);
+  assert.equal(new Set(hashes(after.shots)).size, 3, `after pictures hashed the same: ${hashes(after.shots).join(', ')}`);
+});
+
+test('setEye reports the new height before the draw, and that draw presents a new picture under the gate', () => {
+  const terrain = createContinuousTerrain();
+  heightAt(0, 0);
+  // inpage.setEye writes h immediately. The canvas changes only after the draw's terrain.update returns.
+  let reported = 1200;
+  const setEye = (heightM: number) => { reported = Math.max(1, heightM); };
+  const settle = (h: number) => {
+    setEye(h);
+    let guard = 0;
+    do { terrain.update(0, 0, reported); } while (Number(terrain.mesh.userData.pending ?? 0) > 0 && guard++ < 120);
+    return picture(terrain, reported);
+  };
+  const shown = settle(1200);
+  setEye(28);
+  assert.equal(reported, 28, 'the reported height changes before the draw');
+  const t0 = performance.now();
+  terrain.update(0, 0, reported);
+  const ms = performance.now() - t0;
+  const drawn = picture(terrain, reported);
+  assert.ok(ms < DIVE_FRAME_MS, `setEye draw ${ms.toFixed(1)} ms (limit ${DIVE_FRAME_MS})`);
+  assert.ok(meanDiff(shown, drawn).diff > 0.03, 'the presented picture follows the new height');
+  terrain.dispose();
+});
+
+test('the synchronous rebuild is the stall and the streamed frame is not', () => {
+  heightAt(0, 0);
+  const t0 = performance.now();
+  buildContinuousMesh(0, 0, 400, heightAt);
+  const syncMs = performance.now() - t0;
+  const terrain = createContinuousTerrain();
+  const t1 = performance.now();
+  terrain.update(0, 0, 400);
+  const frameMs = performance.now() - t1;
+  assert.ok(syncMs > frameMs * 3, `full rebuild ${syncMs.toFixed(1)} ms vs streamed frame ${frameMs.toFixed(1)} ms`);
+  assert.ok(frameMs < DIVE_FRAME_MS, `streamed frame ${frameMs.toFixed(1)} ms`);
+  terrain.dispose();
+});
+
+test('a dive from 2000 m to 2 m stays under the frame gate and the picture changes with height', () => {
   const terrain = createContinuousTerrain();
   heightAt(0, 0);
   const gaps: { eye: number; ms: number }[] = [];
@@ -108,7 +160,7 @@ test('a dive from 2000 m to 2 m stays under 500 ms and the picture changes with 
     eye *= 0.84;
   }
   const max = gaps.reduce((m, g) => Math.max(m, g.ms), 0);
-  assert.ok(max < 500, `frame gap ${max.toFixed(1)} ms (limit 500)`);
+  assert.ok(max < DIVE_FRAME_MS, `frame gap ${max.toFixed(1)} ms (limit ${DIVE_FRAME_MS})`);
   const pending = () => Number(terrain.mesh.userData.pending ?? 0);
   const settle = (h: number) => {
     let guard = 0;
@@ -117,7 +169,7 @@ test('a dive from 2000 m to 2 m stays under 500 ms and the picture changes with 
       const t0 = performance.now();
       terrain.update(0, 0, h);
       ms = performance.now() - t0;
-      assert.ok(ms < 500, `${h} m frame ${ms.toFixed(1)} ms`);
+      assert.ok(ms < DIVE_FRAME_MS, `${h} m frame ${ms.toFixed(1)} ms (limit ${DIVE_FRAME_MS})`);
     } while (pending() > 0 && guard++ < 120);
     assert.equal(pending(), 0, `${h} m still streaming`);
     return picture(terrain, h);

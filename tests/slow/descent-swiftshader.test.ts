@@ -1,20 +1,35 @@
 /**
  * The same dive on SwiftShader. A frame is `update` plus the GPU upload and
  * the draw, closed with gl.finish. Warmup is one untimed frame so the shader
- * compile is not the descent. Fails if any later gap exceeds 500 ms, or if
- * the centre of the 1200 m, 300 m and 28 m pictures hash the same.
+ * compile is not the descent. The recorded stall peaks at 477 ms, so a 500 ms
+ * gate already passes it. The gate is 250 ms: that capture fails, the streamed
+ * run passes. The pictures at 1200 m, 300 m and 28 m must not share a hash.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
+import { createServer } from 'node:net';
 import { spawn } from 'node:child_process';
 import { setTimeout as wait } from 'node:timers/promises';
+import { DIVE_FRAME_MS } from '../descent-frame-gate.ts';
 
 const chrome = ['/usr/bin/google-chrome', '/usr/local/bin/google-chrome'].find(p => existsSync(p));
 
-test('SwiftShader dive from 2000 m to 2 m stays under 500 ms and the picture changes', { timeout: 180000, skip: chrome ? false : 'google-chrome is not installed' }, async () => {
-  const port = 5207;
-  const cdp = 9341;
+function freePort() {
+  return new Promise<number>((ok, bad) => {
+    const server = createServer();
+    server.once('error', bad);
+    server.listen(0, '127.0.0.1', () => {
+      const address = server.address();
+      const port = address && typeof address === 'object' ? address.port : 0;
+      server.close(() => ok(port));
+    });
+  });
+}
+
+test('SwiftShader dive from 2000 m to 2 m stays under the frame gate and the picture changes', { timeout: 180000, skip: chrome ? false : 'google-chrome is not installed' }, async () => {
+  const port = await freePort();
+  const cdp = await freePort();
   const vite = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { stdio: 'ignore' });
   const browserProc = spawn(chrome!, [
     '--headless=new', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader',
@@ -64,7 +79,7 @@ test('SwiftShader dive from 2000 m to 2 m stays under 500 ms and the picture cha
     assert.equal(evaluated.result?.exceptionDetails, undefined, JSON.stringify(evaluated.result?.exceptionDetails));
     const dive = evaluated.result?.result?.value as { max: number; renderer: string; shots: Record<string, { hash: string }> };
     assert.match(dive.renderer, /SwiftShader/);
-    assert.ok(dive.max < 500, `SwiftShader frame gap ${dive.max.toFixed(1)} ms (limit 500)`);
+    assert.ok(dive.max < DIVE_FRAME_MS, `SwiftShader frame gap ${dive.max.toFixed(1)} ms (limit ${DIVE_FRAME_MS}; the stall capture is 477 ms)`);
     const hashes = ['1200', '300', '28'].map(k => dive.shots[k].hash);
     assert.equal(new Set(hashes).size, 3, `pictures hashed the same: ${hashes.join(', ')}`);
     ws.close();

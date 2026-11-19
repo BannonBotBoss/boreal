@@ -33,7 +33,7 @@ The globe descent stalls at the 400 m glide and while the dive is held. `setEye`
 |---|---|---|---|
 | Frame slice | 8 ms | a slice of a 16.7 ms frame; `INTEREST.budgetMs` is 4 ms (`src/core/interest.ts`) | yes, calibration |
 | Upload budget | 256 KB | one leaf is about 8 KB; the whole mesh was 2.05–3.10 MB | yes |
-| Gate | 500 ms | the inspection's stall, not a natural period | n/a, the fail line Matthew set |
+| Gate | 250 ms | the stall capture peaks at 477 ms, so a 500 ms line lets it pass; 250 ms fails that file and passes the 96.9 ms streamed capture | the review on PR #507 |
 | Horizon | `horizonMetres` | sqrt(2 R h + h²), R the IUGG mean radius | yes |
 | LOD split | 0.72, unchanged | Ulrich 2002, eye height in the distance | yes |
 | Coarse grid | 8×8 on the horizon square | the same quad count as one fine leaf (`TERRAIN_GRID`) | yes |

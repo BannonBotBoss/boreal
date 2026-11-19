@@ -13,6 +13,8 @@ export interface BigBangAudio {
   sync(t: number, narrationEndedAt: number | null): void;
   /** True once the one narration element has finished a real take. */
   narrationEnded(): boolean;
+  /** True only while a take is actually moving. A blocked or muted start stays false. */
+  narrationPlaying(): boolean;
   /** Measured duration, or NaN until the file header is known. */
   narrationDuration(): number;
   stop(): void;
@@ -30,12 +32,31 @@ export function createBigBangAudio(): BigBangAudio {
   let started = false, hit = false, cueOn = false, bedHeld = false;
   let lastT = -1, lit = 0;
   let audioCtx: AudioContext | null = null;
+  let resumeTried = false;
+  const wake = () => {
+    if (resumeTried) return;
+    resumeTried = true;
+    const host = typeof window === 'undefined' ? undefined : window;
+    const Ctx = host?.AudioContext ?? (host as unknown as { webkitAudioContext?: typeof AudioContext } | undefined)?.webkitAudioContext;
+    if (!Ctx) return;
+    try {
+      audioCtx ??= new Ctx();
+      if (audioCtx.state === 'suspended') void audioCtx.resume().catch(() => {});
+    } catch { /* this browser has no context */ }
+  };
+  const unlock = (ev: Event) => {
+    if (!ev.isTrusted || !audioCtx || audioCtx.state !== 'suspended') return;
+    resumeTried = false;
+    wake();
+  };
+  if (typeof window !== 'undefined') {
+    window.addEventListener('pointerdown', unlock);
+    window.addEventListener('keydown', unlock);
+  }
   const voPlayed = { b7: false, b9: false, b14: false };
   const tick = () => {
-    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!Ctx) return;
-    audioCtx ??= new Ctx();
-    if (audioCtx.state === 'suspended') void audioCtx.resume();
+    wake();
+    if (!audioCtx || audioCtx.state !== 'running') return;
     const now = audioCtx.currentTime;
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
@@ -66,6 +87,9 @@ export function createBigBangAudio(): BigBangAudio {
     narrationEnded() {
       return narration.ended && !(Number.isFinite(narration.duration) && narration.duration < 2);
     },
+    narrationPlaying() {
+      return !narration.paused && narration.currentTime > 0 && !narration.ended;
+    },
     narrationDuration() { return narration.duration; },
     sync(t: number, narrationEndedAt: number | null) {
       const end = narrationEndedAt ?? CINE.b1 + NARRATION.seconds;
@@ -94,7 +118,13 @@ export function createBigBangAudio(): BigBangAudio {
       lastT = t;
       if (narrationEndedAt != null && t >= bangAt(narrationEndedAt)) this.bang();
     },
-    stop() { for (const el of [narration, bed, bang, cue2, vo7, vo9, vo14]) el.pause(); },
+    stop() {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('pointerdown', unlock);
+        window.removeEventListener('keydown', unlock);
+      }
+      for (const el of [narration, bed, bang, cue2, vo7, vo9, vo14]) el.pause();
+    },
   };
 }
 

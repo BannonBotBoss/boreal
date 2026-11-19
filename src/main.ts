@@ -16,8 +16,9 @@ import { CONTACTS } from './core/contactBus';
 import { WAKES, sampleSurface, hipsFor, pawArea, waterline, travelSpeed } from './core/waterWake';
 import { catalog } from './core/catalog';
 import { heightAt, type Entity } from './core/world';
+import { Vector3 } from 'three';
 import { forestHandsOn, readForestHands } from './vr/forestSession';
-import { foxPlace, stepDrives } from './core/drives';
+import { driveFrame, drivePose } from './render/driveBridge';
 import { pupCloud } from './animals/pups';
 import { BorealSound, mealChews } from './audio/borealSound';
 import { createMusic } from './audio/music';
@@ -71,6 +72,7 @@ import { createMenu } from './ui/menu';
 import { globeUrl } from './world/globe/handoff';
 import { toLatLon } from './world/globe/planet';
 import { createPadRouter } from './input/padRouter'; // Grok Bot: pad menu, help, camera mode, filter wheel, globe pad
+import { startAutoplay } from './input/autoplay';
 import { SPHERE_START, startView } from './world/globe/startView';
 import { mintUniverseSeed, normalizeUniverseSeed, readUniverseSeed, worldSeedFromUniverse, writeUniverseSeed } from './core/universeSeed';
 import { createOpening, type Opening } from './world/cosmos/opening';
@@ -90,6 +92,26 @@ import { controlsScreen } from './ui/controls';
 import { ACTION, ACTIVE, BINDINGS_KEY, atomValues, bindingLabel, comboLabel, groupLabel, loadBindings, resolveInput, saveBindings, type Bindings } from './core/bindings';
 
 const element = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+const promptAt = new Vector3();
+/** Words sit beside mama, above the pups, so the labels do not cover their bodies. */
+function placeAnimalPrompt() {
+  const node = element<HTMLElement>('interaction');
+  const cam = view?.camera;
+  if (!node || !cam) return;
+  const side = yaw + Math.PI / 2;
+  const groundY = heightAt(player.x, player.z);
+  promptAt.set(player.x + Math.cos(side) * 1.15, groundY + 2.15, player.z + Math.sin(side) * 1.15);
+  promptAt.project(cam);
+  if (promptAt.z > 1) { node.style.visibility = 'hidden'; return; }
+  node.style.visibility = 'visible';
+  const margin = 96;
+  const rawX = (promptAt.x * 0.5 + 0.5) * window.innerWidth;
+  const rawY = (-promptAt.y * 0.5 + 0.5) * window.innerHeight - 48;
+  node.style.left = `${Math.min(window.innerWidth - margin, Math.max(margin, rawX))}px`;
+  node.style.top = `${Math.min(window.innerHeight - margin, Math.max(margin, rawY))}px`;
+  node.style.bottom = 'auto';
+  node.style.transform = 'translate(-20%, -120%)';
+}
 const canvas = element<HTMLCanvasElement>('world'), status = element('status'), actionButton = element<HTMLButtonElement>('act');
 const dialog = element<HTMLDialogElement>('info');
 const SAVE_KEY = 'boreal.events.v1', NEEDS_KEY = 'boreal.needs.v1'; // T-0036: the embodied animal's needs (water, rest, energy)
@@ -557,7 +579,7 @@ const borealSave = {
   saveResume: (place: ResumePlace) => { context = saveResume(context, place); commitContext(); },
 };
 (window as unknown as { __borealSave?: typeof borealSave }).__borealSave = borealSave;
-function frame(time: number) { const frameStart = performance.now(); latestPlanetSim()?.setEngineNow(frameStart);
+function frame(time: number) { try { const frameStart = performance.now(); latestPlanetSim()?.setEngineNow(frameStart);
   const wallDt = Math.min((time - lastTime) / 1000 || 0, 1); // T-0036: thought bubbles keep real seconds even when frames are slow
   opening?.step(wallDt);
   const dt = Math.min((time - lastTime) / 1000 || 0, .05); lastTime = time; // look and input smoothing stay on this real frame delta
@@ -668,14 +690,14 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
       player.x = pose.x; player.z = pose.z; yaw = pose.heading; player.heading = yaw;
       if (view.playable.id === 'wolf') {
         const yip = pupHeard.some(call => call.kind === 'yip');
-        const foxAt = foxPlace();
+        const foxAt = drivePose();
         const ox = foxAt?.x ?? player.x, oz = foxAt?.z ?? player.z;
         let pupX = player.x, pupZ = player.z, best = Infinity;
         for (const pup of pupCloud()) {
           const d = Math.hypot(pup.x - ox, pup.z - oz);
           if (d < best) { best = d; pupX = pup.x; pupZ = pup.z; }
         }
-        const now = stepDrives(player.x, player.z, yaw, pupX, pupZ, yip, 1 / 30);
+        const now = driveFrame(player.x, player.z, yaw, pupX, pupZ, yip, 1 / 30);
         if (now.hold) {
           player.x = now.mamaX; player.z = now.mamaZ;
           yaw = now.mamaYaw + Math.PI; player.heading = yaw;
@@ -716,6 +738,7 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
   target = view.entities().filter(e => availableActions(player, e, context).length).sort((a, b) => Math.hypot(player.x - a.x, player.z - a.z) - Math.hypot(player.x - b.x, player.z - b.z))[0];
   const action = target && availableActions(player, target, context)[0];
   element('target').textContent = target ? catalog[target.kind].title : 'Explore';
+  placeAnimalPrompt();
   const canDrink = (!action || action === 'forage') && waterAhead(player.x, player.z, yaw);
   const actionLabel = canDrink ? `${pad ? 'A / E' : 'E / click'} · ${drinking ? 'stop drinking' : 'drink'}` : action ? `${pad ? 'A / E' : 'E / click'} · ${action}` : 'Approach an individual';
   if (actionButton.textContent !== actionLabel) actionButton.textContent = actionLabel;
@@ -768,8 +791,7 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
   const stood = weatherAt(player.x, player.z);
   status.innerText = `${photo.active ? 'PHOTO · ' : isPaused() ? 'PAUSED · ' : ''}${autonomous ? 'AUTONOMOUS · ' : ''}${view.clock()} · ${modes.mode.toUpperCase()} · Snow ${stood.depthCm.toFixed(1)} cm · Stamina ${Math.round(modes.stamina)}/100 · Energy ${Math.round(view.playerBrain.energy)}/100 · Water ${Math.round(needs.water)}% · Rest ${Math.round(needs.rest)}%${drinking ? ' · DRINKING' : ''}${holding ? ' · HOLDING' : ''}${autoNote ? ' · ' + autoNote : ''}\n${aimLine}\n${Object.keys(context.records).length} remembered · ${friendCount(context, view.hares.clock())} friends · ${context.inventory.herb} herbs`;
   { const kind = pad ? 'pad' : 'keys'; hint[kind] ||= hintFor(kind);   if (element('device').textContent !== hint[kind]) element('device').textContent = hint[kind]; }
-  if (!xrDriven) requestAnimationFrame(frame);
-}
+} catch (e) { console.warn('frame', e); } finally { if (!xrDriven) requestAnimationFrame(frame); } }
 // The first frame waits for the planet grid so terrain snow is the booted snow plane, not an empty cache. Wasm failure still starts, on climateRaw.
 void openForestPlanet(dayAt(clock0.worldSec), hourAt(clock0.worldSec)).finally(() => requestAnimationFrame(frame));
 { const q = new URLSearchParams(location.search), loading = createLoading(); // startup: warm-up + resource probe behind the loading screen
@@ -812,3 +834,4 @@ if (new URLSearchParams(location.search).has('bench')) void (async () => {
   for (const k of ['ssao', 'shadows', 'pcss', 'contact', 'rays', 'gi', 'ibl', 'clouds']) { M[k] = 0; await sample(`ultra-without-${k}`); delete M[k]; }
   console.log('BENCH done');
 })();
+startAutoplay();

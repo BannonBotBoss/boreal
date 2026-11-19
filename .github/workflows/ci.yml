@@ -27,4 +27,12 @@ jobs:
         with:
           node-version: 24
       - run: npm install --no-audit --no-fund
+      - name: Chrome for the autoplay visit
+        run: |
+          if ! command -v google-chrome >/dev/null 2>&1; then
+            wget -q -O /tmp/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+            sudo apt-get update -y
+            sudo apt-get install -y /tmp/chrome.deb
+          fi
+          npx playwright install ffmpeg
       - run: npm run test:slow

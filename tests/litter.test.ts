@@ -79,3 +79,29 @@ test('the litter is a loose clump, not a row, and it moves', () => {
   const tucked = pupAim(4, 0, 0, 0, 1, true, undefined, true);
   assert.ok(Math.hypot(tucked.x, tucked.z) < Math.hypot(loose.x, loose.z), 'a threat pulls the straggler in');
 });
+
+test('wasm litter_follow and litter_separate keep bodies apart', async () => {
+  const { readFileSync } = await import('node:fs');
+  const bytes = readFileSync(new URL('../public/wasm/boreal_sim.wasm', import.meta.url));
+  const { instance } = await WebAssembly.instantiate(bytes, {});
+  const x = instance.exports as {
+    memory: WebAssembly.Memory;
+    litter_scratch(n: number): number;
+    litter_body_radius(age: number): number;
+    litter_follow(x: number, z: number, slot: number, mx: number, mz: number, yaw: number, dt: number, age: number, time: number, moving: number, threatened: number, vx: number, vz: number, out: number): void;
+    litter_separate(n: number, data: number, mx: number, mz: number): void;
+  };
+  const out = x.litter_scratch(4);
+  x.litter_follow(0, 0, 0, 10, 0, 0, 0.2, 4 / 52, 1, 1, 0, 0, 0, out);
+  const stepped = new Float64Array(x.memory.buffer, out, 4);
+  assert.ok(Number.isFinite(stepped[0]) && Number.isFinite(stepped[1]));
+  const n = 2;
+  const data = x.litter_scratch(n * 3);
+  const buf = new Float64Array(x.memory.buffer, data, n * 3);
+  const radius = x.litter_body_radius(4 / 52);
+  buf.set([0, 0, radius, 0.01, 0, radius]);
+  x.litter_separate(n, data, 5, 0);
+  const after = new Float64Array(x.memory.buffer, data, n * 3);
+  const gap = Math.hypot(after[0] - after[3], after[1] - after[4]);
+  assert.ok(gap >= radius * 2 - 1e-6, `pup bodies overlap: gap ${gap} need ${radius * 2}`);
+});

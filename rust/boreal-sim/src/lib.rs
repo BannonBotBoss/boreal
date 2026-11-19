@@ -149,6 +149,104 @@ thread_local! { static GRID: RefCell<Option<Grid>> = const { RefCell::new(None) 
     n as u32
 }
 
+thread_local! {
+    static LITTER_SCRATCH: std::cell::RefCell<Vec<f64>> = const { std::cell::RefCell::new(Vec::new()) };
+    static DRIVE_PAGE: std::cell::RefCell<drives::PageDrive> = std::cell::RefCell::new(drives::PageDrive::default());
+    static LITTER_PAGE: std::cell::RefCell<[litter::PupLive; 5]> = std::cell::RefCell::new([litter::PupLive::default(); 5]);
+}
+
+/// Forget the live drive step so the next tick starts from rest.
+#[no_mangle]
+pub extern "C" fn drives_reset(has_at: u32, x: f64, z: f64, hunger: f64, protect: f64, set_hunger: u32, set_protect: u32) {
+    DRIVE_PAGE.with(|m| {
+        drives::page_reset(
+            &mut m.borrow_mut(),
+            if has_at != 0 { Some((x, z)) } else { None },
+            if set_hunger != 0 { Some(hunger) } else { None },
+            if set_protect != 0 { Some(protect) } else { None },
+        );
+    });
+}
+
+fn mode_code(mode: drives::FoxMode) -> f64 {
+    match mode {
+        drives::FoxMode::None => 0.0,
+        drives::FoxMode::Approach => 1.0,
+        drives::FoxMode::Linger => 2.0,
+        drives::FoxMode::Watch => 3.0,
+        drives::FoxMode::Flee => 4.0,
+    }
+}
+
+/// One frame of hunger, the fox, and the mother's protect. `out` is 21 numbers.
+#[no_mangle]
+pub extern "C" fn drives_tick(mama_x: f64, mama_z: f64, game_yaw: f64, pup_x: f64, pup_z: f64, yip: u32, dt: f64, out: *mut f64) {
+    if out.is_null() { return; }
+    let now = DRIVE_PAGE.with(|m| drives::page_step(&mut m.borrow_mut(), mama_x, mama_z, game_yaw, pup_x, pup_z, yip != 0, dt));
+    let o = unsafe { std::slice::from_raw_parts_mut(out, 21) };
+    o.copy_from_slice(&[
+        now.hunger, now.effort_pup, now.effort_mama, now.scent, now.danger, now.protect, now.threat, now.approach,
+        mode_code(now.mode), if now.committed { 1.0 } else { 0.0 }, if now.hold { 1.0 } else { 0.0 }, if now.returning { 1.0 } else { 0.0 },
+        now.fox_x, now.fox_z, now.fox_yaw, now.mama_x, now.mama_z, now.mama_yaw, now.pup_x, now.pup_z, if now.yip { 1.0 } else { 0.0 },
+    ]);
+}
+
+/// Forget the live litter so the next tick places the pups again.
+#[no_mangle]
+pub extern "C" fn litter_reset() {
+    LITTER_PAGE.with(|p| *p.borrow_mut() = [litter::PupLive::default(); 5]);
+}
+
+/// One frame of age, size, follow, and personal space. `out` is 5 pups × (x, z, age, scale, yaw, act).
+#[no_mangle]
+pub extern "C" fn litter_frame(dt: f64, game_seconds: f64, mother_x: f64, mother_z: f64, yaw: f64, time: f64, moving: u32, threatened: u32, out: *mut f64) {
+    if out.is_null() { return; }
+    let stepped = LITTER_PAGE.with(|p| litter::litter_tick(&mut p.borrow_mut(), dt, game_seconds, mother_x, mother_z, yaw, time, moving != 0, threatened != 0));
+    let o = unsafe { std::slice::from_raw_parts_mut(out, 30) };
+    for (i, row) in stepped.iter().enumerate() {
+        o[i * 6] = row.0; o[i * 6 + 1] = row.1; o[i * 6 + 2] = row.2; o[i * 6 + 3] = row.3; o[i * 6 + 4] = row.4; o[i * 6 + 5] = row.5;
+    }
+}
+/// Scratch for the litter calls. Valid until the next scratch request. Does not allocate every frame once it has grown.
+#[no_mangle]
+pub extern "C" fn litter_scratch(n: u32) -> *mut f64 {
+    LITTER_SCRATCH.with(|s| {
+        let mut v = s.borrow_mut();
+        if v.len() < n as usize { v.resize(n as usize, 0.0); }
+        v.as_mut_ptr()
+    })
+}
+/// Body radius in metres for one pup of this age.
+#[no_mangle]
+pub extern "C" fn litter_body_radius(age_years: f64) -> f64 { litter::body_radius(age_years) }
+
+/// Pup follow. `out` receives x, z, vx, vz. The step eases from the previous velocity.
+#[no_mangle]
+pub extern "C" fn litter_follow(
+    x: f64, z: f64, slot: u32, mother_x: f64, mother_z: f64, yaw: f64, dt: f64, age_years: f64,
+    time: f64, moving: u32, threatened: u32, vx: f64, vz: f64, out: *mut f64,
+) {
+    if out.is_null() { return; }
+    let (nx, nz, nvx, nvz) = litter::follow_step_vel(
+        x, z, slot, mother_x, mother_z, yaw, dt, age_years, time, moving != 0, threatened != 0, vx, vz,
+    );
+    let o = unsafe { std::slice::from_raw_parts_mut(out, 4) };
+    o.copy_from_slice(&[nx, nz, nvx, nvz]);
+}
+
+/// Personal space. `data` is n triples (x, z, radius). x and z are rewritten in place.
+#[no_mangle]
+pub extern "C" fn litter_separate(n: u32, data: *mut f64, mother_x: f64, mother_z: f64) {
+    if data.is_null() || n == 0 || n > 16 { return; }
+    let slice = unsafe { std::slice::from_raw_parts_mut(data, (n * 3) as usize) };
+    let pups: Vec<(f64, f64, f64)> = (0..n as usize).map(|i| (slice[i * 3], slice[i * 3 + 1], slice[i * 3 + 2])).collect();
+    let out = litter::separate_herd(&pups, mother_x, mother_z);
+    for (i, p) in out.iter().enumerate() {
+        slice[i * 3] = p.0;
+        slice[i * 3 + 1] = p.1;
+    }
+}
+
 fn read_name(ptr: *const u8, len: u32) -> Option<String> {
     if ptr.is_null() || len > 256 { return None; }
     let bytes = unsafe { std::slice::from_raw_parts(ptr, len as usize) };

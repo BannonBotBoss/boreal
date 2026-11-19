@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0258",
+  "agent": "grokbot-3",
+  "note": "Matthew named the pup separation in chat. Not done yet. Matthew's fixes are still not live. #497 (pup separation), #499 (Rust step 1) and #501 (look fixes) are open and blocked by agent-review.",
+  "at": "2026-11-18T15:31:35-08:00"
+}

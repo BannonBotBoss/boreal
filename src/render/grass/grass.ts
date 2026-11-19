@@ -20,7 +20,7 @@
  */
 import * as THREE from 'three';
 import { GLSL_NOISE } from '../../proc/glsl';
-import { addCloudShadow, addTranslucency } from '../pbr';
+import { addCloudShadow, addTranslucency, FLOOR } from '../pbr';
 import { addPatchFade } from '../fade';
 import { WIND_UNIFORMS } from '../trees';
 import { enqueue, cancel, pending } from '../../core/interest';
@@ -55,6 +55,7 @@ uniform float uWind, uWindAmp, uColour; uniform vec2 uWindDir; uniform vec4 uGra
 uniform vec4 uClear[5]; uniform float uClearN;
 uniform vec4 uSight[5]; uniform vec2 uSightR[5]; uniform float uSightN;
 uniform vec4 uShape[GRASS_K]; uniform vec3 uBase[GRASS_K]; uniform vec3 uTip[GRASS_K]; uniform vec3 uFall[GRASS_K];
+uniform float uFloor;
 varying vec3 vGrassColour;
 ${GLSL_NOISE}
 ${MOSS_GLSL}
@@ -103,7 +104,7 @@ const VERT_BODY = `
              : sh.y < 1.5 ? 1.0 - heightPercent * 0.9
              : GRASS_SEGMENTS < 3.0 ? 0.6 * (1.0 - heightPercent * 0.8)
              : heightPercent < sh.z ? 0.15 : pow(max(sin(3.14159 * (heightPercent - sh.z) / (1.0 - sh.z)), 0.0), 0.7);
-  float grassTotalHeight = aBlade.y * alive * (1.0 - 0.6 * smoothstep(uGrass.z * 0.6, uGrass.z, dist)); // blades settle toward the radius (no rim where the field ends)
+  float grassTotalHeight = aBlade.y * alive * mix(1.0, 0.72, clamp(uFloor, 0.0, 1.0)) * (1.0 - 0.6 * smoothstep(uGrass.z * 0.6, uGrass.z, dist)); // blades settle toward the radius; dry cover shortens them as the ground eases, it does not pop
   float grassTotalWidth = max(sh.x, 1.5 * uPx * dist) * prof * alive * min(3.0, inversesqrt(max(keep, 0.05))); // ≥ 1.5 px wide (real widths alias away), thinned blades widen to keep the coverage
   float x = (xSide - 0.5) * grassTotalWidth, y = heightPercent * grassTotalHeight;
   // wind: shared field direction + upstream's noise gusts; strength from the shared drag amplitude (trees: (U/4)²)
@@ -119,9 +120,10 @@ const VERT_BODY = `
   float curveAmount = -randomLean * easedHeight;
   mat3 face = rotateYG(aBlade.x);
   vec3 p = face * (rotateXG(curveAmount) * vec3(x, y, 0.0));
-  p = rotA(rotA(p, windAxis, windLeanAngle), playerAxis, playerLeanAngle);
   vec3 n0 = rotateXG(curveAmount) * vec3(0.0, 0.0, 1.0);
   vec3 nb = face * (rotateYG(3.14159 * 0.3 * (xSide * 2.0 - 1.0) * zSide) * n0) * zSide; // rounded normal (upstream normal1/normal2)
+  if (zSide < 0.0) { p = rotateYG(1.5707963) * p; nb = rotateYG(1.5707963) * nb; } // the crossed blade turns its normal with it
+  p = rotA(rotA(p, windAxis, windLeanAngle), playerAxis, playerLeanAngle);
   nb = rotA(rotA(nb, windAxis, windLeanAngle), playerAxis, playerLeanAngle);
   float skyFadeIn = (1.0 - highLODOut) * 0.25; // upstream SKY_RATIO: normals mostly up, so the field shades like the ground
   objectNormal = normalize(mix(vec3(0.0, 1.0, 0.0), nb, skyFadeIn));
@@ -130,13 +132,13 @@ const VERT_BODY = `
   float fallT = smoothstep(hs - 0.3, hs + 0.3, uColour);
   vec3 tip = mix(uTip[k], uFall[k], fallT), base = mix(uBase[k], uFall[k] * 0.6, fallT * 0.5);
   float tipMix = sh.y > 1.5 ? step(sh.z, heightPercent) : easeInG(heightPercent, 4.0);
-  vGrassColour = mix(base, tip, mix(tipMix, heightPercent, highLODOut)) * shade * mix(0.35, 1.0, easeInG(heightPercent, 2.0));
+  vGrassColour = mix(base, tip, mix(tipMix, heightPercent, highLODOut)) * shade * mix(0.22, 1.0, easeInG(heightPercent, 2.0));
+  vGrassColour = mix(vGrassColour, vec3(0.45, 0.32, 0.12), 0.28 * hs); // mixed green and tan in one clump
+  vGrassColour = mix(vGrassColour, vec3(0.46, 0.32, 0.11), clamp(uFloor, 0.0, 1.0) * 0.7); // the same slow cover blend as the ground
   float snowCover = clamp(uSnowM / max(aBlade.y, 1e-3), 0.0, 1.0); // share of the blade under the snow; 0.8 is the terrain snow albedo (render/pbr.ts, Oke 1987)
   vGrassColour = mix(vGrassColour, vec3(0.8), snowCover);
   float toGround = smoothstep(uGrass.z * 0.5, uGrass.z * 0.85, dist); if (toGround > 0.0) vGrassColour = mix(vGrassColour, groundLayer(soilGround(root.xz), root.xz), toGround); // toward the grass radius blades take the terrain's soil colour + moss layer (render/flora/moss) (far normals are already up): no edge where the field ends
   vec3 grassPos = root + p;
-  float viewDotNormal = clamp(abs(dot(face * vec3(0.0, 0.0, 1.0), normalize(vec3(cameraPosition.x - root.x, 0.0, cameraPosition.z - root.z)))), 0.0, 1.0); // one face, seen from both sides
-  float viewSpaceThickenFactor = easeOutG(1.0 - viewDotNormal, 4.0) * smoothstep(0.0, 0.2, viewDotNormal);
 `;
 const materials = new Map<number, THREE.MeshStandardMaterial>();
 function grassMaterial(segments: number) {
@@ -145,18 +147,15 @@ function grassMaterial(segments: number) {
   m.emissive.setRGB(STYLIZED.grassLift[0], STYLIZED.grassLift[1], STYLIZED.grassLift[2]); // stylized fill: blades stay readable when the landed key light is dim (#192)
   (m as unknown as { defines: Record<string, string> }).defines = { GRASS_SEGMENTS: segments.toFixed(1), TRANSLUCENCY_MASK: '1.0' };
   m.onBeforeCompile = shader => {
-    Object.assign(shader.uniforms, U, MOSS_UNIFORMS, { uWind: WIND_UNIFORMS.uWind, uWindDir: WIND_UNIFORMS.uWindDir, uWindAmp: WIND_UNIFORMS.uWindAmp, uColour: WIND_UNIFORMS.uColour });
+    Object.assign(shader.uniforms, U, MOSS_UNIFORMS, FLOOR, { uWind: WIND_UNIFORMS.uWind, uWindDir: WIND_UNIFORMS.uWindDir, uWindAmp: WIND_UNIFORMS.uWindAmp, uColour: WIND_UNIFORMS.uColour });
     addTranslucency(shader); addCloudShadow(shader);
     addPatchFade(shader); m!.userData.patchFade = true; // render/fade (in-page transition): uniform only, same key; BEFORE the project_vertex swap below so its world-xz line follows the custom projection
     shader.vertexShader = VERT_HEAD + shader.vertexShader
       .replace('#include <beginnormal_vertex>', `vec3 objectNormal; ${VERT_BODY}`)
-      .replace('#include <begin_vertex>', 'vec3 transformed = grassPos;')
-      .replace('#include <project_vertex>', `vec4 mvPosition = modelViewMatrix * vec4(transformed, 1.0);
-        mvPosition.x += viewSpaceThickenFactor * (xSide - 0.5) * grassTotalWidth * 0.5 * zSide; // upstream "HACK"
-        gl_Position = projectionMatrix * mvPosition;`);
+      .replace('#include <begin_vertex>', 'vec3 transformed = grassPos;');
     shader.fragmentShader = 'varying vec3 vGrassColour;\n' + shader.fragmentShader.replace('#include <color_fragment>', '#include <color_fragment>\n diffuseColor.rgb = vGrassColour;');
   };
-  m.customProgramCacheKey = () => `boreal-grass-clear-${segments}`;
+  m.customProgramCacheKey = () => `boreal-grass-crossed-${segments}`;
   materials.set(segments, m); return m;
 }
 /** Blade template: vertex IDs + index for ONE face (upstream #CreateGeometry_ built front + back faces for FrontSide; drawn
@@ -165,8 +164,8 @@ const templates = new Map<number, { id: THREE.BufferAttribute; index: THREE.Buff
 function template(segments: number) {
   let t = templates.get(segments); if (t) return t;
   const V = (segments + 1) * 2, idx: number[] = [];
-  for (let i = 0; i < segments; i++) { const vi = i * 2; idx.push(vi, vi + 1, vi + 2, vi + 2, vi + 1, vi + 3); }
-  t = { id: new THREE.BufferAttribute(Float32Array.from({ length: V }, (_, i) => i), 1), index: new THREE.BufferAttribute(new Uint16Array(idx), 1) };
+  for (let copy = 0; copy < 2; copy++) for (let i = 0; i < segments; i++) { const vi = copy * V + i * 2; idx.push(vi, vi + 1, vi + 2, vi + 2, vi + 1, vi + 3); }
+  t = { id: new THREE.BufferAttribute(Float32Array.from({ length: V * 2 }, (_, i) => i), 1), index: new THREE.BufferAttribute(new Uint16Array(idx), 1) };
   templates.set(segments, t); return t;
 }
 /** ONE instanced mesh per blade LOD for the whole field (perf audit: was 2 meshes per 10 m tile, ~92 objects): kept blades of
@@ -211,7 +210,7 @@ export function createGrass(scene: THREE.Scene) {
     const sq = (tx: number, tz: number) => Math.hypot(Math.max(tx * T - cx, 0, cx - tx * T - T), Math.max(tz * T - cz, 0, cz - tz * T - T));
     const r = Math.ceil(R / T) + 1, ox = Math.floor(cx / T), oz = Math.floor(cz / T), want = new Set<string>();
     for (let a = ox - r; a <= ox + r; a++) for (let b = oz - r; b <= oz + r; b++) { const d = sq(a, b), key = `${a}:${b}`; if (d > R + T / 2) continue; want.add(key); // keep a half-tile margin (no flicker at the edge)
-      if (d <= R && !tiles.has(key) && !pending(`grass:${key}`)) { jobs.add(key); enqueue(`grass:${key}`, d + 5, timedGrass(bladesJob(a, b)), (bl: Blades) => { jobs.delete(key); tiles.set(key, { tx: a, tz: b, b: bl, id: ids++ }); dirty = true; }); } }
+      if (d <= R && !tiles.has(key) && !pending(`grass:${key}`)) { jobs.add(key); enqueue(`grass:${key}`, d * 0.2, timedGrass(bladesJob(a, b)), (bl: Blades) => { jobs.delete(key); tiles.set(key, { tx: a, tz: b, b: bl, id: ids++ }); dirty = true; }); } }
     for (const key of [...tiles.keys()]) if (!want.has(key)) { tiles.delete(key); dirty = true; }
     for (const key of [...jobs]) if (!want.has(key)) { cancel(`grass:${key}`); jobs.delete(key); }
     // per 2.5 m cell: distance thinning (keepAt on the cell's nearest point), blade LOD, and a horizontal view cone (half FOV + margin;

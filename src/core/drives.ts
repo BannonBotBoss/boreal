@@ -245,7 +245,7 @@ export function stepDrives(mamaX: number, mamaZ: number, gameYaw: number, pupX: 
     yaw = toward(fox.x, fox.z, mamaX, mamaZ);
   } else {
     mode = 'linger';
-    const ang = facing + Math.sin(pace * 0.65) * 0.75;
+    const ang = facing + pace * 0.8 / LINGER_RING;
     fox = { x: mamaX + Math.sin(ang) * LINGER_RING, z: mamaZ + Math.cos(ang) * LINGER_RING };
     yaw = ang + Math.PI;
   }

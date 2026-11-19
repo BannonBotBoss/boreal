@@ -1,10 +1,10 @@
 /**
  * The mama's litter, drawn from the same rules as the Rust store.
- * They stand on the trail beside her. A drop that leaves them behind puts them back on it.
- * The meshes are the wolf skin with a woolly coat of fur cards, scaled to a four-week pup.
+ * They stand on the trail beside her. The meshes are the wolf skin with a woolly coat, scaled to a four-week pup.
  */
 import * as THREE from 'three';
-import { ageAfter, besideMother, followStep, growthStage, pupAim, pupCall, pupGap, pupScale, PUP_VOICE, stepHz, type PupCall, type PupPlace } from '../core/litter';
+import { besideMother, growthStage, pupCall, pupGap, pupScale, PUP_VOICE, stepHz, type PupCall, type PupPlace } from '../core/litter';
+import { adoptLitter } from '../render/litterBridge';
 import { livingRoster } from '../core/enterLiving';
 import { heightAt } from '../core/world';
 import { createPlayerWolf } from '../render/playerWolf';
@@ -73,23 +73,22 @@ export function createLitter(scene: THREE.Scene) {
         }
       }
       for (const row of live) {
-        row.pup.ageYears = ageAfter(row.pup.ageYears, gameSeconds);
+        const threatened = mood.threatened === true;
+        const stepped = adoptLitter(live, row.pup, dt, gameSeconds, motherX, motherZ, motherYaw, clock, motherMoved, threatened);
+        row.pup.ageYears = stepped.age;
         row.pup.stage = growthStage(row.pup.ageYears);
-        const grown = pupScale(row.pup.ageYears);
+        const grown = stepped.scale;
         const bulk = 0.88 + ((row.pup.slot * 3 + 1) % 5) * 0.05;
         row.holder.scale.set(grown * 1.1 * bulk, grown * bulk, grown * 1.12 * bulk);
         const prevX = row.pup.x, prevZ = row.pup.z;
         const dist = Math.hypot(prevX - motherX, prevZ - motherZ);
-        const threatened = mood.threatened === true;
-        const aim = pupAim(row.pup.slot, motherX, motherZ, motherYaw, clock, motherMoved, row.pup.ageYears, threatened);
-        const next = followStep(row.pup.x, row.pup.z, row.pup.slot, motherX, motherZ, motherYaw, dt, row.pup.ageYears, clock, motherMoved, threatened);
-        row.pup.x = next.x;
-        row.pup.z = next.z;
-        row.pup.yaw = aim.yaw;
-        row.pup.act = aim.act;
-        const moved = Math.hypot(next.x - prevX, next.z - prevZ) > 0.004;
+        row.pup.x = stepped.x;
+        row.pup.z = stepped.z;
+        row.pup.yaw = stepped.yaw;
+        row.pup.act = stepped.act;
+        const moved = Math.hypot(stepped.x - prevX, stepped.z - prevZ) > 0.004;
         const speed = moved ? 0.6 : 0;
-        const motion = aim.act === 'pounce' || aim.act === 'tumble' ? 'jump' : aim.act === 'sit' || aim.act === 'sniff' || !moved ? 'idle' : 'walk';
+        const motion = stepped.act === 'pounce' || stepped.act === 'tumble' ? 'jump' : stepped.act === 'sit' || stepped.act === 'sniff' || !moved ? 'idle' : 'walk';
         row.wolf.brain.motion = motion;
         row.wolf.brain.jumpTime = motion === 'jump' ? (clock % 0.7) : 0;
         row.wolf.brain.speed = speed;
@@ -112,9 +111,10 @@ export function createLitter(scene: THREE.Scene) {
       for (const row of rows) {
         const grown = pupScale(row.pup.ageYears);
         const bulk = 0.88 + ((row.pup.slot * 3 + 1) % 5) * 0.05;
-        row.holder.scale.set(grown * 1.1 * bulk, grown * bulk, grown * 1.12 * bulk);
+        const fit = grown * bulk;
+        row.holder.scale.set(fit, fit, fit);
         row.holder.position.set(row.pup.x, Math.max(heightAt(row.pup.x, row.pup.z), -0.2), row.pup.z);
-        row.holder.rotation.y = row.pup.yaw;
+        row.holder.rotation.set(0, row.pup.yaw, 0);
         row.wolf.animate(clock, row.wolf.brain.motion === 'walk', undefined, 0, 'walk');
       }
     },

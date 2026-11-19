@@ -65,7 +65,7 @@ export interface RgbaTile { w: number; h: number; rgba: Uint8ClampedArray | Uint
 const dem = new Map<string, Float32Array | null>();
 const photo = new Map<string, Float32Array | null>();
 const inflight = new Map<string, Promise<void>>();
-let generation = 0;
+let generation = 0, holdNet = 0;
 
 export function openTileGeneration() { return generation; }
 
@@ -334,9 +334,7 @@ function pull(kind: 'dem' | 'photo', z: number, x: number, y: number) {
       const tile = await decode(await res.blob());
       // A decode miss is not a 404. Leave it uncached so the next warm tries again.
       if (tile) (kind === 'dem' ? storeTerrarium : storePhoto)(z, x, y, tile);
-    } catch {
-      /* a network miss is not a 404: leave it uncached so the next warm retries */
-    } finally {
+    } catch { holdNet = Date.now() + 20000; } finally {
       inflight.delete(id);
       finish();
     }
@@ -393,7 +391,8 @@ export function photoCoverage(latDeg: number, lonDeg: number) {
 
 let photoHere = '';
 function warm(kind: 'dem' | 'photo', latDeg: number, lonDeg: number) {
-  if (typeof fetch !== 'function') return;
+  // The loading card must not wait on s3 or EOX. A reset is not retried every frame.
+  if (typeof fetch !== 'function' || Date.now() < holdNet || (typeof document !== 'undefined' && document.getElementById('loading'))) return;
   if (kind === 'photo') {
     const here = `${latDeg.toFixed(1)},${lonDeg.toFixed(1)}`;
     if (here !== photoHere) {
@@ -431,5 +430,5 @@ export function warmPhotoTiles(latDeg: number, lonDeg: number) { warm('photo', l
 
 /** Test hook. */
 export function resetOpenTiles() {
-  dem.clear(); photo.clear(); inflight.clear(); generation++;
+  dem.clear(); photo.clear(); inflight.clear(); generation++; holdNet = 0;
 }

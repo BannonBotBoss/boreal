@@ -87,12 +87,18 @@ export function terrainMaterial() {
         float live = (1.0 - uCure) * mix(0.2, 0.85, clamp(vWet, 0.0, 1.0));
         vec3 dead = mix(thatch, straw, 0.45 + 0.55 * n2g);
         vec3 prairie = mix(mix(soil, dead, smoothstep(0.15, 0.72, n2g)), liveG, live * smoothstep(0.4, 0.8, n1g));
-        vec3 litter = vec3(0.16, 0.09, 0.045);
-        vec3 mossC = vec3(0.05, 0.16, 0.04);
-        vec3 needle = vec3(0.22, 0.16, 0.06);
+        vec3 litter = vec3(0.11, 0.07, 0.035);
+        vec3 mossC = vec3(0.12, 0.30, 0.09);
+        vec3 needle = vec3(0.34, 0.22, 0.08);
+        vec3 lichen = vec3(0.62, 0.64, 0.46);
+        vec3 bare = vec3(0.36, 0.22, 0.10);
         float mossNoise = vnoise(vXZ * 0.55, ${SEED.toFixed(3)});
-        float mossN = smoothstep(0.32, 0.72, n1 * 0.55 + mossNoise * 0.45);
-        vec3 boreal = mix(mix(litter, needle, smoothstep(0.25, 0.8, mossNoise)), mossC, mossN);
+        float mossN = smoothstep(0.28, 0.78, n1 * 0.45 + mossNoise * 0.55);
+        float lichenN = smoothstep(0.55, 0.9, vnoise(vXZ * 2.4, ${(SEED + 1.7).toFixed(3)}));
+        float bareN = smoothstep(0.62, 0.9, n2) * (1.0 - mossN);
+        vec3 boreal = mix(mix(litter, needle, smoothstep(0.15, 0.85, mossNoise)), mossC, mossN);
+        boreal = mix(boreal, bare, bareN);
+        boreal = mix(boreal, lichen, lichenN * (1.0 - mossN) * 0.9);
         // A noisy edge, not a hard line. n1g fades the boundary past 500 m so it does not alias.
         float blend = smoothstep(0.22, 0.78, clamp(uFloor + (n1g - 0.5) * 0.85, 0.0, 1.0));
         vec3 floorC = mix(boreal, prairie, blend);

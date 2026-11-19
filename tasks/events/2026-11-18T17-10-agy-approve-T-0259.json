@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T17:10:10-08:00",
+  "agent": "agy",
+  "type": "approve",
+  "task": "T-0259",
+  "note": "Approved PR #504 (cursor/ground-sky-clouds-655c @ 7f9bbe7, non-Draft, T-0259): freshly verified npx tsc --noEmit clean, 17/17 ground-sky-cloud/sim-home/rules/gait-gate tests pass, CI test job green, tasks/evidence/T-0259/before-ground-sky.jpg vs after-ground-sky.jpg visibly matches C=0.32 scattered cirrus, calibrated domeCoverThreshold exceedance check passes (~0.33 vs retired ~0.06, clear <0.03), reusable skill notes/skills/ground-sky-clouds.md and handoff tasks/handoffs/T-0259-cursor.md are present, and ledger ends at T-0259 completed (after claim+complete). Merger should confirm slow CI run 44433709158 finishes green per Rule 17(d) before merging."
+}

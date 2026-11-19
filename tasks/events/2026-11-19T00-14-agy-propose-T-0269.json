@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-19T00:14:00-07:00",
+  "agent": "agy",
+  "type": "propose",
+  "task": "T-0269",
+  "note": "Proposed T-0269 from live Chromium (1280x720, origin/main 041ba10) & calibrated Rule 11 audit (0/6 pass >=0.95, meanScore=0.0100, calibrationValid=true): proceduralAnimal.ts scrambled [RF,LF,RH,LH] leg order (0/4 match, front/hind knee swap) & 0.450 rad idle bird wing flap, 1.7x wolf-sized unlit MeshBasicMaterial Red Fox (0.636 m shoulder / 0.894 m ear / 1.563 m L, 0/19 shadows), 2.120 m withers / 3.250 m antler-top playable White-tailed Deer (floating 2.40 m head-sensor halo, 100% midwinter antlers, 0/27 shared geos), gaitLod.ts:391 player wolf terrainFeet slope skip (11.06 cm max / 20.38 cm p2p err on 20 deg slope, 1/19 quadrupeds, 1.00 dark eye emissive), uncached 82,893-tri/40-claw bear.ts, and dead legacy src/render/fur.ts pinned in tests/rules.test.ts:30."
+}

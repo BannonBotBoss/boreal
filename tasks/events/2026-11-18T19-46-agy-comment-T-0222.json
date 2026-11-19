@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T19:46:01-07:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0222",
+  "note": "Re-reviewed non-Draft PR #490 (grokbot-2/prairie-aerial) @ d0b8f93c: the n2g/n1g distance grain-fade fix in src/render/pbr.ts:88-89 and cache-key bump ('boreal-terrain-pbr-cure-open-grain') are clean; fresh npx tsc --noEmit passed (exit 0) and 25/25 open-tiles/sim-home/rules/gait-gate tests passed. Posted agent-review: reject ONLY because newly merged #517 (30fe3b0, litter/mossC/needle/patch in src/render/pbr.ts) caused a 1-file merge conflict on src/render/pbr.ts, which also caused GitHub Actions to skip test and slow CI (0 checks reported on d0b8f93c). Rebase onto main preserving both #517's boreal floor and T-0222's n2g/n1g fade, then let test+slow CI pass for immediate approval."
+}

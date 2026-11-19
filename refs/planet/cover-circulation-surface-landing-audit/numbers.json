@@ -1,0 +1,301 @@
+{
+  "audit": "T-0277 cover-circulation-surface-landing-audit",
+  "baseUrl": "http://127.0.0.1:5261",
+  "capturedAt": "2026-11-19T17:57:20.023Z",
+  "consoleErrors": [],
+  "pageErrors": [],
+  "calibrationValid": true,
+  "passCount": 0,
+  "totalChecks": 6,
+  "meanScore": 0.0621,
+  "checks": [
+    {
+      "id": "coastal-continentality-cover-biomes",
+      "label": "Coastal 55-64 N continentality/ice-line, 21.4 km ocean decay, temperate forest & alpine tundra",
+      "measured": "oceanDecay=21.4 km (ratio(1)=0.1940); 4/4 60-64 N coasts Cover::Ice (Bergen -0.42 C/ice=0 m, Helsinki -0.29 C, Anchorage -0.92 C, Reykjavik -2.61 C); 5/5 55-61 N coasts tree=0 m (Edinburgh/Juneau tundra); 4/4 NYC/Paris/Tokyo/Miami Boreal; Sahara/Arabia vegW=1.00/1.00 Boreal; Alps 2400 m=rock",
+      "expected": "oceanDecay 300-800 km; 60-64 N maritime coasts ice-free in July (+11..+18 C, tree line 500-900 m); temperate broadleaf distinct from Boreal; arid subtropical deserts vegW < 0.28 (Desert); Alps 2400 m alpine tundra",
+      "score": 0.0119,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.0056,
+      "pass": false,
+      "source": "WMO 1981-2010 Normals (Bergen +15.0 C Jul, Helsinki +17.8 C, Anchorage +15.0 C, Reykjavik +11.2 C, Juneau +13.8 C); Koerner (2003) Alpine Plant Life; Conrad (1946) / Hartmann (1994); Olson et al. (2001) Terrestrial Ecoregions"
+    },
+    {
+      "id": "planetary-psl-ekman-boot-roughness",
+      "label": "Planetary hypsometric PSL, 40 m/s hurricane wind cap, Ekman meridional inflow & boot ROUGH",
+      "measured": "Jan PSL=922.90..1077.03 hPa, Jul PSL=938.37..1090.94 hPa; wind>=39.9 m/s: 724/4608 (15.71% Jan, 718 at 48h, 643 Jul); zonal ocean max|v|=0.000000 m/s; boot land ROUGH=0.01 m on 1407/1407 (100.0%)",
+      "expected": "Climatological PSL ~975..1045 hPa (never >1084.8 hPa record); <0.1% cells at 40 m/s; Ekman surface inflow 15-35 deg (|v| ~1.5-5 m/s); moist forested land ROUGH = 1.5 m after boot",
+      "score": 0.0111,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.0021,
+      "pass": false,
+      "source": "WMO World Weather Extremes (max SLP 1084.8 hPa Tosontsengel); Peixoto & Oort (1992) Physics of Climate ch. 7; Wallace & Hobbs (2006) §9.3 Ekman spiral (15-35 deg); Raupach (1994) / Stull (1988) forest z0 = 1.5 m"
+    },
+    {
+      "id": "overcast-longwave-sea-ice-evap",
+      "label": "Overcast net longwave radiative cooling & solid sea-ice evaporation suppression",
+      "measured": "48h overcast (>95%) positive LWNET: 997/1009 (98.81%, peak +10.21 W/m2); 20 C overcast LWNET=+8.38 W/m2; >95% sea-ice (549 cells) evap mean=0.957, peak=9.846 mm/day",
+      "expected": "Overcast LWNET <= 0 (-10 to -25 W/m2 for stratus with T_cloud < T_surf); solid sea-ice sublimation <= 0.05-0.30 mm/day",
+      "score": 0.0675,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.0295,
+      "pass": false,
+      "source": "Crawford & Duchon (1999) J. Appl. Meteor. 38:474; Oke (1987) Boundary Layer Climates; Persson et al. (2002) JGR 107(C10) SHEBA Arctic sea-ice turbulent latent flux (~0.05-0.3 mm/day)"
+    },
+    {
+      "id": "orographic-solar-eccentricity-obliquity",
+      "label": "Dry-desert orographic rainout, Spencer r^2 in shortwave() & spherical obliquity scaling",
+      "measured": "RH=21.4% (u=1.83 m/s) dry desert ridge precip=0.17 mm/day; Jan3/Jul4 TOA ratio=1.0709 vs SWdown ratio=1.00002 (0.002% vs 7.09%); obliquity=90 deg solstice decl=58.96 deg",
+      "expected": "0.0 mm/day on unsaturated RH=15-21% slope (LCL condensation required); SWdown Jan3/Jul4 ratio ~1.0709 matching (r0/r)^2; obliquity=90 deg solstice decl = 90.00 deg via asin(sin(decl)*sin(tilt)/sin(23.44 deg))",
+      "score": 0.2823,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Roe (2005) Ann. Rev. Earth Planet. Sci. 33:645 (saturated upslope condensation); Spencer (1971) Search 2:172 ((r0/r)^2 = 1.035 perihelion / 0.967 aphelion); Smart (1977) Spherical Astronomy (sin delta = sin eps sin lambda)"
+    },
+    {
+      "id": "remote-landing-ew-mirror-dem-cliff-surfacedata",
+      "label": "Remote landing East-West frame sign, seeded-vs-DEM vertical cliff & surfaceData placeholders",
+      "measured": "+10 km East at (45 N, 10 E) -> deltaLon=-0.12718 deg (WEST!); Hawaii DEM=1200 m vs seeded ocean=-1629.0 m -> remoteGameHeight(0,0)=2826.8 m (cliff=2824.3 m, SITE.datumM err=1200.0 m; Alps datum err=863.0 m); surfaceDataAt live fields=0/4 (forest=0.75, tree=spruce, season=0.5, snow=0)",
+      "expected": "+10 km East -> deltaLon = +0.12718 deg; remoteGameHeight(0,0) = LEVEL.shore + 2 (2.5 m +- 0.5 m); SITE.datumM = DEM elevation; surfaceDataAt reads live clock/snow/stand",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "WGS84 / ENU local tangent plane convention (+x East = +lon); Mapzen Terrarium DEM datum consistency (landingSite.ts); surfaceData.ts live clock/snow contract"
+    },
+    {
+      "id": "live-webgl-globe-visual-verification",
+      "label": "Live Chromium WebGL globe views (Bergen, Sahara, Alps, Global) vs real-world cover & circulation",
+      "measured": "0 console/page errors; recording.webm=146565 bytes; frame-0 Bergen centerRGB=[0.2689,0.3118,0.3379], cover=ice; frame-1 Sahara centerRGB=[0.2923,0.3701,0.2271] (greenDominant=true), cover=boreal; frame-2 Alps centerRGB=[0.3342,0.365,0.2892], cover=rock; frame-3 Orbit centerRGB=[0.5731,0.5927,0.6078]",
+      "expected": "Bergen July coast forested (not ice); Sahara ochre sand desert (R > G > B, not green boreal canopy); Alps 2,400 m alpine tundra; global circulation within physical SLP/wind bounds",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Live WebGL Chromium 1280x720 captures vs generated documentary references ref-0..ref-2"
+    }
+  ],
+  "details": {
+    "coastalDetails": [
+      {
+        "name": "Bergen NO",
+        "lat": 60.39,
+        "lon": 5.32,
+        "elev": 20,
+        "veg": 0.85,
+        "coast": 0,
+        "warmQC": -0.42,
+        "treeM": 0,
+        "iceM": 0,
+        "cover": "ice"
+      },
+      {
+        "name": "Helsinki FI",
+        "lat": 60.17,
+        "lon": 24.94,
+        "elev": 15,
+        "veg": 0.85,
+        "coast": 0,
+        "warmQC": -0.29,
+        "treeM": 0,
+        "iceM": 0,
+        "cover": "ice"
+      },
+      {
+        "name": "Anchorage AK",
+        "lat": 61.22,
+        "lon": -149.9,
+        "elev": 30,
+        "veg": 0.8,
+        "coast": 0,
+        "warmQC": -0.92,
+        "treeM": 0,
+        "iceM": 0,
+        "cover": "ice"
+      },
+      {
+        "name": "Reykjavik IS",
+        "lat": 64.15,
+        "lon": -21.94,
+        "elev": 15,
+        "veg": 0.5,
+        "coast": 0,
+        "warmQC": -2.61,
+        "treeM": 0,
+        "iceM": 0,
+        "cover": "ice"
+      }
+    ],
+    "coastalTreeDetails": [
+      {
+        "name": "Bergen NO",
+        "warmQC": -0.42,
+        "treeM": 0,
+        "iceM": 0,
+        "cover": "ice"
+      },
+      {
+        "name": "Helsinki FI",
+        "warmQC": -0.29,
+        "treeM": 0,
+        "iceM": 0,
+        "cover": "ice"
+      },
+      {
+        "name": "Anchorage AK",
+        "warmQC": -0.92,
+        "treeM": 0,
+        "iceM": 0,
+        "cover": "ice"
+      },
+      {
+        "name": "Edinburgh UK",
+        "warmQC": 2.38,
+        "treeM": 0,
+        "iceM": 366.2,
+        "cover": "tundra"
+      },
+      {
+        "name": "Juneau AK",
+        "warmQC": 0.87,
+        "treeM": 0,
+        "iceM": 133.9,
+        "cover": "tundra"
+      }
+    ],
+    "temperateDetails": [
+      {
+        "name": "New York US",
+        "meanC": 11.04,
+        "cover": "boreal"
+      },
+      {
+        "name": "Paris FR",
+        "meanC": 4.92,
+        "cover": "boreal"
+      },
+      {
+        "name": "Tokyo JP",
+        "meanC": 14.42,
+        "cover": "boreal"
+      },
+      {
+        "name": "Miami FL",
+        "meanC": 21,
+        "cover": "boreal"
+      }
+    ],
+    "desertDetails": [
+      {
+        "name": "Sahara (23.5N, 10E)",
+        "vegWeight": 1,
+        "surfaceRgb": [
+          0.06,
+          0.09,
+          0.035
+        ],
+        "cover": "boreal"
+      },
+      {
+        "name": "Arabia (21.0N, 50E)",
+        "vegWeight": 1,
+        "surfaceRgb": [
+          0.06,
+          0.09,
+          0.035
+        ],
+        "cover": "boreal"
+      }
+    ],
+    "alps": {
+      "lat": 46.5,
+      "lon": 8,
+      "elevM": 2400,
+      "seededH": 1537,
+      "datumErrM": 863,
+      "cover": "rock",
+      "zone": "rock"
+    },
+    "islandDemCliff": {
+      "lat": 19.82,
+      "lon": -155.47,
+      "elevM": 1200,
+      "seededKind": "ocean",
+      "seededH": -1629,
+      "landedY": 2826.75,
+      "cliffM": 2824.25,
+      "datumErrM": 1200
+    },
+    "wasmCirculation": {
+      "janMinPslHpa": 922.9,
+      "janMaxPslHpa": 1077.03,
+      "julMinPslHpa": 938.37,
+      "julMaxPslHpa": 1090.94,
+      "janWindCap": 724,
+      "windCap48": 718,
+      "julWindCap": 643,
+      "totalGlobalCells": 4608,
+      "zonalMeridionalMaxMs": 0,
+      "bareRoughCells": 1407,
+      "landCells": 1407,
+      "ovCells48": 1009,
+      "ovPosLw48": 997,
+      "ovMaxLw48": 10.21,
+      "overcast20CLwNet": 8.38,
+      "iceCells48": 549,
+      "iceEvapMean48": 0.957,
+      "iceEvapMax48": 9.846,
+      "dryDesertOrographicMmDay": 0.167,
+      "dryWindwardRh": 0.2137,
+      "dryWindwardU": 1.827,
+      "toaRatio": 1.07087,
+      "swRatio": 1.00002,
+      "obliquity90DeclDeg": 58.96
+    },
+    "liveMetrics": {
+      "bergenRgb": [
+        0.2689,
+        0.3118,
+        0.3379
+      ],
+      "saharaRgb": [
+        0.2923,
+        0.3701,
+        0.2271
+      ],
+      "alpsRgb": [
+        0.3342,
+        0.365,
+        0.2892
+      ],
+      "orbitRgb": [
+        0.5731,
+        0.5927,
+        0.6078
+      ],
+      "saharaGreenDominant": true,
+      "bergenCoastalIceCover": true,
+      "alpsBareRockCover": true,
+      "liveWasmPslViolation": true,
+      "recordingBytes": 146565
+    },
+    "surfaceData": {
+      "lake": null,
+      "river": null,
+      "soil": null,
+      "wetness": null,
+      "forest": 0.75,
+      "tree": "spruce",
+      "season": 0.5,
+      "snow": 0,
+      "zone": "forest",
+      "placeholder": {
+        "forest": true,
+        "tree": true,
+        "season": true,
+        "snow": true
+      }
+    }
+  }
+}

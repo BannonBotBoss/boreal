@@ -14,6 +14,7 @@
 import { CHUNK_SIZE, heightAt, WORLD_SEED } from '../../core/world';
 import { LEVEL } from '../../core/tuning';
 import { STAGES, lakeAt } from '../../core/stages/elevation';
+import { SITE } from '../../core/sitePhase';
 import { coverSampleAt } from '../../world/globe/coverSample';
 import { RENDER } from '../../core/renderSettings';
 import { covered, footprintsIn, prepareArea, siteAt, type Site } from '../../core/flora/site';
@@ -75,7 +76,7 @@ export function defaultCover(x: number, z: number, s = siteAt(x, z)): Cover {
 export function viewedCover(x: number, z: number): Cover {
   const local = defaultCover(x, z);
   if (heightAt(x, z) < LEVEL.waterSurface + 0.05) return { density: 0, weights: local.weights };
-  if (STAGES.on && lakeAt(STAGES.seed, x, z)) return { density: 0, weights: local.weights };
+  if (STAGES.on && !Number.isFinite(SITE.latDeg) && lakeAt(STAGES.seed, x, z)) return { density: 0, weights: local.weights };
   let land: { water: boolean; biome: string };
   try { land = coverSampleAt(x, z); } catch { return local; }
   if (land.water) return { density: 0, weights: local.weights };
@@ -126,7 +127,7 @@ export function* bladesJob(tx: number, tz: number, seed = WORLD_SEED): Generator
       if (q.some(c => c.density === 0) || r() >= q.reduce((s, c, k) => s + c.density * wq[k], 0)) continue; // hard edge at water / bare rock
       const w = COVER_SPECIES.map((_, s) => q.reduce((a, c, k) => a + c.weights[s] * wq[k], 0)), tot = w.reduce((a, b) => a + b, 0);
       let pick = r() * tot, k = 0; while (k < w.length - 1 && (pick -= w[k]) > 0) k++;
-      const sp_ = COVER_SPECIES[k], row = [x, ground(x, z) - .01, z, r() * Math.PI * 2, sample(r, sp_.length), sp_.lean[0] + r() * (sp_.lean[1] - sp_.lean[0]), keep, k,
+      const sp_ = COVER_SPECIES[k], row = [x, ground(x, z) + .03, z, r() * Math.PI * 2, sample(r, sp_.length), sp_.lean[0] + r() * (sp_.lean[1] - sp_.lean[0]), keep, k,
         Math.min(S - 1, Math.floor((x - x0) / sc)) + S * Math.min(S - 1, Math.floor((z - z0) / sc))]; // [8] = cell
       if (!feet.length || !covered(feet, x, z, .02)) rows.push(row); // tested after every draw, so the rng stream (the field elsewhere) is unchanged
     }

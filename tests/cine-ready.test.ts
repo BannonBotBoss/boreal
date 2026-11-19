@@ -61,6 +61,18 @@ test('the grace starts when the clamp engages, and a ready globe is not held', (
   assert.equal(cineArrivalDue(116, false, false, false, false), false);
 });
 
+test('a blocked narration still hands the planet over on the film clock', () => {
+  const w = installDom('', false, true);
+  let planets = 0;
+  const opening = createOpening(() => { planets++; }, () => {}, { show: () => {}, ready: () => Promise.resolve() });
+  const probe = w.__borealOpening!;
+  probe.begin();
+  for (let i = 0; i < 200 && planets === 0; i++) opening.step(1);
+  assert.equal(planets, 1);
+  assert.ok(probe.elapsed >= CINE.b14End);
+  assert.ok(w.resumes <= 1, `AudioContext.resume ran ${w.resumes} times`);
+});
+
 test('a thrown earth picture still hands the planet over at the end', () => {
   const w = installDom('', false);
   let planets = 0;
@@ -133,7 +145,7 @@ test('return visits do not open the sphere, and the first-visit prewarm failure 
   assert.match(warm, /forestLanding\(\)/);
 });
 
-function installDom(search: string, reduced: boolean) {
+function installDom(search: string, reduced: boolean, blocked = false) {
   const nodes: Fake[] = [];
   type Fake = {
     tag: string; id: string; className: string; textContent: string; hidden: boolean;
@@ -143,7 +155,7 @@ function installDom(search: string, reduced: boolean) {
     append: (...kids: Fake[]) => void; remove: () => void; setAttribute: () => void;
     getContext: () => null; replaceChildren: () => void; insertBefore: (node: Fake, before: Fake | null) => Fake;
     clientWidth: number; clientHeight: number; width: number; height: number; offsetWidth: number;
-    preload: string; onended: null | (() => void); ended: boolean; duration: number;
+    preload: string; onended: null | (() => void); ended: boolean; duration: number; paused: boolean;
     play: () => Promise<void>; pause: () => void; currentTime: number; volume: number; crossOrigin: string;
     src: string; muted: boolean; loop: boolean; playsInline: boolean; alt: string; type: string;
   };
@@ -158,7 +170,7 @@ function installDom(search: string, reduced: boolean) {
       setAttribute() {}, getContext: () => null, replaceChildren() { node.children = []; },
       insertBefore(child: Fake) { child.parent = node; node.children.push(child); return child; },
       clientWidth: 800, clientHeight: 600, width: 0, height: 0, offsetWidth: 1,
-      preload: '', onended: null, ended: false, duration: Number.NaN,
+      preload: '', onended: null, ended: false, duration: blocked ? 8 : Number.NaN, paused: true,
       play: () => Promise.resolve(), pause() {}, currentTime: 0, volume: 1, crossOrigin: '',
       src: '', muted: false, loop: false, playsInline: false, alt: '', type: '',
     };
@@ -187,7 +199,7 @@ function installDom(search: string, reduced: boolean) {
   g.Audio = function Audio(this: unknown, src?: string) {
     const n = mk('audio');
     if (src) n.src = src;
-    n.play = () => { played.push(n.src); return Promise.resolve(); };
+    n.play = () => { if (blocked) return Promise.reject(new Error('gesture')); played.push(n.src); n.paused = false; return Promise.resolve(); };
     return n;
   };
   const listeners = new Map<string, ((e: unknown) => void)[]>();
@@ -204,11 +216,20 @@ function installDom(search: string, reduced: boolean) {
     devicePixelRatio: 1,
   };
   g.AudioContext = undefined;
+  let resumes = 0;
+  if (blocked) {
+    const Ctx = function (this: { state: string; currentTime: number; resume: () => Promise<never> }) {
+      this.state = 'suspended';
+      this.currentTime = 0;
+      this.resume = () => { resumes++; return Promise.reject(new Error('not allowed')); };
+    };
+    (g.window as { AudioContext: unknown }).AudioContext = Ctx;
+  }
   const suns: number[] = [];
   (g.window as { __inpage?: { setFilmDrive: (yaw: number, radii: number, offset: number, sunBias?: number) => void } }).__inpage = {
     setFilmDrive(_yaw, _radii, _offset, sunBias) { suns.push(sunBias ?? 0); },
   };
-  return Object.assign(g.window as { events: string[]; __borealOpening?: { begin: () => void; seek: (t: number) => void; elapsed: number }; __borealSave?: { markBigBangSeen?: () => void } }, { played, suns });
+  return Object.assign(g.window as { events: string[]; __borealOpening?: { begin: () => void; seek: (t: number) => void; elapsed: number }; __borealSave?: { markBigBangSeen?: () => void } }, { played, suns, get resumes() { return resumes; } });
 }
 
 function film(opts: { search?: string; reduced?: boolean; ready: () => Promise<void> }) {

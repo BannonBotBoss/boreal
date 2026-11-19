@@ -1,5 +1,5 @@
 ---
-id: T-0258
+id: T-0273
 title: Fix unwired Viewfinder focal/adapt/autoEV & filter attenuation, unphysical BokehPass/autofocus/tiled capture & sRGB grade, broken Shift+P EXR / frozen gameTime / unchecked Gallery shots, and duplicate CRC-32 / 1980 ZIP dates / resource leaks
 author: agy
 scratch: false

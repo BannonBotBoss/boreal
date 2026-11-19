@@ -1,0 +1,89 @@
+{
+  "seed": 1400,
+  "baseUrl": "http://127.0.0.1:5259",
+  "calibrationValid": true,
+  "passedCount": 0,
+  "totalChecks": 6,
+  "meanScore": 0.0725,
+  "live": {
+    "consoleErrors": [],
+    "pageErrors": [],
+    "recordingBytes": 313781,
+    "pondDryCoord": [
+      3000,
+      2760
+    ],
+    "pondWaterCoord": [
+      3030,
+      2760
+    ]
+  },
+  "checks": [
+    {
+      "id": "elevation-erosion-gravity-sign",
+      "label": "elevation.ts erode() downhill gravity sign (+dh*g vs -dh*g)",
+      "measured": "downhillDecel=57.45%, zeroSpeed=37.40%, uphillAccel=292640, eroded=19724.9 vs 45134.1 (-56.3%)",
+      "expected": "downhillDecel=0.00%, zeroSpeed<=1%, uphillAccel=0, erodedRatio=1.00 (-dh*gravity)",
+      "score": 0.1905,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.15,
+      "pass": false,
+      "source": "Beyer (2015) TU München hydraulic erosion; Lague Hydraulic-Erosion (MIT): v^2 = v0^2 - 2g*dh"
+    },
+    {
+      "id": "river-junction-staircase-cliffs",
+      "label": "rivers.ts breachUnconfined R.cap vertical cliff drops & ID collisions",
+      "measured": "cliffs>0.5m=57/206 (27.7%), maxDrop=-3.818m, capCollisions=85/181, uphillWithin=3",
+      "expected": "0% cliffs >0.5m, maxStep<=0.25m, 0 shared-up R.cap collisions, 0 uphill steps",
+      "score": 0.1,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Chow (1959) Open-Channel Hydraulics; Barnes et al. (2014) Comput. Geosci. 62:117; Lindsay (2016) Hydrol. Process. 30:846"
+    },
+    {
+      "id": "river-mouth-lake-surface-continuity",
+      "label": "flow.ts outlet filled[c]=h[c] sub-lake plunging river mouths",
+      "measured": "mouthMismatch>0.15m=16/60 (26.7%), maxJump=3.567m, maxSubLakePlunge=-4.097m below -0.25m",
+      "expected": "0% mouth mismatches >0.15m, 0.00m plunge below lake surface -0.25m",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Leopold, Wolman & Miller (1964) Fluvial Processes in Geomorphology: lake-surface base-level control"
+    },
+    {
+      "id": "river-containment-and-planform-report-integrity",
+      "label": "riverContain.ts midpoint false-pass & planformReport 2.67x overcount",
+      "measured": "denseOpen=114/2823 (4.04%, maxLift=+0.386m) vs midpointReport=0.000; planformReport meanderPieces=104 vs 39 unique (2.67x); SLOTS=3 full=51/338",
+      "expected": "denseOpen=0%, maxLift<=0.02m, planformReport exact 1.00x unique count, 0 SLOTS overflow",
+      "score": 0.075,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.0667,
+      "pass": false,
+      "source": "Hydrostatics (free surface confined along full reach); Leopold & Wolman (1960) GSA Bull. 71:769"
+    },
+    {
+      "id": "soils-river-pond-exclusion-and-worldcover-calibration",
+      "label": "soils.ts missing 5,374 river-pond cells (483.7 ha) & dry-land bedrock skew",
+      "measured": "pondNotWater=5374/5374 (100.0%, 483.7 ha), trueDryBedrock=12.85% (target 11.40%), soilAt dry-on-water=5991/23267 (25.7%), water-on-dry=543",
+      "expected": "0/5374 pond cells misclassified, trueDryBedrock=11.40% (+-0.1%), 0% water-as-dry soilAt",
+      "score": 0.0117,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "ESA WorldCover 2021 (11.4% Kenora outcrop share); Hallett & Roed (1980) NOEGTS 36; Nobre et al. (2011) J. Hydrol. 404:13"
+    },
+    {
+      "id": "flow-twi-and-inspector-fill-depth-scale",
+      "label": "flow.ts twi() unscaled slope & world.ts fill-depth missing g.k (8.05x)",
+      "measured": "twiMeanDiff=1.930, twiMaxDiff=5.459, cells>|1.0|=62273/65536 (95.0%), worldFillScale=1/8.05 (12.4% of true m)",
+      "expected": "twiMeanDiff<0.1, 0% cells>|1.0|, worldFillScale=1.00 (multiplied by g.k)",
+      "score": 0.058,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.0581,
+      "pass": false,
+      "source": "Beven & Kirkby (1979) Hydrol. Sci. Bull. 24:43 (TWI = ln(a / tan beta) in metric world units)"
+    }
+  ]
+}

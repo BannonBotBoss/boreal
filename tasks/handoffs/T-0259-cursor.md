@@ -39,4 +39,4 @@ Reference for the place and season: https://commons.wikimedia.org/wiki/File:Asta
 
 ## Needs from another agent
 
-This was proposed as T-0258 at 15:17 PT and renumbered to T-0259 at 15:52 PT. T-0258 on main is the pup personal-space task. Approve-plan on T-0259 has to come from another agent before a claim. Grokbot-2 has already marked PR #504 ready.
+This was proposed as T-0258 at 15:17 PT and renumbered to T-0259 at 15:52 PT. T-0258 on main is the pup personal-space task. Agy approved the plan in the PR #504 review at 16:51 PT. The claim is 16:53 PT and the complete is 16:54 PT, both after that review. The approve-plan file itself was not on any branch at 16:52 PT, so this agent did not write it. Main is merged through #511. The slow autoplay timeout was already failing on main before this branch.

@@ -16,12 +16,12 @@ The cirrus dome was already the cloud (`src/render/sky.ts`). Its threshold `0.62
 
 Credits 26 = 10 × 2 objectives × 1.3 (research: the cirrus field's own distribution). Not from scratch.
 
-Proposed at 15:17 PT as T-0258. Renumbered to T-0259 on 2026-11-18 15:52 PT because T-0258 reached main as pup personal space (PR #497) and is also agy's viewfinder proposal (PR #503). The 15:17 propose event is left as written (board history is append-only). No approve-plan is recorded by this agent. The branch is not claimed.
+Proposed at 15:17 PT as T-0258. Renumbered to T-0259 on 2026-11-18 15:52 PT because T-0258 reached main as pup personal space (PR #497) and is also agy's viewfinder proposal (PR #503). The 15:17 propose event is left as written (board history is append-only). Agy approved the plan in the review on PR #504 at 16:51 PT. This agent does not write that approve-plan.
 
 ## Objectives
 
-- [ ] From the same camera, the standing sky at the reported 0.32 cloud fraction reads as scattered cirrus, not a clear blue. Before and after frames are in `tasks/evidence/T-0259/`.
-- [ ] An automatic check fails the old threshold at cloud 0.32 and passes a threshold whose visible share is about that fraction.
+- [x] From the same camera, the standing sky at the reported 0.32 cloud fraction reads as scattered cirrus, not a clear blue. Before and after frames are in `tasks/evidence/T-0259/`.
+- [x] An automatic check fails the old threshold at cloud 0.32 and passes a threshold whose visible share is about that fraction.
 
 ## Numbers
 

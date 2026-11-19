@@ -55,7 +55,7 @@ export interface RgbaTile { w: number; h: number; rgba: Uint8ClampedArray | Uint
 const dem = new Map<string, Float32Array | null>();
 const photo = new Map<string, Float32Array | null>();
 const inflight = new Map<string, Promise<void>>();
-let generation = 0;
+let generation = 0, holdNet = 0;
 
 export function openTileGeneration() { return generation; }
 
@@ -332,9 +332,7 @@ function pull(kind: 'dem' | 'photo', z: number, x: number, y: number) {
       const tile = await decode(await res.blob());
       // A decode miss is not a 404. Leave it uncached so the next warm tries again.
       if (tile) (kind === 'dem' ? storeTerrarium : storePhoto)(z, x, y, tile);
-    } catch {
-      /* a network miss is not a 404: leave it uncached so the next warm retries */
-    } finally {
+    } catch { holdNet = 60; } finally {
       inflight.delete(id);
       finish();
     }
@@ -391,7 +389,9 @@ export function photoCoverage(latDeg: number, lonDeg: number) {
 
 let photoHere = '';
 function warm(kind: 'dem' | 'photo', latDeg: number, lonDeg: number) {
-  if (typeof fetch !== 'function') return;
+  // The card does not wait on a host. A reset skips the next warms, then tries again.
+  if (typeof fetch !== 'function' || (typeof document !== 'undefined' && document.getElementById('loading'))) return;
+  if (holdNet > 0) { holdNet--; return; }
   if (kind === 'photo') {
     const here = `${latDeg.toFixed(1)},${lonDeg.toFixed(1)}`;
     if (here !== photoHere) {
@@ -430,5 +430,5 @@ export function warmOverheadTiles(latDeg: number, lonDeg: number) { const z = OP
 
 /** Test hook. */
 export function resetOpenTiles() {
-  dem.clear(); photo.clear(); inflight.clear(); generation++;
+  dem.clear(); photo.clear(); inflight.clear(); generation++; holdNet = 0;
 }

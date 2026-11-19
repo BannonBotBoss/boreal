@@ -82,7 +82,7 @@ test('prairie feet use thatch and soil, boreal feet use litter', () => {
   const shader = { fragmentShader: '#include <color_fragment>\n#include <roughnessmap_fragment>\n#include <normal_fragment_maps>\n', vertexShader: '#include <begin_vertex>\n', uniforms: {} as Record<string, { value: number }> };
   mat.onBeforeCompile(shader as never, {} as never);
   assert.match(shader.fragmentShader, /vec3 thatch = vec3\(0\.46, 0\.32, 0\.11\)/);
-  assert.match(shader.fragmentShader, /vec3 mossC = vec3\(0\.045, 0\.09, 0\.028\)/);
+  assert.match(shader.fragmentShader, /vec3 mossC = vec3\(0\.05, 0\.16, 0\.04\)/);
   assert.equal(shader.uniforms.uFloor.value, 1);
   assert.equal(shader.uniforms.uCure.value, 1);
   assert.equal(steppeCure(227), 1);

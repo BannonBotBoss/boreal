@@ -16,7 +16,7 @@ import { smoothstep } from '../../proc/math';
 import { coarseMetresLinear } from './coarseRelief';
 import { GLOBE_COLOURS, fromLatLon, surfaceColour, type Surface } from './planet';
 import { LAYER_LOOK } from './planetLayers';
-
+import { orbitFrag, uploadOrbitAlbedo } from '../../render/globe/orbitDraw';
 /** 1024×512. At 3.7 R the disc is ~400 px across a hemisphere, so a texel is under a pixel. */
 export const ORBIT_MAP = { width: 1024, height: 512 };
 /**
@@ -45,15 +45,7 @@ const INV_PI = (1 / Math.PI).toFixed(8);
  *  atmosphere). The map is NASA Visible Earth Blue Marble clouds, cloud_combined_2048.jpg
  *  (https://visibleearth.nasa.gov/images/57747/blue-marble-clouds). White on black, north at
  *  the top; three's flipY puts that top at v = 1, which is this shader's north pole. */
-export const ORBIT_FRAG = `
-  if (uOrbit > 0.001 && uOrbitDeck > 0.5) {
-    vec3 od = normalize(vDetW + uCamP);
-    vec2 ouv = vec2(atan(od.z, od.x) * ${INV_TAU} + 0.5, asin(clamp(od.y, -1.0, 1.0)) * ${INV_PI} + 0.5);
-    float c = texture2D(uOrbitCloud, ouv).r;
-    float deck = smoothstep(0.08, 0.55, c);
-    float ow = clamp(uOrbit, 0.0, 1.0) * presentW;
-    diffuseColor.rgb = mix(diffuseColor.rgb, vec3(${ORBIT_CLOUD_ALBEDO.toFixed(2)}), deck * ow);
-  }`;
+export const ORBIT_FRAG = orbitFrag(ORBIT_CLOUD_ALBEDO, INV_TAU, INV_PI);
 
 export function orbitWeight(altM: number) {
   const a = ORBIT_FADE;
@@ -155,6 +147,7 @@ export function bakeOrbitAlbedo(): OrbitBake {
 let cloudsRequested = false;
 /** Browser load of the Blue Marble cloud map. Node tests never call this. */
 export function loadBlueMarbleClouds() {
+  uploadOrbitAlbedo(ORBIT_DRAW.uOrbitTex, EMPTY_RGBA);
   if (cloudsRequested || typeof document === 'undefined') return;
   cloudsRequested = true;
   const tex = new THREE.TextureLoader().load(`${(import.meta as unknown as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/'}globe/cloud_combined_2048.jpg`);

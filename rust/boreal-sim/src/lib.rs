@@ -104,6 +104,11 @@ thread_local! { static GRID: RefCell<Option<Grid>> = const { RefCell::new(None) 
 
 /// Issue #167 cover row for one landing, written into `out[0..3]`: class id (0 water, 1 ice, 2 rock, 3 tundra, 4 desert,
 /// 5 prairie, 6 boreal, 7 tropical, 8 wetland), stems per hectare, billboard height in metres. Deterministic per (lat, lon).
+/// Orbit-disc vegetation weight. The class itself stays `cover_cell_at`. Drawing samples this, it does not reimplement it.
+#[no_mangle] pub extern "C" fn orbit_vegetation(abs_lat: f64, coast_km: f64) -> f64 {
+    cover::orbit_vegetation(abs_lat, coast_km)
+}
+
 #[no_mangle] pub extern "C" fn cover_cell(lat: f64, lon: f64, elev_m: f64, vegetation: f64, water: u32, out: *mut f64) {
     let r = cover::cover_row(lat, lon, elev_m, vegetation, water != 0);
     let o = unsafe { std::slice::from_raw_parts_mut(out, 3) };

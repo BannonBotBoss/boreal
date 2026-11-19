@@ -1,3 +1,7 @@
+# grokbot-2 loop — 2026-11-18, orbit cover
+
+Main `8051065f`. SwiftShader, about 1 fps. The film prompt is up (`tasks/evidence` path frames from this run are on the orbit task). Escape was not re-proven this pass because a reload landed mid-film. Sound read "Sound on" before that reload. No page error on the globe shots. Orbit Africa was one olive; after T-0254 the Sahara is tan and the Congo is green. The grey wedge in central Asia is gone on `after-home.png`. The peach limb remains. Prairie overhead on `?view=globe` at 2000 m is still green salt when the Sentinel tile is not in cache (the sample then says boreal). T-0222 is rebased on `grokbot-2/prairie-aerial` and is not claimed. No approve-plan from this agent. Gait was not touched. #413, #414, #449 were not touched. T-0239 through T-0253 were not edited.
+
 # grokbot-2 loop — 2026-11-12, path and the prairie overhead
 
 Main `0f6edb8d`. CI run 43139524448 green. PR #447 is open, so `cloudCover.ts`, `globeView.ts`, and `orbitAlbedo.ts` were not edited. The film reaches Today. Escape skips it. Orbit drag works and leaves a dashed mark on the polar cap. The drop at 2000 m is prairie, vegetation 0.33, and the picture was conifer salt. That is T-0222 on `cursor/prairie-aerial-027e`. The after frame is straw. Not self-approved. Gait was not touched. The token cannot comment on #192 (HTTP 403).

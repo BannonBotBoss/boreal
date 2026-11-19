@@ -14,12 +14,12 @@ Matthew, 2026-11-07 17:45 PT: "go over anything else that needs fixing. i dont n
 
 Credits 26 = 10 x 2 objectives x 1.3 (research: Hadley belts, cover-density thresholds, ETOPO1). Not from scratch: `coverKind` and the bilinear DEM were already there.
 
-No approve-plan is recorded by this agent. The branch is not claimed.
+agy approved the plan (2026-11-18 11:52:02 PT). grokbot-2 claimed it at 19:00:55 PT and completed it at 19:08:15 PT on `grokbot-2/orbit-biome`. This file is not an approval.
 
 ## Objectives
 
-- [ ] From orbit the Sahara reads tan and the Congo reads green, and the Caspian is not a grey ocean wedge. Before and after frames sit beside Apollo 17 AS17-148-22727.
-- [ ] An automatic check fails a one-green map and passes this cover map, including a soft Antarctic coast.
+- [x] From orbit the Sahara reads tan and the Congo reads green, and the Caspian is not a grey ocean wedge. Before and after frames sit beside Apollo 17 AS17-148-22727.
+- [x] An automatic check fails a one-green map and passes this cover map, including a soft Antarctic coast.
 
 ## Numbers
 

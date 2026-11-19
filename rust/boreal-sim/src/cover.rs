@@ -158,6 +158,45 @@ pub fn place_hash(lat: f64, lon: f64) -> f64 {
     (z >> 11) as f64 / (1u64 << 53) as f64
 }
 
+/// Vegetation weight for the orbit disc.
+/// Belts follow the Hadley cell: equatorial ascent, subtropical descent near 30°,
+/// mid-latitude storm tracks (Holton & Hakim, An Introduction to Dynamic Meteorology;
+/// the same latitudes `ORBIT_ZONAL` cites via King et al. 2013).
+/// The weights are not a published NDVI table. They are [game calibration] so
+/// `veg_desert_below` 0.28 and `veg_prairie_below` 0.62 in data/earth/cover-density.json
+/// put the Sahara in desert and the Congo in forest.
+/// `coast_km` is distance to the open-ocean flood. A subtropical coast stays wet.
+pub fn orbit_vegetation(abs_lat: f64, coast_km: f64) -> f64 {
+    // Knots follow the Hadley cell (Holton & Hakim). The weights are [game calibration].
+    const ZONAL: [(f64, f64); 11] = [
+        (0.0, 0.94), (8.0, 0.9), (14.0, 0.72), (22.0, 0.34), (28.0, 0.2),
+        (36.0, 0.48), (46.0, 0.8), (56.0, 0.74), (66.0, 0.4), (76.0, 0.16), (90.0, 0.04),
+    ];
+    let a = abs_lat.abs().clamp(0.0, 90.0);
+    let mut z = ZONAL[10].1;
+    if a <= ZONAL[0].0 { z = ZONAL[0].1; }
+    else {
+        for i in 1..ZONAL.len() {
+            if a <= ZONAL[i].0 {
+                let t = (a - ZONAL[i - 1].0) / (ZONAL[i].0 - ZONAL[i - 1].0);
+                z = ZONAL[i - 1].1 + (ZONAL[i].1 - ZONAL[i - 1].1) * t;
+                break;
+            }
+        }
+    }
+    let smooth = |e0: f64, e1: f64, x: f64| { let t = ((x - e0) / (e1 - e0)).clamp(0.0, 1.0); t * t * (3.0 - 2.0 * t) };
+    // Subtropical descent near 20–30° (Holton & Hakim). The 14/22 and 32/44 edges are [game calibration].
+    let belt = smooth(14.0, 22.0, a) * (1.0 - smooth(32.0, 44.0, a));
+    // 700 km e-folding of inland drying [game calibration]: about 40 km stays wet, about 1800 km does not.
+    let inland = 1.0 - (-coast_km.max(0.0) / 700.0).exp();
+    // 0.28 is veg_desert_below (cover-density.json). 0.72 = 1 - 0.28, so a full belt dries to that line [game calibration].
+    let dry = inland * (0.28 + 0.72 * belt);
+    // Same 0.28 desert line (cover-density.json), returned to a wet subtropical coast.
+    let coast_boost = (1.0 - inland) * belt * 0.28;
+    // 0.7 is how hard inland drying multiplies the zonal weight [game calibration].
+    (z * (1.0 - 0.7 * dry) + coast_boost).clamp(0.0, 1.0)
+}
+
 /// Cover class from causes. `vegetation` is the planet sample's 0..1 weight.
 pub fn cover_class(lat_deg: f64, elev_m: f64, vegetation: f64, water: bool) -> Cover {
     cover_class_lines(lat_deg, elev_m, vegetation, water, ice_line_m(lat_deg.abs()), tree_line_m(lat_deg.abs()))
@@ -236,6 +275,14 @@ mod tests {
         let r = cover_row(46.5, 8.0, 3200.0, 0.9, false); // Alps above the tree line
         assert!(matches!(r.class, Cover::Rock | Cover::Ice));
         assert_eq!(r.stems_per_ha, 0.0);
+    }
+    #[test] fn orbit_hadley_moisture() {
+        let sahara = orbit_vegetation(24.0, 1800.0);
+        let congo = orbit_vegetation(1.0, 800.0);
+        let florida = orbit_vegetation(27.0, 40.0);
+        assert!(sahara < 0.28, "Sahara {sahara}");
+        assert!(congo > 0.62, "Congo {congo}");
+        assert!(florida > sahara + 0.15, "Florida {florida} vs Sahara {sahara}");
     }
     #[test] fn arctic_lowland_is_tundra() { assert_eq!(cover_class(68.0, 50.0, 0.4, false), Cover::Tundra); }
     #[test] fn arctic_upland_below_ice_line_is_tundra() {

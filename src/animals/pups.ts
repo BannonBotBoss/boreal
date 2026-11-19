@@ -111,9 +111,10 @@ export function createLitter(scene: THREE.Scene) {
       for (const row of rows) {
         const grown = pupScale(row.pup.ageYears);
         const bulk = 0.88 + ((row.pup.slot * 3 + 1) % 5) * 0.05;
-        row.holder.scale.set(grown * 1.1 * bulk, grown * bulk, grown * 1.12 * bulk);
+        const fit = grown * bulk;
+        row.holder.scale.set(fit, fit, fit);
         row.holder.position.set(row.pup.x, Math.max(heightAt(row.pup.x, row.pup.z), -0.2), row.pup.z);
-        row.holder.rotation.y = row.pup.yaw;
+        row.holder.rotation.set(0, row.pup.yaw, 0);
         row.wolf.animate(clock, row.wolf.brain.motion === 'walk', undefined, 0, 'walk');
       }
     },

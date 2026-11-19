@@ -99,13 +99,14 @@ function placeAnimalPrompt() {
   const cam = view?.camera;
   if (!node || !cam) return;
   const side = yaw + Math.PI / 2;
-  promptAt.set(player.x + Math.cos(side) * 1.35, heightAt(player.x, player.z) + 1.35, player.z + Math.sin(side) * 1.35);
+  const groundY = heightAt(player.x, player.z);
+  promptAt.set(player.x + Math.cos(side) * 1.15, groundY + 2.15, player.z + Math.sin(side) * 1.15);
   promptAt.project(cam);
   if (promptAt.z > 1) { node.style.visibility = 'hidden'; return; }
   node.style.visibility = 'visible';
   const margin = 96;
   const rawX = (promptAt.x * 0.5 + 0.5) * window.innerWidth;
-  const rawY = (-promptAt.y * 0.5 + 0.5) * window.innerHeight;
+  const rawY = (-promptAt.y * 0.5 + 0.5) * window.innerHeight - 48;
   node.style.left = `${Math.min(window.innerWidth - margin, Math.max(margin, rawX))}px`;
   node.style.top = `${Math.min(window.innerHeight - margin, Math.max(margin, rawY))}px`;
   node.style.bottom = 'auto';
@@ -578,7 +579,7 @@ const borealSave = {
   saveResume: (place: ResumePlace) => { context = saveResume(context, place); commitContext(); },
 };
 (window as unknown as { __borealSave?: typeof borealSave }).__borealSave = borealSave;
-function frame(time: number) { const frameStart = performance.now(); latestPlanetSim()?.setEngineNow(frameStart);
+function frame(time: number) { try { const frameStart = performance.now(); latestPlanetSim()?.setEngineNow(frameStart);
   const wallDt = Math.min((time - lastTime) / 1000 || 0, 1); // T-0036: thought bubbles keep real seconds even when frames are slow
   opening?.step(wallDt);
   const dt = Math.min((time - lastTime) / 1000 || 0, .05); lastTime = time; // look and input smoothing stay on this real frame delta
@@ -790,8 +791,7 @@ function frame(time: number) { const frameStart = performance.now(); latestPlane
   const stood = weatherAt(player.x, player.z);
   status.innerText = `${photo.active ? 'PHOTO · ' : isPaused() ? 'PAUSED · ' : ''}${autonomous ? 'AUTONOMOUS · ' : ''}${view.clock()} · ${modes.mode.toUpperCase()} · Snow ${stood.depthCm.toFixed(1)} cm · Stamina ${Math.round(modes.stamina)}/100 · Energy ${Math.round(view.playerBrain.energy)}/100 · Water ${Math.round(needs.water)}% · Rest ${Math.round(needs.rest)}%${drinking ? ' · DRINKING' : ''}${holding ? ' · HOLDING' : ''}${autoNote ? ' · ' + autoNote : ''}\n${aimLine}\n${Object.keys(context.records).length} remembered · ${friendCount(context, view.hares.clock())} friends · ${context.inventory.herb} herbs`;
   { const kind = pad ? 'pad' : 'keys'; hint[kind] ||= hintFor(kind);   if (element('device').textContent !== hint[kind]) element('device').textContent = hint[kind]; }
-  if (!xrDriven) requestAnimationFrame(frame);
-}
+} catch (e) { console.warn('frame', e); } finally { if (!xrDriven) requestAnimationFrame(frame); } }
 // The first frame waits for the planet grid so terrain snow is the booted snow plane, not an empty cache. Wasm failure still starts, on climateRaw.
 void openForestPlanet(dayAt(clock0.worldSec), hourAt(clock0.worldSec)).finally(() => requestAnimationFrame(frame));
 { const q = new URLSearchParams(location.search), loading = createLoading(); // startup: warm-up + resource probe behind the loading screen

@@ -1,0 +1,313 @@
+{
+  "commit": "fafb4ab",
+  "calibrationValid": true,
+  "passedCount": 0,
+  "totalChecks": 7,
+  "meanScore": 0.0476,
+  "consoleErrorCount": 0,
+  "results": [
+    {
+      "id": "data-panel-rust-drive-sync",
+      "label": "Rust Engine Registry drive cards match live WASM drives_tick & record live session calls",
+      "measured": "cardH=0.751 vs liveH=1, cardP=0.011 vs liveP=0.264, calls=\"This game session has called it 1 times. Last call 0.0 ms.\", drives_tick->registry=false",
+      "expected": "|cardH-liveH|<0.02, |cardP-liveP|<0.05, calls>=10 (30 Hz ticks), drives_tick syncs registry",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "rust/boreal-sim/src/lib.rs:183-192 + src/ui/dataPanel.ts:290-291 (Issue #309 single-source telemetry)"
+    },
+    {
+      "id": "data-panel-param-scoping-and-tree",
+      "label": "Engine card Inputs exclude unrelated planet params & Dependency tree lists each node once",
+      "measured": "planetParamsInHunger=8/8, inProtect=8/8, duplicateTreeNodes=[reheatingx2, planetx2, hungerx2, sensesx2, dangerx2]",
+      "expected": "0 planet params in drive cards; 0 duplicate nodes in Dependency tree",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "src/ui/dataPanel.ts:375-381,494"
+    },
+    {
+      "id": "data-panel-escape-close-and-capture-hijack",
+      "label": "Data Panel respects Controls .capturing (U/F2), closes on Escape, and has a close button",
+      "measured": "enteredCapture=true, openedOnUWhileCapturing=true, closeBtns=0, stayedOpenOnEsc=true, pauseOpenedBehind=true, dataBtnOnStartMenu=true",
+      "expected": "U/F2 ignored while .capturing; >=1 close button; Escape closes #data-panel without opening Pause behind it",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "src/ui/dataPanel.ts:75-100; WAI-ARIA APG Dialog Pattern"
+    },
+    {
+      "id": "wasm-drives-litter-world-reset",
+      "label": "WASM DRIVE_PAGE and LITTER_PAGE wire drives_reset/litter_reset and re-anchor on in-page re-landing",
+      "measured": "driveBridgeReset=false, litterBridgeReset=false, after 707m teleport: S=0.503 (mode=\"Fox is in watch.\"), H=1->1, pupNearNewSite=true",
+      "expected": "driveBridge calls drives_reset, litterBridge calls litter_reset, fox re-anchors near new landing (S>0.25 instead of stranded 707 m away)",
+      "score": 0.3333333333333333,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "rust/boreal-sim/src/lib.rs:160,196 + src/render/driveBridge.ts + src/render/litterBridge.ts + src/main.ts:360"
+    },
+    {
+      "id": "menu-select-arrow-and-outside-escape",
+      "label": "Menu allows ArrowDown/Up inside <select> and handles Escape even when focus leaves .start-panel",
+      "measured": "selectFocused=true, afterArrowDown=INPUT(\"\"), pauseOpenBeforeOutsideEsc=true, pauseStillOpenAfterOutsideEsc=true",
+      "expected": "ArrowDown stays on <select>; Escape closes open Pause menu regardless of focused element",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "src/ui/menu.ts:110-118; WAI-ARIA APG Dialog & Listbox keyboard contract"
+    },
+    {
+      "id": "settings-panel-reset-note-and-focus",
+      "label": "settingsPanel Reset to defaults preserves rebuild notice and keeps focus inside the form",
+      "measured": "noteBefore=\"Some changes rebuild the world: they apply when you resume.\", noteAfter=\"\", activeAfter=BODY, focusInsideForm=false",
+      "expected": "non-empty rebuild note preserved after Reset; focus remains inside form (not dropped to BODY)",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "src/ui/settingsPanel.ts:26-28; WAI-ARIA focus preservation"
+    },
+    {
+      "id": "timehud-overlay-guard-and-datapanel-rewind-pad",
+      "label": "timeHud blocks keys/pad behind #start-menu/#data-panel; dataPanel tracks signed rewind & avoids idle 60Hz rAF",
+      "measured": "timeHudChecksMenuAndData=false, followCycleSignedRewind=false, padLoopGated=false",
+      "expected": "timeHud menuUp() includes #start-menu & #data-panel; followCycle uses signed worldSec(); pad poll gated",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "src/ui/timeHud.ts:15 + src/ui/dataPanel.ts:70,233-241 (Issue #109 one-clock rewind)"
+    }
+  ],
+  "raw": {
+    "baseUrl": "http://127.0.0.1:5256",
+    "capturedAt": "2026-11-19T03:07:55.251Z",
+    "dataInspect": {
+      "panelVisible": true,
+      "closeBtns": 0,
+      "hungerVars": [
+        "hunger: 0.751",
+        "fox rate: 0.012 1/s",
+        "wolf rate: 0.006 1/s"
+      ],
+      "hungerCalls": "This game session has called it 1 times. Last call 0.0 ms.",
+      "hungerInputs": [
+        "nlat",
+        "nlon",
+        "solar_constant",
+        "obliquity_deg",
+        "lapse_rate",
+        "humidity_seed",
+        "water_albedo",
+        "snow_albedo",
+        "hunger",
+        "fox_x",
+        "fox_z",
+        "fox_yaw",
+        "mama_x",
+        "mama_z",
+        "mama_yaw",
+        "pup_x",
+        "pup_z",
+        "yip",
+        "protect",
+        "drive_dt"
+      ],
+      "protectVars": [
+        "protect: 0.011"
+      ],
+      "protectCalls": "This game session has called it 1 times. Last call 0.0 ms.",
+      "protectInputs": [
+        "nlat",
+        "nlon",
+        "solar_constant",
+        "obliquity_deg",
+        "lapse_rate",
+        "humidity_seed",
+        "water_albedo",
+        "snow_albedo"
+      ],
+      "preyCalls": "This game session has called it 1 times. Last call 0.0 ms.",
+      "sensesCalls": "This game session has called it 1 times. Last call 0.0 ms.",
+      "dangerCalls": "This game session has called it 1 times. Last call 0.0 ms.",
+      "driveHungerText": "H = 1.000. Fox rate 0.012/s, wolf rate 0.006/s. Fox diet: carnivore.",
+      "driveProtectText": "P = 0.264. The threat has not committed her yet.",
+      "driveDangerText": "D = 0.253. Approach A = 1.955.",
+      "driveScentText": "S = 0.782. Smell 40 m, sight 16 m, hearing 20 m (30 m while a pup yips).",
+      "driveModeText": "Fox is in linger.",
+      "treeLineCount": 20,
+      "treeBoldNodes": [
+        "spacetime",
+        "reheating",
+        "planet",
+        "hunger",
+        "senses",
+        "danger"
+      ],
+      "treeAllMentions": {
+        "spacetime": 1,
+        "reheating": 2,
+        "planet": 2,
+        "nucleosynthesis": 1,
+        "climate": 1,
+        "solar": 1,
+        "energy": 1,
+        "wind": 1,
+        "hydro": 1,
+        "clouds": 1,
+        "hunger": 2,
+        "senses": 2,
+        "prey": 1,
+        "danger": 2,
+        "protect": 1
+      },
+      "pupsBeforeReset": [
+        {
+          "slot": 0,
+          "x": 65.88642980100502,
+          "z": -17.57778753237253,
+          "ageYears": 0.07903167414530005,
+          "yaw": 21.623674195039776,
+          "act": "pounce",
+          "handle": "pup:0",
+          "parent": "4294967296",
+          "stage": "pup"
+        },
+        {
+          "slot": 1,
+          "x": 65.97448465013284,
+          "z": -18.8185426971726,
+          "ageYears": 0.07903167414530005,
+          "yaw": 72.71715419503977,
+          "act": "tumble",
+          "handle": "pup:1",
+          "parent": "4294967296",
+          "stage": "pup"
+        },
+        {
+          "slot": 2,
+          "x": 65.74375184965767,
+          "z": -19.09722156198169,
+          "ageYears": 0.07903167414530005,
+          "yaw": 21.953674195039778,
+          "act": "sit",
+          "handle": "pup:2",
+          "parent": "4294967296",
+          "stage": "pup"
+        },
+        {
+          "slot": 3,
+          "x": 65.55708676283736,
+          "z": -19.406918068386993,
+          "ageYears": 0.07903167414530005,
+          "yaw": 20.553674195039775,
+          "act": "sit",
+          "handle": "pup:3",
+          "parent": "4294967296",
+          "stage": "pup"
+        },
+        {
+          "slot": 4,
+          "x": 66.38152414064146,
+          "z": -18.64369511746826,
+          "ageYears": 0.07903167414530005,
+          "yaw": 71.61715419503976,
+          "act": "tumble",
+          "handle": "pup:4",
+          "parent": "4294967296",
+          "stage": "pup"
+        }
+      ]
+    },
+    "afterEscape": {
+      "dataPanelStillOpen": true,
+      "pauseMenuOpenedBehind": true
+    },
+    "beforeReset": {
+      "found": true,
+      "noteBefore": "Some changes rebuild the world: they apply when you resume."
+    },
+    "afterReset": {
+      "noteAfter": "",
+      "activeTag": "BODY",
+      "focusInsideForm": false
+    },
+    "afterNewWorld": {
+      "driveHungerAfterNewWorld": "H = 1.000. Fox rate 0.012/s, wolf rate 0.006/s. Fox diet: carnivore.",
+      "driveScentAfterNewWorld": "S = 0.503. Smell 40 m, sight 16 m, hearing 20 m (30 m while a pup yips).",
+      "driveProtectAfterNewWorld": "P = 0.000. The threat has not committed her yet.",
+      "driveModeAfterNewWorld": "Fox is in watch.",
+      "pupsAfterNewWorld": [
+        {
+          "slot": 0,
+          "x": 565.5770916787892,
+          "z": 481.9808680214167,
+          "ageYears": 0.07939161164530041,
+          "yaw": 1.5065748537152337,
+          "act": "pounce",
+          "handle": "pup:0",
+          "parent": "4294967296",
+          "stage": "pup"
+        },
+        {
+          "slot": 1,
+          "x": 566.5496004001681,
+          "z": 480.61300087836963,
+          "ageYears": 0.07939161164530041,
+          "yaw": 61.41234485371524,
+          "act": "tumble",
+          "handle": "pup:1",
+          "parent": "4294967296",
+          "stage": "pup"
+        },
+        {
+          "slot": 2,
+          "x": 566.2906752485795,
+          "z": 481.53108289891156,
+          "ageYears": 0.07939161164530041,
+          "yaw": 1.1540748537152334,
+          "act": "trot",
+          "handle": "pup:2",
+          "parent": "4294967296",
+          "stage": "pup"
+        },
+        {
+          "slot": 3,
+          "x": 565.5201230591622,
+          "z": 479.4390151921796,
+          "ageYears": 0.07939161164530041,
+          "yaw": 0.4365748537152335,
+          "act": "sit",
+          "handle": "pup:3",
+          "parent": "4294967296",
+          "stage": "pup"
+        },
+        {
+          "slot": 4,
+          "x": 566.5089848030055,
+          "z": 483.076187118739,
+          "ageYears": 0.07939161164530041,
+          "yaw": 1.1065748537152336,
+          "act": "pounce",
+          "handle": "pup:4",
+          "parent": "4294967296",
+          "stage": "pup"
+        }
+      ]
+    },
+    "focusAfterSelectArrow": {
+      "tag": "INPUT",
+      "text": "",
+      "stayedOnSelect": false
+    },
+    "globeCheck": {
+      "hasDataBtn": false
+    },
+    "consoleErrors": []
+  }
+}

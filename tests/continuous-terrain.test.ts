@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { curvatureDrop, horizonMetres } from '../src/world/globe/horizonSkirt';
-import { buildContinuousMesh, selectTerrainLeaves, SKIRT_FLOOR_M } from '../src/render/continuousTerrain';
+import { buildContinuousMesh, selectTerrainLeaves, SKIRT_FLOOR_M, snowPaint } from '../src/render/continuousTerrain';
 
 function area(leaves: { size: number }[]) {
   return leaves.reduce((s, l) => s + l.size * l.size, 0);
@@ -28,6 +28,12 @@ test('the leaves tile one square that passes the horizon, with no overlap', () =
       if (n) assert.ok(n.size <= leaf.size * 2 + 0.01, `south neighbour ${n.size} vs ${leaf.size}`);
     }
   }
+});
+
+test('snow tints the soil and does not replace it with a white sheet', () => {
+  assert.equal(snowPaint(0), 0);
+  assert.equal(snowPaint(10.4), 0, 'a 10 cm residual is not painted on a green floor');
+  assert.ok(snowPaint(20) > 0.15 && snowPaint(20) < 0.6, `20 cm stayed a sheet (${snowPaint(20)})`);
 });
 
 test('every vertex is the height function minus earth curvature, and skirts drop below it', () => {

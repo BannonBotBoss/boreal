@@ -1,0 +1,10 @@
+{
+  "at": "2026-11-18T16:54:00-08:00",
+  "agent": "cursor",
+  "type": "complete",
+  "task": "T-0259",
+  "branch": "cursor/ground-sky-clouds-655c",
+  "skill": "ground-sky-clouds",
+  "handoff": "tasks/handoffs/T-0259-cursor.md",
+  "note": "Standing cirrus follows the reported cloud fraction. Before and after from the same camera are tasks/evidence/T-0259/. The check is tests/ground-sky-cloud.test.ts. Main is merged through the film handoff fixes (#509, #511)."
+}

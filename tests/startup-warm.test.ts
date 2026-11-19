@@ -4,7 +4,7 @@ import { GOVERNOR, resetGovernor } from '../src/core/quality';
 import { PROBE, cachedProbe, saveProbe } from '../src/core/probe';
 import { LANDING_JOB_MS } from '../src/world/globe/landingStream';
 import {
-  COLD_START, WARM_START, parseWarmStamp, readWarmStamp, saveWarmStamp, splashChunkBudget, standChunkIndex, standPoint,
+  COLD_START, WARM_START, benchFrames, parseWarmStamp, readWarmStamp, saveWarmStamp, settle, splashChunkBudget, standChunkIndex, standPoint,
   startup, startupBudget, startupRoute, type StartupOptions,
 } from '../src/render/startup';
 import type { buildScene } from '../src/render/buildScene';
@@ -267,4 +267,21 @@ test('warm compile uses the cached tier, and the standing cell follows ?at= then
     assert.deepEqual(cells[0], [1, -1]);
     assert.equal(GOVERNOR.probeCap, 3);
   } finally { restore(saved); }
+});
+
+test('a frame that never arrives does not hold the probe caps', async () => {
+  const hung = () => new Promise<void>(() => {});
+  let s = 0;
+  const settleClock = () => ++s < 3 ? 0 : 10_000;
+  const t0 = Date.now();
+  await settle(8, 1000, undefined, hung, settleClock);
+  const settleMs = Date.now() - t0;
+  assert.ok(settleMs < 7000, `settle held ${settleMs}ms`);
+  const view = { photoreal: { INFO: { workMs: 1 }, gpuMs: 0 } } as View;
+  let b = 0;
+  const benchClock = () => ++b < 3 ? 0 : 20_000;
+  const t1 = Date.now();
+  await benchFrames(view, 40, 10, hung, benchClock);
+  const benchMs = Date.now() - t1;
+  assert.ok(benchMs < 7000, `bench held ${benchMs}ms`);
 });

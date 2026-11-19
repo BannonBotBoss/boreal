@@ -64,6 +64,7 @@ import { tryMark } from './core/traces';
 import { appearancePanel, restoreLooks } from './ui/appearancePanel';
 import { JOB_FIRST, runJobs } from './core/interest';
 import { SAVE_KEY_WEATHER, drag as airDrag, loadWeather, saveWeather, updateWeather, weatherAt, windAt } from './core/weather';
+import { snowOnGroundCm } from './render/snowCover';
 import { openForestPlanet } from './core/planetWeather';
 import { SAVE_KEY_DELTAS, loadDeltas, prune, record, saveDeltas } from './core/deltas';
 import { createLoading } from './ui/loading';
@@ -242,7 +243,11 @@ const menu = createMenu({
     clearWorldSaves(true);
     writeUniverseSeed(u);
     renderStore.set('world.stagedTerrain.v2', o?.staged ?? STAGES.on);
-    location.assign(`?${SPHERE_START}`);
+    const keep = new URLSearchParams();
+    const cur = new URLSearchParams(location.search);
+    for (const key of ['autoplay', 'noprobe', 'tier', 'bench']) if (cur.has(key)) keep.set(key, cur.get(key) ?? '');
+    const extra = keep.toString();
+    location.assign(`?${SPHERE_START}${extra ? '&' + extra : ''}`);
   },
   newWorld: o => { // legacy forest-only new world (Generate universe → Advanced)
     clearWorldSaves(true);
@@ -789,7 +794,7 @@ function frame(time: number) { try { const frameStart = performance.now(); lates
   const holding = view.hares.held();
   const aimLine = holding ? `Holding a hare · ${bindingLabel(bindings.eatPrey.keys)} eat · ${bindingLabel(bindings.releasePrey.keys)} release` : huntLock.key ? 'Lock on' : H('lock') > ACTIVE ? 'aiming' : focusTarget ? 'Focus: ' + catalog[focusTarget.kind].title : H('focus') > ACTIVE ? 'Nothing close enough to focus' : modes.exhausted ? 'Recover to 20 stamina; release triggers' : `RT run · LT stealth · LB focus · ${bindingLabel(bindings.lock.keys)} lock`;
   const stood = weatherAt(player.x, player.z);
-  status.innerText = `${photo.active ? 'PHOTO · ' : isPaused() ? 'PAUSED · ' : ''}${autonomous ? 'AUTONOMOUS · ' : ''}${view.clock()} · ${modes.mode.toUpperCase()} · Snow ${stood.depthCm.toFixed(1)} cm · Stamina ${Math.round(modes.stamina)}/100 · Energy ${Math.round(view.playerBrain.energy)}/100 · Water ${Math.round(needs.water)}% · Rest ${Math.round(needs.rest)}%${drinking ? ' · DRINKING' : ''}${holding ? ' · HOLDING' : ''}${autoNote ? ' · ' + autoNote : ''}\n${aimLine}\n${Object.keys(context.records).length} remembered · ${friendCount(context, view.hares.clock())} friends · ${context.inventory.herb} herbs`;
+  status.innerText = `${photo.active ? 'PHOTO · ' : isPaused() ? 'PAUSED · ' : ''}${autonomous ? 'AUTONOMOUS · ' : ''}${view.clock()} · ${modes.mode.toUpperCase()} · Snow ${snowOnGroundCm(stood.depthCm).toFixed(1)} cm · Stamina ${Math.round(modes.stamina)}/100 · Energy ${Math.round(view.playerBrain.energy)}/100 · Water ${Math.round(needs.water)}% · Rest ${Math.round(needs.rest)}%${drinking ? ' · DRINKING' : ''}${holding ? ' · HOLDING' : ''}${autoNote ? ' · ' + autoNote : ''}\n${aimLine}\n${Object.keys(context.records).length} remembered · ${friendCount(context, view.hares.clock())} friends · ${context.inventory.herb} herbs`;
   { const kind = pad ? 'pad' : 'keys'; hint[kind] ||= hintFor(kind);   if (element('device').textContent !== hint[kind]) element('device').textContent = hint[kind]; }
 } catch (e) { console.warn('frame', e); } finally { if (!xrDriven) requestAnimationFrame(frame); } }
 // The first frame waits for the planet grid so terrain snow is the booted snow plane, not an empty cache. Wasm failure still starts, on climateRaw.
@@ -810,7 +815,17 @@ void openForestPlanet(dayAt(clock0.worldSec), hourAt(clock0.worldSec)).finally((
     try { if (!(q.has('noprobe') || cine)) { const r = await inpage?.prewarm(); console.log('INPAGE prewarm ' + JSON.stringify(r)); } }
     catch (e) { console.warn('inpage prewarm', e); }
     return true;
-  }).catch(e => { console.warn('startup', e); return true; }).then(show => { if (show === false) return; void loading.finish(); openAfterLoad(q); }); } // first load: hot sphere, then the planet. A completed intro skips that sphere next time. ?start=globe skips to the planet. ?noprobe: ground capture skips the Ultra bench and the globe prewarm
+  }).catch(e => { console.warn('startup', e); return true; }).then(async show => {
+    if (q.has('tier')) { const { GOVERNOR, LADDER, applied } = await import('./core/quality'); const n = Number(q.get('tier')); GOVERNOR.auto = false; GOVERNOR.probeCap = 0; GOVERNOR.capTier = 0; GOVERNOR.tier = Number.isFinite(n) ? Math.max(0, Math.min(LADDER.length - 1, n)) : 0; console.log(`TIER ${LADDER[GOVERNOR.tier].name} foliage ${applied().foliage}`); }
+    if (show === false) { // the chunk was late: keep the card, but do not leave it up after the ground arrives
+      const t0 = performance.now();
+      while (performance.now() - t0 < 90000) {
+        await new Promise(r => setTimeout(r, 400));
+        try { const cell = standChunkIndex(player.x, player.z); if (view.chunkBuilt(cell.a, cell.b)) break; } catch { /* still building */ }
+      }
+    }
+    void loading.finish(); openAfterLoad(q);
+  }); } // first load: hot sphere, then the planet. A completed intro skips that sphere next time. ?start=globe skips to the planet. ?noprobe: ground capture skips the Ultra bench and the globe prewarm
 
 // ?bench=1: per-tier and per-feature cost after streaming settles (logs `BENCH ...` lines to the console).
 if (new URLSearchParams(location.search).has('bench')) void (async () => {

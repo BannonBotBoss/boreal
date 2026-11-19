@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   biomeGrade, blendDem, blendPhoto, demSlope, elevationWins, globeMatch, inConus, photoCoverage, resetOpenTiles, sampleDem, samplePhoto, slippy, srgbByteToLinear,
-  storePhoto, storeTerrarium, terrariumMetres, tileMetres, tileRing,
+  storePhoto, storeTerrarium, terrariumMetres, tileMetres, tileRing, warmDemTiles,
 } from '../src/world/globe/openTiles';
 
 test('terrarium height is (R*256 + G + B/256) - 32768', () => {
@@ -135,4 +135,32 @@ test('zoom 8 covers a point 40 km out, and a coarse tile fills a missing fine ti
   const pic = samplePhoto(lat, lon);
   assert.ok(pic && pic[1] > 0.1, 'the coarse mosaic colours a point the fine zoom has not fetched');
   assert.ok(photoCoverage(lat, lon) > 0 && photoCoverage(lat, lon) < 1);
+});
+
+test('a refused elevation tile is not fetched again while loading, or on the next frame', async () => {
+  resetOpenTiles();
+  let n = 0;
+  const prev = globalThis.fetch;
+  globalThis.fetch = (() => { n++; return Promise.reject(new Error('net::ERR_CONNECTION_RESET')); }) as typeof fetch;
+  const had = (globalThis as { document?: unknown }).document;
+  try {
+    warmDemTiles(49.77, 65.54);
+    await new Promise(r => setTimeout(r, 100));
+    const first = n;
+    assert.ok(first > 0, 'the first warm asks the network');
+    warmDemTiles(49.77, 65.54);
+    await new Promise(r => setTimeout(r, 40));
+    assert.equal(n, first, 'a connection reset waits before the next try');
+    resetOpenTiles();
+    (globalThis as { document?: { getElementById(id: string): unknown } }).document = { getElementById: id => id === 'loading' ? {} : null };
+    const before = n;
+    warmDemTiles(49.77, 65.54);
+    await new Promise(r => setTimeout(r, 30));
+    assert.equal(n, before, 'the loading card does not fetch a tile');
+  } finally {
+    globalThis.fetch = prev;
+    if (had === undefined) delete (globalThis as { document?: unknown }).document;
+    else (globalThis as { document?: unknown }).document = had;
+    resetOpenTiles();
+  }
 });

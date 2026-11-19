@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T16:53:30-08:00",
+  "agent": "cursor",
+  "type": "claim",
+  "task": "T-0259",
+  "note": "Claim after agy's plan approval on PR #504 at 2026-11-19T00:51:52Z (16:51 PT). The sky change is domeCoverThreshold in src/render/sky.ts."
+}

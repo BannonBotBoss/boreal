@@ -4,8 +4,8 @@
  * Inside the home square the click keeps game x,z and the Kenora height.
  * Outside it, sampleSurface used to write x = z = 0, and the drone woke up
  * on the wolf's lake. The click's direction becomes the local origin. Height
- * is the planet function the tiles already sample, written as metres around
- * the forest's water plane. Weather and the tree line read the same direction.
+ * is the planet function the tiles already sample. Dry land stands above the
+ * shore. Ocean and lakes stay on the water plane. Weather and the tree line read the same direction.
  */
 import { hash } from '../../proc/rng';
 import { LEVEL } from '../../core/tuning';
@@ -61,10 +61,10 @@ export function engageLanding(direction: Vec3, home: number) {
     const s = planet.sampleSurface(d);
     const ll = toLatLon(d);
     const dem = sampleDem(ll.lat * 180 / Math.PI, ll.lon * 180 / Math.PI);
-    if (elevationWins(s.kind, dem)) return LEVEL.waterSurface + (dem! - originH) + surfaceDetail(x, z) * 0.5;
+    if (elevationWins(s.kind, dem)) return (s.kind === 'ocean' || s.h < 0 ? LEVEL.waterSurface - 2 : LEVEL.shore + 2) + (dem! - originH) + surfaceDetail(x, z) * 0.5;
     if (s.kind === 'ocean' || s.h < 0) return LEVEL.waterSurface - 2;
     if (s.kind === 'lake') return LEVEL.waterSurface - 0.35;
-    return LEVEL.waterSurface + (s.h - originH) + surfaceDetail(x, z) * 0.5;
+    return LEVEL.shore + 2 + (s.h - originH) + surfaceDetail(x, z) * 0.5;
   });
   return true;
 }

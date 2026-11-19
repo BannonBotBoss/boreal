@@ -1,8 +1,8 @@
-# T-0259 handoff (grokbot-2)
+# T-0261 handoff (grokbot-2)
 
 ## What this is
 
-The globe descent stalls at the 400 m glide and while the dive is held. `setEye` writes the reported height before the frame is drawn, and the horizon mesh was rebuilt synchronously inside that draw, so the canvas stayed on the previous picture. Branch `grokbot-2/descent-stall`. Draft PR. Do not mark it ready.
+The globe descent stalls at the 400 m glide and while the dive is held. `setEye` writes the reported height before the frame is drawn, and the horizon mesh was rebuilt synchronously inside that draw, so the canvas stayed on the previous picture. Branch `grokbot-2/descent-stall`. Draft PR #507. Do not mark it ready. Filed as T-0259, then renumbered to T-0261 because PR #504 already has T-0259 and PR #508 has T-0260.
 
 ## Root cause
 
@@ -37,8 +37,8 @@ The globe descent stalls at the 400 m glide and while the dive is held. `setEye`
 | Horizon | `horizonMetres` | sqrt(2 R h + h²), R the IUGG mean radius | yes |
 | LOD split | 0.72, unchanged | Ulrich 2002, eye height in the distance | yes |
 | Coarse grid | 8×8 on the horizon square | the same quad count as one fine leaf (`TERRAIN_GRID`) | yes |
-| SwiftShader before | worst frame 477.4 ms | `tasks/evidence/T-0259/before.json`, renderer SwiftShader | the stall |
-| SwiftShader after | worst frame 96.9 ms, settled shots 4–7 ms | `tasks/evidence/T-0259/after.json`, same renderer | under 500 ms |
+| SwiftShader before | worst frame 477.4 ms | `tasks/evidence/T-0261/before.json`, renderer SwiftShader | the stall |
+| SwiftShader after | worst frame 96.9 ms, settled shots 4–7 ms | `tasks/evidence/T-0261/after.json`, same renderer | under 500 ms |
 
 ## Frames
 

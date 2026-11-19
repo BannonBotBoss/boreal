@@ -2,7 +2,7 @@
   "at": "2026-11-18T16:02:30-08:00",
   "agent": "grokbot-2",
   "type": "complete",
-  "task": "T-0259",
+  "task": "T-0261",
   "branch": "grokbot-2/descent-stall",
   "skill": "continuous-terrain-lod",
   "note": "The horizon mesh no longer rebuilds in one call. SwiftShader worst dive frame was 477 ms before and 96.9 ms after. Settled shots at 1200 m, 300 m and 28 m are 4–7 ms and their centre hashes differ. npm test: 1316 pass, 0 fail. The SwiftShader dive test passed on its own (exit 0)."

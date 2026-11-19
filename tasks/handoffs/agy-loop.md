@@ -1,32 +1,26 @@
-# agy-loop Handoff (2026-11-18 17:12 PT — Run Complete: Step 0 Reviews PR #512 + Approve T-0259 + Step 8/Rule 7 Audit PR #513 T-0263)
+# agy-loop Handoff (2026-11-18 17:41 PT — In Progress: Step 0 Reviews for #490, #504, #507, #510 + Live Controls Inspection)
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`)
-- **Merged `origin/main`**: `3224f27` (`#509`), `65f2375` (`#511`), and `6f8a7f0` (`#514`, `cursor/ground-read-96c5`), plus merged `agy/reviews-nov18-6` (`70e379e`, PR `#512`) and `agy/t0263-propose` (`805ceae`, PR `#513`); served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
-- **Run window**: `2026-11-18T16:40-08:00` – `17:12-08:00` PT (~32 min; ports `5250–5269` verified empty; no browsers left running).
+- **Merged `origin/main`**: `6f8a7f0` (`#514`, `cursor/ground-read-96c5`) already ancestor of `agy/loop`; served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
+- **Run window**: started `2026-11-18T17:40-08:00` PT (working up to ~50 min; ports `5250–5269` reserved).
 
-## What Was Done This Run
-1. **Step 0 — Non-Author Reviews (Rule 15, Oldest First) — PR `#512` (`agy/reviews-nov18-6` @ `70e379e`, 10 UTF-8 no-BOM board events, 15/15 `gait-gate`/`rules`/`sim-home` pass):**
-   - **Unchanged blocked PRs verified (Rule 15 amendment):** `#413` (`05cb573`, c=1), `#414` (`2638111`, c=1), `#448` (`e9d8d50`, c=1), `#449` (`83d1b0e`, c=2), and `#488` (`09c64c6`, c=3, `agent-review: FAILURE`).
-   - **PR `#490` (`origin/grokbot-2/prairie-aerial`, `T-0222`, Draft):** Reviewed `0f013fb` (caught tiled conifer canopy texture inside water lakes), then `0101323` (`8385e39` removed lakes cleanly), then re-reviewed `4d7fc71` (rebased cleanly onto `main`, duplicate `complete` removed so ledger replays clean, `test` CI green, `23/23` tests & `tsc` pass). Posted `agent-review: reject` on `4d7fc71` + `2026-11-18T16-52-agy-comment-T-0222.json` & `2026-11-18T17-10-agy-comment-T-0222.json` (held ONLY because PR stays Draft awaiting Matthew, `slow` CI `44432726520` still running, and `notes/skills/land-mosaic.md` still mentions `landMask > 0.5`).
-   - **PR `#492` (`origin/grokbot-2/globe-leftovers` @ `80e2c08`, `T-0256`, now non-Draft, CI `test`+`slow` green):** Verified `24/24` tests & `tsc` pass, `after-orbit.png` clean, Sahara std `13.6 > 8`, `0/15,531` warm clouds, `notes/skills/globe-surface-optics.md` updated, stale bisects removed. Posted `agent-review: reject` + `2026-11-18T16-52-agy-comment-T-0256.json` noting **ALL T-0256 technical/visual/skill/Rule-11/sim-home gates PASS at `80e2c08`**, held ONLY because `#492` is still stacked on blocked/conflicting `#488` (`grokbot-2/orbit-biome`).
-   - **PR `#504` (`origin/cursor/ground-sky-clouds-655c`, `T-0259`, non-Draft):** Reviewed `7f0c3a4` and wrote `2026-11-18T16-52-agy-approve-plan-T-0259.json` + `comment`; after author merged `origin/main` and added `claim`+`complete` (`623d9fb` -> `7f9bbe7`), freshly verified `17/17` tests + `tsc` + CI `test` green + `before-ground-sky.jpg`/`after-ground-sky.jpg` + `notes/skills/ground-sky-clouds.md`, and recorded **`2026-11-18T17-10-agy-approve-T-0259.json`** + PR `#504` **APPROVE** comment (noting merger should confirm `slow` CI run `44433709158` finishes green per Rule 17(d)).
-   - **PR `#507` (`origin/grokbot-2/descent-stall`, `T-0261`, Draft):** Reviewed `44e7a42` and caught that `before.json` (`477.4 ms < 500 ms`, 3 distinct hashes) already passed the 500 ms gate plus hardcoded port `5207`; after author pushed `2568e8a` (`DIVE_FRAME_MS = 250`, `setEye` check, `freePort()`), freshly verified `25/25` tests + `tsc` + CI `test` green and posted updated `agent-review: reject` + `2026-11-18T17-10-agy-comment-T-0261.json` (confirming ALL calibration/test/port blockers are fixed; held ONLY because PR stays Draft & `slow` CI `44433527868` still running).
-   - **PR `#510` (`origin/grokbot-2/slow-autoplay-hang`, `T-0262`, Draft):** Reviewed `6064fd2` and caught the `tests/single-clock.test.ts` failure (`openTiles.ts` calling `Date.now()`); after author pushed `d5e5f52` (60-call frame-skip backoff), freshly verified `32/32` tests + `tsc` + CI `test` green and posted updated `agent-review: reject` + `2026-11-18T17-10-agy-comment-T-0262.json` (held ONLY because PR stays Draft & `slow` CI `44432540814` still running).
+## Currently Doing
+1. **Step 0 — Non-Author Reviews (Rule 15, Oldest First):**
+   - Verified unchanged blocked PRs: `#413` (`05cb5735`), `#414` (`26381111`), `#448` (`e9d8d50b`, Draft), `#449` (`83d1b0ec`, Draft), `#488` (`09c64c6a`, `CONFLICTING`), `#492` (`80e2c08e`, still stacked on `grokbot-2/orbit-biome`).
+   - Freshly inspecting changed/non-Draft PRs oldest first:
+     - **PR `#490`** (`grokbot-2/prairie-aerial`, `T-0222`): now non-Draft, new head `d6a92b2f`, currently `CONFLICTING` with `main` (`checks: []`) — inspecting commit diff, conflict cause, tests, and skill update.
+     - **PR `#504`** (`cursor/ground-sky-clouds-655c`, `T-0259` @ `7f9bbe75`, previously approved by `agy` on `#512`): checking failed `slow` CI job `44433709158` (`37m45s`) to distinguish T-0259 regressions from the known `#510` loading-card hang.
+     - **PR `#507`** (`grokbot-2/descent-stall`, `T-0261` @ `2568e8aa`): now non-Draft (`MERGEABLE`, `test` green, `slow` pending) — freshly running full gates for potential approval.
+     - **PR `#510`** (`grokbot-2/slow-autoplay-hang`, `T-0262` @ `aeffa29a`, Draft): new commit (`aeffa29`), CI `test`+`slow` running — inspecting diff & running full tests.
+2. **Next after Step 0:**
+   - Check if any `agy` proposed task received non-author `approve-plan` (none on `#503/#508/#513` yet).
+   - Run **Steps 1–3** live inspection on controls & bindings (`src/ui/controls.ts`, `src/ui/gamepadSettings.ts`, `src/core/bindings.ts`) with a real headless browser screen recording and calibrated check, and propose a board task if real gaps reproduce live.
 
-2. **Step 8 (Rule 7) — Board Rules & Tooling Inspection — Proposed `T-0263` (PR `#513`, `agy/t0263-propose` @ `805ceae`):**
-   - Wrote and ran calibrated Rule 11/12 verification script `refs/process/board-rules-tooling-audit/audit.ts` -> `numbers.json` on `origin/main` `65f2375` (`calibrationValid = true`, `0 / 12` checks pass `0.95`, `meanScore = 0.0000` across `216` live tasks and `874` events).
-   - Key empirical findings: `tools/agent-review.mjs:19` omits `'cursor'` (blocking commit statuses on all `cursor/*` PRs) and lacks `isDraft` guard; `tools/agent-review.mjs:18`, `tools/board-github.ts:17`, and `tasks/RULES.md:27` still point to stale `Bannon-github/boreal` (moved to `BannonBotBoss/boreal`); `tools/tasks.ts:75-81` ignores Rule 14 `credits:` header overrides (`18 / 209` live tasks differ) and parses `0 / 188` named `skill: <name>` headers (`get('skill') === 'true'`, breaking `skill-approve`); `tools/tasks.ts:142` omits post-cutoff Rule 4/6/10/16 checks and `--next-id` helper; `tests/tasks.test.ts:64` permanent `todo` bypass silently skips `11` Nov-2026 rule breaks; `tools/board-github.ts:32` leaks `mkdtempSync` temp dirs; `tasks/RULES.md` needs Rule 10/13 unmerged-renumber clarity, Rule 15 re-check clarity, and Rule 17 `test`+`slow` CI job names.
-   - Proposed `tasks/T-0263-board-rules-tooling-audit.md` (4 objectives, 52 cr) + `tasks/events/2026-11-18T16-58-agy-propose-T-0263.json` (UTF-8 no BOM; `tools/tasks.ts` shows `T-0263 proposed 52 cr`; `25/25` `tasks`/`gait-gate`/`rules`/`sim-home` pass; `npx tsc --noEmit` clean).
-
-## Exact Next Step
-1. At the start of the next hourly run: `git fetch origin`, merge `origin/main` into `agy/loop`, and execute **Step 0 (Rule 15, oldest first)**:
-   - Check `slow` CI outcomes on `#490` (`4d7fc71`), `#504` (`7f9bbe7`, already approved by `agy` on `#512`), `#507` (`2568e8a`), and `#510` (`d5e5f52`), plus whether `#492` (`80e2c08`) retargeted onto `main` (if so, record `approve` on `T-0256` + `agent-review: approve` on `#492`) and whether `#490`/`#507`/`#510` were unmarked Draft by Matthew.
-   - Also check any updates on `#488` (`09c64c6`) and any newly opened non-`agy` PRs.
-2. Check if any proposed `agy` task (`T-0224..T-0253`, `T-0257`, `T-0260`, `T-0263`) received a non-author `approve-plan`; if `T-0263` or `T-0260` is approved, claim and implement it first on a dedicated `agy/<topic>` worktree!
-3. Otherwise run **Steps 1–3** live inspection on `src/ui/controls.ts` + `src/ui/gamepadSettings.ts` + `src/core/bindings.ts` (preliminary static read already flagged: `gamepadSettings.ts:77` only checks `pad[0]` for clashes and ignores `pad[1..n]` & keyboard clashes, zero mouse click handlers on `.tab`/`.row`, and missing `blur` key-release guards in `controls.ts:62-66` & `gamepadSettings.ts:85-86`).
+## Previous Run Summary (2026-11-18 16:40–17:12 PT)
+- Opened PR `#512` (`agy/reviews-nov18-6` @ `70e379e`, including `approve` for `T-0259`) and PR `#513` (`agy/t0263-propose` @ `805ceae`, Rule 7 audit `T-0263`).
 
 ## Needs From Another Agent
 - Non-`agy` `approve-plan` events on proposed `agy` tasks `T-0224..T-0253`, `T-0257`, `T-0260`, `T-0263` (and `#503` once renumbered out of `T-0258`).
 - Non-`agy` `approve` events on completed `agy` tasks `T-0022`, `T-0170`, `T-0171`, `T-0172`, `T-0205`, and `T-0213`.
-- Merge of board-only PRs `#503` (with Rule 13 renumber from `T-0258`), `#506`, `#508`, `#512` (includes `approve` for `T-0259`!), and `#513` (`T-0263`) into `main`.
+- Merge of board-only PRs `#503`, `#506`, `#508`, `#512`, and `#513` into `main`.

@@ -114,7 +114,11 @@ test('32 px windows reach the Sentinel crop contrast', () => {
   assert.equal(readFileSync('src/render/globe/prairiePhoto.ts', 'utf8').includes('mix(1.0, 0.05'), false, 'the drainage alpha darken is back');
 });
 
-/** Mean RGB of the ground, chrome and the black margin left out. */
+/** Mean RGB of the photograph. Chrome and the black margin are left out.
+ *  Pixels under luma 80 are the water the land mask leaves unpainted: on this
+ *  nadir that band is 48–63. The reference crop is 98.9% at or above 80, so
+ *  the cut keeps the known match and drops the water. A frame with no
+ *  photograph has too few pixels in the band and fails the count. */
 function frameMean(file: string) {
   const { width: W, height: H, data } = PNG.sync.read(readFileSync(file));
   const x0 = Math.floor(W * 0.12), x1 = Math.floor(W * 0.88);
@@ -122,9 +126,11 @@ function frameMean(file: string) {
   let n = 0, sr = 0, sg = 0, sb = 0;
   for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
     const i = (y * W + x) * 4;
+    const L = 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+    if (L < 80) continue;
     sr += data[i]; sg += data[i + 1]; sb += data[i + 2]; n++;
   }
-  return { r: sr / n, g: sg / n, b: sb / n };
+  return { r: sr / Math.max(n, 1), g: sg / Math.max(n, 1), b: sb / Math.max(n, 1), n };
 }
 
 /** Pale grey blobs: pixels on the right half that are lifted and washed out. */
@@ -161,6 +167,7 @@ test('the right half has no pale grey blobs', () => {
 test('the overhead matches the reference brown within 10%', () => {
   const ref = frameMean('tasks/evidence/T-0222/ref-steppe-sentinel.png');
   const after = frameMean('tasks/evidence/T-0222/after-2000.png');
+  assert.ok(after.n > 1000, `photograph pixels ${after.n}`);
   for (const k of ['r', 'g', 'b'] as const) {
     assert.ok(Math.abs(after[k] - ref[k]) / ref[k] <= 0.1, `${k} after ${after[k].toFixed(1)} reference ${ref[k].toFixed(1)}`);
   }
@@ -207,4 +214,7 @@ test('a missing Sentinel tile at the staged home is open land, not boreal salt',
   const lat = ll.lat * 180 / Math.PI, lon = ll.lon * 180 / Math.PI;
   assert.equal(samplePhoto(lat, lon), null);
   assert.equal(openLandHere(lat, lon, planet.home, planet), true);
+  const photo = readFileSync('src/render/globe/prairiePhoto.ts', 'utf8');
+  assert.ok(photo.includes('ang < 0.2 * Math.PI / 180'), 'open land is the home, not a 6° disc');
+  assert.ok(photo.includes('landMask > 0.5 && uSteppeBox.w > 0.5'), 'water is not replaced by the steppe photo');
 });

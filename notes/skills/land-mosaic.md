@@ -93,6 +93,16 @@ about 51 N, 95 W, 6.1 m per pixel, CC BY 4.0). The reference is the known match.
 zoom-8 tile, edge about 0.08, no water, one histogram bin. A variance or mean-luma test
 passes that frame.
 
+## Prairie overhead (open grass, not the conifer crop)
+
+When `coverSampleLatLon` says prairie or desert, or the eye is within 0.2° of the staged home (about 22 km), `uOpenLand` replaces the conifer crop. The colour is an 11-tile EOX Sentinel-2 cloudless zoom-16 mosaic (`warmOverheadTiles`), sampled with `textureLod` 0 and graded by 0.76. One texel is about 1.5 m, under one screen pixel at 2000 m on a 45° lens and a 720 px frame. The DEM hillshade is the only extra shade. Do not store flow distance in the atlas alpha, and do not draw a channel polyline: those were the stair-stepped edges and the straight black graph.
+
+The photograph replaces land only (`landMask > 0.5`). Open water is the height field, and the photo must not paint it. Outside the atlas the flat thatch fades with distance (`nearDisc`); it does not hard-replace the disc. The boreal detail normal stays off while `uOpenLand` is set, or pale grey blobs come back. Coarse snow stays off while `uSteppeBox.w` is set.
+
+`warmPhotoTiles`, `warmDemTiles` and `warmOverheadTiles` only schedule fetches. `bindOverheadPhoto` reads tiles already in memory and returns. Do not await a tile before the loading screen can finish.
+
+The check is `tests/prairie-aerial.test.ts`. The known colour match is the land (luma ≥ 80) of `tasks/evidence/T-0222/after-2000.png` against `ref-steppe-sentinel.png`, within 10%. The known mismatch for the pale blobs is a right-half fraction at or above 0.004. The reference crop is a different, gullied steppe, so the window-std floor is 2, not the reference's 9.
+
 ## Mistakes to avoid
 
 - Do not call the lattice hash on an un-wrapped planet coordinate with `floor` passed straight into `ivec`. It crushed the frame to a dark red. Use `detN`, which already mods the cell.

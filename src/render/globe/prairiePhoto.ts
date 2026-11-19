@@ -15,7 +15,8 @@ export function openLandHere(lat: number, lon: number, dir: Vec3, planet: Planet
   if (!cover.water && (cover.biome === 'prairie' || cover.biome === 'desert')) return true;
   const h = planet.home;
   const ang = Math.acos(Math.max(-1, Math.min(1, dir[0] * h[0] + dir[1] * h[1] + dir[2] * h[2])));
-  return ang < 6 * Math.PI / 180;
+  // 0.2° is about 22 km: the overhead and the staged home, not a 670 km disc.
+  return ang < 0.2 * Math.PI / 180;
 }
 
 type Aerial = {
@@ -96,6 +97,8 @@ export function stepPrairieOverhead(latDeg: number, lonDeg: number, dir: Vec3, p
   g.__openLand = open ? 1 : 0;
   g.__photoDown = 0;
   if (!open || alt >= 80000) return;
+  // These only schedule fetches. bind reads tiles already in memory and returns.
+  // Nothing here is awaited, so the loading screen is not gated on a network tile.
   warmPhotoTiles(latDeg, lonDeg);
   warmDemTiles(latDeg, lonDeg);
   if (alt < 8000) {
@@ -195,7 +198,7 @@ export function prairieFarGlsl(invPi: string) {
       float hillF = clamp(dot(nrmF, normalize(vec3(-0.45, 0.72, 0.35))), 0.0, 1.0);
       vec3 openFar = vec3(0.40, 0.29, 0.11) * (0.58 + 0.55 * hillF);
       diffuseColor.rgb = mix(diffuseColor.rgb, openFar, nearDisc);
-    } else if (uOpenLand > 0.5 && uSteppeBox.w > 0.5) {
+    } else if (uOpenLand > 0.5 && landMask > 0.5 && uSteppeBox.w > 0.5) {
       vec3 pd = normalize(vDetW + uCamP);
       float lat = degrees(asin(clamp(pd.y, -1.0, 1.0)));
       float lon = degrees(atan(pd.z, pd.x));
@@ -204,10 +207,12 @@ export function prairieFarGlsl(invPi: string) {
       float latc = radians(clamp(lat, -85.0, 85.0));
       float my = (1.0 - log(tan(latc) + 1.0 / cos(latc)) / ${invPi}) * 0.5 * nTiles;
       vec2 uvS = vec2(mx - uSteppeBox.x, my - uSteppeBox.y) / max(uSteppeBox.w, 1.0);
-      vec3 steppe = vec3(0.40, 0.29, 0.11);
+      float nearDisc = 1.0 - smoothstep(80000.0, 400000.0, length(vViewPosition));
       if (uvS.x > 0.001 && uvS.y > 0.001 && uvS.x < 0.999 && uvS.y < 0.999) {
-        steppe = textureLod(uSteppe, uvS, 0.0).rgb * 0.76;
+        diffuseColor.rgb = textureLod(uSteppe, uvS, 0.0).rgb * 0.76;
+      } else {
+        vec3 steppe = vec3(0.40, 0.29, 0.11);
+        diffuseColor.rgb = mix(diffuseColor.rgb, steppe, nearDisc);
       }
-      diffuseColor.rgb = steppe;
     }`;
 }

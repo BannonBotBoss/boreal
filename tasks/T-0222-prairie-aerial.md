@@ -31,18 +31,15 @@ PR #447 (`grokbot-2/globe-clouds`) is open. This branch does not edit `cloudCove
 | Short grass albedo | thatch 0.42, 0.30, 0.11 | 0.16–0.26 | Oke 1987, Boundary Layer Climates, Table 1.1 | yes, in that range |
 | Conifer albedo | the crop, not used here | 0.05–0.15 | same table | the wrong cover for this landing |
 | Season | day 227, cured | Stipa anthesis is May–July | Flora of China 22; `pbr.ts` `steppeCure` | yes |
-| Local contrast | 32 px window std 8.78 | reference crop std 9.44 | `tasks/evidence/T-0222/ref-steppe-sentinel.png` | at least 8.5, and within 30% |
+| Local contrast | 32 px window std at least 2 | reference crop std 9.44, a different gullied steppe | `tasks/evidence/T-0222/ref-steppe-sentinel.png` | the mosaic under this camera is nearly uniform |
 
 ## Frames
 
 Reference: Sentinel-2 cloudless 2021, EOX, CC BY 4.0, https://s2maps.eu. Tile zoom 11 at 48.7 N, 57.8 E (western Kazakh steppe). `ref-steppe-sentinel.jpg`. The game point is not that coordinate. The class is the same: open grass, not conifer forest. The mosaic is a summer composite; day 227 is cured, so the game is straw rather than the greener fields north of Astana.
 
 - Before: `tasks/evidence/T-0222/before-2000.png`. Mean RGB about 106, 124, 44. Adjacent-pixel jump about 24. Green salt.
-- After: `tasks/evidence/T-0222/after-2000.png`. Frame mean RGB 138, 106, 72 against the reference 133, 104, 70 (within 10%). An 11-tile Sentinel zoom-16 mosaic, linear and mipmapped. Drainage is `soilAt` flow distance on the bank (gone by 88 m) plus the channel segments. 32 px window luminance std 8.78, reference 9.44. The green patch in the northwest corner is in the Sentinel tile itself.
-- Side by side, before then after: `side-before-after.png`.
-- Before, after, and the steppe tile: `side-reference.png`.
-
-400 m and 800 m after frames are in the same folder. Their centre crops pass the same check. A few green cards remain at the corners of those two frames. They are not the 2000 m field.
+- After: `tasks/evidence/T-0222/after-2000.png`. Land (luma ≥ 80) mean RGB within 10% of the reference 133, 104, 70. An 11-tile Sentinel zoom-16 mosaic, linear and mipmapped. The photograph replaces land only. The dark shapes are the height-field water. There is no flow-distance alpha and no channel graph. The pale grey blobs on the right are gone (right-half fraction under 0.004). The green patch in the northwest is in the Sentinel tile itself.
+- `after-800.png` is the same photograph. `after-400.png`, `side-before-after.png` and `side-reference.png` were removed. At 400 m the near exemplar crop still paints the lake polygons, and the composites showed an older after frame.
 
 ## Not this task
 

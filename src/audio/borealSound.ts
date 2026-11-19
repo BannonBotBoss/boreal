@@ -99,7 +99,7 @@ export class BorealSound {
   private loops = new Map<SoundId, GainNode>();
   private prev = new Map<string, { problem: string; motion: string; phase: number }>();
   private wolfPrev = { motion: 'idle', phase: 0 }; private lastTouch = -1e9; private pawState = { last: -1e9 }; private lastSlice = new Map<SoundId, number>();
-  private time = 0; private waterAmount = 0; private waterCheck = 0;
+  private time = 0; private waterAmount = 0; private waterCheck = 0; private audioWake = false;
   private haltedNow = false;
   get volume() { return BUS_LEVEL.master; } get muted() { return BUS_STATE.muted; } get musicVolume() { return BUS_LEVEL.music; } get musicOn() { return BUS_STATE.musicOn; }
   /** false = the audio/music module's source replaces the built-in music-day/night loops. */
@@ -111,8 +111,19 @@ export class BorealSound {
     onBusChange(() => this.applyVolume());
     // real paw touchdowns (?loco=1 locomotion) replace the half-stride footstep timer; loaded lazily (keeps node tests DOM/three-free)
     void import('../animals/locomotion/game').then(m => m.onPlayerTouchdown(t => this.touchdown(t))).catch(() => {});
-    const start = () => { void this.start(); };
-    addEventListener('pointerdown', start, { once: true }); addEventListener('keydown', start, { once: true });
+    const start = (e: Event) => {
+      if (!e.isTrusted) return;
+      removeEventListener('pointerdown', start);
+      removeEventListener('keydown', start);
+      void this.start();
+    };
+    const unlock = (e: Event) => {
+      if (!e.isTrusted || !this.ctx || this.ctx.state !== 'suspended') return;
+      this.audioWake = false;
+      this.wake();
+    };
+    addEventListener('pointerdown', start); addEventListener('keydown', start);
+    addEventListener('pointerdown', unlock); addEventListener('keydown', unlock);
     addEventListener('keydown', e => {
       if (e.repeat || (e.target as HTMLElement)?.tagName === 'INPUT') return;
       const k = e.key.toLowerCase();
@@ -126,12 +137,20 @@ export class BorealSound {
   }
 
   get started() { return !!this.ctx; }
+  /** One resume attempt. The next real gesture clears the latch. */
+  private wake() {
+    const ctx = this.ctx;
+    if (!ctx || this.audioWake || ctx.state !== 'suspended') return;
+    this.audioWake = true;
+    void ctx.resume().catch(() => {});
+  }
   howl() { this.playAt('wolf-howl', undefined, MIX.howl); }
   growl() { this.playAt('wolf-growl', undefined, MIX.growl); }
 
   async start() {
     if (this.ctx) return;
     const ctx = this.ctx = new AudioContext();
+    this.audioWake = true;
     // buses → master → limiter → speakers (the limiter catches stacked one-shots; it used to clip)
     const lim = ctx.createDynamicsCompressor(); lim.threshold.value = -3; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = .002; lim.release.value = .15;
     this.master = ctx.createGain(); this.master.connect(lim); lim.connect(ctx.destination);
@@ -304,7 +323,7 @@ export class BorealSound {
     const ctx = this.ctx; if (!ctx) return;
     if (f.halted) { if (ctx.state === 'running' && !this.haltTimer) this.haltTimer = setTimeout(() => { this.haltTimer = undefined; if (this.haltedNow) void ctx.suspend(); }, 400); this.haltedNow = true; return; } // one timer, not one per frame
     this.haltedNow = false;
-    if (ctx.state === 'suspended') void ctx.resume();
+    if (ctx.state === 'suspended') this.wake(); else this.audioWake = false;
     this.time += f.dt;
 
     // Listener follows the wolf; forward is -sin/-cos(yaw) like the movement code.

@@ -231,7 +231,9 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       bootGaveUp = moved.gaveUp;
       if (pinned != null) elapsed = Math.min(CINE.b14End, pinned);
       if (begun && narrationEndedAt == null && audio.narrationEnded()) narrationEndedAt = elapsed;
-      if (begun && narrationEndedAt == null && elapsed >= narrationEndFallback() + 1 && !(audio.narrationDuration() > 2)) narrationEndedAt = narrationEndFallback();
+      // The clock does not wait on a take that never started. A loaded header (duration > 2) used to block this, so a rejected play() left the card on Today forever.
+      if (begun && narrationEndedAt == null && elapsed >= narrationEndFallback() + 1 && !audio.narrationPlaying()) narrationEndedAt = narrationEndFallback();
+      if (begun && narrationEndedAt == null && elapsed >= narrationEndFallback() + 9) narrationEndedAt = narrationEndFallback();
       try { paintDom(); } catch (e) { console.warn('cine paint', e); }
       arrive();
       if (!begun || !sphere) return;

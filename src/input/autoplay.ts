@@ -200,7 +200,7 @@ async function orbit(run: Run) {
   const c = canvas();
   if (!c) return;
   note(run, 'rotating the globe');
-  await drag(c, 6, 16);
+  await drag(c, 8, 14, 180);
   note(run, 'clicked a land spot');
   await landClick(c);
   clickExplore(run);
@@ -326,7 +326,7 @@ function fill(input: HTMLInputElement, seed: string) {
   input.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
-async function drag(c: HTMLCanvasElement, steps: number, px: number) {
+async function drag(c: HTMLCanvasElement, steps: number, px: number, gap = 0) {
   const r = c.getBoundingClientRect();
   const y = r.top + r.height * 0.5;
   let x = r.left + r.width * 0.72;
@@ -334,6 +334,7 @@ async function drag(c: HTMLCanvasElement, steps: number, px: number) {
   for (let i = 0; i < steps; i++) {
     x -= px;
     pointer(c, 'pointermove', x, y, 1);
+    if (gap) await wait(gap);
     await frame();
   }
   pointer(c, 'pointerup', x, y, 0);

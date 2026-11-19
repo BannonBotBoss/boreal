@@ -157,7 +157,7 @@ let cloudsRequested = false;
 export function loadBlueMarbleClouds() {
   if (cloudsRequested || typeof document === 'undefined') return;
   cloudsRequested = true;
-  const tex = new THREE.TextureLoader().load('/globe/cloud_combined_2048.jpg');
+  const tex = new THREE.TextureLoader().load(`${(import.meta as unknown as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/'}globe/cloud_combined_2048.jpg`);
   tex.colorSpace = THREE.NoColorSpace;
   tex.wrapS = THREE.RepeatWrapping;
   tex.wrapT = THREE.ClampToEdgeWrapping;

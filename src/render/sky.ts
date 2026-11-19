@@ -95,6 +95,23 @@ void main() {
   #include <colorspace_fragment>
 }`;
 
+/**
+ * Noise threshold for the standing cirrus dome.
+ *
+ * The field is sheet·0.38 + fibers·0.40 + lace·0.22 of 5-octave value-noise
+ * fBm (mean about 0.49, almost nothing above 0.74). The old line
+ * `0.62 − 0.4·C` put the threshold at 0.49 when the weather reported
+ * C = 0.32, so only a few percent of directions got a veil and the sky
+ * read clear. This is the same coverage threshold the globe shell uses
+ * (world/globe/cloudCover.ts): the exceedance of the field is about the
+ * reported fraction. 0.56 is nearly clear, 0.42 is about one third, 0.12
+ * is overcast. tests/ground-sky-cloud.test.ts resamples the field.
+ */
+export function domeCoverThreshold(cloud: number) {
+  const c = Math.min(1, Math.max(0, cloud));
+  return 0.56 - 0.44 * c;
+}
+
 export function createSky(scene: THREE.Scene) {
   const search = typeof location === 'undefined' ? '' : location.search, venus = createVenus(scene, search); // the date is the clock's (initDay applies ?date= after this is built)
   const sky = new Sky(); sky.scale.setScalar(600); sky.layers.enable(1); sky.userData.physicalSky = true; scene.add(sky); // layer 1 = GI probe capture
@@ -178,7 +195,7 @@ export function createSky(scene: THREE.Scene) {
       // Weather (core/weather): cloud cover, drift, fog and precipitation come from the cell under the viewer.
       const w = weatherAt(focus.x, focus.z), dt = Math.max(0, Math.min(.2, time - lastTime)); lastTime = time; let fogV = Infinity; // a rewind drops this gap: cloud drift does not run backward. The sun still does, because the hour comes from the clock.
       if (WEATHER.on) {
-        cu.uCover.value = .62 - .4 * Math.max(w.cloud, Math.max(0, w.rh - .6)); // more condensate → lower noise threshold → more cover
+        cu.uCover.value = domeCoverThreshold(Math.max(w.cloud, Math.max(0, w.rh - .6))); // more condensate → lower noise threshold → more cover
         drift.x += w.wind.x * dt * 2e-4; drift.y += w.wind.z * dt * 2e-4; cu.uDrift.value.copy(drift);
         // Aerial perspective: Koschmieder visibility V = 3.912/β (Koschmieder 1924). β = clear air 3.912/30 km + fog
         // 144.7·LWC^0.88 km⁻¹ (Kunkel 1984, J. Clim. Appl. Meteorol. 23:34; LWC g/m³) + rain 0.25·R^0.63 km⁻¹ [verify].

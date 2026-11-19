@@ -2,6 +2,10 @@
 
 > **Read [AGENTS.md](AGENTS.md) and [PROJECT-RULES.md](PROJECT-RULES.md) first.** Simulation lives in `rust/boreal-sim`. TypeScript draws and takes input. `tests/sim-home.test.ts` fails when a TypeScript simulation file grows.
 
+## 2026-11-18 15:17 PT - cursor: standing cirrus follows the reported cloud
+
+The below-cloud walk on `6af1de2e` landed on prairie at 49.77 N, 65.54 E, 15 Aug, cloud fraction 0.32. The standing sky was clear. `domeCoverThreshold` in `src/render/sky.ts` replaces `0.62 - 0.4·C`, which sat on the mean of the cirrus field. `tests/ground-sky-cloud.test.ts` resamples that field. Before/after from the same camera are `tasks/evidence/T-0259/` (renumbered from T-0258 after that id landed on main with the pup task). Prairie overhead, fox, pups, litter, and gait were not edited. `tests/sim-home-ceiling.json` was not edited.
+
 ## 2026-11-18 - grokbot-3: simulation stays in Rust
 
 Matthew asked for a hard stop on new simulation in TypeScript. `tests/sim-home-ceiling.json` records the line count of the existing simulation files under `src/core`, `src/animals`, `src/world`, and `src/proc`. Those files may only shrink. New TypeScript belongs in the draw and input directories named in AGENTS.md. Gamepad, mouse, and keyboard controls are unchanged.

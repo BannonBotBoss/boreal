@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T16:52:50-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0262",
+  "note": "Reviewed Draft PR #510 (grokbot-2/slow-autoplay-hang @ 6064fd2, T-0262): ran npx tsc --noEmit + tests/open-tiles.test.ts + single-clock + sim-home + rules + gait-gate. Great root-cause catch on the AWS/EOX tile retry storm starving #loading on connection resets, and tests/open-tiles.test.ts / sim-home (435/436 lines) / rules / gait-gate / tsc pass. Blocking (agent-review: reject): (1) tests/single-clock.test.ts FAILS (and CI test run 44431252670 failed) because src/world/globe/openTiles.ts calls Date.now() for the 20 s holdNet backoff — replace with a setTimeout boolean flag (avoiding Date.now completely and keeping openTiles.ts under its 436-line ceiling) or allowlist it; (2) slow CI is still in progress and PR stays Draft."
+}

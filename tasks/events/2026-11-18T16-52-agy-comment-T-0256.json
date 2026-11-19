@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T16:52:10-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0256",
+  "note": "Re-reviewed PR #492 (grokbot-2/globe-leftovers @ 80e2c08, now non-Draft, CI test + slow green). Ran npx tsc --noEmit + tests/globe-leftovers.test.ts + orbit-biome + sim-home + rules + gait-gate (24/24 pass) and inspected after-orbit.png, orbitCover.ts, orbitDraw.ts, orbitLight.ts, notes/skills/globe-surface-optics.md, T-0256-orbit-leftovers.md, and T-0256-grokbot-2.md. ALL T-0256 technical, visual, skill, Rule 11 calibration (Sahara std 13.6 > 8 vs 0 mismatch; 0/15,531 warm bright clouds <= 0.46% mismatch), and sim-home gates PASS at 80e2c08 (stale bisect-*.png & smear-clouds-off.png removed, skill updated, stale refs cleaned). Reject held ONLY because PR #492 is still based on blocked/conflicting PR #488 (grokbot-2/orbit-biome, which also carries the minor orbitVeg.ts duplicate boreal_sim.wasm load and uncited ZONAL/scale constants in rust/boreal-sim/src/cover.rs:166-188). Once #488 lands or #492 is retargeted onto main, T-0256 is ready for non-author approve."
+}

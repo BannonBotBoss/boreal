@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T16:52:30-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0259",
+  "note": "Reviewed PR #504 (cursor/ground-sky-clouds-655c @ 7f0c3a4, non-Draft): ran npx tsc --noEmit + tests/ground-sky-cloud.test.ts + sim-home + rules + gait-gate (17/17 pass), inspected src/render/sky.ts (domeCoverThreshold), notes/skills/ground-sky-clouds.md, tasks/handoffs/T-0259-cursor.md, and before-ground-sky.jpg vs after-ground-sky.jpg (clear visual cirrus match at C=0.32, calibrated exceedance ~0.33 vs retired ~0.06 and clear <0.03). Plan is now APPROVED via approve-plan above. Remaining before merge approve: (1) record claim + complete events for T-0259 after this approve-plan; (2) merge/rebase origin/main (includes #509/#511 film-handoff fixes) so the timed-out slow CI check (45m4s) re-runs green."
+}

@@ -1,0 +1,216 @@
+{
+  "audit": "trees-v2-impostor-tube-steppe-audit",
+  "baseUrl": "http://127.0.0.1:5263",
+  "capturedAt": "2026-11-19T09:08:23.191Z",
+  "consoleErrors": [],
+  "failedUrls": [],
+  "calibrationValid": true,
+  "passCount": 0,
+  "totalChecks": 6,
+  "meanScore": 0.3284,
+  "slotsFront": {
+    "near": {
+      "px": 13049,
+      "r": 78,
+      "g": 101,
+      "b": 66.1,
+      "luma": 93.6,
+      "bOverG": 0.654,
+      "rOverG": 0.772,
+      "bboxW": 119,
+      "bboxH": 358
+    },
+    "mid": {
+      "px": 8935,
+      "r": 85.2,
+      "g": 108.8,
+      "b": 69,
+      "luma": 100.9,
+      "bOverG": 0.634,
+      "rOverG": 0.783,
+      "bboxW": 93,
+      "bboxH": 356
+    },
+    "crown": {
+      "px": 11798,
+      "r": 45.1,
+      "g": 58.6,
+      "b": 34.3,
+      "luma": 54,
+      "bOverG": 0.585,
+      "rOverG": 0.769,
+      "bboxW": 89,
+      "bboxH": 363
+    },
+    "impostor": {
+      "px": 20936,
+      "r": 48.4,
+      "g": 63.7,
+      "b": 41.4,
+      "luma": 58.9,
+      "bOverG": 0.649,
+      "rOverG": 0.76,
+      "bboxW": 149,
+      "bboxH": 355
+    }
+  },
+  "live": {
+    "lodViewerStats": {
+      "near": 13736,
+      "mid": 2484,
+      "crown": 38,
+      "impostor": 2,
+      "buildMs": 32.5,
+      "height": 13.449051936142833
+    },
+    "browserProbe": {
+      "budget16": {
+        "barkVerts": 95348,
+        "barkVertCap": 260000,
+        "barkVertPct": 36.7,
+        "barkIdx": 350760,
+        "barkIdxCap": 600000,
+        "barkIdxPct": 58.5,
+        "leafVerts": 189136,
+        "leafVertCap": 700000,
+        "leafVertPct": 27,
+        "leafIdx": 283704,
+        "leafIdxCap": 1100000,
+        "leafIdxPct": 25.8,
+        "crownVerts": 626,
+        "crownVertCap": 4000,
+        "crownVertPct": 15.7,
+        "crownIdx": 1752,
+        "crownIdxCap": 8000,
+        "crownIdxPct": 21.9
+      },
+      "perClass": {
+        "age_25": {
+          "barkV": 6937,
+          "barkI": 26196,
+          "leafV": 18832,
+          "leafI": 28248,
+          "crownV": 159,
+          "crownI": 444,
+          "nearTris": 3797,
+          "midTris": 740
+        },
+        "age_70": {
+          "barkV": 23475,
+          "barkI": 86688,
+          "leafV": 47624,
+          "leafI": 71436,
+          "crownV": 164,
+          "crownI": 456,
+          "nearTris": 11182,
+          "midTris": 1995
+        },
+        "age_130": {
+          "barkV": 33606,
+          "barkI": 123192,
+          "leafV": 57792,
+          "leafI": 86688,
+          "crownV": 154,
+          "crownI": 432,
+          "nearTris": 14550,
+          "midTris": 2940
+        },
+        "age_220": {
+          "barkV": 31330,
+          "barkI": 114684,
+          "leafV": 64888,
+          "leafI": 97332,
+          "crownV": 149,
+          "crownI": 420,
+          "nearTris": 14868,
+          "midTris": 2800
+        }
+      },
+      "sceneUndefPoison": {
+        "fullDelta": 5,
+        "variantsDelta": 1,
+        "treeRecorded": true
+      }
+    },
+    "standViewerStats": {
+      "height": 13.449051936142833,
+      "dbh": 14.883026816601237,
+      "buildMs": 44.80000000447035,
+      "tris": {
+        "near": 13736,
+        "mid": 2484,
+        "crown": 38
+      },
+      "stems": 1030,
+      "cards": 1648
+    }
+  },
+  "checks": [
+    {
+      "id": "trees-v2-scene-undef-poison-and-batch-budget",
+      "label": "trees/game.ts scene===undefined variant poisoning & 16-variant BatchedMesh budget",
+      "measured": "scene===undefined poison fullDelta=5, variantsDelta=1; 16-variant totals: bark=95348/260000v 350760/600000i, leaf=189136/700000v 283704/1100000i, crown=626/4000v 1752/8000i; mb/ml checked=false",
+      "expected": "Defer variant upload until scene exists (fullDelta=0), all 16 variants fit BatchedMesh caps with headroom, and materialise guards nb/mb/nl/ml >= 0",
+      "score": 0.6,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Three.js BatchedMesh API (maxVertexCount/maxIndexCount) & deterministic cold-start job ordering"
+    },
+    {
+      "id": "trees-v2-reconcile-steppe-throttle-and-leak",
+      "label": "trees/game.ts per-frame unthrottled reconcileSteppe & unbounded steppeTufts scene leak",
+      "measured": "reconcileSteppe before 1m/500ms throttle=true; prunes/disposes steppeTufts=false",
+      "expected": "reconcileSteppe gated on generation/movement throttle and steppeTufts pruned & geometry-disposed on unload/dropPlacedTrees",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Three.js GPU memory lifecycle (BufferGeometry.dispose) & frame-budget engineering (<= 16.6 ms)"
+    },
+    {
+      "id": "impostor-matrix-order-normals-and-cyan-tint",
+      "label": "trees/impostor.ts reversed modelMatrix inverse, bake-camera normals & 2.05x cyan-blue tint",
+      "measured": "reversedMatOrder=true (angle error=62.25 deg on moved parent group), bakesWorldNormals=false, IMPOSTOR_FX.tint=(0.39,0.42,0.8) B/G=1.905x B/R=2.051x; live frame-0 near luma=93.6 (13049 px, W=119) vs crown luma=54 (57.7%) & impostor luma=58.9 (62.9%, 20936 px = +60.4% bloated area, W=149)",
+      "expected": "inverse(modelMatrix * transformedInstanceMatrix) (0 deg error), object/world-space normal transform to live view space, neutral physically calibrated tint (B/G <= 1.15)",
+      "score": 0.3862,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Brucks (2018) Octahedral Impostors; Three.js modelViewMatrix = viewMatrix * modelMatrix * instanceMatrix; Pharr et al. (2023) PBR albedo conservation"
+    },
+    {
+      "id": "tube-parallel-transport-vertical-degeneracy",
+      "label": "trees/tube.ts:38 parallel-transport vertical degeneracy (zero normals / collapsed rings)",
+      "measured": "curved-to-vertical test stem: zeroNorms=7/35 vertices (20%), line 38 XV fallback=false",
+      "expected": "0/N zero-length normals on any curved-to-vertical stem (fallback to XV when |t x UPV| < 1e-6 on ring i > 0, matching line 34)",
+      "score": 0.4,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Bishop (1975) \"There is More than One Way to Frame a Curve\", Am. Math. Monthly 82(3):246-251; Weber & Penn (1995) sec. 5"
+    },
+    {
+      "id": "far-ring-impostor-nonuniform-scale",
+      "label": "trees/farRing.ts:24-25 non-uniform scale applied to octahedral impostors",
+      "measured": "nonUniformImpScale=true (sx=0.8..1.2 vs sy=0.85..1.15, max aspect distortion=1.412x in unit-sphere impostor projection)",
+      "expected": "Uniform scale (or aspect-corrected impostor projection) for octahedral impostor instances so cameraDir & bounding sphere stay undistorted",
+      "score": 0.3541,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.3541,
+      "pass": false,
+      "source": "Brucks (2018) Octahedral Impostors bounding-sphere isotropic projection assumption"
+    },
+    {
+      "id": "steppe-tuft-albedo-phenology-and-yaw-jitter",
+      "label": "flora/steppeTuft.ts 2.6x linear albedo, zero phenology & loop-index yaw jitter on camera pan",
+      "measured": "linear maxRGB=(0.72,0.58,0.22) meanLinearY=0.4057 (vs 0.16-0.28 cured grass), seasonalPhenology=false, usesLoopIndexYaw=true (97/100 tussocks jump yaw on 1-slot pan)",
+      "expected": "Linear reflectance mean Y <= 0.28 (max <= 0.38), seasonal green/cured/snow phenology, and world-coordinate-seeded yaw (0/100 yaw jumps on pan)",
+      "score": 0.2301,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Oke (1987) Boundary Layer Climates Table 1.1 (dry grass albedo 0.16-0.28); Asner (1998) Remote Sens. Environ. 64:234-253; Flora of China Vol. 22 (Stipa lessingiana May-Jul anthesis)"
+    }
+  ]
+}

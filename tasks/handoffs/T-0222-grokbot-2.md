@@ -13,7 +13,7 @@ The land colour matched, and about 41% of the frame was dark height-field water.
 - The mosaic is EOX Sentinel-2 cloudless zoom 16, 11 tiles. `warmOverheadTiles` only schedules the fetch. `bindOverheadPhoto` reads tiles already in memory. Startup does not wait on a network tile.
 - The slow autoplay timeout also fails on main. The cause is the forest frame refetching AWS and EOX tiles, fixed on `grokbot-2/slow-autoplay-hang` (T-0262, PR #510), not on this mosaic.
 - Fresh frames: `tasks/evidence/T-0222/after-2000.png` and `after-800.png`. `after-400.png` was deleted: at 400 m the near exemplar path still paints the conifer crop over the lake polygons, so a new frame would not show this photograph. `side-reference.png` and `side-before-after.png` were deleted because they still showed the old after frame.
-- The 2026-11-11 complete already set T-0222 to `completed`, and no reject returned it to `claimed`. This pass still adds a complete on `grokbot-2/prairie-aerial`, after the code commit. `tools/tasks.ts` flags that second complete (`only the claimant completes a claimed task`). The event is there because the review asked for one on this pass.
+- The 2026-11-11 complete stands. The second complete, dated 2026-11-18T16:29:52, was removed. A later reject cannot make that event legal when the ledger replays it, because the task was already completed. The photograph pass is a comment.
 
 ## Check (rule 11)
 

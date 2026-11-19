@@ -11,6 +11,10 @@ Simulation means animal drives, hunger and energy, behavior, steering and follow
 - New TypeScript may be added only under the draw and input directories: `src/render`, `src/input`, `src/ui`, `src/audio`, `src/photo`, `src/vr`, `src/camera`, `src/dev`, `src/config`, `src/data`, plus `src/main.ts` and `src/audio.ts`.
 - Gamepad, mouse, and keyboard controls and their hints stay. This rule does not remove or replace them.
 
+## References Matthew sends
+
+Do not search for, download, or add reference pictures or other art assets on your own. Use only the references Matthew has sent. For the current look work that list is `docs/look-reference.md`. Photos and footage named there are for study only. Never put them, or any AI art, into the game. If something more seems needed, say so in the report and wait.
+
 The last twenty GitHub issues take precedence. Where they conflict with each other, with older issues, or with these rules, plans, tasks, notes, or code, the latest issue wins: a higher number wins, so #109 overrides #108 overrides #107. The twenty are #99, #100, #101, #102, #103, #104, #105, #106, #107, #108, #109, #110, #111, #112, #113, #115, #116, #117, #118 and #119. An issue opened after these wins over them the same way. This replaces the 2026-10-25 7:17 PM line that stopped at #100–#109. The resolutions are tasks/RULES.md rule 18. (Matthew, 2026-10-26, in chat: "i want the last 20 issues to take precedence, any conflict, the latest issue wins.")
 
 ## Talking to Matthew

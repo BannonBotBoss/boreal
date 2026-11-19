@@ -204,7 +204,8 @@ void main() {
           alpha.setX(i, Math.min(1, m.ink) * gate * DENSITY_TINT.peakAlpha);
         }
         const opacity = groundMarkOpacity(m.ink, gate);
-        if (opacity <= 0.02) return;
+        // A disc in the standing group reads as a pale ring on the litter. Far stains stay.
+        if (opacity <= 0.02 || Math.hypot(eye.x - m.x, eye.z - m.z) < 12) return;
         const mesh = discs[discN] ?? discMesh();
         const material = mesh.material as THREE.ShaderMaterial;
         material.uniforms.uColor.value.setRGB(c[0], c[1], c[2]);

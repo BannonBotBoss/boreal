@@ -39,7 +39,7 @@ const FRAME = [
 ];
 const WALL = [
   'audio/music.ts', 'core/badges.ts', 'core/genome.ts', 'core/probe.ts', 'core/stages/elevation.ts', 'core/stages/flow.ts', 'core/stages/rivers.ts', 'core/stages/soils.ts',
-  'render/startup.ts', 'ui/badgePanel.ts', 'ui/padMenu.ts', 'world/sun/sunView.ts',
+  'input/autoplay.ts', 'render/startup.ts', 'ui/badgePanel.ts', 'ui/padMenu.ts', 'world/sun/sunView.ts',
 ];
 
 guard('no performance.now outside the clock and frame budgets', t => /performance\.now\s*\(/.test(t), FRAME, ['core/worldClock.ts']);

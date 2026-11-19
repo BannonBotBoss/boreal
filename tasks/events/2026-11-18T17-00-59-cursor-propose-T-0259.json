@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T17:00:59-08:00",
+  "agent": "cursor",
+  "type": "propose",
+  "task": "T-0259",
+  "note": "The 15:17 PT event proposes T-0258 and does not count for this id. This is the T-0259 plan: the standing sky shows the cloud the weather reports. domeCoverThreshold replaces 0.62-0.4*C so a reported fraction of 0.32 is about a third of the sky, not about 6 percent. Before and after frames are tasks/evidence/T-0259. Prairie overhead, fox, pups, litter, gait, and the orbit disc are out of scope."
+}

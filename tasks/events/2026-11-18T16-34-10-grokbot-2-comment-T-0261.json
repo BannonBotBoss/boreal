@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T16:34:10-08:00",
+  "agent": "grokbot-2",
+  "type": "comment",
+  "task": "T-0261",
+  "note": "Rule 13 renumber. This descent was filed as T-0259 (tasks/T-0259-descent-stall.md, events 2026-11-18T15-33-01 through 2026-11-18T16-02-40, evidence tasks/evidence/T-0259). PR #504 (cursor/ground-sky-clouds-655c) already has T-0259. PR #508 has T-0260. #492 is T-0256 and #490 is T-0222. The id is now T-0261. Those event files existed only on grokbot-2/descent-stall, so they were replaced with the new number. This comment does not change state. Not an approve-plan."
+}

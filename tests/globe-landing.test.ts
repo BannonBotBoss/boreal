@@ -99,6 +99,17 @@ test('a dry boreal click stands above the shore and grows grass and trees', asyn
     const y = heightAt(0, 0);
     assert.ok(y > LEVEL.shore, `the click is dry ground, not the lake plane (${y})`);
     assert.ok(viewedCover(4, -3).density > 0.05, 'grass grows beside the wolf');
+    const { bladesJob, GRASS } = await import('../src/render/grass/cover');
+    const { finish } = await import('../src/core/interest');
+    let near = 0;
+    for (let tx = -1; tx <= 1; tx++) for (let tz = -1; tz <= 1; tz++) {
+      const tile = finish(bladesJob(tx, tz));
+      for (let i = 0; i < tile.count; i++) {
+        const x = tile.pos[i * 3], z = tile.pos[i * 3 + 2];
+        if (x * x + z * z < 64) near++;
+      }
+    }
+    assert.ok(near > 2000, `Ultra density (max ${GRASS.maxDensity}/m²) draws ${near} blades within 8 m`);
     let spruce = 0;
     for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) {
       spruce += generateChunk(a, b).filter(e => e.kind === 'spruce').length;

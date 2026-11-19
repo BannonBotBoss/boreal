@@ -1,0 +1,120 @@
+{
+  "task": "T-0273",
+  "generatedAt": "2026-11-18T23:00:42.346Z",
+  "calibration": {
+    "knownMatch": {
+      "ratioExact": 1,
+      "deltaExact": 1,
+      "mean": 1
+    },
+    "knownMismatch": {
+      "ratioOff100x": 0.01,
+      "deltaOffFull": 0,
+      "mean": 0.005
+    }
+  },
+  "calibrationValid": true,
+  "summary": {
+    "passed": 0,
+    "total": 12,
+    "meanScore": 0
+  },
+  "checks": [
+    {
+      "id": "focal_mm_wired_to_camera_fov",
+      "measured": "0/2 views wire mountViewfinder().fov() (50mm=26.99deg vs 400mm=3.44deg)",
+      "reference": "2/2 views (game & globe) apply full-frame 36x24 mm pinhole vFOV = 2*atan(12/f)",
+      "source": "ISO 12232 / thin-lens pinhole projection; src/render/buildScene.ts:98, src/world/globe/globeView.ts:104",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "band_filter_photopic_attenuation",
+      "measured": "blue=0.000 stops; halpha Y/mean=0.7744; deadBranch=true",
+      "reference": "blue=3.792 stops (-log2(0.0722)); halpha photopic normalization=1.0000; no dead branch",
+      "source": "IEC 61966-2-1 sRGB Y = 0.2126R + 0.7152G + 0.0722B; src/camera/filters.ts:17-29, src/camera/gameCamera.ts:56",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "game_view_autoEV_night_calibration",
+      "measured": "gameAutoEV=false, globeAutoEV=false, starlight error=26.09 stops (15.0 vs -11.09)",
+      "reference": "Live metered EV100 within <=0.5 stops across day (+15) to starlight (-11.09)",
+      "source": "Lagarde & de Rousiers 2014 (Moving Frostbite to PBR §4.5, K=12.5); src/camera/gameCamera.ts:45,66",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "globe_meta_and_camera_panel_hotkey",
+      "measured": "globeHardcodesWORLD_SEED=true, globeWallDate=true, cameraPanelCaseInsensitiveC=false",
+      "reference": "Globe viewfinder writes live STAGES.seed & sim date; Camera panel C toggle handles both c and C",
+      "source": "src/world/globe/globeView.ts:101,104; src/ui/cameraPanel.ts:25",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "bokeh_thin_lens_hyperfocal_coc",
+      "measured": "50mm f/22 focus=100m d=200m: blur=0.11364 (5.7x over maxblur 0.02)",
+      "reference": "Physical thin-lens CoC fraction=0.000024 (sharp landscape at hyperfocal distance)",
+      "source": "Potmesil & Chakravarty 1981 (SIGGRAPH); src/render/post.ts:105",
+      "score": 0.000208437552109388,
+      "pass": false
+    },
+    {
+      "id": "autofocus_raycast_coverage",
+      "measured": "0/6 primary scene targets in distanceAt() (only chunks.values())",
+      "reference": "6/6 primary scene targets (terrain, wolf, litter, animals, hares, landingCast) raycasted for autofocus/click-to-focus",
+      "source": "src/render/buildScene.ts:642-646 vs buildScene.ts:105-106 (chunk ground meshes removed)",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "photo_capture_ao_sunfx_and_tile_vignette",
+      "measured": "passesAoAndFx=false, tileAwareGrade=false (8K splits into 4 tiles)",
+      "reference": "Capture passes active GTAO/SUNFX and uses full-frame UV for vignette/grain across 4 tiles at 8K",
+      "source": "src/render/buildScene.ts:623-638, src/render/post.ts:62-74,164",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "photo_panel_focal_bounds_and_linear_grade",
+      "measured": "focalLength default=0 min=12 (live DOM=12); gradeBeforeOutput=false",
+      "reference": "Default within [min,max] and colour grade/luma applied in scene-linear space before OutputPass",
+      "source": "IEC 61966-2-1 linear luminance; src/render/post.ts:22,128-129",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "viewfinder_game_shift_p_exr",
+      "measured": "live Shift+P hasExr=false (1 IDB shots), mainPassesHdr=false",
+      "reference": "Shift+P in game view saves linear OpenEXR alongside PNG as advertised by readout",
+      "source": "src/camera/gameCamera.ts:82,86, src/main.ts:392",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "viewfinder_gametime_and_gallery_selection",
+      "measured": "hardcodedHourAt0=true, liveGalleryCheckboxes=[{\"id\":\"1\",\"checked\":false}]",
+      "reference": "Metadata records live worldSec() game time and newly taken viewfinder shots default to selected=true",
+      "source": "src/render/buildScene.ts:98, src/photo/gallery.ts:127",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "shared_crc32_and_png_text_safety",
+      "measured": "crc32 copies=2 (IEEE check=true), 150KB tEXt roundtrip=false",
+      "reference": "1 shared CRC-32 implementation (Rule 2) and stack-safe PNG 1.2 tEXt decoding",
+      "source": "ISO/IEC 15948 (PNG 1.2 §11.3.4.3); PROJECT-RULES.md Rule 2; src/camera/png.ts:2,17, src/photo/zip.ts:2",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "zip_dos_timestamp_and_resource_leaks",
+      "measured": "zipDosDate=0x21 (1980-01-01), closesIdb=false, revokesPreviewUrl=false, uncleanedInterval=true",
+      "reference": "Current MS-DOS local timestamp (PKWARE APPNOTE §4.4.6), IDB closed, preview URLs revoked, no orphaned setInterval",
+      "source": "PKWARE APPNOTE 6.3.10 §4.4.6; src/photo/zip.ts:10-12, src/photo/store.ts:4-5, src/photo/gallery.ts:113-115, src/camera/gameCamera.ts:89",
+      "score": 0,
+      "pass": false
+    }
+  ]
+}

@@ -90,6 +90,17 @@ export function groundMarkRadius(kind: Exclude<PictureKind, 'individual'>): numb
   return SIZE[kind] * 0.5 * GROUND_MARK_SCALE;
 }
 
+/**
+ * A stain whose edge comes within this many metres of the camera reads as a pale
+ * ring on the floor beside the wolf. The centre can sit further out than 12 m
+ * while the rim still crosses the standing view, so the test is the near edge.
+ */
+export const GROUND_MARK_CLEAR_M = 8;
+
+export function groundMarkInStandingView(distM: number, radiusM: number) {
+  return distM - radiusM < GROUND_MARK_CLEAR_M;
+}
+
 export function createAnimalDensity(scene: THREE.Scene) {
   let n = 0;
   const geo = new THREE.BufferGeometry();
@@ -204,13 +215,13 @@ void main() {
           alpha.setX(i, Math.min(1, m.ink) * gate * DENSITY_TINT.peakAlpha);
         }
         const opacity = groundMarkOpacity(m.ink, gate);
-        // A disc in the standing group reads as a pale ring on the litter. Far stains stay.
-        if (opacity <= 0.02 || Math.hypot(eye.x - m.x, eye.z - m.z) < 12) return;
+        const radius = groundMarkRadius(kind);
+        // A disc whose rim enters the standing view reads as a pale ring on the litter. Far stains stay.
+        if (opacity <= 0.02 || groundMarkInStandingView(Math.hypot(eye.x - m.x, eye.z - m.z), radius)) return;
         const mesh = discs[discN] ?? discMesh();
         const material = mesh.material as THREE.ShaderMaterial;
         material.uniforms.uColor.value.setRGB(c[0], c[1], c[2]);
         material.uniforms.uAlpha.value = opacity;
-        const radius = groundMarkRadius(kind);
         mesh.position.set(m.x, m.y + 0.12, m.z);
         mesh.scale.set(radius, 1, radius);
         mesh.visible = true;

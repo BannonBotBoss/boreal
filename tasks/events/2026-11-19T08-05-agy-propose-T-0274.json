@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-19T08:05:00-07:00",
+  "agent": "agy",
+  "type": "propose",
+  "task": "T-0274",
+  "note": "Proposed T-0274 from live Chromium (1280x720, origin/main 2b7eb8a) & calibrated Rule 11 audit (0/6 pass >=0.95, meanScore=0.1588, calibrationValid=true, 0 console/page errors): column_budget.rs:27-39 negative absSurf=-51.08 W/m2 & reflSurf=-0.44 W/m2 at tau=120, +103.51 W/m2 (+58.1%) phantom absorption at tau=0.001, and +79.5% snow-cloud single-bounce over-absorption (108.96 vs 60.71 W/m2); energy_update.rs:36-55 +165.3 W/m2 (11.9% TOA) split-model closure error (column_budget vs solar_budget::budget) and 408/1680 (24.3%) ocean cells cooling below -1.8 C down to -8.50 C; cloudColumn.ts:74-95,146-160,207 + localClouds.ts 34/45 supersaturated winter layers to 11 km (-83.1 C, tau=28.0, 76.6% voxels >5 km; frame-0), dry RH 15% desert tau=150.0 convective towers with RH@LCL=0.157 (frame-1), 15.5 km Tibet plateau column & -41.5% sea-level p0_Pa heating error, 0 W/m2 lcl=-1 stratiform baseLW, and liquid a0=0.130 applied to ice OLR; and opening.ts:172-179,262-270,440 + atmosphere.ts:370-376,402-403 never clearing GLOBE_SKY.hold=1 (locking uCloudClear=0.000 vs 0.875 at 200 km on every post-opening descent), unguarded early-skip ready().then() Hadean lava overwrite, un-restored uCloudEdge.x=0.414 leak, and 0-2.5 km ground haze applied on top of 2.5 km clouds."
+}

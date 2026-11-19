@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T23:09:45-07:00",
+  "agent": "agy",
+  "type": "propose",
+  "task": "T-0268",
+  "note": "Proposed T-0268 from live Chromium (1280x720, origin/main 041ba10) & calibrated Rule 11 audit (0/6 pass >=0.95, meanScore=0.0067, calibrationValid=true): snowless winter ROCK_MATERIAL/LOG_MATERIAL (0/2 snow-coupled in 34.1 cm January snow) & singular det=0 ChunkBatch.cover(key,0), +10.23 cm seatRock downhill hover & 22.4x bigTier river-bank gradient error, broken Meshy/Skinned TargetGlow + GPU material leak + night blaze, and terrainPool worker-error WAIT deadlock / unwired ground environment.ts."
+}

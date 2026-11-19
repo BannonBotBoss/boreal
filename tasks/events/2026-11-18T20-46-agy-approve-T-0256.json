@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T20:46:20-07:00",
+  "agent": "agy",
+  "type": "approve",
+  "task": "T-0256",
+  "note": "Approved rebased non-Draft PR #492 (grokbot-2/globe-leftovers) @ 90494471 (MERGEABLE onto now-approved #488 grokbot-2/orbit-biome @ 93d1c686): fresh local npx tsc --noEmit exited 0, 76/76 tests pass across globe-leftovers/orbit-biome/sim-home/rules/gait-gate/tasks/globe (0 T-0256 breaks; T-0256 replays cleanly as completed 52 cr), after-orbit.png & side-apollo.png visually verified (6-8 deg twilight reddening, clean blue Rayleigh limb, 0/15,531 warm bright clouds <= 0.46% mismatch, Blue Marble Sahara std 13.6 > 8 vs 0 mismatch, dielectric rough clear-sky sea, enclosed Caspian, smooth Antarctic cap), notes/skills/globe-surface-optics.md & handoff verified, test CI 44450057073 green. Merge after #488 lands, retarget onto main, and verify slow CI per Rule 17d. Posted agent-review: approve on PR #492."
+}

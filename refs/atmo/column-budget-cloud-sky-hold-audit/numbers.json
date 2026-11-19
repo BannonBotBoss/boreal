@@ -1,0 +1,260 @@
+{
+  "generatedAt": "2026-11-19T15:03:58.875Z",
+  "baseUrl": "http://127.0.0.1:5258",
+  "viewport": "1280x720",
+  "consoleErrors": [],
+  "pageErrors": [],
+  "calibrationValid": true,
+  "passingChecks": 0,
+  "totalChecks": 6,
+  "meanScore": 0.1588,
+  "checks": [
+    {
+      "id": "column-budget-thick-cloud-and-thin-abs",
+      "label": "column_budget.rs thick-cloud non-negativity & thin-cloud tau-scaling",
+      "measured": "tau=120: absSurf=-51.08 W/m^2, reflSurf=-0.44 W/m^2 (NEGATIVE); tau=0.001: dAbsAtm=+103.51 W/m^2 (+58.1%)",
+      "expected": "tau=120: absSurf >= 0, reflSurf >= 0 (R_c + A_c <= 1); tau=0.001: dAbsAtm -> 0 W/m^2 (< 1 W/m^2)",
+      "score": 0.0249,
+      "knownMatchScore": 0.9996,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Lacis & Hansen (1974) J. Atmos. Sci. 31:118; Stephens (1978) J. Atmos. Sci. 35:2123"
+    },
+    {
+      "id": "column-budget-snow-multiple-bounce",
+      "label": "column_budget.rs cloudy snow multiple-bounce surface absorption",
+      "measured": "alpha=0.80, cloud=1, tau=10: absSurf=108.96 W/m^2 (+79.5% vs exact geometric series)",
+      "expected": "Multiple-bounce exact absSurf=60.71 W/m^2 ((1-a)/(1-a*Rc*t))",
+      "score": 0.5571,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.2222,
+      "pass": false,
+      "source": "Lacis & Hansen (1974) eq. 21; Warren (1982) Rev. Geophys. 20:67 (snow albedo & cloud-snow multiple reflection)"
+    },
+    {
+      "id": "energy-update-split-closure-and-sst",
+      "label": "energy_update.rs exported shortwave closure & seawater freezing floor (-1.8 C)",
+      "measured": "max |qabs+reflsw+absatm-toa|=165.3 W/m^2 (11.9% TOA); 408/1680 (24.3%) ocean cells < -1.8 C (min SST=-8.50 C)",
+      "expected": "0.0 W/m^2 shortwave closure error (single radiative model); 0% ocean SST below -1.8 C seawater freezing",
+      "score": 0.0664,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Trenberth, Fasullo & Kiehl (2009) BAMS 90:311; UNESCO EOS-80 / Millero (1978) seawater freezing point -1.8 C at 35 PSU"
+    },
+    {
+      "id": "cloud-column-winter-monolith-and-desert-tau",
+      "label": "cloudColumn.ts winter stratiform monolith & dry-desert convective tau/LCL consistency",
+      "measured": "Winter(-10C,RH77%): 34/45 layers>=80% RH to 11 km (topK=190.0K, tau=28.0, 76.6% voxels>5km); Desert(35C,RH15%,c=0.1): tau=150.0, RH@LCL=0.157",
+      "expected": "Winter stratus top 1-3 km (0% opaque fill >5 km, tau ~5-15); dry desert tau < 5, environmental RH at well-mixed LCL = 1.00",
+      "score": 0.0523,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.05,
+      "pass": false,
+      "source": "Shupe et al. (2011) J. Climate 24:4674 (Arctic winter stratus top 1-3 km); Stull (1988) Boundary Layer Meteorology ch. 1 (constant mixed-layer q)"
+    },
+    {
+      "id": "cloud-column-elevation-and-lw-emissivity",
+      "label": "cloudColumn.ts plateau tropopause/pressure air mass, non-LCL base LW, & ice emissivity",
+      "measured": "Tibet 4.5 km: top ASL=15500 m (+4.5 km past 11 km tropopause), heatingKPerDay=0.464 vs 0.793 K/d (-41.5%); lcl=-1 stratiform baseLW=0.0 W/m^2 (topLW=73.9); ice a0=0.130",
+      "expected": "Column caps at 11 km ASL tropopause; heating uses pressureAt(groundM); stratiform baseLW>0 when waterPath>0; ice LW a0~0.055 m^2/g",
+      "score": 0.2521,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.2433,
+      "pass": false,
+      "source": "US Std Atm (1976) 11 km ASL tropopause; Ebert & Curry (1992) JGR 97:3831 (ice LW k ~ 0.055 m^2/g); Stephens (1978) upward a0 = 0.158 m^2/g"
+    },
+    {
+      "id": "opening-globe-sky-hold-and-cloud-edge-leak",
+      "label": "opening.ts GLOBE_SKY.hold descent-cloud lock, early-skip Hadean overwrite & atmosphere.ts uCloudEdge.x leak",
+      "measured": "GLOBE_SKY.hold=0 in src: false; post-opening descent@200km uCloudClear=0.000 (vs 0.875); early-skip ready().then() guard: false; post-hold uCloudEdge.x=0.414 (vs 0.614)",
+      "expected": "GLOBE_SKY.hold reset to 0 on opening stop; uCloudClear=0.875 at 200 km; early-skip guard true; uCloudEdge.x restored to 0.614",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "T-0034 / T-0041 CLOUD_OPEN descent cloud clearing (1,500 km -> 150 km); opening.ts & atmosphere.ts state invariants"
+    }
+  ],
+  "live": {
+    "frame0": {
+      "alt": 2499.9999999999995,
+      "lcVisible": true,
+      "lcOpacity": 1,
+      "lcExt": 0.11765065205699661,
+      "stats": {
+        "drawn": 4,
+        "inView": 3,
+        "cached": 12,
+        "queued": 6,
+        "deepest": 2,
+        "splitDepth": 13,
+        "splitK": 1,
+        "lodSplit": 1.7,
+        "nearK": 0.226,
+        "hold": {
+          "lv": 2,
+          "dd": 741233,
+          "edge": 2498201,
+          "reach": 10000,
+          "minDeep": 741233
+        },
+        "tier": 1,
+        "segments": 40
+      }
+    },
+    "frame0Pixels": {
+      "meanLuma": 0.7159,
+      "meanRgb": [
+        0.637,
+        0.731,
+        0.798
+      ],
+      "brightFrac": 0.9221,
+      "whiteCloudFrac": 0.4518,
+      "blueSkyFrac": 0.7786
+    },
+    "frame1": {
+      "alt": 3499.9999999999995,
+      "lcVisible": true,
+      "lcOpacity": 1,
+      "lcExt": 0.07598317149304512,
+      "stats": {
+        "drawn": 2,
+        "inView": 2,
+        "cached": 12,
+        "queued": 4,
+        "deepest": 2,
+        "splitDepth": 12,
+        "splitK": 1,
+        "lodSplit": 1.7,
+        "nearK": 0,
+        "hold": {
+          "lv": 2,
+          "dd": 910071,
+          "edge": 2503740,
+          "reach": 14000,
+          "minDeep": 910071
+        },
+        "tier": 1,
+        "segments": 40
+      }
+    },
+    "frame1Pixels": {
+      "meanLuma": 0.7168,
+      "meanRgb": [
+        0.616,
+        0.735,
+        0.838
+      ],
+      "brightFrac": 0.833,
+      "whiteCloudFrac": 0.3498,
+      "blueSkyFrac": 0.9137
+    },
+    "frame2": {
+      "mode": "globe",
+      "state": null,
+      "openingPhase": "sphere"
+    },
+    "frame2Pixels": {
+      "meanLuma": 0.0736,
+      "meanRgb": [
+        0.066,
+        0.074,
+        0.095
+      ],
+      "brightFrac": 0.0506,
+      "whiteCloudFrac": 0.0538,
+      "blueSkyFrac": 0.0158
+    },
+    "frame3": {
+      "mode": "band",
+      "state": null,
+      "openingPhase": "sphere"
+    },
+    "frame3Pixels": {
+      "meanLuma": 0.3198,
+      "meanRgb": [
+        0.307,
+        0.329,
+        0.263
+      ],
+      "brightFrac": 0.0034,
+      "whiteCloudFrac": 0.004,
+      "blueSkyFrac": 0
+    },
+    "recordingBytes": 29146
+  },
+  "rawSamples": {
+    "snowCloudy": {
+      "toa": 680.8882015231806,
+      "reflAtm": 384.88222643477764,
+      "reflSurf": 57.33859671682917,
+      "absAtm": 129.70452029294188,
+      "absSurf": 108.96285807863192,
+      "albedo": 0.8,
+      "glint": 0,
+      "tsi": 1361.776403046361
+    },
+    "exactSnowAbs": 60.71,
+    "clear": {
+      "toa": 1089.421122437089,
+      "reflAtm": 48.51471690278652,
+      "reflSurf": 121.66696251292525,
+      "absAtm": 178.16289668471063,
+      "absSurf": 741.0765463366665,
+      "albedo": 0.15,
+      "glint": 0,
+      "tsi": 1361.776403046361
+    },
+    "thinCloud": {
+      "toa": 1089.421122437089,
+      "reflAtm": 48.64476169816432,
+      "reflSurf": 107.03721951949878,
+      "absAtm": 281.67413206372026,
+      "absSurf": 652.0650091557056,
+      "albedo": 0.15,
+      "glint": 0,
+      "tsi": 1361.776403046361
+    },
+    "thickCb": {
+      "toa": 1089.421122437089,
+      "reflAtm": 989.3739174184635,
+      "reflSurf": -0.4379913290353965,
+      "absAtm": 151.56776156735313,
+      "absSurf": -51.08256521969223,
+      "albedo": 0.15,
+      "glint": 0,
+      "tsi": 1361.776403046361
+    },
+    "winter": {
+      "lcl": 500,
+      "top": -1,
+      "tau": 28,
+      "wp": 0.5092,
+      "satLayers": 34,
+      "topK": 190.02,
+      "voxelsFrac": 0.542,
+      "voxelsAbove5kmFrac": 0.766,
+      "boxExt": 0.08552
+    },
+    "desert": {
+      "lcl": 4000,
+      "top": 6250,
+      "tau": 149.95,
+      "wp": 1.7762,
+      "rhAtLcl": 0.157
+    },
+    "tibet": {
+      "maxAsl": 15500,
+      "pTibet": 59301,
+      "heatReported": 0.4642,
+      "heatTrue": 0.7931
+    },
+    "atmosphereHoldLeak": {
+      "edgeBefore": 0.614,
+      "edgeAfterRelease": 0.414,
+      "hasHoldReset": false
+    }
+  }
+}

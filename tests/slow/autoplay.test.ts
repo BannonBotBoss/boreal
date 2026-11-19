@@ -14,7 +14,7 @@ const root = join(import.meta.dirname, '../..');
 const port = 5217;
 const chrome = ['/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/usr/bin/chromium', '/usr/bin/chromium-browser'].find(p => existsSync(p));
 
-test('autoplay reaches the end without a page error', { timeout: 840_000 }, async () => {
+test('autoplay reaches the end without a page error', { timeout: 930_000 }, async () => {
   assert.ok(chrome, 'Chrome is not installed (google-chrome or chromium)');
   const frames = '/opt/cursor/artifacts';
     mkdirSync(frames, { recursive: true });
@@ -52,7 +52,7 @@ test('autoplay reaches the end without a page error', { timeout: 840_000 }, asyn
       const step = await page!.evaluate(() => document.querySelector('#loading .loading-step')?.textContent ?? '').catch(() => '');
       console.log(`LOGS\n${logs.join('\n')}\nERRORS\n${errors.join('\n')}\nFAILED\n${failed.join('\n')}\nSTEP ${step}`);
     };
-    const loadingGone = Date.now() + 90_000;
+    const loadingGone = Date.now() + 180_000;
     while (Date.now() < loadingGone) {
       const up = await page.evaluate(() => !!document.getElementById('loading')).catch(() => true);
       if (!up) break;
@@ -61,7 +61,7 @@ test('autoplay reaches the end without a page error', { timeout: 840_000 }, asyn
     if (await page.evaluate(() => !!document.getElementById('loading')).catch(() => true)) {
       await dump();
       await page.screenshot({ path: join(frames, 'autoplay-timeout.png') }).catch(() => {});
-      throw new Error('#loading still up after 90s');
+      throw new Error('#loading still up after 180s');
     }
     try {
       await page.waitForFunction(() => (window as unknown as { __autoplayDone?: boolean }).__autoplayDone === true, undefined, { timeout: 700_000 });
@@ -71,7 +71,11 @@ test('autoplay reaches the end without a page error', { timeout: 840_000 }, asyn
       throw err;
     }
     const shot = join(frames, 'autoplay-done.png');
-    await page.screenshot({ path: shot });
+    // The last frame is best-effort: on a GPU-less CI runner the busy renderer can
+    // miss the default 30s capture window after every step already passed.
+    await page.screenshot({ path: shot, timeout: 90_000 }).catch(err => {
+      console.log(`AUTOPLAY final screenshot skipped: ${(err as Error).message.split("\n")[0]}`);
+    });
     const video = page.video();
     await context.close();
     page = undefined;

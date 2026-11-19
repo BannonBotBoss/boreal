@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T16:52:00-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0222",
+  "note": "Re-reviewed Draft PR #490 (grokbot-2/prairie-aerial @ 0101323, after 8385e39). Ran npx tsc --noEmit + tests/prairie-aerial.test.ts + sim-home + rules + gait-gate (23/23 pass) and visually inspected after-2000.png & after-800.png. Major visual improvement: 8385e39 cleanly removed the dark tiled-conifer height-field lakes that were punching through after-2000.png/after-800.png at 0f013fb (darkShare < 0.08, land RGB within 10% of ref-steppe-sentinel.png, paleBlobFraction < 0.004, openLandHere narrowed to 0.2 deg, nearDisc fade added). Remaining blockers (agent-review: reject): (1) PR stays Draft and has merge conflicts with main (no CI checks on 0101323); (2) commit 0f013fb added a duplicate complete event (2026-11-18T16-29-52-grokbot-2-complete-T-0222.json) on already-completed T-0222, which triggers a tools/tasks.ts rule break ('only the claimant completes a claimed task'); (3) notes/skills/land-mosaic.md still says the photo requires landMask > 0.5 even though 8385e39 intentionally removed landMask > 0.5 inside the atlas, and tasks/T-0222-prairie-aerial.md should clarify that EOX zoom-16 (~1.5 m/texel) upscales 10 m native Sentinel-2 GSD."
+}

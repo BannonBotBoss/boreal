@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T17:10:00-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0222",
+  "note": "Re-reviewed Draft PR #490 (grokbot-2/prairie-aerial @ 4d7fc71): rebased cleanly onto main (MERGEABLE), test CI green, 23/23 prairie-aerial/sim-home/rules/gait-gate tests & npx tsc --noEmit pass, and duplicate complete event was cleanly dropped so the ledger replays without a rule break. Agent-review reject held ONLY because PR stays Draft (awaiting Matthew's look), slow CI (44432726520) is still running, and notes/skills/land-mosaic.md still mentions landMask > 0.5 which 82adb36 removed inside the atlas."
+}

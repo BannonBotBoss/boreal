@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-19T01:03:00-07:00",
+  "agent": "agy",
+  "type": "propose",
+  "task": "T-0270",
+  "note": "Proposed T-0270 from live Chromium (1280x720, origin/main 041ba10) & calibrated Rule 11 audit (0/6 pass >=0.95, meanScore=0.0852, calibrationValid=true): fade.ts:59,67 post-tonemap linear/sRGB far-layer mix (RMS 0.123, blowing out both noon & winter midnight 400 m drone views to sRGB 245,247,235 luma 245.7/255), droneGrade.ts:14 DRONE_STOP=1.5 (+0.585 EV vs sqrt(2)) & inpage.ts:473-474 uncompensated backgroundIntensity double-exposure surge (+16.5% at 2 km, +50% at 400-600 m, effective 3.90 vs 2.60), inpage.ts:475/228-234 unrestored physicalSky.scale=100000 (50 km > cam.far 8 km) clipping the Preetham sky dome after G landing (darkFrac 0.5297 vs 0.0056), inpage.ts:476 hardcoded daytime blue fog RGB(0.45,0.62,0.9) at winter midnight (16.43x sky.ts night fog), fade.ts:86 + inpage.ts:237-260 hideForBand uncompiled patchFade deadlock (17/67 chunks hidden at 1200 m) & WeakMap false poisoning, plus forestLanding.ts:74-81 seed-blind landingMemo (150.6 m stale cross-seed error) and 398.45 m 1-frame G-embody camera snap."
+}

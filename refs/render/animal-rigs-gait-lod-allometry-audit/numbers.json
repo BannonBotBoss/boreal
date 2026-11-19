@@ -1,0 +1,275 @@
+{
+  "audit": "animal-rigs-gait-lod-allometry-audit",
+  "capturedAt": "2026-11-19T07:11:16.946Z",
+  "baseUrl": "http://127.0.0.1:5261",
+  "calibrationValid": true,
+  "passing": 0,
+  "total": 6,
+  "meanScore": 0.01,
+  "checks": [
+    {
+      "id": "procedural-animal-leg-order-and-bird-wing-pivot",
+      "label": "proceduralAnimal.ts [LF,LH,RF,RH] leg-index alignment with quadrupedPose & idle/shoulder bird wings",
+      "measured": "lynxExact=0/4 (RF,LF,RH,LH), foxExact=0/4 (RF,LF,RH,LH), front/hind swapped on i=1(LF->LH) & i=2(RH->RF), eagleIdleWingRot=0.450 rad, shoulderPivot=false",
+      "expected": "4/4 exact [LF,LH,RF,RH] quadrant match (0 front/hind swaps) + 0.000 rad idle wing flap + shoulder-joint wing pivot",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Hildebrand (1965) Science 150:701-708 (lateral-sequence quadruped gait LH->LF->RH->RF); Alexander (1984) Int. J. Robotics Res. 3(2):49-59"
+    },
+    {
+      "id": "procedural-red-fox-scale-lighting-and-shadows",
+      "label": "Procedural Red Fox (Vulpes vulpes) anatomical scale, lit PBR tone-mapped material, and shadow casting",
+      "measured": "scale=1.70, shoulderH=0.636 m (earTop=0.894 m), totalL=1.563 m, litPBR=0/19 (MeshBasicMaterial), toneMapped=0/19, castShadow=0/19",
+      "expected": "shoulderH=0.35-0.42 m (target 0.39 m), totalL=0.90-1.05 m (target 0.98 m), 100% lit MeshStandardMaterial (toneMapped=true), castShadow=true",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Lariviere & Pasitschniak-Arts (1996) Mammalian Species 537 (Vulpes vulpes: 0.35-0.42 m shoulder, 0.90-1.05 m total length); Johnsen et al. (2006) J. Exp. Biol. 209:789-800"
+    },
+    {
+      "id": "playable-deer-rig-allometry-winter-antlers-and-sharing",
+      "label": "Playable White-tailed Deer (animalRig.ts / playables.ts) withers allometry, sex/seasonal antlers & geometry sharing",
+      "measured": "withersH=2.120 m, totalAntlerH=3.250 m, cameraHeight=2.2 m, DEER_LEGS.hip=1.1 m, antlered=20/20 (100%), sharedGeos=0/27, sharedMats=0/4",
+      "expected": "withersH=0.85-1.05 m (target 0.95 m), totalH~1.35-1.55 m, cameraHeight~1.1-1.3 m, <=50% antlered (<=15% Jan winter shed), 100% shared geometry/materials across deer",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Smith (1991) Mammalian Species 388 (Odocoileus virginianus: 0.85-1.05 m shoulder); Goss (1983) Deer Antlers, Academic Press (Dec-Feb antler shedding; antlerless females)"
+    },
+    {
+      "id": "player-wolf-slope-terrain-feet-and-gait-lod-coverage",
+      "label": "Player wolf slope terrainFeet IK (gaitLod.ts:391), GAIT_LOD_SPECIES quadruped coverage, & non-emissive dark eyes",
+      "measured": "playerMaxPawSlopeErr=11.06 cm (p2p=20.38 cm on 20 deg slope, vs NPC 5.73 cm), GAIT_LOD_SPECIES=1/19 (5.3%), wolfEyeEmissiveIntensity=1.00",
+      "expected": "playerMaxPawSlopeErr <= 2.0 cm on 20 deg slope (terrainFeet runs after copyProcRig), 100% quadruped GAIT_LOD_SPECIES coverage, wolfEyeEmissiveIntensity <= 0.05 in pitch darkness",
+      "score": 0.06,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Alexander (1984) Int. J. Robotics Res. 3(2):49-59; Bollo (2016) GDC Inertialization; Ollivier et al. (2004) Vet. Ophthalmol. 7(1):11-22 (tapetum lucidum retro-reflection, zero self-emission)"
+    },
+    {
+      "id": "bear-rig-template-caching-claws-and-transactional-posture",
+      "label": "Bear rig (bear.ts) shared template caching, merged per-paw claws, PBR nostrils, & posture-driven head motion",
+      "measured": "sharedGeos=0/47 (rebuilds 82893 fur tris per call), clawMeshes=40 (40 draw calls), meshBasicNostrils=2, bareClockIdleSine=true, postureSupport=false",
+      "expected": "100% shared skin/fur template across instances (like rigSkin.ts), <=4 merged claw meshes (1/paw), 0 MeshBasicMaterial, posture-driven head (no bare Math.sin(time))",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Akenine-Moller et al. (2018) Real-Time Rendering 4th ed. (geometry batching/sharing); PROJECT-RULES.md Rule 5 (transactional posture, no bare clock timers)"
+    },
+    {
+      "id": "dead-legacy-fur-shell-module-and-noise-allowlist",
+      "label": "Removal of dead legacy src/render/fur.ts (private shader noise allowlist + unlit midnight rim emissive)",
+      "measured": "furTsExists=true, liveImporters=0, inRulesNoiseAllowlist=true, privateHash3Vnoise=true, unlitMidnightRimEmissive=true",
+      "expected": "Dead unreferenced src/render/fur.ts deleted and removed from tests/rules.test.ts shader-noise allowlist (0 duplicate noise libraries)",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "PROJECT-RULES.md Rule 1 & tests/rules.test.ts:30 (single shared GLSL_NOISE in src/proc/glsl.ts; shrink allowlists to zero)"
+    }
+  ],
+  "raw": {
+    "legOrderAndBird": {
+      "lynxCheck": {
+        "exactMatch": 0,
+        "frontHindMatch": 2,
+        "actual": [
+          {
+            "index": 0,
+            "x": 0.099,
+            "z": -0.154,
+            "actual": "RF",
+            "expected": "LF"
+          },
+          {
+            "index": 1,
+            "x": -0.099,
+            "z": -0.154,
+            "actual": "LF",
+            "expected": "LH"
+          },
+          {
+            "index": 2,
+            "x": 0.099,
+            "z": 0.154,
+            "actual": "RH",
+            "expected": "RF"
+          },
+          {
+            "index": 3,
+            "x": -0.099,
+            "z": 0.154,
+            "actual": "LH",
+            "expected": "RH"
+          }
+        ]
+      },
+      "foxCheck": {
+        "exactMatch": 0,
+        "frontHindMatch": 2,
+        "actual": [
+          {
+            "index": 0,
+            "x": 0.07,
+            "z": -0.12,
+            "actual": "RF",
+            "expected": "LF"
+          },
+          {
+            "index": 1,
+            "x": -0.07,
+            "z": -0.12,
+            "actual": "LF",
+            "expected": "LH"
+          },
+          {
+            "index": 2,
+            "x": 0.07,
+            "z": 0.12,
+            "actual": "RH",
+            "expected": "RF"
+          },
+          {
+            "index": 3,
+            "x": -0.07,
+            "z": 0.12,
+            "actual": "LH",
+            "expected": "RH"
+          }
+        ]
+      },
+      "idleWingRotRad": 0.45,
+      "birdIdleStill": false,
+      "wingIsShoulderPivoted": false
+    },
+    "redFox": {
+      "scale": 1.7,
+      "shoulderHeightM": 0.6362,
+      "totalHeightM": 0.8945,
+      "totalLengthM": 1.5632,
+      "totalMeshes": 19,
+      "litPbrMeshes": 0,
+      "toneMappedMeshes": 0,
+      "shadowCastingMeshes": 0
+    },
+    "playableDeer": {
+      "withersHeightM": 2.12,
+      "totalHeightM": 3.25,
+      "cameraHeight": 2.2,
+      "antleredCount": 20,
+      "totalGeosB": 27,
+      "sharedGeos": 0,
+      "sharedMats": 0,
+      "uniqueMatsB": 4
+    },
+    "playerWolfSlopeAndGaitLod": {
+      "slopeDeg": 20,
+      "playerSlope": {
+        "errs": [
+          0.1106,
+          -0.0932,
+          0.1106,
+          -0.0932
+        ],
+        "maxAbsErr": 0.11062905956096075,
+        "peakToPeak": 0.20380543414241983
+      },
+      "npcSlope": {
+        "errs": [
+          0.0573,
+          0,
+          0.0573,
+          0
+        ],
+        "maxAbsErr": 0.0573145670767697,
+        "peakToPeak": 0.05731454859572577
+      },
+      "gaitLodSpeciesCount": 1,
+      "manifestQuadrupedCount": 19,
+      "maxEyeEmissive": 1,
+      "copyProcRigReturnsTrue": true
+    },
+    "bearRig": {
+      "totalMeshes": 47,
+      "uniqueGeosPerBear": 47,
+      "sharedGeos": 0,
+      "clawMeshes": 40,
+      "furTris": 82893,
+      "basicMats": 2,
+      "clawBatchScore": 0.1,
+      "hasBareClockIdleSine": true,
+      "hasPostureSupport": false
+    },
+    "legacyFur": {
+      "furExists": true,
+      "liveImporters": 0,
+      "stillInNoiseAllowlist": true,
+      "hasPrivateNoise": true,
+      "hasUnlitEmissiveRim": true
+    },
+    "slopeSpot": {
+      "x": 44,
+      "z": 30,
+      "h": 2.2247423714264425,
+      "slopeDeg": 24.93511727900259,
+      "yawBroadside": 1.642975982222607
+    }
+  },
+  "live": {
+    "consoleErrors": [],
+    "pageErrors": [],
+    "liveTelemetry": {
+      "frame0": {
+        "status": "12:18 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+        "luma": {
+          "ok": true,
+          "mean": 0,
+          "maxR": 0,
+          "brightOrangePx": 0
+        }
+      },
+      "frame1": {
+        "status": "00:18 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 74/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+        "luma": {
+          "ok": true,
+          "mean": 0,
+          "maxR": 0,
+          "brightOrangePx": 0
+        }
+      },
+      "frame2": {
+        "slopeSpot": {
+          "x": 44,
+          "z": 30,
+          "h": 2.2247423714264425,
+          "slopeDeg": 24.93511727900259,
+          "yawBroadside": 1.642975982222607
+        },
+        "status": "13:12 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 74/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+        "luma": {
+          "ok": true,
+          "mean": 0,
+          "maxR": 0,
+          "brightOrangePx": 0
+        }
+      },
+      "frame3": {
+        "playable": "deer",
+        "sensesTitle": "",
+        "status": "12:21 · WALK · Snow 34.4 cm · Stamina 100/100 · Energy 75/100 · Water 99% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+        "luma": {
+          "ok": true,
+          "mean": 0,
+          "maxR": 0,
+          "brightOrangePx": 0
+        }
+      }
+    }
+  }
+}

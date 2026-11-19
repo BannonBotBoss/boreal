@@ -1,0 +1,182 @@
+{
+  "audit": "T-0267-shadows-trees-flora-audit",
+  "calibrationValid": true,
+  "passingCount": 0,
+  "totalChecks": 6,
+  "meanScore": 0.1525,
+  "consoleErrors": 0,
+  "checks": [
+    {
+      "id": "contact-shadow-solar-geometry-and-midnight",
+      "label": "Contact shadow solar stretch direction, antisolar offset, and midnight opacity (buildScene.ts:584, contactShadow.ts:25,42)",
+      "measured": "noonStretch=1.55 > lowSunStretch=0.95 (inverted), antisolarOffset=false, midnightOpacity=0.55 (toneMapped=false), 0/4 invariants",
+      "expected": "lowSunStretch > noonStretch (cot elev), antisolar offset along -sunDir, midnight/overcast opacity <= 0.15, toneMapped=true (4/4)",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "NOAA Solar Position / Meeus (1998) shadow length L = h·cot(α); physically based ambient occlusion under overcast/night sky"
+    },
+    {
+      "id": "contact-shadow-slope-normal-scaling",
+      "label": "Contact shadow terrain gradient normalization on 30° slope (buildScene.ts:574, contactShadow.ts:45)",
+      "measured": "nx=Δy (missing /0.4) -> tilt=13.00° vs 30.0° (2.50× under-tilt, downhill hover +21.9 cm)",
+      "expected": "nx = (heightAt(x+h,z)-y)/h -> tilt = 30.0° on 30° slope (0.0 cm slope-mismatch hover)",
+      "score": 0.4335,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Differential geometry surface normal n = normalize(-∂h/∂x, 1, -∂h/∂z) for heightfield y = h(x, z)"
+    },
+    {
+      "id": "weber-penn-tropism-sign-and-sweep-orients",
+      "label": "Weber-Penn signed vertical tropism & basal-sweep child orientation sync (weberPenn.ts:30,49-52)",
+      "measured": "n=361 L2 shoots: mean Δy(+0.8)=+0.1820m vs Δy(-0.8)=+0.1820m (identical upward bend: Math.abs(amount)=true); sweepUpdatesOrients=false (trunk bends 4.98° while orients stay unswept)",
+      "expected": "negative attractionUp bends downward (Δy(-0.8) < Δy(+0.8) - 0.01m) AND basal sweep rotates orients[i] with points[i] (2/2)",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Weber & Penn (1995) SIGGRAPH §4.3 signed vertical tropism (attractionUp < 0 = weeping/drooping) & stem-frame continuity"
+    },
+    {
+      "id": "conifer-lod-card-energy-conservation",
+      "label": "Conifer near/mid foliage vertex albedo energy conservation & LOD parity (conifer.ts:167,260)",
+      "measured": "nearLeaf maxRGB=1.578 (mean=1.166), midLeaf maxRGB=3.023 (mean=2.247, 1.93× jump)",
+      "expected": "vertex RGB <= 1.000 (linear energy conservation) and near/mid mean parity >= 0.95",
+      "score": 0.4248,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.4156,
+      "pass": false,
+      "source": "Physically Based Rendering (Pharr, Jakob & Humphreys 2023) reflectance ρ ∈ [0, 1]; PROSPECT-D Picea mariana needle albedo ≤ 0.25"
+    },
+    {
+      "id": "horizon-canopy-stride-and-billboard-silhouette",
+      "label": "Horizon CANOPY DataTexture dimensions (64×64 vs 32×32) & organic billboard crown silhouette (horizonMesh.ts:22, billboardAtlas.ts:29-42)",
+      "measured": "canopyTile()=16384 B (64×64) uploaded as 32×32 (4096 B, 4× byte/2× stride mismatch); conifer sprite triangle residual=0.50 px (rigid geometric triangle)",
+      "expected": "DataTexture dims match buffer (64×64 = 16,384 B) AND conifer/broadleaf sprites have organic irregular crown silhouettes (mean residual >= 1.5 px)",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "WebGL2 texImage2D row-stride specification; Viereck & Johnston (1990) ragged black-spruce spire morphology"
+    },
+    {
+      "id": "understory-juniper-underground-and-carpet-slope",
+      "label": "Prostrate juniper above-ground stem bounds & clonal carpet terrain-slope conformity (flora/plant.ts:119-121,134-140, flora.ts:167)",
+      "measured": "juniper minY=-41.4 cm (12.1% verts < -1 cm); clump maxR=0.29 m placed upright (slopeAlign=false) -> +13.3 cm hover on 25° slope",
+      "expected": "juniper minY >= -1.0 cm (prostrate stems stay above soil) AND clonal carpets align to local terrain normal (<= 2.0 cm edge hover on 25° slope)",
+      "score": 0.0564,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Flora of North America Vol. 2 (Juniperus communis var. depressa decumbent stems >= 0 cm above substrate) & clonal mat terrain conformity"
+    }
+  ],
+  "raw": {
+    "baseUrl": "http://127.0.0.1:5259",
+    "capturedAt": "2026-11-19T04:57:04.583Z",
+    "contactShadowSolar": {
+      "stretchExpr": "0.85 + sun * 0.7",
+      "opacityExpr": "0.55 + sun * 0.35",
+      "gameNoonStretch": 1.5499999999999998,
+      "gameLowSunStretch": 0.955,
+      "gameMidnightOpacity": 0.55,
+      "hasAntisolarOffset": false,
+      "usesToneMappedFalse": true,
+      "passed": 0,
+      "total": 4
+    },
+    "contactShadowSlope": {
+      "missingDivStep": true,
+      "slopeDegTrue": 30,
+      "gameTiltDeg": 13,
+      "slopeFactorError": 2.5,
+      "downhillHoverCm": 21.91
+    },
+    "weberPenn": {
+      "l2Count": 361,
+      "dyPos": 0.18198,
+      "dyNeg": 0.18198,
+      "diffPosNeg": 0,
+      "usesAbsAmount": true,
+      "tropismDistinguishesSign": false,
+      "sweepUpdatesOrients": false,
+      "trunkSweepAngleDeg": 4.98,
+      "passed": 0,
+      "total": 2
+    },
+    "coniferCardAlbedo": {
+      "nearLeafMaxRgb": 1.578,
+      "nearLeafMeanRgb": 1.1656,
+      "midLeafMaxRgb": 3.0234,
+      "midLeafMeanRgb": 2.2465,
+      "midOverNearMeanRatio": 1.927,
+      "energyScore": 0.3308,
+      "nearMidParity": 0.5188,
+      "gainLine": "cardSteps(pause, midCards, h, crownR, form, rnd, 2, 1.9)"
+    },
+    "horizonCanopyAndSprites": {
+      "canopyTileBytes": 16384,
+      "horizonMeshDeclaredDims": "32x32 (4096 bytes)",
+      "strideMatches": false,
+      "coniferSpriteLinearResidPx": 0.497,
+      "coniferSpriteMaxResidPx": 0.969,
+      "spriteHasOrganicSilhouette": false,
+      "hardcodedLeftSun": true
+    },
+    "understoryFlora": {
+      "juniperId": "juniper",
+      "juniperMinYCm": -41.4,
+      "juniperBelowMinus1cmShare": 0.1209,
+      "juniperBelowVerts": 8529,
+      "juniperTotalVerts": 70560,
+      "carpetSpeciesCount": 3,
+      "maxCarpetRadiusM": 0.28,
+      "measuredClumpMaxRM": 0.285,
+      "floraAlignsToSlope": false,
+      "carpetHoverOn25DegCm": 13.31
+    },
+    "liveFrames": {
+      "frame0Info": {
+        "hud": "12:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+        "time": "PROCEDURAL WORLD / 01BorealA landscape made from instructions."
+      },
+      "frame3Info": {
+        "treesV2": {
+          "stepMaxMs": 6.1,
+          "trees": 0,
+          "far": 0,
+          "near": 0,
+          "mid": 0,
+          "crown": 0,
+          "variants": 0,
+          "buildMs": [],
+          "slow": [
+            [
+              6.1,
+              9,
+              110,
+              "atlas13"
+            ]
+          ],
+          "tris": {},
+          "full": 0
+        },
+        "flora": {
+          "tiles": 0,
+          "plants": 0,
+          "visible": 0,
+          "clumps": 0,
+          "clumpsVisible": 0,
+          "bySpecies": {},
+          "sliceMaxMs": 0,
+          "buildMaxMs": 0,
+          "geometries": 128
+        }
+      },
+      "consoleErrorCount": 0,
+      "consoleErrors": []
+    }
+  }
+}

@@ -31,8 +31,13 @@ export const GROUND_HOLD = {
 const within = <T,>(p: Promise<T>, ms: number) => Promise.race([p, new Promise<never>((_, no) => setTimeout(() => no(new Error('timeout')), ms))]);
 type View = ReturnType<typeof buildScene>;
 export const raf = () => new Promise<number>(r => requestAnimationFrame(r)), wait = (ms: number) => new Promise(r => setTimeout(r, ms));
-/** A wedged SwiftShader frame never fires requestAnimationFrame, so the time cap behind that await is never read. */
-const tick = (pump: () => Promise<unknown>) => Promise.race([pump(), wait(4000)]);
+/** A wedged SwiftShader frame never fires requestAnimationFrame, so the time cap behind that await is never read.
+ *  The timer is cleared when the frame does arrive, or a startup leaves hundreds of 4 s timers behind. */
+const tick = (pump: () => Promise<unknown>) => {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const cap = new Promise<void>(resolve => { timer = setTimeout(resolve, 4000); });
+  return Promise.race([pump(), cap]).finally(() => clearTimeout(timer));
+};
 const wall = () => performance.now();
 /** Wait until the interest job queue stays empty for `quietFrames` frames (or `maxMs`). Shared with ?bench. */
 export async function settle(quietFrames = 60, maxMs = 40000, onFrame?: (elapsed: number) => void, pump: () => Promise<unknown> = raf, now = wall, busy: () => unknown = queued) {

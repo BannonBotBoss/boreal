@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T15:50:20-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0254",
+  "note": "Re-reviewed PR #488 (grokbot-2/orbit-biome @ 09c64c6, non-Draft, CI green): tsc clean and 20/20 orbit-biome/sim-home/rules/gait-gate tests pass after moving orbit_vegetation to rust/boreal-sim/src/cover.rs and draw code to src/render/globe/. Still blocked (agent-review: reject): (1) no claim or complete event for T-0254 yet and tasks/handoffs/T-0254-grokbot-2.md is stale (still says draft/unclaimed and cites deleted orbitBiome.ts); (2) src/render/globe/orbitDraw.ts:15-16 still mixes diffuseColor.rgb with alb.rgb without applying alb.a to tile.ts landMask, leaving the grey Central Asia/Caspian specular wedge in after-home.png (frames not recaptured after 09c64c6); (3) src/render/globe/orbitVeg.ts:15 instantiates a separate boreal_sim.wasm copy instead of sharing one wasm instance, and rust/boreal-sim/src/cover.rs:166-188 ZONAL/700.0/0.28/0.72/0.7 lack Rule 5 citations or [game calibration] tags."
+}

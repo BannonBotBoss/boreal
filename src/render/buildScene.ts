@@ -581,7 +581,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       for (const row of animals.values()) { if (spots.length >= 24) break; const g = foot(row.entity.x, row.entity.z); spots.push({ x: row.entity.x, y: g.y, z: row.entity.z, s: 0.9, nx: g.nx, nz: g.nz }); }
       for (const hare of hares.list()) { if (spots.length >= 24) break; const g = foot(hare.x, hare.z); spots.push({ x: hare.x, y: g.y, z: hare.z, s: 0.35, nx: g.nx, nz: g.nz }); }
       const sun = 1 - Math.min(1, Math.max(0, darkness));
-      contacts.set(spots, { stretch: 0.85 + sun * 0.7, opacity: 0.55 + sun * 0.35, yaw: Math.atan2(lit.dir.x, lit.dir.z) });
+      contacts.set(spots, { stretch: 0.85 + sun * 0.7, opacity: 0.32 + sun * 0.22, yaw: Math.atan2(lit.dir.x, lit.dir.z) });
     }
     for (const child of scene.children) {
       const picture = child.userData.animalPicture || child.userData.wolfLod || child.name.startsWith('pup:');

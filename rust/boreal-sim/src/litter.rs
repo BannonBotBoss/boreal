@@ -28,10 +28,14 @@ const LATERAL_M: f64 = 1.15;
 const VIEW_BACK_M: f64 = 1.55;
 /// Further than this in one step is a drop, not a walk. The pup is on the trail at once.
 const REJOIN_M: f64 = 4.0;
-/// Disc around mama that a pup body may not enter. [game calibration] Chest plus a planted foreleg, not a measured shoulder width.
-const MAMA_BODY_M: f64 = 0.42;
-/// Four-week pup body radius. [game calibration] It grows with body_scale.
-const PUP_BODY_M: f64 = 0.18;
+/// Disc around mama that a pup body may not enter.
+/// The drawn wolf is the body mesh at WOLF_SCALE 2 (about 1.4 m nose to rump).
+/// 0.42 left the pups inside that torso. [game calibration]
+const MAMA_BODY_M: f64 = 0.72;
+/// Four-week pup body radius. The mesh is the adult skin at pup scale 0.3,
+/// about 0.42 m nose to rump, so 0.18 let the bodies occupy the same ground.
+/// It grows with body_scale. [game calibration]
+const PUP_BODY_M: f64 = 0.28;
 /// Seconds for the steering velocity to catch a new direction. [game calibration]
 const STEER_TAU: f64 = 0.28;
 
@@ -502,6 +506,23 @@ mod tests {
             }
         }
         assert!(body_radius(1.0) > r);
+        assert!(r >= 0.28, "four-week radius {r} is inside the drawn mesh");
+    }
+
+    #[test]
+    fn a_pile_does_not_line_up() {
+        let r = body_radius(EMERGE_YEARS);
+        let piled: Vec<(f64, f64, f64)> = (0..5).map(|_| (0.0, 0.0, r)).collect();
+        let out = separate_herd(&piled, 0.0, 0.0);
+        let mut area = 0.0;
+        for i in 2..out.len() {
+            let ax = out[i].0 - out[0].0;
+            let az = out[i].1 - out[0].1;
+            let bx = out[1].0 - out[0].0;
+            let bz = out[1].1 - out[0].1;
+            area += (ax * bz - az * bx).abs();
+        }
+        assert!(area > 0.05, "pups lined up, spread {area}");
     }
 
     #[test]

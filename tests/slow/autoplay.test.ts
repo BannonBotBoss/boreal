@@ -14,13 +14,14 @@ const root = join(import.meta.dirname, '../..');
 const port = 5217;
 const chrome = ['/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/usr/bin/chromium', '/usr/bin/chromium-browser'].find(p => existsSync(p));
 
-test('autoplay reaches the end without a page error', { timeout: 840_000 }, async () => {
+test('autoplay reaches the end without a page error', { timeout: 930_000 }, async () => {
   assert.ok(chrome, 'Chrome is not installed (google-chrome or chromium)');
   const frames = '/opt/cursor/artifacts';
     mkdirSync(frames, { recursive: true });
     mkdirSync('/tmp/autoplay-video', { recursive: true });
   const logs: string[] = [];
   const errors: string[] = [];
+  const failed: string[] = [];
   let vite: ChildProcess | undefined;
   let browser: Browser | undefined;
   let page: Page | undefined;
@@ -35,6 +36,7 @@ test('autoplay reaches the end without a page error', { timeout: 840_000 }, asyn
     const context = await browser.newContext({ viewport: { width: 1280, height: 720 }, recordVideo: { dir: '/tmp/autoplay-video', size: { width: 1280, height: 720 } } });
     page = await context.newPage();
     page.on('pageerror', e => errors.push(e.message));
+    page.on('requestfailed', r => failed.push(`${r.failure()?.errorText ?? 'failed'} ${r.url()}`));
     page.on('console', msg => {
       const line = msg.text();
       if (msg.type() === 'error') errors.push(line);
@@ -45,16 +47,35 @@ test('autoplay reaches the end without a page error', { timeout: 840_000 }, asyn
         void page!.screenshot({ path: join(frames, `autoplay-${logs.length}-${slug}.png`) }).catch(() => {});
       }
     });
-    await page.goto(`http://127.0.0.1:${port}/?autoplay=1`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`http://127.0.0.1:${port}/?autoplay=1&noprobe=1`, { waitUntil: 'domcontentloaded' });
+    const dump = async () => {
+      const step = await page!.evaluate(() => document.querySelector('#loading .loading-step')?.textContent ?? '').catch(() => '');
+      console.log(`LOGS\n${logs.join('\n')}\nERRORS\n${errors.join('\n')}\nFAILED\n${failed.join('\n')}\nSTEP ${step}`);
+    };
+    const loadingGone = Date.now() + 180_000;
+    while (Date.now() < loadingGone) {
+      const up = await page.evaluate(() => !!document.getElementById('loading')).catch(() => true);
+      if (!up) break;
+      await page.waitForTimeout(500);
+    }
+    if (await page.evaluate(() => !!document.getElementById('loading')).catch(() => true)) {
+      await dump();
+      await page.screenshot({ path: join(frames, 'autoplay-timeout.png') }).catch(() => {});
+      throw new Error('#loading still up after 180s');
+    }
     try {
-      await page.waitForFunction(() => (window as unknown as { __autoplayDone?: boolean }).__autoplayDone === true, undefined, { timeout: 780_000 });
+      await page.waitForFunction(() => (window as unknown as { __autoplayDone?: boolean }).__autoplayDone === true, undefined, { timeout: 700_000 });
     } catch (err) {
-      console.log(`LOGS\n${logs.join('\n')}\nERRORS\n${errors.join('\n')}`);
+      await dump();
       await page.screenshot({ path: join(frames, 'autoplay-timeout.png') }).catch(() => {});
       throw err;
     }
     const shot = join(frames, 'autoplay-done.png');
-    await page.screenshot({ path: shot });
+    // The last frame is best-effort: on a GPU-less CI runner the busy renderer can
+    // miss the default 30s capture window after every step already passed.
+    await page.screenshot({ path: shot, timeout: 90_000 }).catch(err => {
+      console.log(`AUTOPLAY final screenshot skipped: ${(err as Error).message.split("\n")[0]}`);
+    });
     const video = page.video();
     await context.close();
     page = undefined;

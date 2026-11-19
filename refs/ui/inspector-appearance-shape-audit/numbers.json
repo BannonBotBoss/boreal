@@ -1,0 +1,145 @@
+{
+  "task": "T-0260",
+  "generatedAt": "2026-11-19T00:08:44.571Z",
+  "calibration": {
+    "knownMatch": {
+      "ratio_exact": 1,
+      "delta_zero": 1,
+      "binary_pass": 1
+    },
+    "knownMismatch": {
+      "ratio_zero": 0,
+      "delta_full": 0,
+      "binary_fail": 0
+    }
+  },
+  "calibrationValid": true,
+  "summary": {
+    "passed": 0,
+    "total": 12,
+    "passThreshold": 0.95,
+    "meanScore": 0.2581
+  },
+  "checks": [
+    {
+      "id": "inspector-visible-on-toggle",
+      "name": "#inspector panel visible on pressing I without hidden boreal-debug class",
+      "measured": 0,
+      "target": 360,
+      "unit": "px width (CSS #inspector width)",
+      "source": "src/style.css:20 (#inspector width: 360px) vs src/camera/gameCamera.ts:97 (display:none !important)",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "inspector-terrain-pick",
+      "name": "Clicking visible ground selects terrain column/weather/deltas in Inspector",
+      "measured": 0,
+      "target": 6,
+      "unit": "hits / 6 ground clicks",
+      "source": "src/render/buildScene.ts:179,666-675 (ground.visible=false & continuousTerrain omitted from pick roots)",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "inspector-gizmo-material-disposal",
+      "name": "drawGizmos() & toggle(false) dispose allocated Three.js materials and geometries (0 leaked materials/frame)",
+      "measured": 0,
+      "target": 1,
+      "unit": "disposal compliance fraction",
+      "source": "src/ui/inspector.ts:216-220,228,230,265 (Three.js r180 WebGLRenderer disposal contract)",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "inspector-shared-geometry-guard",
+      "name": "freeGeometry() preserves userData.shared cached meshes (trees/rocks) on What-If preview restore",
+      "measured": 0,
+      "target": 1,
+      "unit": "boolean (1 = guards userData.shared)",
+      "source": "src/ui/inspector.ts:37 vs src/render/geometry.ts disposeObject shared-cache invariant",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "inspector-player-species-dynamic",
+      "name": "Inspector player readout uses active playable species instead of hardcoded Gray wolf",
+      "measured": 0,
+      "target": 1,
+      "unit": "boolean (1 = species-aware)",
+      "source": "src/ui/inspector.ts:137-143 vs src/render/playables.ts (wolf, deer, bear, hare)",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "appearance-keydown-capture-leak",
+      "name": "appearancePanel removes capture-phase keydown listeners on rebuild/unmount (0 leaked listeners)",
+      "measured": 2,
+      "target": 0,
+      "unit": "leaked capture keydown listeners over 2 edits",
+      "source": "WHATWG DOM Standard §2.7 EventTarget.removeEventListener(type, cb, capture) vs src/ui/appearancePanel.ts:60,64",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "shapetools-3d-handle-lifecycle",
+      "name": "3D drag handles guard behind-camera NDC (v.z>1), handle pointercancel, and detach on Inspector close",
+      "measured": 0,
+      "target": 1,
+      "unit": "3 lifecycle guards fraction",
+      "source": "src/ui/shapeTools.ts:31-53 & src/ui/inspector.ts:263-266 (W3C Pointer Events Level 3)",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "genome-load-ratio-constraint",
+      "name": "createGenomeEditor().load() enforces cross-parameter height/length >= 0.70 constraint",
+      "measured": 0.5556,
+      "target": 0.7,
+      "unit": "height/length ratio (must be >= 0.70)",
+      "source": "src/core/genome.ts:32,71 (CONSTRAINTS height/length in [0.7, 1.4])",
+      "score": 0.7936507936507936,
+      "pass": false
+    },
+    {
+      "id": "genome-handlewall-size-linear",
+      "name": "handleWall(\"size\") scales 1:1 with worldDelta/baseExtent (no double size^2 division)",
+      "measured": 0.7143,
+      "target": 1,
+      "unit": "d(size) / (worldDelta / baseExtent)",
+      "source": "src/core/genome.ts:80-85 (\"the render layer effect is exactly linear\")",
+      "score": 0.7142857142857149,
+      "pass": false
+    },
+    {
+      "id": "genome-fitprofile-domain",
+      "name": "fitProfile() reaches valid (1.30, 1.30) sketch from (0.75, 0.75) without stale height clamp",
+      "measured": 1.0714,
+      "target": 1.3,
+      "unit": "fitted length (target 1.30)",
+      "source": "src/core/genome.ts:95-104 (least-squares over valid CONSTRAINTS domain)",
+      "score": 0.8241761538461538,
+      "pass": false
+    },
+    {
+      "id": "appearance-shader-csm-and-luminance",
+      "name": "render/appearance.ts chains onBeforeCompile (preserving CSM shadows) and uses Rec.709 linear luminance without 2x albedo blowup",
+      "measured": 0,
+      "target": 1,
+      "unit": "shader compliance fraction",
+      "source": "ITU-R BT.709-6 / IEC 61966-2-1 linear luminance (0.2126, 0.7152, 0.0722) & Three.js CSM onBeforeCompile chaining (src/render/photoreal.ts)",
+      "score": 0,
+      "pass": false
+    },
+    {
+      "id": "shapetools-wheel-swatch-srgb-match",
+      "name": "ShapeTools color wheel pixel RGB matches CSS swatch sRGB output at HSV(0, 0.5, 1)",
+      "measured": 128,
+      "target": 188,
+      "unit": "green/blue byte (wheel canvas 128 vs CSS swatch 188)",
+      "source": "IEC 61966-2-1 sRGB transfer function & Three.js r180 ColorManagement (src/ui/shapeTools.ts:64,109)",
+      "score": 0.7647058823529411,
+      "pass": false
+    }
+  ]
+}

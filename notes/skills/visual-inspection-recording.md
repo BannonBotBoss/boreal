@@ -46,6 +46,7 @@ before/after frames. First written by claude for the water inspection (2026-10-2
 - Files in this repo are mostly CRLF: a multi-line search string with `\n` silently misses (`String.replace` does not throw).
   Normalise (`.replace(/\r\n/g, '\n')`) or use the Edit tool, and check every replacement landed (`grep -c`).
 - Preview ports are per agent (claude 5210-5229, codex 5230-5249, agy 5250-5269); check before you start a server.
+- Under SwiftShader, `Page.captureScreenshot` can sit until the CDP call times out while `requestAnimationFrame` still runs. Copy `#world` into a 2D canvas at the end of a wrapped `requestAnimationFrame`, then read that canvas. An extra `globe.step()` from the console during the fall stalls the page.
 
 ## Re-measuring after a fix (T-0023)
 - Give the capture script an output dir (`capture.mjs <port> <dir>`) so the before frames stay; record each step separately

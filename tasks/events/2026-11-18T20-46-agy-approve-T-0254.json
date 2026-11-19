@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T20:46:10-07:00",
+  "agent": "agy",
+  "type": "approve",
+  "task": "T-0254",
+  "note": "Approved rebased non-Draft PR #488 (grokbot-2/orbit-biome) @ 93d1c686 (MERGEABLE onto main): all 3 previous blockers fixed (claim 19:00:55-08:00 & complete 19:08:15-08:00 events plus updated handoff matching exact head, orbitDraw.ts landMask = mix(landMask, alb.a, ow) removes Caspian/Black Sea grey ocean specular wedge in recaptured after-home.png & after-africa.png, orbitVeg.ts shares wasmInstance from src/render/simWasm.ts and rust/boreal-sim/src/cover.rs cites Holton & Hakim / cover-density.json and tags calibration constants [game calibration]). Fresh local npx tsc --noEmit exited 0, 72/72 tests pass across orbit-biome/sim-home/rules/gait-gate/tasks/globe (0 T-0254 breaks; T-0254 replays cleanly as completed 26 cr), notes/skills/orbit-biome.md & calibrated Rule 11 checks verified, test CI 44450055058 green (rebase onto a3828c7 if slow CI hits pre-#510 autoplay hang; merger verifies per Rule 17d). Posted agent-review: approve on PR #488."
+}

@@ -89,6 +89,35 @@ test('stored models are the manifest, and a species with no file keeps a body si
   assert.equal(manifest['Canada Lynx'], undefined);
 });
 
+test('a dry boreal click stands above the shore and grows grass and trees', async () => {
+  const { LEVEL } = await import('../src/core/tuning');
+  const { generateChunk } = await import('../src/core/world');
+  const { viewedCover } = await import('../src/render/grass/cover');
+  const aim = fromLatLon(49.77 * Math.PI / 180, 20.16 * Math.PI / 180);
+  assert.equal(engageLanding(aim, 0), true);
+  try {
+    const y = heightAt(0, 0);
+    assert.ok(y > LEVEL.shore, `the click is dry ground, not the lake plane (${y})`);
+    assert.ok(viewedCover(4, -3).density > 0.05, 'grass grows beside the wolf');
+    const { bladesJob, GRASS } = await import('../src/render/grass/cover');
+    const { finish } = await import('../src/core/interest');
+    let near = 0;
+    for (let tx = -1; tx <= 1; tx++) for (let tz = -1; tz <= 1; tz++) {
+      const tile = finish(bladesJob(tx, tz));
+      for (let i = 0; i < tile.count; i++) {
+        const x = tile.pos[i * 3], z = tile.pos[i * 3 + 2];
+        if (x * x + z * z < 64) near++;
+      }
+    }
+    assert.ok(near > 2000, `Ultra density (max ${GRASS.maxDensity}/m²) draws ${near} blades within 8 m`);
+    let spruce = 0;
+    for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) {
+      spruce += generateChunk(a, b).filter(e => e.kind === 'spruce').length;
+    }
+    assert.ok(spruce > 8, `the stand has trees beyond the clearing (${spruce})`);
+  } finally { clearLanding(); }
+});
+
 test('#192 T-0127: the landing cover class thins near trees (desert keeps almost none, boreal keeps the stand)', async () => {
   const { coverTreeShare } = await import('../src/world/globe/coverKind');
   const { generateChunk } = await import('../src/core/world');

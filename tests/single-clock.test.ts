@@ -32,7 +32,7 @@ function guard(name: string, violates: (text: string) => boolean, allowed: strin
 
 const FRAME = [
   'animals/hare.ts', 'animals/locomotion/lab.ts', 'core/interest.ts', 'core/stages/elevation.ts', 'core/stages/flow.ts', 'core/stages/rivers.ts', 'core/stages/soils.ts', 'core/weather.ts',
-  'dev/walkProbe.ts', 'input/padRouter.ts', 'main.ts', 'render/batch.ts', 'render/flora/fartrees.ts', 'render/flora/flora.ts', 'render/flora/moss.ts', 'render/grass/grass.ts',
+  'dev/descentFrame.ts', 'dev/walkProbe.ts', 'input/padRouter.ts', 'main.ts', 'render/batch.ts', 'render/continuousTerrain.ts', 'render/flora/fartrees.ts', 'render/flora/flora.ts', 'render/flora/moss.ts', 'render/grass/grass.ts',
   'render/math.ts', 'render/photoreal.ts', 'render/startup.ts', 'render/trees/conifer.ts', 'render/trees/game.ts', 'render/trees/viewer.ts',
   'ui/controls.ts', 'ui/gamepadSettings.ts', 'ui/haptics.ts', 'ui/loading.ts', 'ui/padMenu.ts', 'ui/shapeTools.ts',
   'world/globe/globeView.ts', 'world/globe/home.ts', 'world/globe/inpage.ts', 'world/globe/tile.ts', 'world/cosmos/sphere.ts', 'world/sun/sunView.ts',

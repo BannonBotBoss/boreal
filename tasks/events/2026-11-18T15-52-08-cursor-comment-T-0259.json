@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T15:52:08-08:00",
+  "agent": "cursor",
+  "type": "comment",
+  "task": "T-0259",
+  "note": "Renumbered from T-0258. The 15:17 PT propose (tasks/events/2026-11-18T15-17-00-cursor-propose-T-0258.json) used T-0258. That id reached main as pup personal space on PR #497, and agy also proposed it on PR #503. This standing-sky task is T-0259. No claim: approve-plan still has to come from another agent."
+}

@@ -28,11 +28,12 @@ import { RENDER } from '../../core/renderSettings';
 import { COVER_SPECIES, GRASS, bladesJob, keepAt, type Blades } from './cover';
 import { MOSS_GLSL, MOSS_UNIFORMS } from '../flora/moss';
 import { snowDepthCm, weatherAt } from '../../core/weather';
+import { snowOnGroundCm } from '../snowCover';
 import { STYLIZED } from '../stylizedPalette';
 import { landingClearDiscs, landingSightLines } from '../../core/landingRoster';
 
 export const GRASS_FX = { off: false }; // bench hook (cost measurement), like TREE_FX
-export const GRASS_INFO = { tiles: 0, blades: 0, drawn: 0, culled: 0, tris: 0, lods: [0, 0, 0], sliceMaxMs: 0, packMaxMs: 0, packs: 0 };
+export const GRASS_INFO = { tiles: 0, blades: 0, drawn: 0, culled: 0, near: 0, tris: 0, lods: [0, 0, 0], sliceMaxMs: 0, packMaxMs: 0, packs: 0 };
 (globalThis as { borealGrass?: unknown }).borealGrass = { info: GRASS_INFO, fx: GRASS_FX }; // dev/bench handle (survives Vite HMR module copies)
 const K = COVER_SPECIES.length;
 const U = {
@@ -70,9 +71,9 @@ const VERT_BODY = `
   vec3 root = position;
   float dist = distance(cameraPosition, root);
   float keep = (dist <= uGrass.y ? 1.0 : pow(uGrass.y / dist, 2.0)) * (1.0 - smoothstep(uGrass.z * 0.8, uGrass.z, dist)) * uGrass.w; // cover.keepAt × foliage
-  keep *= max(step(dist, 3.0), step(-0.35, dot(root - cameraPosition, uCamFwd) / max(dist, 1e-3))); // one field mesh, no per-tile culling: blades well behind the view collapse
+  keep *= max(step(dist, 24.0), step(-0.35, dot(root - cameraPosition, uCamFwd) / max(dist, 1e-3))); // blades behind the camera collapse past 24 m. The chase view of the wolf stays inside that, so the floor around her is not a bald half-disc
   float alive = step(aBlade.w, keep);
-  alive *= 1.0 - step(aBlade.y, uSnowM); // a blade no taller than the snow depth is buried; the terrain snow layer shows
+  float bury = clamp(uSnowM / max(aBlade.y, 0.02), 0.0, 0.72); // snow shortens a blade. It does not delete it, or a 10 cm residual erases the hairgrass
   float clearKeep = 1.0;
   clearKeep *= mix(1.0, step(uClear[0].z, distance(root.xz, uClear[0].xy)), step(0.5, uClearN));
   clearKeep *= mix(1.0, step(uClear[1].z, distance(root.xz, uClear[1].xy)), step(1.5, uClearN));
@@ -104,8 +105,8 @@ const VERT_BODY = `
              : sh.y < 1.5 ? 1.0 - heightPercent * 0.9
              : GRASS_SEGMENTS < 3.0 ? 0.6 * (1.0 - heightPercent * 0.8)
              : heightPercent < sh.z ? 0.15 : pow(max(sin(3.14159 * (heightPercent - sh.z) / (1.0 - sh.z)), 0.0), 0.7);
-  float grassTotalHeight = aBlade.y * alive * mix(1.0, 0.72, clamp(uFloor, 0.0, 1.0)) * (1.0 - 0.6 * smoothstep(uGrass.z * 0.6, uGrass.z, dist)); // blades settle toward the radius; dry cover shortens them as the ground eases, it does not pop
-  float grassTotalWidth = max(sh.x, 1.5 * uPx * dist) * prof * alive * min(3.0, inversesqrt(max(keep, 0.05))); // ≥ 1.5 px wide (real widths alias away), thinned blades widen to keep the coverage
+  float grassTotalHeight = aBlade.y * alive * (1.0 - bury) * mix(1.0, 0.72, clamp(uFloor, 0.0, 1.0)) * (1.0 - 0.6 * smoothstep(uGrass.z * 0.6, uGrass.z, dist)); // blades settle toward the radius; dry cover shortens them as the ground eases, it does not pop
+  float grassTotalWidth = max(sh.x * 4.0, 4.0 * uPx * dist) * prof * alive * min(3.0, inversesqrt(max(keep, 0.05))); // wide enough to read as a clump at the standing eye (a real 2 mm leaf is sub-pixel)
   float x = (xSide - 0.5) * grassTotalWidth, y = heightPercent * grassTotalHeight;
   // wind: shared field direction + upstream's noise gusts; strength from the shared drag amplitude (trees: (U/4)²)
   float windDir = atan(uWindDir.y, uWindDir.x) + (vnoise(root.xz * 0.05 + 0.05 * uWind, 7.0) - 0.5) * 1.2;
@@ -132,7 +133,7 @@ const VERT_BODY = `
   float fallT = smoothstep(hs - 0.3, hs + 0.3, uColour);
   vec3 tip = mix(uTip[k], uFall[k], fallT), base = mix(uBase[k], uFall[k] * 0.6, fallT * 0.5);
   float tipMix = sh.y > 1.5 ? step(sh.z, heightPercent) : easeInG(heightPercent, 4.0);
-  vGrassColour = mix(base, tip, mix(tipMix, heightPercent, highLODOut)) * shade * mix(0.22, 1.0, easeInG(heightPercent, 2.0));
+  vGrassColour = mix(base, tip, mix(tipMix, heightPercent, highLODOut)) * shade * mix(0.7, 1.0, easeInG(heightPercent, 2.0)) * 2.6; // leaf albedo is ~0.05; under this sun that is the soil colour, so a clump never read
   vGrassColour = mix(vGrassColour, vec3(0.45, 0.32, 0.12), 0.28 * hs); // mixed green and tan in one clump
   vGrassColour = mix(vGrassColour, vec3(0.46, 0.32, 0.11), clamp(uFloor, 0.0, 1.0) * 0.22); // a little of the ground tint; the clump stays mixed green and tan
   float snowCover = clamp(uSnowM / max(aBlade.y, 1e-3), 0.0, 1.0); // share of the blade under the snow; 0.8 is the terrain snow albedo (render/pbr.ts, Oke 1987)
@@ -199,13 +200,13 @@ export function createGrass(scene: THREE.Scene) {
     const T = GRASS.tile, cx = camera.position.x, cz = camera.position.z, R = Math.min(GRASS.radius * Math.sqrt(foliage), nearRadius); // never beyond full-res terrain (interest near tier)
     group.visible = !GRASS_FX.off && foliage > 0;
     if (segs !== RENDER.terrainSegments) { segs = RENDER.terrainSegments; tiles.clear(); } // roots follow the terrain lattice
-    U.uGrass.value.set(GRASS.lodDist, GRASS.full, R, foliage); U.uPlayer.value.copy(player); U.uSnowM.value = snowDepthCm(weatherAt(player.x, player.z).sweMm) / 100; const fov = (camera as THREE.PerspectiveCamera).fov ?? 48; U.uPx.value = 2 * Math.tan(fov * Math.PI / 360) / Math.max(1, globalThis.innerHeight ?? 900);
+    U.uGrass.value.set(GRASS.lodDist, GRASS.full, R, foliage); U.uPlayer.value.copy(player); U.uSnowM.value = snowOnGroundCm(snowDepthCm(weatherAt(player.x, player.z).sweMm)) / 100; const fov = (camera as THREE.PerspectiveCamera).fov ?? 48; U.uPx.value = 2 * Math.tan(fov * Math.PI / 360) / Math.max(1, globalThis.innerHeight ?? 900);
     const discs = landingClearDiscs();
     U.uClearN.value = Math.min(5, discs.length);
     for (let i = 0; i < 5; i++) { const d = discs[i]; U.uClear.value[i].set(d?.x ?? 0, d?.z ?? 0, d?.r ?? 0, 0); }
     const lines = landingSightLines();
     U.uSightN.value = Math.min(5, lines.length);
-    for (let i = 0; i < 5; i++) { const s = lines[i]; U.uSight.value[i].set(s?.x0 ?? 0, s?.z0 ?? 0, s?.x1 ?? 0, s?.z1 ?? 0); U.uSightR.value[i].set(s?.r ?? 0, 0); }
+    for (let i = 0; i < 5; i++) { const s = lines[i]; U.uSight.value[i].set(s?.x0 ?? 0, s?.z0 ?? 0, s?.x1 ?? 0, s?.z1 ?? 0); U.uSightR.value[i].set(Math.min(s?.r ?? 0, 0.4), 0); } // a 1.6 m corridor balds the floor under the wolf. Grass only steps aside for the body itself
     camera.getWorldDirection(U.uCamFwd.value);
     const sq = (tx: number, tz: number) => Math.hypot(Math.max(tx * T - cx, 0, cx - tx * T - T), Math.max(tz * T - cz, 0, cz - tz * T - T));
     const r = Math.ceil(R / T) + 1, ox = Math.floor(cx / T), oz = Math.floor(cz / T), want = new Set<string>();
@@ -214,24 +215,24 @@ export function createGrass(scene: THREE.Scene) {
     for (const key of [...tiles.keys()]) if (!want.has(key)) { tiles.delete(key); dirty = true; }
     for (const key of [...jobs]) if (!want.has(key)) { cancel(`grass:${key}`); jobs.delete(key); }
     // per 2.5 m cell: distance thinning (keepAt on the cell's nearest point), blade LOD, and a horizontal view cone (half FOV + margin;
-    // off when looking steeply down). Cells within 3 m always draw (the player's own patch, camera swings).
+    // off when looking steeply down). Cells within 24 m always draw, so the chase view is not a bald half-disc.
     const S = GRASS.sub, C = T / S, f = U.uCamFwd.value, fl = Math.hypot(f.x, f.z), aspect = (camera as THREE.PerspectiveCamera).aspect ?? 16 / 9;
     const cone = fl > .6 ? Math.atan(Math.tan(fov * Math.PI / 360) * aspect) + .35 : Infinity;
-    let blades = 0, drawn = 0, culled = 0; const parts: Float32Array[][] = [[], [], []], cnt = [0, 0, 0], hs: number[][] = [[], [], []], hn: number[][] = [[], [], []];
+    let blades = 0, drawn = 0, culled = 0, near = 0; const parts: Float32Array[][] = [[], [], []], cnt = [0, 0, 0], hs: number[][] = [[], [], []], hn: number[][] = [[], [], []];
     for (const t of tiles.values()) { const bl = t.b; if (!bl.count) continue; blades += bl.count;
       for (let c = 0; c < S * S; c++) { const a = bl.sub[c], e = bl.sub[c + 1]; if (a === e) continue;
         const bx = t.tx * T + (c % S) * C, bz = t.tz * T + Math.floor(c / S) * C, d = Math.hypot(Math.max(bx - cx, 0, cx - bx - C), Math.max(bz - cz, 0, cz - bz - C));
-        if (d > 3 && cone < 4) { const ox = bx + C / 2 - cx, oz = bz + C / 2 - cz, oc = Math.hypot(ox, oz);
+        if (d > 24 && cone < 4) { const ox = bx + C / 2 - cx, oz = bz + C / 2 - cz, oc = Math.hypot(ox, oz);
           if (Math.acos(Math.max(-1, Math.min(1, (ox * f.x + oz * f.z) / (oc * fl)))) - Math.asin(Math.min(1, C * .75 / oc)) > cone) { culled += e - a; continue; } }
         const n = Math.min(e - a, Math.ceil((e - a) * quant(keepAt(d, R) * foliage))); if (!n) continue;
-        const l = d < GRASS.lodNear ? 0 : d < GRASS.lodDist ? 1 : 2; parts[l].push(bl.data.subarray(a * 8, (a + n) * 8)); cnt[l] += n; drawn += n;
+        const l = d < GRASS.lodNear ? 0 : d < GRASS.lodDist ? 1 : 2; parts[l].push(bl.data.subarray(a * 8, (a + n) * 8)); cnt[l] += n; drawn += n; if (d < 8) near += n;
         hs[l].push(t.id * 64 + c); hn[l].push(n); } } // per-LOD signatures: which cells, and how many blades of each
     // a LOD mesh repacks at once when its set of cells changes (tiles in/out, LOD or cone crossings), thinning-only changes at most 4×/s
     const tn = performance.now(), thin = tn - lastPack > 250; let packed = false;
     const same = (a: number[], b: number[]) => a.length === b.length && a.every((v, i) => v === b[i]);
     for (let l = 0; l < 3; l++) if (dirty || !same(hs[l], sigS[l]) || (thin && !same(hn[l], sigN[l]))) { sigS[l] = hs[l]; sigN[l] = hn[l]; lods[l].pack(parts[l], cnt[l]); packed = true; GRASS_INFO.lods[l] = cnt[l]; }
     if (packed) { lastPack = tn; dirty = false; GRASS_INFO.packMaxMs = Math.max(GRASS_INFO.packMaxMs, performance.now() - tn); GRASS_INFO.packs++; GRASS_INFO.tris = GRASS_INFO.lods.reduce((s, n, l) => s + n * SEG[l] * 2, 0); }
-    Object.assign(GRASS_INFO, { tiles: tiles.size, blades, drawn, culled });
+    Object.assign(GRASS_INFO, { tiles: tiles.size, blades, drawn, culled, near });
   }
   return { group, update, tiles: () => tiles.size };
 }

@@ -30,10 +30,10 @@ test('the leaves tile one square that passes the horizon, with no overlap', () =
   }
 });
 
-test('10 cm of snow is a visible cover, and a dry reading is bare', () => {
+test('snow tints the soil and does not replace it with a white sheet', () => {
   assert.equal(snowPaint(0), 0);
-  assert.ok(snowPaint(10.4) > 0.8, 'the HUD depth has to show on the ground');
-  assert.equal(snowPaint(5), 1);
+  assert.equal(snowPaint(10.4), 0, 'a 10 cm residual is not painted on a green floor');
+  assert.ok(snowPaint(20) > 0.15 && snowPaint(20) < 0.6, `20 cm stayed a sheet (${snowPaint(20)})`);
 });
 
 test('every vertex is the height function minus earth curvature, and skirts drop below it', () => {

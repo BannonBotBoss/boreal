@@ -12,6 +12,9 @@
  * (Sims et al. 1997; moisture axis dry → wet); leaf dimensions from Flora of North America (FNA) treatments.
  */
 import { CHUNK_SIZE, heightAt, WORLD_SEED } from '../../core/world';
+import { LEVEL } from '../../core/tuning';
+import { STAGES, lakeAt } from '../../core/stages/elevation';
+import { coverSampleAt } from '../../world/globe/coverSample';
 import { RENDER } from '../../core/renderSettings';
 import { covered, footprintsIn, prepareArea, siteAt, type Site } from '../../core/flora/site';
 import { CELL } from '../../core/ground';
@@ -64,9 +67,31 @@ export function defaultCover(x: number, z: number, s = siteAt(x, z)): Cover {
   const density = (1 - bare) * (.45 + .55 * smoothstep(.55, .95, s.wet)) * (.4 + .6 * s.light) * (1 - smoothstep(30, 40, s.slopeDeg)); // shade thins graminoids [game calibration]
   return { density, weights };
 }
-let source: (x: number, z: number) => Cover = defaultCover;
+/**
+ * What the standing eye grows. The Kenora site can call the den a bare pocket or a lake
+ * even when the cover sample under the landing is dry prairie or forest. A dry landing
+ * still gets clumps: hairgrass on the steppe, a thin forest floor under boreal.
+ */
+export function viewedCover(x: number, z: number): Cover {
+  const local = defaultCover(x, z);
+  if (heightAt(x, z) < LEVEL.waterSurface + 0.05) return { density: 0, weights: local.weights };
+  if (STAGES.on && lakeAt(STAGES.seed, x, z)) return { density: 0, weights: local.weights };
+  let land: { water: boolean; biome: string };
+  try { land = coverSampleAt(x, z); } catch { return local; }
+  if (land.water) return { density: 0, weights: local.weights };
+  if (land.biome === 'prairie' || land.biome === 'desert') {
+    const clump = random(hash(`tuft:${WORLD_SEED}:${Math.floor(x / 1.6)}:${Math.floor(z / 1.6)}`))();
+    const density = land.biome === 'desert' ? (clump > 0.72 ? 0.32 : 0.05) : (clump > 0.42 ? 0.62 : 0.16);
+    const weights = COVER_SPECIES.map(c => c.id === 'hairgrass' || c.id === 'oatgrass' ? 1 : c.id === 'bluejoint' ? 0.3 : 0.08);
+    return { density, weights };
+  }
+  if (local.density >= 0.08) return local;
+  const weights = COVER_SPECIES.map(c => c.form === 'shrub' ? 0.35 : 0.7);
+  return { density: 0.38, weights };
+}
+let source: (x: number, z: number) => Cover = viewedCover;
 /** Soils stage hook: replace the density field (undefined restores the default). */
-export function setCoverSource(fn?: (x: number, z: number) => Cover) { source = fn ?? defaultCover; }
+export function setCoverSource(fn?: (x: number, z: number) => Cover) { source = fn ?? viewedCover; }
 export const coverAt = (x: number, z: number) => source(x, z);
 
 /** Grass tuning; cost scales with LADDER `foliage` (core/quality): density × foliage, radius × √foliage. [game calibration] */

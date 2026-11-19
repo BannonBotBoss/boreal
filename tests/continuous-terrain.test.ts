@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { curvatureDrop, horizonMetres } from '../src/world/globe/horizonSkirt';
-import { buildContinuousMesh, selectTerrainLeaves, SKIRT_FLOOR_M } from '../src/render/continuousTerrain';
+import { buildContinuousMesh, selectTerrainLeaves, SKIRT_FLOOR_M, snowPaint } from '../src/render/continuousTerrain';
 
 function area(leaves: { size: number }[]) {
   return leaves.reduce((s, l) => s + l.size * l.size, 0);
@@ -28,6 +28,12 @@ test('the leaves tile one square that passes the horizon, with no overlap', () =
       if (n) assert.ok(n.size <= leaf.size * 2 + 0.01, `south neighbour ${n.size} vs ${leaf.size}`);
     }
   }
+});
+
+test('10 cm of snow is a visible cover, and a dry reading is bare', () => {
+  assert.equal(snowPaint(0), 0);
+  assert.ok(snowPaint(10.4) > 0.8, 'the HUD depth has to show on the ground');
+  assert.equal(snowPaint(5), 1);
 });
 
 test('every vertex is the height function minus earth curvature, and skirts drop below it', () => {

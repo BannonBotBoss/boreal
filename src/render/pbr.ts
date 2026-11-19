@@ -80,7 +80,7 @@ export function terrainMaterial() {
         vec3 liveG = vec3(0.18, 0.24, 0.07);
         float live = (1.0 - uCure) * mix(0.2, 0.85, clamp(vWet, 0.0, 1.0));
         vec3 dead = mix(thatch, straw, 0.45 + 0.55 * n2);
-        vec3 prairie = mix(mix(soil, dead, smoothstep(0.22, 0.62, n2)), liveG, live * smoothstep(0.5, 0.85, n1));
+        vec3 prairie = mix(mix(soil, dead, smoothstep(0.15, 0.72, n2)), liveG, live * smoothstep(0.4, 0.8, n1));
         vec3 litter = vec3(0.14, 0.08, 0.04);
         vec3 mossC = vec3(0.045, 0.09, 0.028);
         vec3 boreal = mix(litter, mossC, smoothstep(0.40, 0.75, n1));

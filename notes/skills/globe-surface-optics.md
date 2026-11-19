@@ -77,6 +77,26 @@ Arrival hour is 8. `setFilmDrive` sun bias pulls the sun onto the camera and hid
 the evidence shot leaves it at 0. Home on the staged seed is about 50°N, 66°E, zenith about 60°,
 so the west limb is night. A camera near 12°N, 18°W is about 23° from the subsolar point and stays lit.
 
+## Orbit land colour and the clear-sky sea (T-0256)
+
+The arrival disc does not paint land from a class-constant table. `buildOrbitCover` in
+`src/render/globe/orbitCover.ts` samples `public/globe/blue-marble-200408.jpg` (Blue Marble
+Next Generation, August 2004, Stöckli, Vermote, Saleous, Simmon and Herring 2005) once per
+pixel, converts sRGB to linear, and writes that into the cover texture. Ocean is still the
+globe water colour. The fragment samples that texture at the unwarped geographic UV
+(`orbitFrag` in `src/render/globe/orbitDraw.ts`), so the coast is the land mask. Tibet is
+the plateau in the image, not an ice-class white fill. Vegetation weight, where a class is
+still needed, is `orbit_vegetation` in `rust/boreal-sim`, loaded by `src/render/globe/orbitVeg.ts`.
+
+At orbit the sea is not a mirror. `orbitWater` in `src/render/globe/orbitLight.ts` drops the
+bright sky `reflectionColor` as `uOrbit` rises, holds roughness at `max(uOceanRough, 0.62)`,
+and multiplies metalness by `(1 - uOrbit)` so clear-sky water is dielectric. `uOceanRough`
+stays about 0.15–0.2 and `uOceanMetal` about 0.1–0.2 for the near field. A cloud deck still
+gates the glint: `csSpec` keeps `1.0 - smoothstep(0.08, 0.35, coverS)` and is then multiplied
+by `(1 - cloudDeck)`. The orbit patch also replaces `atmWarmSun` with the 6–8° twilight gate
+(`TWILIGHT` in the same file). The near-field source in `atmosphere.ts` still carries
+`TERMINATOR` until that patch runs.
+
 ## Mistakes to avoid
 - A second cloud sphere, or `oceanMesh.receiveShadow`. The shadow is analytic. Orbit clouds are the
   NASA map above, and only when the shell is off. Do not also bake a shell for tiers that already ray-march.

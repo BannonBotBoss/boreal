@@ -11,7 +11,7 @@
  * three-geospatial/astronomy-engine, i.e. new dependencies in package.json (a shared file). See AGENT-NOTES.md.
  * The sun is the game's: core/timeOfDay sunPosition(gameHour(world clock)) at the home region, turned into planet axes.
  */
-import * as THREE from 'three';
+import * as THREE from 'three'; import { orbitAtmosphere } from '../../render/globe/orbitLight';
 import { LOG_DEPTH, LOG_DEPTH_PREFIX } from './logDepth';
 import { GLSL_NOISE, GLSL_WORLEY } from '../../proc/glsl';
 import { GLOBE_LAYERS } from './planetLayers';
@@ -387,7 +387,7 @@ void main() {
       const prev = m.onBeforeCompile.bind(m);
       m.onBeforeCompile = (sh, r) => {
         prev(sh, r); Object.assign(sh.uniforms, uniforms);
-        sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>\n${GLSL}`)
+        sh.fragmentShader = orbitAtmosphere(sh.fragmentShader.replace('#include <common>', `#include <common>\n${GLSL}`)
           
           .replace('#include <opaque_fragment>', `if (uSteps.z > 0.5) { vec3 fp = -vViewPosition * 1e-3, tr; float d = length(fp); vec3 rd = fp / max(d, 1e-6);
     // only the DIRECT sun is reddened (sunset) / cut (planet shadow) on its way to the fragment (x1.12 = noon
@@ -401,7 +401,7 @@ void main() {
     outgoingLight = (reflectedLight.directDiffuse * cs + reflectedLight.directSpecular * csSpec) * (1.12) * sunC + (reflectedLight.indirectDiffuse + reflectedLight.indirectSpecular) * skyF + totalEmissiveRadiance;
     vec3 ins = atmScatter(rd, d, int(uSteps.z), int(uSteps.w), tr); outgoingLight = outgoingLight * tr + ins * ATM_AERIAL;
     vec4 cl = atmClouds(rd, d + ${CLOUDS.groundSlackKm.toFixed(1)}, int(uSteps.w)); outgoingLight = mix(outgoingLight, cl.rgb * tr + ins * ATM_AERIAL, cl.a); outgoingLight += atmEmission(rd, d) * ATM_AERIAL; } // clouds between camera and ground
-#include <opaque_fragment>`);
+#include <opaque_fragment>`));
       };
       m.needsUpdate = true;
     },

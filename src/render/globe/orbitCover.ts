@@ -7,6 +7,56 @@ import { coarseMetresLinear } from '../../world/globe/coarseRelief';
 import { GLOBE_COLOURS } from '../../world/globe/planet';
 import { orbitVegetation } from './orbitVeg';
 
+/**
+ * Blue Marble Next Generation, August 2004 (Stöckli, Vermote, Saleous, Simmon
+ * and Herring 2005, NASA Earth Observatory). Per-pixel land colour, not a
+ * class constant. public/globe/blue-marble-200408.jpg is a 1024×512 WMS grab.
+ */
+let marble: Uint8Array | null = null;
+let marbleW = 0;
+let marbleH = 0;
+
+export function setMarble(rgb: Uint8Array, width: number, height: number) {
+  marble = rgb;
+  marbleW = width;
+  marbleH = height;
+}
+
+/** IEC 61966-2-1 sRGB byte to a linear byte. The cover texture is uploaded as linear. */
+function linearByte(c: number) {
+  const u = c / 255;
+  const l = u <= 0.04045 ? u / 12.92 : ((u + 0.055) / 1.055) ** 2.4;
+  return Math.max(0, Math.min(255, Math.round(l * 255)));
+}
+
+function marbleAt(lat: number, lon: number): [number, number, number] | null {
+  if (!marble) return null;
+  let x = ((lon + 180) / 360) * marbleW;
+  x = ((x % marbleW) + marbleW) % marbleW;
+  const y = Math.max(0, Math.min(marbleH - 1, ((90 - lat) / 180) * (marbleH - 1)));
+  const x0 = Math.floor(x) % marbleW;
+  const y0 = Math.min(marbleH - 1, Math.floor(y));
+  const i = (y0 * marbleW + x0) * 3;
+  return [linearByte(marble[i]) / 255, linearByte(marble[i + 1]) / 255, linearByte(marble[i + 2]) / 255];
+}
+
+/** Browser decode of the Blue Marble JPEG. Node tests call setMarble with the raw RGB. */
+export async function loadMarble() {
+  if (marble || typeof document === 'undefined') return;
+  const base = (import.meta as unknown as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '/';
+  const blob = await (await fetch(`${base}globe/blue-marble-200408.jpg`)).blob();
+  const bmp = await createImageBitmap(blob);
+  const canvas = document.createElement('canvas');
+  canvas.width = bmp.width; canvas.height = bmp.height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  ctx.drawImage(bmp, 0, 0);
+  const px = ctx.getImageData(0, 0, bmp.width, bmp.height).data;
+  const rgb = new Uint8Array(bmp.width * bmp.height * 3);
+  for (let i = 0, j = 0; i < px.length; i += 4, j += 3) { rgb[j] = px[i]; rgb[j + 1] = px[i + 1]; rgb[j + 2] = px[i + 2]; }
+  setMarble(rgb, bmp.width, bmp.height);
+}
+
 /** Linear albedo, the same exposure scale as GLOBE_COLOURS (a few percent for canopy). */
 export const BIOME_ALBEDO: Record<CoverKind, readonly [number, number, number]> = {
   water: [0.02, 0.05, 0.1],
@@ -153,11 +203,14 @@ export function buildOrbitCover(width = 1024, height = 512): OrbitCover {
       if (ocean[p]) {
         rgb = oceanRgb(elev);
         a = 0;
-      } else if (elev < 0) {
-        rgb = LAKE;
       } else {
-        const kind = coverKind(lat, elev, orbitVegetation(Math.abs(lat), coast[p]), false, coast[p] * 1000);
-        rgb = BIOME_ALBEDO[kind];
+        const shot = marbleAt(lat, -180 + (i + 0.5) / w * 360);
+        if (shot) rgb = shot;
+        else if (elev < 0) rgb = LAKE;
+        else {
+          const kind = coverKind(lat, elev, orbitVegetation(Math.abs(lat), coast[p]), false, coast[p] * 1000);
+          rgb = BIOME_ALBEDO[kind];
+        }
       }
       rgba[o] = byte(rgb[0]); rgba[o + 1] = byte(rgb[1]); rgba[o + 2] = byte(rgb[2]); rgba[o + 3] = a;
     }

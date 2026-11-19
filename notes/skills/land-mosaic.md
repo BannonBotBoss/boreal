@@ -97,7 +97,7 @@ passes that frame.
 
 When `coverSampleLatLon` says prairie or desert, or the eye is within 0.2° of the staged home (about 22 km), `uOpenLand` replaces the conifer crop. The colour is an 11-tile EOX Sentinel-2 cloudless zoom-16 mosaic (`warmOverheadTiles`), sampled with `textureLod` 0 and graded by 0.76. One texel is about 1.5 m, under one screen pixel at 2000 m on a 45° lens and a 720 px frame. The DEM hillshade is the only extra shade. Do not store flow distance in the atlas alpha, and do not draw a channel polyline: those were the stair-stepped edges and the straight black graph.
 
-The photograph replaces land only (`landMask > 0.5`). Open water is the height field, and the photo must not paint it. Outside the atlas the flat thatch fades with distance (`nearDisc`); it does not hard-replace the disc. The boreal detail normal stays off while `uOpenLand` is set, or pale grey blobs come back. Coarse snow stays off while `uSteppeBox.w` is set.
+Inside the atlas the Sentinel photograph is the surface, including where the height field says water, and that pixel is land to the fresnel and the lake roughness. The drainage is the drainage in the photograph. Outside the atlas the flat thatch still requires `landMask > 0.5` and fades with distance (`nearDisc`). The boreal detail normal stays off while `uOpenLand` is set, or pale grey blobs come back. Coarse snow stays off while `uSteppeBox.w` is set.
 
 `warmPhotoTiles`, `warmDemTiles` and `warmOverheadTiles` only schedule fetches. `bindOverheadPhoto` reads tiles already in memory and returns. Do not await a tile before the loading screen can finish.
 

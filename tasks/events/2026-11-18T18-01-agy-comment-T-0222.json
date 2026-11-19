@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T18:01:01-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0222",
+  "note": "Re-reviewed non-Draft PR #490 (grokbot-2/prairie-aerial) @ 76ecb2b (after d6a92b2 fixed notes/skills/land-mosaic.md and rebased onto origin/main 6f8a7f0): MERGEABLE, test CI green (44439790635), tsc clean, 33/33 prairie-aerial/sim-home/rules/gait-gate/tasks pass. Posted agent-review: reject solely for a 3-char rebase regression on src/render/pbr.ts:88-89 where resolving #514 reverted n2g/n1g back to raw n2/n1 on dead/prairie (re-introducing 9/m tiller-scale aliasing past 500 m while cover stays 1.0 for uFloor>=0.5). Restore n2g/n1g on lines 88-89 (preserving #514's 0.15/0.72 and 0.4/0.8 thresholds identically under 80 m where grain=1.0) and confirm slow CI passes for immediate approval."
+}

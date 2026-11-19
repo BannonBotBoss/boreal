@@ -74,6 +74,14 @@ test('the orbit shader draws this map instead of the vertex green', () => {
   const view = readFileSync('src/world/globe/globeView.ts', 'utf8');
   assert.ok(draw.includes('buildOrbitCover'), 'the bake is the cover map');
   assert.ok(draw.includes('texture2D(uOrbitTex'), 'the fragment samples it');
+  assert.ok(draw.includes('landMask = mix(landMask, alb.a, ow)'), 'orbit alpha replaces the coarse ocean mask');
   assert.ok(frag.includes('uploadOrbitAlbedo'), 'the cloud load uploads the cover');
   assert.ok(view.includes('loadBlueMarbleClouds'), 'the globe starts that load');
+  const veg = readFileSync('src/render/globe/orbitVeg.ts', 'utf8');
+  assert.ok(veg.includes('wasmInstance'), 'orbit vegetation uses the shared wasm instance');
+  assert.equal(veg.includes('WebAssembly.instantiate'), false, 'orbit vegetation does not instantiate a second copy');
+  const cover = readFileSync('rust/boreal-sim/src/cover.rs', 'utf8');
+  const fn = cover.slice(cover.indexOf('pub fn orbit_vegetation'));
+  assert.ok(fn.includes('[game calibration]'), 'orbit vegetation constants are tagged');
+  assert.ok(fn.includes('700'), 'the inland scale stays cited in the function');
 });

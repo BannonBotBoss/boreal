@@ -158,11 +158,16 @@ pub fn place_hash(lat: f64, lon: f64) -> f64 {
     (z >> 11) as f64 / (1u64 << 53) as f64
 }
 
-/// Vegetation weight for the orbit disc. Hadley belts (Holton & Hakim; the same latitudes
-/// `ORBIT_ZONAL` cites via King et al. 2013): wet tropics, dry subtropics, wet mid-latitudes.
-/// `coast_km` is distance to the open-ocean flood. A subtropical coast stays wet; the inland
-/// belt dries on a 700 km scale. Thresholds live in cover-density.json (0.28 desert, 0.62 prairie).
+/// Vegetation weight for the orbit disc.
+/// Belts follow the Hadley cell: equatorial ascent, subtropical descent near 30°,
+/// mid-latitude storm tracks (Holton & Hakim, An Introduction to Dynamic Meteorology;
+/// the same latitudes `ORBIT_ZONAL` cites via King et al. 2013).
+/// The weights are not a published NDVI table. They are [game calibration] so
+/// `veg_desert_below` 0.28 and `veg_prairie_below` 0.62 in data/earth/cover-density.json
+/// put the Sahara in desert and the Congo in forest.
+/// `coast_km` is distance to the open-ocean flood. A subtropical coast stays wet.
 pub fn orbit_vegetation(abs_lat: f64, coast_km: f64) -> f64 {
+    // Knots follow the Hadley cell (Holton & Hakim). The weights are [game calibration].
     const ZONAL: [(f64, f64); 11] = [
         (0.0, 0.94), (8.0, 0.9), (14.0, 0.72), (22.0, 0.34), (28.0, 0.2),
         (36.0, 0.48), (46.0, 0.8), (56.0, 0.74), (66.0, 0.4), (76.0, 0.16), (90.0, 0.04),
@@ -180,10 +185,15 @@ pub fn orbit_vegetation(abs_lat: f64, coast_km: f64) -> f64 {
         }
     }
     let smooth = |e0: f64, e1: f64, x: f64| { let t = ((x - e0) / (e1 - e0)).clamp(0.0, 1.0); t * t * (3.0 - 2.0 * t) };
+    // Subtropical descent near 20–30° (Holton & Hakim). The 14/22 and 32/44 edges are [game calibration].
     let belt = smooth(14.0, 22.0, a) * (1.0 - smooth(32.0, 44.0, a));
+    // 700 km e-folding of inland drying [game calibration]: about 40 km stays wet, about 1800 km does not.
     let inland = 1.0 - (-coast_km.max(0.0) / 700.0).exp();
+    // 0.28 is veg_desert_below (cover-density.json). 0.72 = 1 - 0.28, so a full belt dries to that line [game calibration].
     let dry = inland * (0.28 + 0.72 * belt);
+    // Same 0.28 desert line (cover-density.json), returned to a wet subtropical coast.
     let coast_boost = (1.0 - inland) * belt * 0.28;
+    // 0.7 is how hard inland drying multiplies the zonal weight [game calibration].
     (z * (1.0 - 0.7 * dry) + coast_boost).clamp(0.0, 1.0)
 }
 

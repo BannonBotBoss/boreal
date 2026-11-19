@@ -210,7 +210,7 @@ export function createGrass(scene: THREE.Scene) {
     const sq = (tx: number, tz: number) => Math.hypot(Math.max(tx * T - cx, 0, cx - tx * T - T), Math.max(tz * T - cz, 0, cz - tz * T - T));
     const r = Math.ceil(R / T) + 1, ox = Math.floor(cx / T), oz = Math.floor(cz / T), want = new Set<string>();
     for (let a = ox - r; a <= ox + r; a++) for (let b = oz - r; b <= oz + r; b++) { const d = sq(a, b), key = `${a}:${b}`; if (d > R + T / 2) continue; want.add(key); // keep a half-tile margin (no flicker at the edge)
-      if (d <= R && !tiles.has(key) && !pending(`grass:${key}`)) { jobs.add(key); enqueue(`grass:${key}`, d + 5, timedGrass(bladesJob(a, b)), (bl: Blades) => { jobs.delete(key); tiles.set(key, { tx: a, tz: b, b: bl, id: ids++ }); dirty = true; }); } }
+      if (d <= R && !tiles.has(key) && !pending(`grass:${key}`)) { jobs.add(key); enqueue(`grass:${key}`, d * 0.2, timedGrass(bladesJob(a, b)), (bl: Blades) => { jobs.delete(key); tiles.set(key, { tx: a, tz: b, b: bl, id: ids++ }); dirty = true; }); } }
     for (const key of [...tiles.keys()]) if (!want.has(key)) { tiles.delete(key); dirty = true; }
     for (const key of [...jobs]) if (!want.has(key)) { cancel(`grass:${key}`); jobs.delete(key); }
     // per 2.5 m cell: distance thinning (keepAt on the cell's nearest point), blade LOD, and a horizontal view cone (half FOV + margin;

@@ -13,8 +13,8 @@ export function createContactShadows(scene: THREE.Scene) {
   const g = canvas.getContext('2d');
   if (g) {
     const ink = g.createRadialGradient(32, 32, 2, 32, 32, 32);
-    ink.addColorStop(0, 'rgba(0,0,0,0.55)');
-    ink.addColorStop(0.45, 'rgba(0,0,0,0.22)');
+    ink.addColorStop(0, 'rgba(0,0,0,0.9)');
+    ink.addColorStop(0.42, 'rgba(0,0,0,0.55)');
     ink.addColorStop(1, 'rgba(0,0,0,0)');
     g.fillStyle = ink;
     g.fillRect(0, 0, 64, 64);
@@ -22,7 +22,7 @@ export function createContactShadows(scene: THREE.Scene) {
   const map = new THREE.CanvasTexture(canvas);
   const geo = new THREE.CircleGeometry(0.55, 14);
   geo.rotateX(-Math.PI / 2);
-  const mat = new THREE.MeshBasicMaterial({ map, transparent: true, depthWrite: false, toneMapped: false });
+  const mat = new THREE.MeshBasicMaterial({ map, transparent: true, depthWrite: false, toneMapped: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 });
   const mesh = new THREE.InstancedMesh(geo, mat, 24);
   mesh.name = 'contact-shadows';
   mesh.frustumCulled = false;

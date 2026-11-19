@@ -85,8 +85,8 @@ export function terrainMaterial() {
         vec3 straw = vec3(0.55, 0.38, 0.12);
         vec3 liveG = vec3(0.18, 0.24, 0.07);
         float live = (1.0 - uCure) * mix(0.2, 0.85, clamp(vWet, 0.0, 1.0));
-        vec3 dead = mix(thatch, straw, 0.45 + 0.55 * n2);
-        vec3 prairie = mix(mix(soil, dead, smoothstep(0.15, 0.72, n2)), liveG, live * smoothstep(0.4, 0.8, n1));
+        vec3 dead = mix(thatch, straw, 0.45 + 0.55 * n2g);
+        vec3 prairie = mix(mix(soil, dead, smoothstep(0.15, 0.72, n2g)), liveG, live * smoothstep(0.4, 0.8, n1g));
         vec3 litter = vec3(0.16, 0.09, 0.045);
         vec3 mossC = vec3(0.05, 0.16, 0.04);
         vec3 needle = vec3(0.22, 0.16, 0.06);
@@ -107,7 +107,7 @@ export function terrainMaterial() {
           float grainN = mix(1.0, 1.0 - smoothstep(80.0, 500.0, eyeN), step(0.5, uFloor));
           normal = normalize(normal - (viewMatrix * vec4(gx, 0., gz, 0.)).xyz * (1.0 - snow) * 1.5 * grainN); }`);
   };
-  terrain.customProgramCacheKey = () => ['boreal-terrain-pbr-cure-open', ...groundLayers.map(l => l.name)].join(':');
+  terrain.customProgramCacheKey = () => ['boreal-terrain-pbr-cure-open-grain', ...groundLayers.map(l => l.name)].join(':');
   fadeOptIn(terrain); // render/fade: in-page transition patch fade (uniform only, same cache key)
   return terrain;
 }

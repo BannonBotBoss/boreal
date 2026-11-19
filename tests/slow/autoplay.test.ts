@@ -21,6 +21,7 @@ test('autoplay reaches the end without a page error', { timeout: 840_000 }, asyn
     mkdirSync('/tmp/autoplay-video', { recursive: true });
   const logs: string[] = [];
   const errors: string[] = [];
+  const failed: string[] = [];
   let vite: ChildProcess | undefined;
   let browser: Browser | undefined;
   let page: Page | undefined;
@@ -35,6 +36,7 @@ test('autoplay reaches the end without a page error', { timeout: 840_000 }, asyn
     const context = await browser.newContext({ viewport: { width: 1280, height: 720 }, recordVideo: { dir: '/tmp/autoplay-video', size: { width: 1280, height: 720 } } });
     page = await context.newPage();
     page.on('pageerror', e => errors.push(e.message));
+    page.on('requestfailed', r => failed.push(`${r.failure()?.errorText ?? 'failed'} ${r.url()}`));
     page.on('console', msg => {
       const line = msg.text();
       if (msg.type() === 'error') errors.push(line);
@@ -46,10 +48,25 @@ test('autoplay reaches the end without a page error', { timeout: 840_000 }, asyn
       }
     });
     await page.goto(`http://127.0.0.1:${port}/?autoplay=1`, { waitUntil: 'domcontentloaded' });
+    const dump = async () => {
+      const step = await page!.evaluate(() => document.querySelector('#loading .loading-step')?.textContent ?? '').catch(() => '');
+      console.log(`LOGS\n${logs.join('\n')}\nERRORS\n${errors.join('\n')}\nFAILED\n${failed.join('\n')}\nSTEP ${step}`);
+    };
+    const loadingGone = Date.now() + 90_000;
+    while (Date.now() < loadingGone) {
+      const up = await page.evaluate(() => !!document.getElementById('loading')).catch(() => true);
+      if (!up) break;
+      await page.waitForTimeout(500);
+    }
+    if (await page.evaluate(() => !!document.getElementById('loading')).catch(() => true)) {
+      await dump();
+      await page.screenshot({ path: join(frames, 'autoplay-timeout.png') }).catch(() => {});
+      throw new Error('#loading still up after 90s');
+    }
     try {
-      await page.waitForFunction(() => (window as unknown as { __autoplayDone?: boolean }).__autoplayDone === true, undefined, { timeout: 780_000 });
+      await page.waitForFunction(() => (window as unknown as { __autoplayDone?: boolean }).__autoplayDone === true, undefined, { timeout: 700_000 });
     } catch (err) {
-      console.log(`LOGS\n${logs.join('\n')}\nERRORS\n${errors.join('\n')}`);
+      await dump();
       await page.screenshot({ path: join(frames, 'autoplay-timeout.png') }).catch(() => {});
       throw err;
     }

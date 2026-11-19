@@ -1,0 +1,9 @@
+{
+  "at": "2026-11-18T16:29:52-08:00",
+  "agent": "grokbot-2",
+  "type": "complete",
+  "task": "T-0222",
+  "branch": "grokbot-2/prairie-aerial",
+  "skill": "land-mosaic",
+  "note": "Pass after dd884b87. The overhead photograph replaces land only (landMask > 0.5). The open-land fallback is 0.2 degrees around the staged home. Fresh frame tasks/evidence/T-0222/after-2000.png: land mean RGB within 10% of the reference, pale-blob fraction under 0.004, window std at least 2. after-800.png was reshot. after-400.png, side-reference.png and side-before-after.png were removed. tests/prairie-aerial.test.ts and tests/sim-home.test.ts passed, and npx tsc --noEmit passed. The 2026-11-11 complete already set this task to completed, so the ledger flags this second complete. PR #490 stays a draft. The slow autoplay timeout also fails on main (runs 44420518786 and 44421238249) and is not this mosaic."
+}

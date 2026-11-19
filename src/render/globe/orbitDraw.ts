@@ -14,6 +14,10 @@ export function orbitFrag(cloudAlbedo: number, invTau: string, invPi: string) {
     float ow = clamp(uOrbit, 0.0, 1.0) * presentW;
     vec4 alb = texture2D(uOrbitTex, ouv);
     diffuseColor.rgb = mix(diffuseColor.rgb, alb.rgb, ow);
+    // Alpha is the open-ocean mask (0 ocean, 1 land or enclosed lake). The coarse
+    // mesh still treats the Caspian depression as ocean, and the later Fresnel,
+    // roughness and metalness reads use landMask. Pull that mask from the map.
+    landMask = mix(landMask, alb.a, ow);
     if (uOrbitDeck > 0.5) {
       float c = texture2D(uOrbitCloud, ouv).r;
       float deck = smoothstep(0.08, 0.55, c);
@@ -40,5 +44,6 @@ export function uploadOrbitAlbedo(slot: { value: THREE.Texture }, empty: THREE.T
     const prev = slot.value;
     slot.value = tex;
     if (prev && prev !== empty) prev.dispose();
+    (window as unknown as { __orbitCover?: boolean }).__orbitCover = true;
   });
 }

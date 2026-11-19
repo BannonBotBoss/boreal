@@ -26,7 +26,7 @@ Checked before numbering: `tasks/` through T-0261, and open PRs #488 (T-0254), #
 | What | Game | Real | Source | Match |
 |---|---|---|---|---|
 | Fail-fast | 90 s | not a natural rate | the old wait was 780000 ms in `tests/slow/autoplay.test.ts` | the ceiling is a test, not a behaviour |
-| Retry backoff | 20 s | not a natural rate | a frame is about 16 ms; retrying a reset every frame filled the connection pool | yes, one miss does not refetch on the next frame |
+| Retry backoff | the next 60 warm calls | not a natural rate | a frame is about 16 ms; retrying a reset every frame filled the connection pool | yes, one miss does not refetch on the next frame |
 | First loading, hosts blocked | title menu at 66.8 s, 0 external failures | n/a | headless Chrome, `--host-resolver-rules` dropping every host but 127.0.0.1 | under the 90 s gate |
 
 ## Frames

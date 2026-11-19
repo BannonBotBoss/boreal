@@ -10,7 +10,7 @@ Main's slow job sits on `#loading` until the 780 s autoplay timeout. The console
 
 - The forest frame and the horizon skirt call `warmDemTiles` and `warmPhotoTiles` every frame. Those fetch `https://s3.amazonaws.com/elevation-tiles-prod/terrarium/...` and `https://tiles.maps.eox.at/wmts/...`. A network miss was left uncached, so the next frame fetched the same tile again.
 - With those hosts unresolvable, the first loading card logged hundreds of `ERR_NAME_NOT_RESOLVED` and was still on "Measuring your graphics hardware…" at 40 s. That is the same shape as the CI reset: the card never gets to remove itself while the connection pool is full of tile retries.
-- `warm` now returns while `#loading` is in the document, and a thrown fetch sets a 20 s backoff. The same blocked-host run then reached the title menu at 66.8 s with 0 external failures.
+- `warm` now returns while `#loading` is in the document. A thrown fetch is not stored as a missing tile: the next 60 warm calls skip the network, then it tries again. One main run logged `ERR_CONNECTION_RESET` and the next logged no error; both sat on the card. The host flakes. #492 at `80e2c08e` passed slow with one test, the Kenora cell, and did not run the autoplay visit. With the hosts blocked, this card reached the title menu at 66.8 s and made no external request.
 - `tests/slow/autoplay.test.ts` fails at 90 s if the card is still up, and prints console errors, the loading step, and each failed request URL.
 
 ## Check (rule 11)
@@ -32,4 +32,4 @@ None.
 
 ## Limits
 
-The photographs and the elevation still load after the card is gone. A host that keeps resetting is tried again after 20 s. The film after Generate was not the hang on main: the log never left step 1.
+The photographs and the elevation still load after the card is gone. A host that keeps resetting is tried again after 60 warm calls, not cached as a hole. The film after Generate was not the hang on main: the log never left step 1.

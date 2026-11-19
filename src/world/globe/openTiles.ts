@@ -334,7 +334,7 @@ function pull(kind: 'dem' | 'photo', z: number, x: number, y: number) {
       const tile = await decode(await res.blob());
       // A decode miss is not a 404. Leave it uncached so the next warm tries again.
       if (tile) (kind === 'dem' ? storeTerrarium : storePhoto)(z, x, y, tile);
-    } catch { holdNet = Date.now() + 20000; } finally {
+    } catch { holdNet = 60; } finally {
       inflight.delete(id);
       finish();
     }
@@ -391,8 +391,9 @@ export function photoCoverage(latDeg: number, lonDeg: number) {
 
 let photoHere = '';
 function warm(kind: 'dem' | 'photo', latDeg: number, lonDeg: number) {
-  // The loading card must not wait on s3 or EOX. A reset is not retried every frame.
-  if (typeof fetch !== 'function' || Date.now() < holdNet || (typeof document !== 'undefined' && document.getElementById('loading'))) return;
+  // The card does not wait on a host. A reset skips the next warms, then tries again.
+  if (typeof fetch !== 'function' || (typeof document !== 'undefined' && document.getElementById('loading'))) return;
+  if (holdNet > 0) { holdNet--; return; }
   if (kind === 'photo') {
     const here = `${latDeg.toFixed(1)},${lonDeg.toFixed(1)}`;
     if (here !== photoHere) {

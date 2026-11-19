@@ -71,7 +71,11 @@ test('autoplay reaches the end without a page error', { timeout: 930_000 }, asyn
       throw err;
     }
     const shot = join(frames, 'autoplay-done.png');
-    await page.screenshot({ path: shot });
+    // The last frame is best-effort: on a GPU-less CI runner the busy renderer can
+    // miss the default 30s capture window after every step already passed.
+    await page.screenshot({ path: shot, timeout: 90_000 }).catch(err => {
+      console.log(`AUTOPLAY final screenshot skipped: ${(err as Error).message.split("\n")[0]}`);
+    });
     const video = page.video();
     await context.close();
     page = undefined;

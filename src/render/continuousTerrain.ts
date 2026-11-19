@@ -11,6 +11,10 @@
  */
 import * as THREE from 'three';
 import { heightAt, terrainBand } from '../core/world';
+import { LEVEL } from '../core/tuning';
+import { STAGES } from '../core/stages/elevation';
+import { soilAt } from '../core/stages/soils';
+import { snowDepthCm, weatherAt } from '../core/weather';
 import { dayAt } from '../core/timeOfDay';
 import { worldSec } from '../core/worldClock';
 import { coverSampleAt } from '../world/globe/coverSample';
@@ -124,8 +128,19 @@ export function selectTerrainLeaves(camX: number, camZ: number, eyeM: number, sp
   return { leaves, root };
 }
 
+/** A dusting, not a whiteout. Full cover at 5 cm replaced the forest floor with one white sheet. */
+export function snowPaint(depthCm: number) {
+  if (!(depthCm > 0)) return 0;
+  return Math.min(0.35, depthCm / 40);
+}
+
 function paint(x: number, z: number, y: number, target: THREE.Color, cure = 0) {
-  const band = terrainBand(y, x, z);
+  let band = terrainBand(y, x, z);
+  // A lake bed below the walkable shore is water. Dry feet are soil, not the khaki water-band colour.
+  if (band === 'water' && y >= LEVEL.shore) {
+    const soil = STAGES.on ? soilAt(STAGES.seed, x, z).kind : 'till';
+    band = soil === 'water' ? 'till' : soil;
+  }
   if (isStaged(band)) groundColor(band as SoilKind, target);
   else target.set(BAND_COLOR[band]);
   if (cure > 0) target.lerp(STRAW, 0.35 + 0.6 * cure);
@@ -157,6 +172,7 @@ export function buildContinuousMesh(
   const snow = new Float32Array(n);
   const idx: number[] = [];
   const tint = new THREE.Color();
+  const snowHere = snowPaint(snowDepthCm(weatherAt(camX, camZ).sweMm));
   let outer = 0;
   leaves.forEach((leaf, li) => {
     const base = li * per;
@@ -182,6 +198,7 @@ export function buildContinuousMesh(
       normal[i * 3] = -gx / len; normal[i * 3 + 1] = 1 / len; normal[i * 3 + 2] = -gz / len;
       paint(x, z, raw, tint, cure);
       color[i * 3] = tint.r; color[i * 3 + 1] = tint.g; color[i * 3 + 2] = tint.b;
+      snow[i] = snowHere;
       uv[i * 2] = ix / seg; uv[i * 2 + 1] = iz / seg;
     }
     for (let iz = 0; iz < seg; iz++) for (let ix = 0; ix < seg; ix++) {

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { COVER_SPECIES, GRASS, bladesJob, coverAt, keepAt, setCoverSource, siteAt } from '../src/render/grass/cover';
+import { COVER_SPECIES, GRASS, bladesJob, coverAt, keepAt, setCoverSource, siteAt, viewedCover } from '../src/render/grass/cover';
 import { finish } from '../src/core/interest';
 import { STAGES, lakeAt } from '../src/core/stages/elevation';
 import { riverAt } from '../src/core/stages/rivers';
@@ -16,6 +16,15 @@ test('species rows are physical and cited ranges are ordered', () => {
   }
   assert.ok(new Set(COVER_SPECIES.map(s => s.form)).size === 3, 'grasses, sedges and low shrubs');
 });
+test('a dry landing still grows clumps where the Kenora site is bare', () => {
+  STAGES.on = true;
+  try {
+    assert.equal(viewedCover(0, 0).density, 0, 'the den origin is under the lake, so it stays bare');
+    const bank = viewedCover(65, -19);
+    assert.ok(bank.density > 0.08, `the forest stand grows grass (${bank.density})`);
+  } finally { STAGES.on = false; }
+});
+
 test('density falloff: full near, monotone, zero at the radius', () => {
   assert.equal(keepAt(0, 48), 1); assert.equal(keepAt(GRASS.full, 48), 1); assert.equal(keepAt(48, 48), 0);
   for (let d = 0; d < 48; d += .5) assert.ok(keepAt(d + .5, 48) <= keepAt(d, 48) + 1e-12);

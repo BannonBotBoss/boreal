@@ -810,7 +810,16 @@ void openForestPlanet(dayAt(clock0.worldSec), hourAt(clock0.worldSec)).finally((
     try { if (!(q.has('noprobe') || cine)) { const r = await inpage?.prewarm(); console.log('INPAGE prewarm ' + JSON.stringify(r)); } }
     catch (e) { console.warn('inpage prewarm', e); }
     return true;
-  }).catch(e => { console.warn('startup', e); return true; }).then(show => { if (show === false) return; void loading.finish(); openAfterLoad(q); }); } // first load: hot sphere, then the planet. A completed intro skips that sphere next time. ?start=globe skips to the planet. ?noprobe: ground capture skips the Ultra bench and the globe prewarm
+  }).catch(e => { console.warn('startup', e); return true; }).then(async show => {
+    if (show === false) { // the chunk was late: keep the card, but do not leave it up after the ground arrives
+      const t0 = performance.now();
+      while (performance.now() - t0 < 90000) {
+        await new Promise(r => setTimeout(r, 400));
+        try { const cell = standChunkIndex(player.x, player.z); if (view.chunkBuilt(cell.a, cell.b)) break; } catch { /* still building */ }
+      }
+    }
+    void loading.finish(); openAfterLoad(q);
+  }); } // first load: hot sphere, then the planet. A completed intro skips that sphere next time. ?start=globe skips to the planet. ?noprobe: ground capture skips the Ultra bench and the globe prewarm
 
 // ?bench=1: per-tier and per-feature cost after streaming settles (logs `BENCH ...` lines to the console).
 if (new URLSearchParams(location.search).has('bench')) void (async () => {

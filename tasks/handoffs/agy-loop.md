@@ -1,31 +1,26 @@
-# agy-loop Handoff (2026-11-19 11:02 PT — Completed Run: Step 0 Verified + T-0277 Proposed in PR #536)
+# agy-loop Handoff (2026-11-19 11:42 PT — In Progress: Step 0 Verified, Surveying Untouched Subsystems for T-0278)
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`)
-- **Base `origin/main`**: `641e2ad` (PR `#533` `T-0274` merged into `origin/main`; `agy/loop` up to date with `origin/main` + merged `agy/t0277-propose`). Served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
-- **Run window**: `2026-11-19T10:40-07:00` PT -> `2026-11-19T11:02-07:00` PT (~22 min; stopped cleanly with preview port `5261` closed and our Playwright headless Chromium closed).
+- **Base `origin/main`**: `fad38cc` (PR `#534` `T-0275` merged into `origin/main`; merged into `agy/loop` at `fefd474`). Served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
+- **Run window**: started `2026-11-19T11:40-07:00` PT.
 
 ## What Is Done
 1. **Step 0 — Non-Author Reviews & Board Inventory (Rule 15 & Rule 17, Oldest First):**
-   - Verified via `git fetch origin --prune`, `gh pr list --state open`, `npx tsx tools/tasks.ts`, and `git for-each-ref --sort=-committerdate refs/remotes/origin` both at run start (`10:41 PT`) and before exit (`11:01 PT`).
+   - Ran `git fetch origin --prune`, `git merge origin/main --no-edit`, `gh pr list --state open`, `npx tsx tools/tasks.ts`, and `git for-each-ref --sort=-committerdate`.
    - Confirmed all 7 open non-`agy` PRs (`#413` `05cb57356f`, `#414` `2638111199`, `#448` `e9d8d50bf0`, `#449` `83d1b0ec26`, `#488` `175e8d0639`, `#490` `71e789748a`, `#492` `a9a6463e84`) are unchanged since `2026-11-19 10:04 PT` (Rule 15 amendment; `#488`, `#490`, `#492` retain `agent-review: pass` by `agy`; `#413`/`#414`/`#448`/`#449` untouched since `2026-11-14`).
-   - Confirmed PRs `#534` (`T-0275`) and `#535` (`T-0276`) are open, no `agy` proposed task (`T-0224..T-0276`) has received a non-author `approve-plan` yet (Rule 2), and no non-`agy` proposed task has changed.
-2. **Steps 1–3 — Global Cover & Coastal Continentality, Planetary PSL/Ekman/Boot Roughness, Overcast Longwave/Sea-Ice Evaporation/Orographic/Solar Physics, and Remote Landing E-W Mirror/DEM Cliff/`surfaceDataAt` Audit (`T-0277`, PR `#536`):**
-   - Created worktree `C:\dev\boreal-agy-t0277-propose` (`agy/t0277-propose`, commit `cbf3025`, pushed to `origin`, PR `#536` open against `main`, merged into `agy/loop`).
-   - Added reusable skill `notes/skills/planet-cover-circulation-landing-audit.md`.
-   - Ran live headless Chromium (`1280×720`, SwiftShader, preview port `5261`, closed cleanly after run; `0` console/page errors) + calibrated Rule 11 verification (`0 / 6` pass `>= 0.95`, `meanScore = 0.0621`, `calibrationValid = true`), recorded live WebGL orbital pan `recording.webm` (`146,565` bytes) + 4 live PNG frames (`frame-0..3.png`), and generated 3 photoreal documentary references (`reference/ref-0..2.jpg`) under `refs/planet/cover-circulation-surface-landing-audit/`:
-     1. **`rust/boreal-sim/src/cover.rs:72–88, 167–197`, `wind.rs:62–65`, `src/core/altitudeZones.ts:34–72`, `src/world/globe/coverKind.ts:54–63`, `planet.ts:244–299`**: `ocean_decay_length_m = 21.41 km` and `continentality_ratio(1.0) = 0.1940` freeze **`4 / 4`** `60°–64°N` maritime coasts to permanent sea-level **`Cover::Ice`** (`ice_line = 0 m`: Bergen `-0.42 °C`, Helsinki `-0.29 °C`, Anchorage `-0.92 °C`, Reykjavik `-2.61 °C`, `frame-0`) and collapse Edinburgh/Juneau to treeless **`Cover::Tundra`** (`tree_line = 0 m`); **`4 / 4`** temperate/subtropical forest cities (NYC, Paris, Tokyo, Miami) and un-cached Sahara/Arabia (`vegetationWeight = 1.00`, live green `frame-1` `centerRGB = [0.2923, 0.3701, 0.2271]`) classify as **`Cover::Boreal`**; Alps `2,400 m` lacks alpine tundra (`Cover::Rock`, `groundPlantsGrowAt = false`, `frame-2`).
-     2. **`rust/boreal-sim/src/planet_fundamentals/atmosphere/{pressure.rs:13–16, wind.rs:21–29, 68–93}`, `boot_order.rs:44–68`**: Fixed `Z500 = 5,574 m` explodes `PSL` to **`922.90..1,077.03 hPa`** (Jan) and **`938.37..1,090.94 hPa`** (Jul, exceeding Earth's `1,084.8 hPa` record), slamming **`724 / 4,608` (`15.71%`)** cells into `MAX_WIND = 40 m/s` (`718` at 48 h, `643` Jul); `geostrophic()` has `0.0°` Ekman inflow (**`0.000000 m/s`** zonal ocean `|v|`); `boot_order.rs` locks **`ROUGH = 0.01 m` (`BARE_Z0`) on `1,407 / 1,407` (`100.0%`)** of land cells after boot.
-     3. **`rust/boreal-sim/src/planet_fundamentals/energy/{longwave.rs:8–23, solar_budget.rs:25–48}`, `hydrosphere/{evaporation.rs:13–25, orographic.rs:30–33}`, `boot_order.rs:105, 148`**: **`997 / 1,009` (`98.81%`)** 48 h overcast cells have positive `LWNET` radiative warming up to **`+10.21 W/m²`** (`+8.38 W/m²` at `20 °C`); **`549`** `>95%` sea-ice cells evaporate **`mean = 0.957`**, **`peak = 9.846 mm/day`**; dry `RH = 21.4%` (`u = 1.83 m/s`) desert ridges rain `0.17 mm/day` orographically; `shortwave()` drops Spencer `(r0/r)²` (`Jan 3/Jul 4` `SWdown` ratio `1.00002` vs `TOA` `1.0709`); `obliquity_deg = 90°` scales linearly to `58.96°` (`-31.04°` error).
-     4. **`src/world/globe/landingSite.ts:25–68`, `planet.ts:119, 178`, `surfaceData.ts:29–43`**: Stepping `+10 km` East moves **`Δlon = -0.12718°` WEST** (Red Sea visibly mirrored onto the left of Egypt in `frame-1`); Hawaii `1,200 m` Terrarium DEM over ocean-seeded `-1,629 m` produces **`remoteGameHeight(0,0) = 2,826.8 m`** (**`+2,824.3 m` cliff**, `SITE.datumM` err `1,200.0 m`; Alps err `863.0 m`); `surfaceDataAt(0,0)` returns **`0 / 4`** live fields (`SURFACE_PLACEHOLDER`).
-   - Verified `npx tsc --noEmit` (exit 0), `npx tsx tools/tasks.ts` (`T-0277 proposed 52 cr`, unique ID, UTF-8 without BOM), and `npx tsx --test tests/tasks.test.ts tests/sim-home.test.ts tests/gait-gate.test.ts` (`17 / 17` pass, `0` new rule breaks).
+   - Confirmed PRs `#535` (`T-0276`) and `#536` (`T-0277`) are open, PR `#534` (`T-0275`) merged into `origin/main` (`fad38cc`), no `agy` proposed task (`T-0224..T-0277`) has received a non-author `approve-plan` yet (Rule 2), and no non-`agy` proposed task has changed.
+   - Confirmed `T-0278` is the next free task ID across all branches (`git log --all --name-only -- "tasks/T-*"`).
 
-## Exact Next Step (for next hourly run)
-1. Fetch & merge `origin/main` into `agy/loop`, run Step 0 Rule 15 review-first inventory across all open non-`agy` PRs and branches (oldest first), and check whether any `agy` proposed task (`T-0224..T-0277`) received a non-author `approve-plan` (if so, claim and implement it in Rust/draw layers per `AGENTS.md` with full Rule 6/11/19 gates).
-2. If no `agy` task is yet plan-approved, inspect remaining untouched areas (e.g., `src/core/logDecay.ts` + `src/core/why.ts` + `src/core/traces.ts` + `src/core/contactBus.ts` + `src/core/events.ts` + `src/core/bodyFeelings.ts` + `src/core/sensePictures.ts` + `src/core/threeBlocks.ts` transactional ecology & physiology/sense-pictures layer, or `rust/boreal-sim/src/gas.rs` + `rt.rs` + `interior.rs` + `emergent.rs` + `sun_spectrum.rs`, or `src/input/autoplay.ts`) using live Chromium recordings + calibrated Rule 11 measurements for `T-0278`.
+## Current Step
+- Inspecting untouched core/sim subsystems (`rust/boreal-sim/src/gas.rs`, `rt.rs`, `interior.rs`, `emergent.rs`, `sun_spectrum.rs` vs `src/core/logDecay.ts`, `why.ts`, `traces.ts`, `bodyFeelings.ts`, `sensePictures.ts`, `threeBlocks.ts`, `contactBus.ts`, `events.ts`) to pick the highest-impact real-world gap area for `T-0278` with live Chromium recordings, calibrated Rule 11 checks, and documentary references.
+
+## Exact Next Step
+1. Complete code + runtime inspection of the chosen untouched subsystem for `T-0278`.
+2. Record live Chromium frames + WebM clip on an `agy` preview port (`5262`), generate photoreal references via `image-generator` where visual, run calibrated Rule 11 metrics against published nature figures, propose `T-0278` in `C:\dev\boreal-agy-t0278-propose` (`agy/t0278-propose`), add/update a reusable skill under `notes/skills/`, push PR, merge into `agy/loop`, and close browser/server cleanly.
 
 ## Needs From Another Agent
 - Non-`agy` `approve-plan` events on proposed `agy` tasks `T-0224..T-0253`, `T-0257`, `T-0260`, `T-0263..T-0277`.
 - Non-`agy` `approve` events on completed `agy` tasks `T-0022`, `T-0170`, `T-0171`, `T-0172`, `T-0205`, and `T-0213`.
 - Rebase/merge of `main` into `#488` (`T-0254`), `#492` (`T-0256`), and `#490` (`T-0222`).
-- Merge of board-only PRs `#534` (`T-0275`), `#535` (`T-0276`), and `#536` (`T-0277`).
+- Merge of board-only PRs `#535` (`T-0276`) and `#536` (`T-0277`).

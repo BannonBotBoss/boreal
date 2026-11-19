@@ -14,6 +14,13 @@ import { readFileSync } from 'node:fs';
 import { PNG } from 'pngjs';
 import { coarseMetresLinear } from '../src/world/globe/coarseRelief';
 
+test('the cloud map uses the site base, not the host root', () => {
+  const src = readFileSync('src/world/globe/orbitAlbedo.ts', 'utf8');
+  assert.equal(src.includes("'/globe/cloud_combined_2048.jpg'"), false);
+  assert.match(src, /BASE_URL/);
+  assert.match(src, /globe\/cloud_combined_2048\.jpg/);
+});
+
 test('the planet land mask is a world map, not coasts cut along meridians', () => {
   const W = 360, H = 180;
   const land: boolean[] = [];

@@ -583,5 +583,5 @@ if (uCrownFloor > 0.5 && landMask > 0.5 && uOpenLand < 0.5) {
     if (vSkirt > 0.0) gl_FragColor.rgb = vec3(1.0, 0.0, 0.0); else if (d < w) gl_FragColor.rgb = vec3(1.0, 0.9, 0.0); }
 #endif`);
   };
-  m.customProgramCacheKey = () => 'globe-steppe-photo-29'; return m;
+  m.customProgramCacheKey = () => 'globe-steppe-photo-31'; return m;
 }

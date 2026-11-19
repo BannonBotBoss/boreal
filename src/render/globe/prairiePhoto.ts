@@ -183,9 +183,15 @@ export function prairieNearGlsl(invPi: string) {
         vec2 uvO = vec2(mxO - uSteppeBox.x, myO - uSteppeBox.y) / max(uSteppeBox.w, 1.0);
         if (uvO.x > 0.001 && uvO.y > 0.001 && uvO.x < 0.999 && uvO.y < 0.999) {
           openC = textureLod(uSteppe, uvO, 0.0).rgb * 0.76;
+          // The Sentinel pixel is the surface, including its thin drainage. The height field is not.
+          photo = mix(photo, openC, clamp(uOpenLand, 0.0, 1.0));
+          landMask = 1.0;
+        } else {
+          photo = mix(photo, openC, clamp(uOpenLand, 0.0, 1.0) * landMask);
         }
-      }
-      photo = mix(photo, openC, clamp(uOpenLand, 0.0, 1.0) * landMask);`;
+      } else {
+        photo = mix(photo, openC, clamp(uOpenLand, 0.0, 1.0) * landMask);
+      }`;
 }
 
 /** The far steppe sample. No alpha darken: the photograph already has the drainage. */
@@ -198,7 +204,7 @@ export function prairieFarGlsl(invPi: string) {
       float hillF = clamp(dot(nrmF, normalize(vec3(-0.45, 0.72, 0.35))), 0.0, 1.0);
       vec3 openFar = vec3(0.40, 0.29, 0.11) * (0.58 + 0.55 * hillF);
       diffuseColor.rgb = mix(diffuseColor.rgb, openFar, nearDisc);
-    } else if (uOpenLand > 0.5 && landMask > 0.5 && uSteppeBox.w > 0.5) {
+    } else if (uOpenLand > 0.5 && uSteppeBox.w > 0.5) {
       vec3 pd = normalize(vDetW + uCamP);
       float lat = degrees(asin(clamp(pd.y, -1.0, 1.0)));
       float lon = degrees(atan(pd.z, pd.x));
@@ -209,8 +215,11 @@ export function prairieFarGlsl(invPi: string) {
       vec2 uvS = vec2(mx - uSteppeBox.x, my - uSteppeBox.y) / max(uSteppeBox.w, 1.0);
       float nearDisc = 1.0 - smoothstep(80000.0, 400000.0, length(vViewPosition));
       if (uvS.x > 0.001 && uvS.y > 0.001 && uvS.x < 0.999 && uvS.y < 0.999) {
+        // Inside the atlas the photograph is the water too, so the pixel is land to the
+        // fresnel and the lake roughness. Height-field lakes are not drawn on top.
         diffuseColor.rgb = textureLod(uSteppe, uvS, 0.0).rgb * 0.76;
-      } else {
+        landMask = 1.0;
+      } else if (landMask > 0.5) {
         vec3 steppe = vec3(0.40, 0.29, 0.11);
         diffuseColor.rgb = mix(diffuseColor.rgb, steppe, nearDisc);
       }

@@ -38,7 +38,7 @@ PR #447 (`grokbot-2/globe-clouds`) is open. This branch does not edit `cloudCove
 Reference: Sentinel-2 cloudless 2021, EOX, CC BY 4.0, https://s2maps.eu. Tile zoom 11 at 48.7 N, 57.8 E (western Kazakh steppe). `ref-steppe-sentinel.jpg`. The game point is not that coordinate. The class is the same: open grass, not conifer forest. The mosaic is a summer composite; day 227 is cured, so the game is straw rather than the greener fields north of Astana.
 
 - Before: `tasks/evidence/T-0222/before-2000.png`. Mean RGB about 106, 124, 44. Adjacent-pixel jump about 24. Green salt.
-- After: `tasks/evidence/T-0222/after-2000.png`. Land (luma ≥ 80) mean RGB within 10% of the reference 133, 104, 70. An 11-tile Sentinel zoom-16 mosaic, linear and mipmapped. The photograph replaces land only. The dark shapes are the height-field water. There is no flow-distance alpha and no channel graph. The pale grey blobs on the right are gone (right-half fraction under 0.004). The green patch in the northwest is in the Sentinel tile itself.
+- After: `tasks/evidence/T-0222/after-2000.png`. Land (luma ≥ 80) mean RGB within 10% of the reference 133, 104, 70. An 11-tile Sentinel zoom-16 mosaic, linear and mipmapped. Inside the atlas the photograph covers the height-field water. The drainage is the drainage in the photograph. Pixels under luma 70 stay under 8% of the frame. The pale grey blobs on the right are gone (right-half fraction under 0.004). The green patch in the northwest is in the Sentinel tile itself.
 - `after-800.png` is the same photograph. `after-400.png`, `side-before-after.png` and `side-reference.png` were removed. At 400 m the near exemplar crop still paints the lake polygons, and the composites showed an older after frame.
 
 ## Not this task

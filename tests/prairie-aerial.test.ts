@@ -164,6 +164,20 @@ test('the right half has no pale grey blobs', () => {
   assert.ok(layers.includes('uSteppeBox.w'), 'the coarse snow colour stays off the overhead photo');
 });
 
+/** Share of the ground that is the dark height-field water. The reference crop is about 0.01. */
+function darkShare(file: string) {
+  const { width: W, height: H, data } = PNG.sync.read(readFileSync(file));
+  const x0 = Math.floor(W * 0.12), x1 = Math.floor(W * 0.88);
+  const y0 = Math.floor(H * 0.1), y1 = Math.floor(H * 0.82);
+  let n = 0, d = 0;
+  for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+    const i = (y * W + x) * 4;
+    const L = 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+    n++; if (L < 70) d++;
+  }
+  return d / Math.max(n, 1);
+}
+
 test('the overhead matches the reference brown within 10%', () => {
   const ref = frameMean('tasks/evidence/T-0222/ref-steppe-sentinel.png');
   const after = frameMean('tasks/evidence/T-0222/after-2000.png');
@@ -171,6 +185,8 @@ test('the overhead matches the reference brown within 10%', () => {
   for (const k of ['r', 'g', 'b'] as const) {
     assert.ok(Math.abs(after[k] - ref[k]) / ref[k] <= 0.1, `${k} after ${after[k].toFixed(1)} reference ${ref[k].toFixed(1)}`);
   }
+  const dark = darkShare('tasks/evidence/T-0222/after-2000.png');
+  assert.ok(dark < 0.08, `height-field water share ${dark.toFixed(3)}`);
 });
 
 /** A magnified mosaic spikes the gradient every block. Lag 8 must not stand out from its neighbours. */
@@ -216,5 +232,6 @@ test('a missing Sentinel tile at the staged home is open land, not boreal salt',
   assert.equal(openLandHere(lat, lon, planet.home, planet), true);
   const photo = readFileSync('src/render/globe/prairiePhoto.ts', 'utf8');
   assert.ok(photo.includes('ang < 0.2 * Math.PI / 180'), 'open land is the home, not a 6° disc');
-  assert.ok(photo.includes('landMask > 0.5 && uSteppeBox.w > 0.5'), 'water is not replaced by the steppe photo');
+  assert.ok(photo.includes('uOpenLand > 0.5 && uSteppeBox.w > 0.5'), 'the photograph covers the atlas');
+  assert.equal(photo.includes('uOpenLand > 0.5 && landMask > 0.5 && uSteppeBox.w > 0.5'), false, 'the height field does not punch lakes through the photograph');
 });

@@ -134,7 +134,7 @@ const VERT_BODY = `
   float tipMix = sh.y > 1.5 ? step(sh.z, heightPercent) : easeInG(heightPercent, 4.0);
   vGrassColour = mix(base, tip, mix(tipMix, heightPercent, highLODOut)) * shade * mix(0.22, 1.0, easeInG(heightPercent, 2.0));
   vGrassColour = mix(vGrassColour, vec3(0.45, 0.32, 0.12), 0.28 * hs); // mixed green and tan in one clump
-  vGrassColour = mix(vGrassColour, vec3(0.46, 0.32, 0.11), clamp(uFloor, 0.0, 1.0) * 0.7); // the same slow cover blend as the ground
+  vGrassColour = mix(vGrassColour, vec3(0.46, 0.32, 0.11), clamp(uFloor, 0.0, 1.0) * 0.22); // a little of the ground tint; the clump stays mixed green and tan
   float snowCover = clamp(uSnowM / max(aBlade.y, 1e-3), 0.0, 1.0); // share of the blade under the snow; 0.8 is the terrain snow albedo (render/pbr.ts, Oke 1987)
   vGrassColour = mix(vGrassColour, vec3(0.8), snowCover);
   float toGround = smoothstep(uGrass.z * 0.5, uGrass.z * 0.85, dist); if (toGround > 0.0) vGrassColour = mix(vGrassColour, groundLayer(soilGround(root.xz), root.xz), toGround); // toward the grass radius blades take the terrain's soil colour + moss layer (render/flora/moss) (far normals are already up): no edge where the field ends

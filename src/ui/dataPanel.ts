@@ -7,6 +7,7 @@ import { latestPlanetSim, type PlanetSim } from '../core/planetBudget';
 import { sharedPlanetSim } from '../core/planetWeather';
 import { decodeEngineReport, healthColor, logSentence, healthWord, parseCycle, type EngineInst, type EngineReport } from '../core/engineReport';
 import { DRIVE_EQUATIONS, driveParams, driveSnapshot } from '../core/drives';
+import { driveUsesRust, driveView } from '../render/driveBridge';
 import { NOT_IN_RUST } from '../data/notInRust';
 import { TIERS } from '../world/cosmos/lod';
 import { CosmosSphere } from '../world/cosmos/sphere';
@@ -286,7 +287,7 @@ async function refresh() {
   if (gen !== generation || !s || !root) return;
   simRef = s;
   paintDrives();
-  const packed = driveParams();
+  const packed = driveUsesRust() ? null : driveParams();
   if (packed) s.setEngineDrives(packed);
   if (!s.engineReport()) {
     if (nodes.readout) nodes.readout.textContent = 'The Rust simulation is not loaded, so there is nothing to report yet.';
@@ -318,7 +319,7 @@ async function refresh() {
 function paintDrives() {
   const host = nodes.drives;
   if (!host) return;
-  const now = driveSnapshot();
+  const now = driveView() ?? driveSnapshot();
   if (!host.dataset.ready) {
     host.dataset.ready = '1';
     host.replaceChildren();

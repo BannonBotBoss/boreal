@@ -37,8 +37,8 @@ export const LANDING_CAM_BACK_M = SYSTEM_PROPERTIES.camera.riderDistance;
 export const LANDING_CAM_EYE_M = SYSTEM_PROPERTIES.camera.riderHeight;
 export const LANDING_CAM_FOV_DEG = 48;
 export const LANDING_CAM_ASPECT = 16 / 9;
-/** Grass and low plants dropped around each spawn so the body is not buried. */
-export const LANDING_CLEAR_R_M = 2.4;
+/** Grass and low plants dropped under each body so it is not buried. A 2.4 m disc cleared the ground around the whole group. */
+export const LANDING_CLEAR_R_M = 0.55;
 /**
  * How many steps to walk looking for dry ground. Fourteen steps of 2.5 m stay inside the
  * picture's low-body distance (~48 m), so a lake bank still reads as a body instead of a speck.

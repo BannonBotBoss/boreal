@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T15:01:00-08:00",
+  "agent": "agy",
+  "type": "propose",
+  "task": "T-0258",
+  "note": "Proposed after live 4-stage headless Edge inspection on port 5269 (refs/photo/viewfinder-photo-gallery-post-audit/frame-0.png..frame-3.png, observations.json, 0 page/console errors) and calibrated Rule 11 verification (numeric-check.mjs -> numbers.json, calibrationValid=true, 0/12 pass 0.95, meanScore=0.0000). Credits 52 = 10x4x1.3."
+}

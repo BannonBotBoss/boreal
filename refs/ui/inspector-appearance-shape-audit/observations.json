@@ -1,0 +1,124 @@
+{
+  "port": 5268,
+  "url": "http://127.0.0.1:5268/?nomenu&stages=1&trees=v2&noprobe=1&hour=10",
+  "pageErrors": [],
+  "consoleErrors": [],
+  "stages": {
+    "stage0_openInspector": {
+      "inspectorPresent": true,
+      "inspectorHidden": false,
+      "bodyInspecting": true,
+      "text": "Click anything in the world: tree, rock, prop, ground, deer, hare or yourself. I closes.",
+      "rect": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "computed": {
+        "display": "none",
+        "visibility": "visible",
+        "opacity": "1",
+        "position": "absolute",
+        "zIndex": "5",
+        "bg": "rgba(11, 21, 16, 0.9)"
+      }
+    },
+    "stage1_groundAndPlayerPick": {
+      "groundClicks": [
+        {
+          "x": 220,
+          "y": 620,
+          "header": ""
+        },
+        {
+          "x": 380,
+          "y": 600,
+          "header": ""
+        },
+        {
+          "x": 920,
+          "y": 620,
+          "header": ""
+        },
+        {
+          "x": 1050,
+          "y": 560,
+          "header": ""
+        },
+        {
+          "x": 180,
+          "y": 480,
+          "header": ""
+        },
+        {
+          "x": 820,
+          "y": 490,
+          "header": ""
+        }
+      ],
+      "playerHit": null,
+      "header": "",
+      "groups": [],
+      "hasEditAppearanceBtn": false
+    },
+    "stage2_appearanceAndShapeTools": {
+      "beforeEdits": {
+        "keydownAddedCapture": 4,
+        "keydownRemovedCapture": 0,
+        "keydownRemovedBubble": 0,
+        "keydownActive": 4,
+        "hasAppearanceDom": true,
+        "hasWheelCanvas": true,
+        "hasProfileCanvas": true
+      },
+      "wheelSample": {
+        "midRedRight": [
+          255,
+          128,
+          128,
+          255
+        ],
+        "midGreen120": [
+          127,
+          255,
+          127,
+          255
+        ],
+        "centerWhite": [
+          255,
+          255,
+          255,
+          255
+        ]
+      },
+      "afterEdits": {
+        "keydownAddedCapture": 6,
+        "keydownRemovedCapture": 0,
+        "keydownRemovedBubble": 0,
+        "keydownActive": 6,
+        "stops": [
+          {
+            "left": "0%",
+            "title": "stop 0: #6b4a2f @ 0"
+          },
+          {
+            "left": "100%",
+            "title": "stop 1: #6b4a2f @ 1"
+          }
+        ],
+        "appearanceInDom": true
+      }
+    },
+    "stage3_afterCloseInspector": {
+      "inspectorHidden": false,
+      "bodyInspecting": true,
+      "appearanceStillInDocument": true,
+      "keydownActiveAfterClose": 6
+    }
+  }
+}

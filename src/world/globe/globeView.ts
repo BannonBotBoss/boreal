@@ -135,7 +135,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
   const planet = globePlanet(seed, STAGES.on, STAGES.seed), R = PLANET.radius; // home.ts: surfaceAt (staged) or heightAt
   let lod = globeLod(), lodTier = worldTier(); // tile rows follow the HELD world tier (core/quality worldTier), not every step
   const camera = new THREE.PerspectiveCamera(Number(q.get('fov')) || 45, /* ?fov=: screenshots (long lens) */ innerWidth / innerHeight, 1, 1e9);
-  const applyRes = () => { if (!own.resize) return; renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5) * lod.resScale); renderer.setSize(innerWidth, innerHeight, false); };
+  const applyRes = () => { if (!own.resize) return; const want = Math.min(devicePixelRatio, 1.5) * lod.resScale; const edge = Math.max(innerWidth, innerHeight) * want; renderer.setPixelRatio(edge > 4096 ? want * 4096 / edge : want); renderer.setSize(innerWidth, innerHeight, false); };
   applyRes(); if (own.resize) listen(window, 'resize', () => { applyRes(); camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); });
   if (own.pageDom) { renderer.toneMapping = THREE.ACESFilmicToneMapping; if (q.has('ev')) renderer.toneMappingExposure = 2 ** Number(q.get('ev')); } // ?ev=: photographic exposure in stops (night shots: airglow needs ~+15..20 EV, as ISS night photography) // shared: the game owns tone mapping (also ACES)
 

@@ -231,8 +231,11 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       bootGaveUp = moved.gaveUp;
       if (pinned != null) elapsed = Math.min(CINE.b14End, pinned);
       if (begun && narrationEndedAt == null && audio.narrationEnded()) narrationEndedAt = elapsed;
-      if (begun && narrationEndedAt == null && elapsed >= narrationEndFallback() + 1 && !(audio.narrationDuration() > 2)) narrationEndedAt = narrationEndFallback();
-      paintDom();
+      // The clock does not wait on a take that never started. A loaded header (duration > 2) used to block this, so a rejected play() left the card on Today forever.
+      if (begun && narrationEndedAt == null && elapsed >= narrationEndFallback() + 1 && !audio.narrationPlaying()) narrationEndedAt = narrationEndFallback();
+      if (begun && narrationEndedAt == null && elapsed >= narrationEndFallback() + 9) narrationEndedAt = narrationEndFallback();
+      try { paintDom(); } catch (e) { console.warn('cine paint', e); }
+      arrive();
       if (!begun || !sphere) return;
       cycle = secondsToCycle(cosmicSeconds(elapsed));
       const end = narrationEndedAt ?? narrationEndFallback();
@@ -243,9 +246,6 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     skip() {
       if (arrived || stopped) return;
       if (!begun) begin();
-      // The ending paints Today and the arrival camera, then lands. Jump the
-      // clock there and run that same paint, so a skip does not leave the
-      // magma uniform or the page-load orbit from the start of the film.
       if (narrationEndedAt == null) narrationEndedAt = narrationEndFallback();
       pinned = null;
       elapsed = CINE.b14End;
@@ -256,7 +256,8 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
       if (!booted) bootGaveUp = true;
       tintGlobe(elapsed);
       driveFilm(elapsed);
-      paintDom();
+      try { paintDom(); } catch (e) { console.warn('cine paint', e); }
+      arrive();
     },
     stop() {
       if (stopped) return;
@@ -391,11 +392,10 @@ export function createOpening(onPlanet: () => void, onBegin?: () => void, earth?
     }
     bootNote.hidden = !(bootHeld > 0 && !booted && !bootGaveUp);
     if (begun) audio.sync(elapsed, narrationEndedAt);
-    // Land only on the hold after B14, so 232 million years still plays through to Today.
-    if (stage === 'hold' && cineArrivalDue(elapsed, earthOn, booted, bootGaveUp, arrived)) {
-      cineTrace(`CINE TRACE arrival ${JSON.stringify({ elapsed: +elapsed.toFixed(3), clock: formatClock(elapsed), earthOn, booted, gaveUp: bootGaveUp, held: +bootHeld.toFixed(2) })}`);
-      land('cinematic:complete');
-    }
+  }
+
+  function arrive() {
+    if (cineStage(elapsed, begun, narrationEndedAt) === 'hold' && cineArrivalDue(elapsed, earthOn, booted, bootGaveUp, arrived)) land('cinematic:complete');
   }
 
   /** The ending and a dismissal share one exit: the seen flag, then the planet entry `onPlanet` already is. */

@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-19T02:11:00-07:00",
+  "agent": "agy",
+  "type": "propose",
+  "task": "T-0271",
+  "note": "Proposed T-0271 from live Chromium (1280x720, origin/main 8f81245) & calibrated Rule 11 audit (0/6 pass >=0.95, meanScore=0.3284, calibrationValid=true, 0 console errors): trees/game.ts:40-73 scene===undefined permanent variant poisoning (fullDelta=5, variantsDelta=1) & unchecked mb/ml guards; game.ts:119,139-153 unthrottled per-frame O(N) reconcileSteppe & unbounded steppeTufts scene/BufferGeometry leak; trees/impostor.ts:210,212 reversed inverse(transformedInstanceMatrix*modelMatrix) (62.25 deg error), un-transformed bake-camera normals, ~80% wasted square-sphere atlas horizontal resolution, 2.05x cyan-blue tint (0.39,0.42,0.80), and live frame-0 near luma 93.6 (13,049 px, W=119) vs crown luma 54.0 (-42.3%) & impostor luma 58.9 (-37.1%, 20,936 px = +60.4% bloated area, W=149); trees/tube.ts:38 parallel-transport vertical degeneracy (7/35 = 20% zero-length normals on J-hook upturn); trees/farRing.ts:24-25 1.412x non-uniform impostor scale; and flora/steppeTuft.ts:77-79,182 0.4057 mean linear albedo (tip 0.72 vs 0.16-0.28 Oke 1987), zero phenology, and loop-index yaw hash2u(i,1,7) scrambling 97/100 tussocks on camera pan."
+}

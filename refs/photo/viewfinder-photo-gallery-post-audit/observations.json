@@ -1,0 +1,142 @@
+{
+  "capturedAt": "2026-11-18T22:58:16.406Z",
+  "url": "http://127.0.0.1:5269/?start=game&noprobe=1&nomenu=1&unlockAll=1&at=30,20,-0.35",
+  "port": 5269,
+  "pageErrors": [],
+  "consoleErrors": [],
+  "stages": {
+    "stage0_live_viewfinder": {
+      "cameraPanelPresent": true,
+      "buttons": [
+        "Camera",
+        "◉ Photo",
+        "Gallery"
+      ],
+      "panelCollapsed": true,
+      "canvasSize": [
+        1280,
+        720
+      ],
+      "statusClockLine": "08:06 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+    },
+    "stage1_camera_panel_halpha": {
+      "focalTest": {
+        "beforeVal": "50",
+        "afterVal": "400",
+        "beforeRgb": [
+          0,
+          0,
+          0
+        ],
+        "afterRgb": [
+          0,
+          0,
+          0
+        ],
+        "filterOptions": [
+          {
+            "value": "visible",
+            "label": "Visible (no filter)",
+            "disabled": false
+          },
+          {
+            "value": "red",
+            "label": "Red channel",
+            "disabled": false
+          },
+          {
+            "value": "green",
+            "label": "Green channel",
+            "disabled": false
+          },
+          {
+            "value": "blue",
+            "label": "Blue channel",
+            "disabled": false
+          },
+          {
+            "value": "luminance",
+            "label": "Luminance (photopic)",
+            "disabled": false
+          },
+          {
+            "value": "halpha",
+            "label": "H-alpha 656.3 nm",
+            "disabled": false
+          },
+          {
+            "value": "uv",
+            "label": "UV 160-170 nm (absorbed by O2/O3 above ~50 km)",
+            "disabled": true
+          },
+          {
+            "value": "euv",
+            "label": "EUV 17-30 nm (absorbed in the thermosphere)",
+            "disabled": true
+          },
+          {
+            "value": "xray",
+            "label": "X-ray 0.1-0.8 nm (absorbed above ~70 km)",
+            "disabled": true
+          }
+        ],
+        "readoutText": "game  EV100 15.0 auto\nP photo  Shift+P photo+EXR  G gallery  ` debug HUD"
+      },
+      "halphaReadout": {
+        "readoutText": "game  EV100 15.0 auto\nH-alpha 656.3 nm: R band x 0.07 nm / 100 nm\nP photo  Shift+P photo+EXR  G gallery  ` debug HUD",
+        "canvasMeanRgb": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "stage2_gallery_and_idb": {
+      "idbPhotos": [
+        {
+          "id": 1,
+          "pngBytes": 1994406,
+          "hasExr": false,
+          "exrBytes": 0,
+          "meta": {
+            "takenWall": "2026-11-18T22:59:01.743Z",
+            "gameTime": "08:00",
+            "view": "game",
+            "location": "x 28 z 24",
+            "seed": 1400,
+            "N": 8,
+            "t": 0.008,
+            "iso": 100,
+            "nd": 0,
+            "focalMm": 50,
+            "auto": true,
+            "filter": "visible",
+            "ev100": 15
+          }
+        }
+      ],
+      "galleryInfo": {
+        "open": true,
+        "heading": "Photo session · 1 capture(s)",
+        "shotCheckboxes": [
+          {
+            "id": "1",
+            "checked": false
+          }
+        ]
+      }
+    },
+    "stage3_photo_mode": {
+      "initial": {
+        "active": true,
+        "focalLengthDomValue": "12",
+        "focalLengthMin": "12",
+        "focalLengthMax": "200",
+        "dofDomValue": "0",
+        "focusDomValue": "8",
+        "fstopDomValue": "2.8"
+      },
+      "afterDofFocus": "8"
+    }
+  }
+}

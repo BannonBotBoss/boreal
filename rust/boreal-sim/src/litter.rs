@@ -28,6 +28,16 @@ const LATERAL_M: f64 = 1.15;
 const VIEW_BACK_M: f64 = 1.55;
 /// Further than this in one step is a drop, not a walk. The pup is on the trail at once.
 const REJOIN_M: f64 = 4.0;
+/// Disc around mama that a pup body may not enter.
+/// The drawn wolf is the body mesh at WOLF_SCALE 2 (about 1.4 m nose to rump).
+/// 0.42 left the pups inside that torso. [game calibration]
+const MAMA_BODY_M: f64 = 0.72;
+/// Four-week pup body radius. The mesh is the adult skin at pup scale 0.3,
+/// about 0.42 m nose to rump, so 0.18 let the bodies occupy the same ground.
+/// It grows with body_scale. [game calibration]
+const PUP_BODY_M: f64 = 0.28;
+/// Seconds for the steering velocity to catch a new direction. [game calibration]
+const STEER_TAU: f64 = 0.28;
 
 fn growth_u(age_years: f64) -> f64 {
     (age_years.max(0.0) / 1.0).min(1.0)
@@ -118,9 +128,9 @@ pub fn pup_aim(slot: u32, mother_x: f64, mother_z: f64, yaw: f64, time: f64, mov
     if act == "sniff" { side += 0.18 * (time * 1.7 + phase).sin(); }
     if act == "sit" { back *= 0.75; side *= 0.75; }
     if act == "pounce" {
-        let sib = PUP_HOME[((slot + 1) % LITTER_COUNT) as usize];
-        back = (back + sib.0 * cluster * age_pull) * 0.5;
-        side = (side + sib.1 * cluster * age_pull) * 0.5;
+        // A pounce is its own little leap, not a step toward a sibling. Averaging homes lined them up.
+        back += (time * 3.1 + phase).sin() * 0.1;
+        side += 0.12 * (phase * 1.7).cos();
     }
     if act == "tumble" {
         back += (time * 2.2 + phase).sin() * 0.12;
@@ -152,6 +162,75 @@ pub fn trail_slot(slot: u32, mother_x: f64, mother_z: f64, yaw: f64, age_years: 
     (x, z)
 }
 
+/// Ground radius of one pup. Four weeks is `PUP_BODY_M`.
+pub fn body_radius(age_years: f64) -> f64 {
+    let young = body_scale(EMERGE_YEARS);
+    PUP_BODY_M * body_scale(age_years) / young
+}
+
+/// Personal space. Each pup is a disc, and mama is a disc they cannot enter.
+pub fn separate_herd(pups: &[(f64, f64, f64)], mother_x: f64, mother_z: f64) -> Vec<(f64, f64, f64)> {
+    let mut out: Vec<(f64, f64, f64)> = pups.to_vec();
+    let clear_mama = |p: &mut (f64, f64, f64)| {
+        let mut dx = p.0 - mother_x;
+        let mut dz = p.1 - mother_z;
+        let mut d = (dx * dx + dz * dz).sqrt();
+        let need = MAMA_BODY_M + p.2;
+        if d >= need {
+            return;
+        }
+        if d < 1e-6 {
+            dx = 0.0;
+            dz = 1.0;
+            d = 1.0;
+        }
+        p.0 = mother_x + dx / d * need;
+        p.1 = mother_z + dz / d * need;
+    };
+    let split_pairs = |out: &mut Vec<(f64, f64, f64)>| {
+        for i in 0..out.len() {
+            for j in (i + 1)..out.len() {
+                let dx = out[j].0 - out[i].0;
+                let dz = out[j].1 - out[i].1;
+                let mut d = (dx * dx + dz * dz).sqrt();
+                let need = out[i].2 + out[j].2 + 1e-4;
+                if d >= need {
+                    continue;
+                }
+                let (ux, uz) = if d < 1e-6 {
+                    (((i + j) as f64).cos(), ((i + j) as f64).sin())
+                } else {
+                    (dx / d, dz / d)
+                };
+                if d < 1e-6 {
+                    d = 0.0;
+                }
+                let push = (need - d) / 2.0;
+                out[i].0 -= ux * push;
+                out[i].1 -= uz * push;
+                out[j].0 += ux * push;
+                out[j].1 += uz * push;
+            }
+        }
+    };
+    for _ in 0..8 {
+        for p in out.iter_mut() {
+            clear_mama(p);
+        }
+        split_pairs(&mut out);
+    }
+    for p in out.iter_mut() {
+        let keep = p.2;
+        p.2 += 0.004;
+        clear_mama(p);
+        p.2 = keep;
+    }
+    for _ in 0..4 {
+        split_pairs(&mut out);
+    }
+    out
+}
+
 fn act_mps(act: &str, age_years: f64) -> f64 {
     let walk = walk_mps(age_years);
     match act {
@@ -163,21 +242,88 @@ fn act_mps(act: &str, age_years: f64) -> f64 {
     }
 }
 
-/// One follow step toward the aim at time 0. The pup does not overshoot it.
-pub fn follow_step(x: f64, z: f64, slot: u32, mother_x: f64, mother_z: f64, yaw: f64, dt: f64, age_years: f64) -> (f64, f64) {
-    let act = pup_act(slot, 0.0);
-    let (tx, tz, _, _) = pup_aim(slot, mother_x, mother_z, yaw, 0.0, true, age_years, false);
+/// One follow step. Velocity eases onto the aim over `STEER_TAU`, so a frame cannot flip it.
+/// A gap longer than `REJOIN_M` is still the drop onto the trail. Returns x, z, vx, vz.
+pub fn follow_step_vel(
+    x: f64, z: f64, slot: u32, mother_x: f64, mother_z: f64, yaw: f64, dt: f64, age_years: f64,
+    time: f64, moving: bool, threatened: bool, vx0: f64, vz0: f64,
+) -> (f64, f64, f64, f64) {
+    let act = pup_act(slot, time);
+    let (tx, tz, _, _) = pup_aim(slot, mother_x, mother_z, yaw, time, moving, age_years, threatened);
     let dx = tx - x;
     let dz = tz - z;
     let d = (dx * dx + dz * dz).sqrt();
     if d < 1e-6 || dt <= 0.0 {
-        return (x, z);
+        return (x, z, 0.0, 0.0);
     }
     if d > REJOIN_M {
-        return (tx, tz);
+        return (tx, tz, 0.0, 0.0);
     }
-    let step = (act_mps(act, age_years) * dt).min(d);
-    (x + dx / d * step, z + dz / d * step)
+    let speed = act_mps(act, age_years);
+    let want = speed.min(d / dt);
+    let k = 1.0 - (-dt / STEER_TAU).exp();
+    let mut vx = vx0 + (dx / d * want - vx0) * k;
+    let mut vz = vz0 + (dz / d * want - vz0) * k;
+    let step = (vx * vx + vz * vz).sqrt() * dt;
+    if step > d {
+        let s = d / step;
+        vx *= s;
+        vz *= s;
+    }
+    (x + vx * dt, z + vz * dt, vx, vz)
+}
+
+/// One pup the page is drawing. Unseeded until the first tick places it.
+#[derive(Clone, Copy, Debug)]
+pub struct PupLive {
+    pub x: f64,
+    pub z: f64,
+    pub vx: f64,
+    pub vz: f64,
+    pub age: f64,
+    pub seeded: bool,
+}
+
+impl Default for PupLive {
+    fn default() -> Self { Self { x: 0.0, z: 0.0, vx: 0.0, vz: 0.0, age: EMERGE_YEARS, seeded: false } }
+}
+
+fn act_code(act: &str) -> f64 {
+    match act { "sniff" => 1.0, "sit" => 2.0, "pounce" => 3.0, "tumble" => 4.0, "straggle" => 5.0, _ => 0.0 }
+}
+
+/// Age, size, follow, and what the pup is doing. Returns x, z, age, scale, yaw, act.
+pub fn litter_tick(pups: &mut [PupLive; 5], dt: f64, game_seconds: f64, mother_x: f64, mother_z: f64, yaw: f64, time: f64, moving: bool, threatened: bool) -> [(f64, f64, f64, f64, f64, f64); 5] {
+    let mut out = [(0.0, 0.0, 0.0, 0.0, 0.0, 0.0); 5];
+    let mut faces = [0.0; 5];
+    let mut acts = [0.0; 5];
+    for slot in 0..5 {
+        let pup = &mut pups[slot];
+        if !pup.seeded {
+            let (x, z, _, _) = pup_aim(slot as u32, mother_x, mother_z, yaw, 0.0, true, EMERGE_YEARS, false);
+            pup.x = x; pup.z = z; pup.age = EMERGE_YEARS; pup.seeded = true;
+        }
+        pup.age = age_after(pup.age, game_seconds);
+        let (_, _, face, act) = pup_aim(slot as u32, mother_x, mother_z, yaw, time, moving, pup.age, threatened);
+        faces[slot] = face;
+        acts[slot] = act_code(act);
+        let (x, z, vx, vz) = follow_step_vel(pup.x, pup.z, slot as u32, mother_x, mother_z, yaw, dt, pup.age, time, moving, threatened, pup.vx, pup.vz);
+        pup.x = x; pup.z = z; pup.vx = vx; pup.vz = vz;
+    }
+    let bodies: Vec<(f64, f64, f64)> = pups.iter().map(|p| (p.x, p.z, body_radius(p.age))).collect();
+    let cleared = separate_herd(&bodies, mother_x, mother_z);
+    for slot in 0..5 {
+        pups[slot].x = cleared[slot].0;
+        pups[slot].z = cleared[slot].1;
+        out[slot] = (pups[slot].x, pups[slot].z, pups[slot].age, body_scale(pups[slot].age), faces[slot], acts[slot]);
+    }
+    out
+}
+
+/// One follow step from rest, toward the aim at time 0.
+pub fn follow_step(x: f64, z: f64, slot: u32, mother_x: f64, mother_z: f64, yaw: f64, dt: f64, age_years: f64) -> (f64, f64) {
+    let (nx, nz, _, _) = follow_step_vel(x, z, slot, mother_x, mother_z, yaw, dt, age_years, 0.0, true, false, 0.0, 0.0);
+    (nx, nz)
 }
 
 /// Past the trail, not yet the rejoin. A short separation.
@@ -341,6 +487,73 @@ mod tests {
         let far = (x * x + z * z).sqrt();
         let near = (tx * tx + tz * tz).sqrt();
         assert!(near < far, "threatened {near} should be closer than {far}");
+    }
+
+    #[test]
+    fn a_pile_keeps_a_body_gap() {
+        let r = body_radius(EMERGE_YEARS);
+        let piled: Vec<(f64, f64, f64)> = (0..5).map(|i| (0.04 * i as f64, 0.03 * i as f64, r)).collect();
+        let out = separate_herd(&piled, 0.0, 0.0);
+        let mama = MAMA_BODY_M + r;
+        for p in &out {
+            let d = (p.0 * p.0 + p.1 * p.1).sqrt();
+            assert!(d >= mama - 1e-6, "inside mama at {d}");
+        }
+        for i in 0..out.len() {
+            for j in (i + 1)..out.len() {
+                let d = ((out[i].0 - out[j].0).powi(2) + (out[i].1 - out[j].1).powi(2)).sqrt();
+                assert!(d >= r * 2.0 - 1e-6, "overlap at {d}");
+            }
+        }
+        assert!(body_radius(1.0) > r);
+        assert!(r >= 0.28, "four-week radius {r} is inside the drawn mesh");
+    }
+
+    #[test]
+    fn a_pile_does_not_line_up() {
+        let r = body_radius(EMERGE_YEARS);
+        let piled: Vec<(f64, f64, f64)> = (0..5).map(|_| (0.0, 0.0, r)).collect();
+        let out = separate_herd(&piled, 0.0, 0.0);
+        let mut area = 0.0;
+        for i in 2..out.len() {
+            let ax = out[i].0 - out[0].0;
+            let az = out[i].1 - out[0].1;
+            let bx = out[1].0 - out[0].0;
+            let bz = out[1].1 - out[0].1;
+            area += (ax * bz - az * bx).abs();
+        }
+        assert!(area > 0.05, "pups lined up, spread {area}");
+    }
+
+    #[test]
+    fn steering_does_not_flip_between_frames() {
+        let mut x = 0.0;
+        let mut z = 3.0;
+        let mut vx = 0.0;
+        let mut vz = 0.0;
+        let mut prev_ux = 0.0;
+        let mut prev_uz = 0.0;
+        for i in 0..30 {
+            let (nx, nz, nvx, nvz) = follow_step_vel(x, z, 0, 0.0, 0.0, 0.0, 1.0 / 30.0, EMERGE_YEARS, 0.0, true, false, vx, vz);
+            let mx = nx - x;
+            let mz = nz - z;
+            let m = (mx * mx + mz * mz).sqrt();
+            if m > 1e-5 && i > 0 {
+                assert!(mx / m * prev_ux + mz / m * prev_uz > 0.5, "frame {i} flipped");
+            }
+            if m > 1e-5 {
+                prev_ux = mx / m;
+                prev_uz = mz / m;
+            }
+            x = nx;
+            z = nz;
+            vx = nvx;
+            vz = nvz;
+        }
+        let (hx, hz, _, _) = pup_aim(0, 0.0, 0.0, 0.0, 0.0, true, EMERGE_YEARS, false);
+        let left = ((x - hx).powi(2) + (z - hz).powi(2)).sqrt();
+        let began = (hx * hx + (3.0 - hz).powi(2)).sqrt();
+        assert!(left < began, "the pup still walks toward the home");
     }
 
     #[test]

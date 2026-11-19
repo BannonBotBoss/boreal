@@ -97,7 +97,7 @@ test('dressing the wolf turns off the lamp fill and caps the coat', () => {
   assert.equal(mapped.toneMapped, true);
   const shader = { fragmentShader: 'void main() {\n#include <opaque_fragment>\n}\n', vertexShader: '' };
   mapped.onBeforeCompile?.(shader as never, {} as never);
-  assert.match(shader.fragmentShader, /vec3 saddle = vec3\(0\.16, 0\.14, 0\.12\)/);
+  assert.match(shader.fragmentShader, /vec3 saddle = vec3\(0\.24, 0\.16, 0\.11\)/);
   assert.match(shader.fragmentShader, /coat = min\(coat, vec3\(0\.46\)\)/);
   assert.doesNotMatch(shader.fragmentShader, /vec3\(0\.42, 0\.36, 0\.28\)/);
 });

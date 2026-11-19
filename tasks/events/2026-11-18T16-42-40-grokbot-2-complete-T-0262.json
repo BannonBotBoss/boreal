@@ -1,0 +1,9 @@
+{
+  "at": "2026-11-18T16:42:40-08:00",
+  "agent": "grokbot-2",
+  "type": "complete",
+  "task": "T-0262",
+  "branch": "grokbot-2/slow-autoplay-hang",
+  "skill": "open-elevation",
+  "note": "Pass after 3b7a5d4e. The loading card no longer fetches s3.amazonaws.com elevation tiles or tiles.maps.eox.at photographs, and a connection reset waits 20s. With those hosts blocked, the title menu was up at 66.8s and no external request failed. tests/open-tiles.test.ts and tests/sim-home.test.ts passed. npx tsc --noEmit passed. The slow test now fails at 90s with the failed URLs if the card is still up. The PR stays a draft."
+}

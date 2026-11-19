@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T16:47:05-08:00",
+  "agent": "grokbot-2",
+  "type": "comment",
+  "task": "T-0222",
+  "note": "Matthew, 2026-11-18 16:32 PT, rejected after-2000 at 0f013fb0: the land colour matched, and about 41% of the frame was dark height-field water the Sentinel image of this spot does not have. Inside the atlas the photograph is now the surface, including the fresnel, so the height field does not punch lakes. Fresh frames tasks/evidence/T-0222/after-2000.png and after-800.png. Land mean RGB 142.7, 109.7, 74.7 against the reference 133.0, 104.0, 70.7. Pixels under luma 70 are 0.000 of the frame. The right-half pale fraction stays under 0.004. Commit 8385e396. PR #490 stays a draft."
+}

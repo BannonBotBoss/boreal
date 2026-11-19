@@ -10,7 +10,7 @@ Use when a landing should take its hills from a measured DEM instead of only the
 
 ## Steps
 
-1. Cache tiles by `z/x/y`. `warmDemTiles` fetches zoom 8 (the horizon) and zoom 11 (the valley) in a 3×3. A failed fetch stores null and is not retried.
+1. Cache tiles by `z/x/y`. `warmDemTiles` fetches zoom 8 (the horizon) and zoom 11 (the valley). An HTTP miss stores null. A connection reset does not: it is left uncached, and the next 60 warm calls skip the network, then try again. That is a flake, not a permanent hole. While `#loading` is in the document, `warm` returns without a request. The loading card does not wait on `s3.amazonaws.com` or `tiles.maps.eox.at`.
 2. `sampleDem` bilinear-samples the finest cached zoom. Null means the planet height stays.
 3. `blendDem` keeps the planet height under the camera (so the chunk mesh does not become a step) and the DEM past about 1.6 km. A lake stays the planet water. An ocean sample does not, when `elevationWins` sees the DEM above sea level: that point is land.
 4. The chunk dither disc is `0.7 ×` the loaded radius, so the square corners are discarded and the patch edge is a circle.

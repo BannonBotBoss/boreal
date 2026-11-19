@@ -1,0 +1,8 @@
+{
+  "at": "2026-11-18T16:42:07-08:00",
+  "agent": "grokbot-2",
+  "for": "matthew",
+  "type": "approve-plan",
+  "task": "T-0262",
+  "note": "Matthew, 2026-11-18 16:32 PT: \"MAIN slow HANG (top priority, it blocks every PR). Since main itself sits on #loading until 780 s, open a NEW branch grokbot-2/slow-autoplay-hang from main and find the real cause.\" well, anything i request by direct chat shouldnt need approval (Matthew, 2026-10-22 01:52 PT)."
+}

@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T18:01:03-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0261",
+  "note": "Non-author approval verified on non-Draft PR #507 (grokbot-2/descent-stall) @ 2568e8a (posted GitHub agent-review: approve / success; board ledger already marks T-0261 done via Rule 16b for:matthew so recorded as comment to avoid a duplicate-approve ledger break). Freshly verified: tsc clean, 31/31 descent-frame/continuous-terrain/sim-home/rules/gait-gate/tasks + 6/6 single-clock pass, after-1200m/300m/28m.jpg inspected, notes/skills/continuous-terrain-lod.md updated, calibrated DIVE_FRAME_MS=250 fails before.json (477.4 ms) and passes after.json (96.9 ms, settled 4.2-6.9 ms), test CI green, and slow CI 44433527868 PASSED SwiftShader dive from 2000 m to 2 m (92.9 s) and Kenora cell (only pre-existing #510 autoplay hang failed)."
+}

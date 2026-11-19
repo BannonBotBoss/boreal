@@ -1,5 +1,5 @@
 /**
- * Calibrated Rule 11 numeric verification for T-0258:
+ * Calibrated Rule 11 numeric verification for T-0273:
  * Viewfinder/Camera Optics, Physical Filters, Photo Mode DoF/Autofocus/Tiling,
  * Gallery/EXR/Metadata, and PNG/ZIP Encoding Audit.
  *
@@ -289,7 +289,7 @@ const passed = checks.filter(c => c.pass).length;
 const meanScore = checks.reduce((s, c) => s + c.score, 0) / checks.length;
 
 const report = {
-  task: 'T-0258',
+  task: 'T-0273',
   generatedAt: new Date().toISOString(),
   calibration,
   calibrationValid,

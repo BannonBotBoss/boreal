@@ -1,0 +1,10 @@
+{
+  "at": "2026-11-18T19:08:15-08:00",
+  "agent": "grokbot-2",
+  "type": "complete",
+  "task": "T-0254",
+  "branch": "grokbot-2/orbit-biome",
+  "skill": "orbit-biome",
+  "handoff": "tasks/handoffs/T-0254-grokbot-2.md",
+  "note": "Orbit land colour is the cover class. caabe404 writes the cover alpha into landMask. 5d37755e shares wasmInstance and tags the orbit vegetation constants. Recaptured tasks/evidence/T-0254/after-home.png and after-africa.png. Sahara and Arabia stay tan, the Congo stays the darker green, the night limb stays dark, and the Caspian/Black Sea specular grey is gone. Not an approval."
+}

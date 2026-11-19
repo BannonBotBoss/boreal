@@ -1,0 +1,275 @@
+{
+  "generatedAt": "2026-11-19T17:00:35.830Z",
+  "baseUrl": "http://127.0.0.1:5260",
+  "calibrationValid": true,
+  "passed": 0,
+  "total": 6,
+  "meanScore": 0.0727,
+  "checks": [
+    {
+      "id": "alexander-gait-multispecies-cadence-and-hysteresis",
+      "label": "Multi-species gallop cadence (Bear/Deer/Canid), Froude hysteresis & shared gravity()",
+      "measured": "Bear 6/12 m/s: 24.19/48.39 Hz (stride 0.248 m); Deer 6/15.65 m/s: 5.14/9.46 Hz (stride 1.654 m); cloned WOLF_LEGS 10.5 m/s: 8.13 Hz vs 2.60 Hz; deer jitter switches=39/39; hardcoded G=9.81=true",
+      "expected": "Bear ~2.16-2.30 Hz; Deer ~2.29-2.36 Hz; cloned/other canids ~2.60 Hz (no pointer-identity lock); 0/39 hysteresis switches; shared gravity() (9.8202 m/s^2)",
+      "score": 0.1177,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.1177,
+      "pass": false,
+      "source": "Heglund & Taylor (1988) JEB 138:301 Table 3 (f = 4.44 M^-0.156 Hz); Shine et al. (2015) JEB 218:3102; Alexander & Jayes (1983) J. Zool. 201:135"
+    },
+    {
+      "id": "plangait-gallop-override-duty-and-flight",
+      "label": "planGait() gallop override duty ramp, stride length & extended suspension",
+      "measured": "At 10.5 m/s override='gallop': duty=0.300 (vs 0.170), stride=2.288 m (vs 4.038 m), cadence=4.59 Hz (+76.5%), extended flight preserved=0/4 speeds",
+      "expected": "duty=0.170 at 10.5 m/s, stride=4.038 m, cadence=2.60 Hz (0% inflation), extended flight preserved=4/4 speeds",
+      "score": 0.1889,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.1852,
+      "pass": false,
+      "source": "Walter & Carrier (2007) JEB 210:208 (canid gallop duty ~0.21 at 9.2 m/s, 71-75 ms stance); Bertram & Gutmann (2009) J. R. Soc. Interface 6:549"
+    },
+    {
+      "id": "controller-mid-lod-grounding-and-samples",
+      "label": "controller.ts 'mid' LOD terrain sample budget & stance foot grounding",
+      "measured": "mid ground()=6.00 calls/frame (near=10.32); mid max stance foot sink=206.41 mm underground (near=0.00 mm)",
+      "expected": "mid ground() <= 2.00 calls/frame (per controller.ts:5 contract); mid max stance foot sink <= 2.0 mm",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "src/animals/locomotion/controller.ts:4-5 LOD contract (mid = 2 ground samples, feet on tilted support plane)"
+    },
+    {
+      "id": "stickrig-gallop-paw-target-alignment",
+      "label": "stickRig.ts world paw-to-target alignment (shift & pelvisShift)",
+      "measured": "9 m/s gallop stance paw error [LF,LH,RF,RH]=[75.7, 65.5, 76.7, 64.3] mm (max 76.7 mm; maxShift=76.7 mm, maxSpineFlex=17.4 deg) vs 0.00 mm when shift+pelvisShift applied",
+      "expected": "<= 2.0 mm stance paw-to-target error (0.00 mm geometric match to controller.ts pose.feet)",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "src/animals/locomotion/signals.ts:36-39 & fork/playerRig.ts:176-183 (shift + pelvisShift rig contract)"
+    },
+    {
+      "id": "jump-slope-ballistics-and-loco-game-wiring",
+      "label": "Ballistic slope jump trajectory & ?loco=1 gameGround/store/hold wiring",
+      "measured": "20 deg uphill pounce: terrain-following rise +2.40 m mid-air, d2y/dt2=[-87.2, 279.5] m/s^2 (max err 289.3 m/s^2 vs -9.82); flat-ground air=0..0.2 impulse err=33.8 m/s^2; gameGround=-0.2 (vs LEVEL.waterSurface=-0.25), mirrorStoredAnimal=false, f.hold=false",
+      "expected": "Constant ballistic d2y/dt2 = -9.82 m/s^2 (+-0.5 m/s^2) on slopes & flat ground; ?loco=1 uses unified water/terrain surface, mirrors living store, and wires f.hold",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Newtonian projectile mechanics (y(t)=y0+v0*t-0.5*g*t^2, g=9.8202 m/s^2); PROJECT-RULES rule 4; src/core/tuning.ts LEVEL.waterSurface=-0.25"
+    },
+    {
+      "id": "hare-sideslope-roll-wakes-and-skeleton-tails",
+      "label": "Hare side-slope roll & wake cadence/offsets, and resting mammal tail ground clearance",
+      "measured": "20 deg side-slope: roll=0.0 deg (poseHare roll=false), slip=10.0 mm, footGroundErr=9.5 mm, leashes=2; wake=7.00 Hz vs HARE_GAIT 4.40 Hz (+59.1%) with trot offsets=true; 20/54 (37.0%) mammal resting tails below y=0 (worst: North American River Otter -75.5 mm, all pass validateSkeleton=0)",
+      "expected": "Terrain-matched roll on side-slopes (slip < 2 mm, 0 leashes); wakes follow HARE_GAIT cadence (4.40 Hz) & half-bound offsets; 0/54 mammal resting tails below y=0",
+      "score": 0.1295,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.1292,
+      "pass": false,
+      "source": "Hildebrand (1977) J. Mammal. 58:131 (Lepus half-bound); Bertram & Gutmann (2009); boundScore.ts REF.slip=10 mm / 0 leashes; skeleton.ts ground plane y >= 0"
+    }
+  ],
+  "details": {
+    "check1": {
+      "bear6": {
+        "cycle": 0.248,
+        "hz": 24.193548387096776,
+        "duty": 0.23162178159218705
+      },
+      "bear12": {
+        "cycle": 0.248,
+        "hz": 48.38709677419355,
+        "duty": 0.2
+      },
+      "deer6": {
+        "cycle": 1.16807525969922,
+        "hz": 5.13665532265875,
+        "duty": 0.28327773144286905
+      },
+      "deer15": {
+        "cycle": 1.654448548610676,
+        "hz": 9.4571692864907,
+        "duty": 0.2
+      },
+      "wolfRef": {
+        "cycle": 4.038461538461539,
+        "hz": 2.5999999999999996,
+        "duty": 0.17
+      },
+      "wolfClone": {
+        "cycle": 1.2922148198615124,
+        "hz": 8.125583949830641,
+        "duty": 0.2
+      },
+      "deerHystSwitches": 39,
+      "usesSharedGravity": false
+    },
+    "check2": {
+      "rows": [
+        {
+          "v": 5,
+          "autoDuty": 0.28455112721989384,
+          "overDuty": 0.3,
+          "autoCycle": 2.1367521367521367,
+          "overCycle": 2.0267174303411246,
+          "autoHz": 2.34,
+          "overHz": 2.467043468984441,
+          "autoExtended": true,
+          "overExtended": false
+        },
+        {
+          "v": 7,
+          "autoDuty": 0.2523021295274897,
+          "overDuty": 0.3,
+          "autoCycle": 2.878543104714349,
+          "overCycle": 2.4208751841870066,
+          "autoHz": 2.431785714285714,
+          "overHz": 2.8915162771395764,
+          "autoExtended": true,
+          "overExtended": false
+        },
+        {
+          "v": 9.2,
+          "autoDuty": 0.2044123679542696,
+          "overDuty": 0.3,
+          "autoCycle": 3.6312648920264077,
+          "overCycle": 2.47425151749441,
+          "autoHz": 2.5335524324324323,
+          "overHz": 3.71829619379865,
+          "autoExtended": true,
+          "overExtended": false
+        },
+        {
+          "v": 10.5,
+          "autoDuty": 0.17,
+          "overDuty": 0.3,
+          "autoCycle": 4.038461538461539,
+          "overCycle": 2.288461538461539,
+          "autoHz": 2.5999999999999996,
+          "overHz": 4.588235294117646,
+          "autoExtended": true,
+          "overExtended": false
+        }
+      ],
+      "extendedAuto": 4,
+      "extendedOver": 0
+    },
+    "check3": {
+      "midGroundCallsPerFrame": 6,
+      "nearGroundCallsPerFrame": 10.316666666666666,
+      "maxMidUndergroundMm": 206.40557177738864,
+      "maxNearUndergroundMm": 0
+    },
+    "check4": {
+      "maxStick": [
+        75.70064232689715,
+        65.50637097406282,
+        76.72899838970322,
+        64.33215997898128
+      ],
+      "maxFixed": [
+        3.5684606981930085e-12,
+        3.5741433558443197e-12,
+        3.580691130776755e-12,
+        3.561545724537567e-12
+      ],
+      "worstStick": 76.72899838970322,
+      "worstFixed": 3.580691130776755e-12,
+      "maxShiftMm": 76.72899838970233,
+      "maxSpineDeg": 17.407870660423065
+    },
+    "check5": {
+      "slopeFlightFrames": 99,
+      "slopeMinAcc": -87.2036392332177,
+      "slopeMaxAcc": 279.48681486421737,
+      "maxAccelErrMps2": 289.3070382227221,
+      "flatAirImpulseMps2": 33.76577964085497,
+      "apexHeightM": 0.37471056957244603,
+      "airSecondsS": 0.5525,
+      "gameWaterMatchesLevel": false,
+      "locoMirrorsStore": false,
+      "locoPassesHold": false
+    },
+    "check6": {
+      "maxRollDeg": 0,
+      "poseHareAppliesRoll": false,
+      "maxSlipMm": 9.958453731972803,
+      "maxFootGroundErrMm": 9.529420257727693,
+      "leashes": 2,
+      "wakeHz": 7,
+      "realHareHz": 4.4,
+      "wakeUsesBoundOffsets": false,
+      "subterraneanTailCount": 20,
+      "totalMammals": 54,
+      "worstTails": [
+        {
+          "species": "North American River Otter",
+          "archetype": "mustelid",
+          "withers": 0.25,
+          "minTailMm": -75.5,
+          "pctWithers": -30.2,
+          "validateFails": 0
+        },
+        {
+          "species": "Eastern Gray Squirrel",
+          "archetype": "rodent",
+          "withers": 0.1,
+          "minTailMm": -70.2,
+          "pctWithers": -70.2,
+          "validateFails": 0
+        },
+        {
+          "species": "Red Squirrel",
+          "archetype": "rodent",
+          "withers": 0.08,
+          "minTailMm": -56.2,
+          "pctWithers": -70.2,
+          "validateFails": 0
+        },
+        {
+          "species": "Woodland Jumping Mouse",
+          "archetype": "rodent",
+          "withers": 0.03,
+          "minTailMm": -55.6,
+          "pctWithers": -185.5,
+          "validateFails": 0
+        },
+        {
+          "species": "Meadow Jumping Mouse",
+          "archetype": "rodent",
+          "withers": 0.03,
+          "minTailMm": -55.6,
+          "pctWithers": -185.5,
+          "validateFails": 0
+        },
+        {
+          "species": "Fisher",
+          "archetype": "mustelid",
+          "withers": 0.25,
+          "minTailMm": -45.9,
+          "pctWithers": -18.4,
+          "validateFails": 0
+        }
+      ]
+    }
+  },
+  "live": {
+    "consoleErrors": [],
+    "pageErrors": [],
+    "liveReadouts": {
+      "frame-0": "gait gallop  Fr 15.00  duty 0.21  2.52 Hz  ground  1 sec / sec\nstride 3.57 m  pitch -1.2°  roll 0.0°\nLF φ 0.72 swing\nLH φ 0.27 swing\nRF φ 0.87 swing\nRH φ 0.17 down",
+      "frame-1": "gait gallop  Fr 11.85  duty 0.23  2.48 Hz  ground  1 sec / sec\nstride 3.23 m  pitch -12.2°  roll 0.0°\nLF φ 0.87 swing\nLH φ 0.42 swing\nRF φ 0.02 down\nRH φ 0.32 swing",
+      "frame-2": "gait gallop  Fr 18.51  duty 0.30  4.20 Hz  ground  1 sec / sec\nstride 2.38 m  pitch -5.5°  roll 0.0°\nLF φ 0.10 down\nLH φ 0.65 swing\nRF φ 0.25 down\nRH φ 0.55 swing",
+      "frame-3": "POUNCE  gait gallop  Fr 9.07  duty 0.25  2.43 Hz  AIRBORNE  1 sec / sec\nstride 2.88 m  pitch 6.6°  roll 3.9°\nLF φ 0.70 swing\nLH φ 0.25 swing\nRF φ 0.85 swing\nRH φ 0.15 swing"
+    },
+    "locoCanvas": {
+      "width": 640,
+      "height": 360
+    },
+    "recordingBytes": 370378
+  }
+}

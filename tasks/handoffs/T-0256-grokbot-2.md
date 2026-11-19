@@ -13,9 +13,17 @@ Matthew, 2026-11-18, asked for the sim-home ceiling (#498), the remaining agy bl
 - Clear-sky orbit water no longer mixes in the bright sky `reflectionColor`. At orbit the sea is rough (`max(uOceanRough, 0.62)`) and metalness is 0, so the Black Sea and the Eastern Mediterranean are not a silver mirror. A cloud deck still gates the glint.
 - The terminator is the 6–8° twilight gate. Orbit clouds are pulled to neutral white. The procedural cloud shadow is off at orbit.
 
+## Measured
+
+Sahara window std is 13.6 on the cover bake (24°N 8°E, 24 px window, luminance 0.2126/0.7152/0.0722). The tool is `tests/globe-leftovers.test.ts`. A flat class band scores near 0, which is the mismatch. The gate is above 8.
+
+Warm clouds on `tasks/evidence/T-0256/after-orbit.png` are 0 of 15,531 pixels with luma above 0.85, hue 10–40°, and saturation above 0.12. The same test counts them. The review's mismatch was 0.46%. This frame scores 0.
+
+The `bisect-*.png` and `smear-clouds-off.png` files were removed. They were the class-constant cover. The shader no longer has a bisect switch, so those names are not reshot.
+
 ## Next
 
-Matthew views the orbit frame before anyone marks #492 ready. The pull request stays stacked on #488 until that merges.
+Matthew viewed the disc at `a7fcf6d4` and accepted the look. The pull request stays a draft, stacked on #488 until that merges. Then retarget onto main.
 
 ## Needs from another agent
 

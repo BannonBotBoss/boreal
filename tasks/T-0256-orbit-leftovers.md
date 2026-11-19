@@ -37,21 +37,24 @@ The post-tonemap navy replace is gone. At orbit the bright sky `reflectionColor`
 |---|---|---|---|---|
 | Twilight inner edge | 6° solar elevation | civil twilight, sun's centre 6° below the horizon | Seidelmann (ed.) 1992, Explanatory Supplement to the Astronomical Almanac, University Science Books | yes |
 | Twilight outer edge | 8° | the reddened strip on the Apollo 17 frame ends inside that | NASA AS17-148-22727, 7 December 1972 | yes |
-| Warm bright clouds | 0.48% of pixels with luma above 0.8, hue 10–40°, saturation above 0.12 | the thin-limb frame is 0.43% on that count; the review's figure was 0.46% | same count on `tasks/evidence/T-0256/after-orbit.png`. Tan land under a thin cloud adds the two hundredths | within 0.02 of 0.46% |
-| Sahara 25°N 10°E | desert, red above green | subtropical desert | cover map, Hadley belts (Holton & Hakim; the knots in `orbitBiome.ts`) | yes |
-| Congo 0° 20°E | green above red | equatorial forest | same | yes |
-| Bangkok 14°N 101°E | green above red | humid tropics, not a desert | same cover map. The copied zonal curve had painted this belt tan | yes |
-| Caspian 42°N 51°E | enclosed lake, alpha land, channels under 20 | surface near −28 m, not joined to the ocean | Kosarev & Yablonskaya 1994, The Caspian Sea, SPB Academic Publishing | yes |
-| Antarctic cap | one land row south of about −84.9° | the ice sheet, not a copied ocean row | the zoom-0 grid; empty-row floor 2000 m is Bedmap2 interior elevation (Fretwell et al. 2013, The Cryosphere 7:375) | yes |
-| Cloud specular | GGX times (1 − deck), ocean roughness kept | a cloud deck removes the direct sun and does not polish the sea | Walter et al. 2007, EGSR, GGX; Cox and Munk 1954, J. Opt. Soc. Am. 44:838 | yes |
-| Land reflectance | per-class mean and variance of the August 2004 composite | Sahara, Kazakh steppe, Congo, Siberian taiga, the Sudd, Taymyr, the Andean puna, Greenland | Stöckli, Vermote, Saleous, Simmon and Herring 2005, NASA Earth Observatory, Blue Marble Next Generation. https://visibleearth.nasa.gov/collection/1484/blue-marble | the table in `blueMarbleAlbedo.json` |
+| Warm bright clouds | 0 of 15,531 pixels with luma above 0.85, hue 10–40°, saturation above 0.12 | the review's gate was 0.46% | `tasks/evidence/T-0256/after-orbit.png`, the count in `tests/globe-leftovers.test.ts` | 0, under 0.46% |
+| Sahara 24°N 8°E | 107, 70, 38 and a 24 px window std of 13.6 | subtropical desert, not one flat band | `public/globe/blue-marble-200408.jpg` sampled by `buildOrbitCover`; `tests/globe-leftovers.test.ts` | yes |
+| Congo 1°N 23°E | green above red | equatorial forest | the same image | yes |
+| Bangkok 14°N 101°E | green above red | humid tropics | the same image | yes |
+| Tibet 32°N 88°E | tan, not a white sheet | the plateau in August | the same image. An ice-class fill had painted it white | yes |
+| Caspian 42°N 51°E | enclosed basin, alpha land, channels under 40 | surface near −28 m, not joined to the ocean | Kosarev & Yablonskaya 1994, The Caspian Sea, SPB Academic Publishing | yes |
+| Antarctic cap | one land row south of about −84.9° | the ice sheet, not a copied ocean row | `src/render/globe/southCap.ts`; empty-row floor 2000 m is Bedmap2 interior elevation (Fretwell et al. 2013, The Cryosphere 7:375) | yes |
+| Cloud specular | `csSpec` then times (1 − deck); orbit roughness at least 0.62 and metalness 0 | a cloud deck removes the direct sun and clear sky does not mirror | Walter et al. 2007, EGSR, GGX; `src/render/globe/orbitLight.ts` | yes |
+| Land reflectance | the August 2004 image, per pixel | the composite itself, not a class mean | Stöckli, Vermote, Saleous, Simmon and Herring 2005, NASA Earth Observatory. https://visibleearth.nasa.gov/collection/1484/blue-marble | `public/globe/blue-marble-200408.jpg` |
 
 ## Frames
 
-Before disc: `tasks/evidence/T-0254/before-orbit.png` (also `tasks/evidence/T-0221/after-clouds.png`).
-After disc: `tasks/evidence/T-0256/after-orbit.png`.
+Before the cover: `tasks/evidence/T-0221/after-clouds.png`.
+After disc: `tasks/evidence/T-0256/after-orbit.png` (shot at `ba461c6d`; `742467ed` does not change it).
 Beside Apollo 17: `tasks/evidence/T-0256/side-apollo.png`. Reference copy: `tasks/evidence/T-0254/ref-apollo17.png`.
 https://images.nasa.gov/details/as17-148-22727
+
+The older `bisect-*.png` and `smear-clouds-off.png` frames were deleted. They were shot on the class-constant cover, and they still showed the flat bands, the white Tibet, and the grey sea. The current shader has no `?bisect=` switch, so reshooting those names would only repeat the accepted disc under a false label.
 
 Arrival view: hour 8, day 227, altitude 23,572,733 m, staged, NASA clouds loaded.
 

@@ -9,6 +9,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { PNG } from 'pngjs';
 import { setMarble, buildOrbitCover, coverPixel } from '../src/render/globe/orbitCover';
 import { TWILIGHT } from '../src/render/globe/orbitLight';
 import { loadOrbitVegetation } from '../src/render/globe/orbitVeg';
@@ -73,6 +74,40 @@ test('orbit land is the Blue Marble image, not three flat class bands', () => {
   const mean = s / c;
   const std = Math.sqrt(Math.max(0, s2 / c - mean * mean));
   assert.ok(std > 8, `Sahara window std ${std.toFixed(2)} is a flat band`);
+});
+
+test('bright clouds on the accepted disc stay under the warm fraction', () => {
+  const { width: W, height: H, data } = PNG.sync.read(readFileSync('tasks/evidence/T-0256/after-orbit.png'));
+  const sum = (x: number, y: number) => { const i = (y * W + x) * 4; return data[i] + data[i + 1] + data[i + 2]; };
+  let sx = 0, sy = 0, n = 0;
+  const yMax = Math.min(H - 20, 640), xMax = Math.min(W - 20, 1100);
+  for (let y = 20; y < yMax; y++) for (let x = 20; x < xMax; x++) if (sum(x, y) > 40) { sx += x; sy += y; n++; }
+  const cx = sx / n, cy = sy / n;
+  const rads: number[] = [];
+  for (let y = 20; y < yMax; y += 2) for (let x = 20; x < xMax; x += 2) if (sum(x, y) > 40) rads.push(Math.hypot(x - cx, y - cy));
+  rads.sort((a, b) => a - b);
+  const rad = rads[Math.floor(rads.length * 0.995)];
+  let clouds = 0, warm = 0;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    if (Math.hypot(x - cx, y - cy) > rad * 0.92) continue;
+    const i = (y * W + x) * 4;
+    const r = data[i] / 255, g = data[i + 1] / 255, b = data[i + 2] / 255;
+    const lum = (r + g + b) / 3;
+    if (lum <= 0.85) continue;
+    clouds++;
+    const mx = Math.max(r, g, b), mn = Math.min(r, g, b), dlt = mx - mn;
+    const sat = mx < 1e-4 ? 0 : dlt / mx;
+    let h = 0;
+    if (dlt > 1e-4) {
+      if (mx === r) h = ((g - b) / dlt) % 6;
+      else if (mx === g) h = (b - r) / dlt + 2;
+      else h = (r - g) / dlt + 4;
+      h *= 60; if (h < 0) h += 360;
+    }
+    if (h >= 10 && h <= 40 && sat > 0.12) warm++;
+  }
+  const frac = warm / Math.max(1, clouds);
+  assert.ok(frac <= 0.0046, `warm clouds ${(frac * 100).toFixed(2)}% of ${clouds}`);
 });
 
 test('the terminator is the twilight gate and orbit water is not a mirror', () => {

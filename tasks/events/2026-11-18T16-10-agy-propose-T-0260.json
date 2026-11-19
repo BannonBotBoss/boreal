@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T16:10:00-08:00",
+  "agent": "agy",
+  "type": "propose",
+  "task": "T-0260",
+  "note": "Live 4-stage headless Edge inspection on origin/main 4b7e2c5 (port 5268, refs/ui/inspector-appearance-shape-audit/frame-0..3.png, observations.json, 0 page/console errors) and calibrated Rule 11 check (numeric-check.mjs -> numbers.json, calibrationValid=true, 0/12 pass 0.95, meanScore=0.2581). Propose T-0260 (4 objectives, 52 cr): fix hidden #inspector (gameCamera.ts:97 display:none !important), dead terrain picking (buildScene.ts:179,666-675), 60 Hz gizmo material leak & shared geometry disposal in inspector.ts, capture-phase keydown listener leak in appearancePanel.ts:60, 3D handle/wheel/swatch/stop bugs in shapeTools.ts, CSM-clobbering & 2x BT.601 coat shader in render/appearance.ts, and genome.ts load()/handleWall('size')/fitProfile() bugs."
+}

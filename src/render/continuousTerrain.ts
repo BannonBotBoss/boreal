@@ -34,6 +34,17 @@ export const TERRAIN_SPLIT = 0.72;
 /** Skirt drop as a fraction of the leaf size, and a floor so a fine edge still covers one coarse step. */
 export const SKIRT_FRAC = 0.35;
 export const SKIRT_FLOOR_M = 8;
+/**
+ * A full `buildContinuousMesh` on main 6af1de2e took 371–560 ms and uploaded 2–3 MB
+ * in that same call (eye 400 m: 560 ms, 2.55 MB). A dive crosses about forty
+ * log-height bands, which is the held-dive freeze. A frame may spend this long
+ * building the next leaves. The rest of the frame stays free to draw.
+ */
+export const TERRAIN_BUILD_MS = 8;
+/** New vertex bytes assigned to a buffer the GPU has not seen yet. One leaf is about 8 KB. */
+export const TERRAIN_UPLOAD_BYTES = 256 * 1024;
+/** Quads along the placeholder that covers the horizon square until the leaves arrive. */
+export const TERRAIN_COARSE = 8;
 
 export interface TerrainLeaf { x0: number; z0: number; size: number }
 
@@ -220,9 +231,125 @@ export function buildContinuousMesh(
   };
 }
 
+/** One leaf, the same vertex order `buildContinuousMesh` writes for that leaf. `seg` is the quad count. */
+export function buildLeaf(
+  leaf: TerrainLeaf,
+  camX: number, camZ: number,
+  height: (x: number, z: number) => number,
+  cure: number,
+  seg = TERRAIN_GRID,
+): ContinuousMesh {
+  const row = seg + 1;
+  const skirtVerts = 4 * row;
+  const per = row * row + skirtVerts;
+  const position = new Float32Array(per * 3);
+  const normal = new Float32Array(per * 3);
+  const color = new Float32Array(per * 3);
+  const uv = new Float32Array(per * 2);
+  const wet = new Float32Array(per);
+  const snow = new Float32Array(per);
+  const idx: number[] = [];
+  const tint = new THREE.Color();
+  let outer = 0;
+  const step = leaf.size / seg;
+  const skirt = Math.max(SKIRT_FLOOR_M, leaf.size * SKIRT_FRAC);
+  const g = seg + 3, heights = new Float32Array(g * g);
+  for (let iz = 0; iz < g; iz++) for (let ix = 0; ix < g; ix++) {
+    heights[iz * g + ix] = height(leaf.x0 + (ix - 1) * step, leaf.z0 + (iz - 1) * step);
+  }
+  const hAt = (ix: number, iz: number) => heights[(iz + 1) * g + (ix + 1)];
+  for (let iz = 0; iz < row; iz++) for (let ix = 0; ix < row; ix++) {
+    const i = iz * row + ix;
+    const x = leaf.x0 + ix * step, z = leaf.z0 + iz * step;
+    const raw = hAt(ix, iz);
+    const r = Math.hypot(x - camX, z - camZ);
+    if (r > outer) outer = r;
+    position[i * 3] = x; position[i * 3 + 1] = raw - curvatureDrop(r); position[i * 3 + 2] = z;
+    const gx = (hAt(ix + 1, iz) - hAt(ix - 1, iz)) / (2 * step);
+    const gz = (hAt(ix, iz + 1) - hAt(ix, iz - 1)) / (2 * step);
+    const len = Math.hypot(gx, 1, gz) || 1;
+    normal[i * 3] = -gx / len; normal[i * 3 + 1] = 1 / len; normal[i * 3 + 2] = -gz / len;
+    paint(x, z, raw, tint, cure);
+    color[i * 3] = tint.r; color[i * 3 + 1] = tint.g; color[i * 3 + 2] = tint.b;
+    uv[i * 2] = ix / seg; uv[i * 2 + 1] = iz / seg;
+  }
+  for (let iz = 0; iz < seg; iz++) for (let ix = 0; ix < seg; ix++) {
+    const a = ix + row * iz, b = a + row, c = b + 1, d = a + 1;
+    idx.push(a, b, d, b, c, d);
+  }
+  const edges: [number, number, number, number][] = [
+    [0, 1, 0, 0],
+    [seg * row, 1, 0, 0],
+    [0, row, 0, 0],
+    [seg, row, 0, 0],
+  ];
+  edges.forEach((edge, e) => {
+    const skirtBase = row * row + e * row;
+    for (let k = 0; k < row; k++) {
+      const src = edge[0] + k * edge[1];
+      const i = skirtBase + k;
+      position[i * 3] = position[src * 3];
+      position[i * 3 + 1] = position[src * 3 + 1] - skirt;
+      position[i * 3 + 2] = position[src * 3 + 2];
+      normal[i * 3] = normal[src * 3]; normal[i * 3 + 1] = normal[src * 3 + 1]; normal[i * 3 + 2] = normal[src * 3 + 2];
+      color[i * 3] = color[src * 3]; color[i * 3 + 1] = color[src * 3 + 1]; color[i * 3 + 2] = color[src * 3 + 2];
+      uv[i * 2] = uv[src * 2]; uv[i * 2 + 1] = uv[src * 2 + 1];
+      if (k < seg) {
+        const a = src, b = src + edge[1], c = skirtBase + k, d = c + 1;
+        idx.push(a, c, b, b, c, d);
+      }
+    }
+  });
+  return {
+    position, normal, color, uv, wet, snow, index: new Uint32Array(idx),
+    triangles: idx.length / 3, leaves: 1, outerM: outer, root: leaf,
+  };
+}
+
+export function meshBytes(data: ContinuousMesh) {
+  return data.position.byteLength + data.normal.byteLength + data.color.byteLength
+    + data.uv.byteLength + data.wet.byteLength + data.snow.byteLength + data.index.byteLength;
+}
+
+function mergeParts(parts: ContinuousMesh[]): ContinuousMesh {
+  let verts = 0, indexes = 0, outer = 0;
+  for (const p of parts) { verts += p.position.length / 3; indexes += p.index.length; if (p.outerM > outer) outer = p.outerM; }
+  const position = new Float32Array(verts * 3), normal = new Float32Array(verts * 3), color = new Float32Array(verts * 3);
+  const uv = new Float32Array(verts * 2), wet = new Float32Array(verts), snow = new Float32Array(verts), index = new Uint32Array(indexes);
+  let v = 0, i = 0;
+  for (const p of parts) {
+    position.set(p.position, v * 3); normal.set(p.normal, v * 3); color.set(p.color, v * 3);
+    uv.set(p.uv, v * 2); wet.set(p.wet, v); snow.set(p.snow, v);
+    for (let k = 0; k < p.index.length; k++) index[i++] = p.index[k] + v;
+    v += p.position.length / 3;
+  }
+  return { position, normal, color, uv, wet, snow, index, triangles: indexes / 3, leaves: parts.length, outerM: outer, root: parts[0].root };
+}
+
+function geometryFrom(data: ContinuousMesh) {
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(data.position, 3));
+  geo.setAttribute('normal', new THREE.BufferAttribute(data.normal, 3));
+  geo.setAttribute('color', new THREE.BufferAttribute(data.color, 3));
+  geo.setAttribute('uv', new THREE.BufferAttribute(data.uv, 2));
+  geo.setAttribute('aWet', new THREE.BufferAttribute(data.wet, 1));
+  geo.setAttribute('aSnow', new THREE.BufferAttribute(data.snow, 1));
+  geo.setIndex(new THREE.BufferAttribute(data.index, 1));
+  geo.computeBoundingSphere();
+  return geo;
+}
+
+/** The horizon square `selectTerrainLeaves` starts from, drawn as one coarse grid. */
+export function coarseLeaf(camX: number, camZ: number, eyeM: number): TerrainLeaf {
+  const eye = Math.max(1, eyeM);
+  const size = rootSize(eye);
+  const floor = minLeaf(eye);
+  return { x0: Math.round(camX / floor) * floor - size / 2, z0: Math.round(camZ / floor) * floor - size / 2, size };
+}
+
 export interface ContinuousTerrain {
   mesh: THREE.Mesh;
-  /** Rebuild when the camera crosses a snap cell. Returns true when the geometry changed. */
+  /** Show a coarse ground this call, and upload a budget of finer leaves. Returns true when the draw changed. */
   update(camX: number, camZ: number, eyeM: number): boolean;
   dispose(): void;
 }
@@ -247,6 +374,23 @@ export function continuousMaterial() {
   return mat;
 }
 
+let leafMat: THREE.MeshStandardMaterial | undefined;
+/** Fine leaves sit in front of the coarse placeholder. Same shader, so no second compile. */
+function leafMaterial() {
+  if (leafMat) return leafMat;
+  const mat = continuousMaterial().clone();
+  mat.polygonOffset = true;
+  mat.polygonOffsetFactor = -2;
+  mat.polygonOffsetUnits = -2;
+  leafMat = mat;
+  return mat;
+}
+
+function cureAt(camX: number, camZ: number) {
+  const here = coverSampleAt(camX, camZ);
+  return (here.biome === 'prairie' || here.biome === 'desert') ? steppeCure(dayAt(worldSec())) : 0;
+}
+
 /** The mesh the ground view draws instead of the chunk plates and the far skirt. */
 export function createContinuousTerrain(): ContinuousTerrain {
   const geometry = new THREE.BufferGeometry();
@@ -257,38 +401,91 @@ export function createContinuousTerrain(): ContinuousTerrain {
   mesh.castShadow = false;
   let key = '';
   let geo = geometry;
-  const pub = { leaves: 0, outerM: 0, triangles: 0 };
+  let queue: TerrainLeaf[] = [];
+  let cursor = 0;
+  let cure = 0;
+  let anchor = { x: 0, z: 0 };
+  const fine: THREE.Mesh[] = [];
+  const pub = { leaves: 0, outerM: 0, triangles: 0, frameMs: 0, uploaded: 0, pending: 0 };
   (globalThis as { __terrain?: typeof pub }).__terrain = pub;
-  function update(camX: number, camZ: number, eyeM: number) {
-    const eye = Math.max(1, eyeM);
-    const snap = Math.max(24, minLeaf(eye));
-    const biome = coverSampleAt(camX, camZ).biome;
-    const next = `${Math.round(camX / snap)}:${Math.round(camZ / snap)}:${Math.round(Math.log2(eye) * 4)}:${biome}`;
-    if (next === key && geo.getAttribute('position')?.count) return false;
-    let data: ContinuousMesh;
-    try { data = buildContinuousMesh(camX, camZ, eye, heightAt); }
-    catch { return false; }
-    // The mesh that is on screen stays until this buffer is filled. An empty
-    // geometry is never assigned, so a biome rebuild cannot open a hole.
-    if (chunkAction(true, false, data.triangles > 0) !== 'swap') return false;
-    const nextGeo = new THREE.BufferGeometry();
-    nextGeo.setAttribute('position', new THREE.BufferAttribute(data.position, 3));
-    nextGeo.setAttribute('normal', new THREE.BufferAttribute(data.normal, 3));
-    nextGeo.setAttribute('color', new THREE.BufferAttribute(data.color, 3));
-    nextGeo.setAttribute('uv', new THREE.BufferAttribute(data.uv, 2));
-    nextGeo.setAttribute('aWet', new THREE.BufferAttribute(data.wet, 1));
-    nextGeo.setAttribute('aSnow', new THREE.BufferAttribute(data.snow, 1));
-    nextGeo.setIndex(new THREE.BufferAttribute(data.index, 1));
-    nextGeo.computeBoundingSphere();
-    const previous = geo;
-    geo = nextGeo;
-    mesh.geometry = nextGeo;
-    key = next;
-    if (previous !== nextGeo) previous.dispose();
-    mesh.userData.triangles = pub.triangles = data.triangles;
-    mesh.userData.leaves = pub.leaves = data.leaves;
-    mesh.userData.outerM = pub.outerM = data.outerM;
-    return true;
+  function dropFine() {
+    for (const child of fine) { mesh.remove(child); child.geometry.dispose(); }
+    fine.length = 0;
   }
-  return { mesh, update, dispose() { geo.dispose(); } };
+  function publish(uploaded: number, started: number) {
+    pub.frameMs = performance.now() - started;
+    pub.uploaded = uploaded;
+    pub.pending = Math.max(0, queue.length - cursor);
+    pub.leaves = Math.max(geo.getAttribute('position')?.count ? 1 : 0, cursor);
+    mesh.userData.triangles = pub.triangles;
+    mesh.userData.leaves = pub.leaves;
+    mesh.userData.outerM = pub.outerM;
+    mesh.userData.pending = pub.pending;
+    mesh.userData.frameMs = pub.frameMs;
+  }
+  function update(camX: number, camZ: number, eyeM: number) {
+    const started = performance.now();
+    const eye = Math.max(1, eyeM);
+    let uploaded = 0;
+    let changed = false;
+    try {
+      const snap = Math.max(24, minLeaf(eye));
+      const biome = coverSampleAt(camX, camZ).biome;
+      const next = `${Math.round(camX / snap)}:${Math.round(camZ / snap)}:${Math.round(Math.log2(eye) * 4)}:${biome}`;
+      if (next !== key || !geo.getAttribute('position')?.count) {
+        cure = cureAt(camX, camZ);
+        anchor = { x: camX, z: camZ };
+        const placeholder = buildLeaf(coarseLeaf(camX, camZ, eye), camX, camZ, heightAt, cure, TERRAIN_COARSE);
+        // Keep the drawn ground until the placeholder has vertices. An empty swap would open a hole.
+        if (chunkAction(true, false, placeholder.triangles > 0) === 'swap') {
+          dropFine();
+          const nextGeo = geometryFrom(placeholder);
+          const previous = geo;
+          geo = nextGeo;
+          mesh.geometry = nextGeo;
+          if (previous !== nextGeo) previous.dispose();
+          key = next;
+          const selected = selectTerrainLeaves(camX, camZ, eye);
+          queue = selected.leaves.slice().sort((a, b) => nodeDist(a.x0, a.z0, a.size, camX, camZ, eye) - nodeDist(b.x0, b.z0, b.size, camX, camZ, eye));
+          cursor = 0;
+          pub.outerM = placeholder.outerM;
+          pub.triangles = placeholder.triangles;
+          changed = true;
+        }
+      }
+      const batch: ContinuousMesh[] = [];
+      let batchBytes = 0;
+      while (cursor < queue.length && performance.now() - started < TERRAIN_BUILD_MS) {
+        const part = buildLeaf(queue[cursor], anchor.x, anchor.z, heightAt, cure);
+        const bytes = meshBytes(part);
+        if (batch.length > 0 && batchBytes + bytes > TERRAIN_UPLOAD_BYTES) break;
+        cursor++;
+        batch.push(part);
+        batchBytes += bytes;
+        if (batchBytes >= TERRAIN_UPLOAD_BYTES) break;
+      }
+      if (batch.length && chunkAction(true, false, true) === 'swap') {
+        const merged = mergeParts(batch);
+        const child = new THREE.Mesh(geometryFrom(merged), leafMaterial());
+        child.frustumCulled = false;
+        child.name = 'terrain-leaf';
+        child.receiveShadow = true;
+        mesh.add(child);
+        fine.push(child);
+        uploaded = meshBytes(merged);
+        pub.triangles += merged.triangles;
+        changed = true;
+        // The leaves tile the root. The placeholder would z-fight once they cover it.
+        if (cursor >= queue.length) geo.setDrawRange(0, 0);
+      }
+    } catch { /* keep whatever is already drawn */ }
+    publish(uploaded, started);
+    return changed;
+  }
+  return {
+    mesh, update, dispose() {
+      dropFine();
+      geo.dispose();
+    },
+  };
 }

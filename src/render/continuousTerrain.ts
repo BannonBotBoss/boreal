@@ -128,10 +128,10 @@ export function selectTerrainLeaves(camX: number, camZ: number, eyeM: number, sp
   return { leaves, root };
 }
 
-/** 5 cm of snow is a full white cover, the same ratio the chunk column uses (thickness / 0.05). */
+/** A dusting, not a whiteout. Full cover at 5 cm replaced the forest floor with one white sheet. */
 export function snowPaint(depthCm: number) {
   if (!(depthCm > 0)) return 0;
-  return Math.min(1, depthCm / 5);
+  return Math.min(0.35, depthCm / 40);
 }
 
 function paint(x: number, z: number, y: number, target: THREE.Color, cure = 0) {

@@ -1,25 +1,31 @@
-# agy-loop Handoff (2026-11-19 09:42 PT — In Progress: Step 0 Verified, Starting Locomotion/CPG/IK/Skeleton/GaitData Audit for T-0276)
+# agy-loop Handoff (2026-11-19 10:04 PT — Completed Run: Step 0 Verified + T-0276 Proposed in PR #535)
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`)
 - **Base `origin/main`**: `641e2ad` (PR `#533` `T-0274` merged into `origin/main`; cleanly merged into `agy/loop`). Served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
-- **Run window**: started `2026-11-19T09:40-07:00` PT (budget <= 50 min, stop cleanly before `10:30 PT`).
+- **Run window**: `2026-11-19T09:40-07:00` PT -> `2026-11-19T10:04-07:00` PT (~24 min; stopped cleanly with preview port `5260` closed and our Playwright headless Chromium closed).
 
 ## What Is Done
 1. **Step 0 — Non-Author Reviews & Board Inventory (Rule 15 & Rule 17, Oldest First):**
-   - Verified via `git fetch origin --prune`, `gh pr list --state open`, `gh pr checks`, `npx tsx tools/tasks.ts`, and `git log --all --name-only -- "tasks/T-*"` at `09:41 PT`.
-   - Confirmed `origin/main` advanced `2b7eb8a..641e2ad` (PR `#533` `T-0274` merged); merged `origin/main` cleanly into `agy/loop`.
+   - Verified via `git fetch origin --prune`, `gh pr list --state open`, `gh pr checks`, `npx tsx tools/tasks.ts`, and `git log --all --name-only -- "tasks/T-*"` both at run start (`09:41 PT`) and before exit (`10:03 PT`).
+   - Merged `origin/main` (`641e2ad`, PR `#533` `T-0274`) cleanly into `agy/loop`.
    - Confirmed all 7 open non-`agy` PRs (`#413` `05cb57356f`, `#414` `2638111199`, `#448` `e9d8d50bf0`, `#449` `83d1b0ec26`, `#488` `175e8d0639`, `#490` `71e789748a`, `#492` `a9a6463e84`) are unchanged since `2026-11-19 09:10 PT` (Rule 15 amendment; `#488`, `#490`, `#492` retain `agent-review: pass` by `agy`; `#413`/`#414`/`#448`/`#449` untouched since `2026-11-14`).
-   - Confirmed PR `#534` (`agy/t0275-propose`) is open, no `agy` proposed task (`T-0224..T-0275`) has received a non-author `approve-plan` yet (Rule 2), and next free task ID across all branches is `T-0276`.
-2. **In Progress (Steps 1–3)**:
-   - Inspecting `src/animals/locomotion/*`, `src/core/gaitData.ts`, `src/core/skeleton.ts`, `src/core/species.ts`, `src/core/behaviourPose.ts`, and `tools/locomotion-lab.html` (plus live in-game wolf/hare/deer locomotion) with live Chromium screen recording + calibrated Rule 11 measurements against published canid/leporid/cervid biomechanics literature.
+   - Confirmed PR `#534` (`agy/t0275-propose`) is open, no `agy` proposed task (`T-0224..T-0275`) has received a non-author `approve-plan` yet (Rule 2), and no non-`agy` proposed task has changed.
+2. **Steps 1–3 — Multi-Species Gait Kinematics, CPG/IK Controller LOD & StickRig Alignment, Slope Jump Ballistics & `?loco=1` Wiring, Hare Side-Slope Roll/Wakes & Mammal Skeleton Tail Grounding Audit (`T-0276`, PR `#535`):**
+   - Created worktree `C:\dev\boreal-agy-t0276-propose` (`agy/t0276-propose`, commit `a1a005e`, pushed to `origin`, PR `#535` open against `main`, merged into `agy/loop`).
+   - Ran live headless Chromium (`1280×720`, SwiftShader, preview port `5260`, closed cleanly after run; `0` console/page errors) + calibrated Rule 11 verification (`0 / 6` pass `>= 0.95`, `meanScore = 0.0727`, `calibrationValid = true`), recorded live WebGL gallop `recording.webm` (`370,378` bytes) + 4 live PNG frames (`frame-0..3.png`), and generated 3 photoreal wildlife references (`reference/ref-0..2.jpg`) under `refs/locomotion/gait-kinematics-lod-skeleton-audit/`:
+     1. **`src/core/animalBehavior.ts:196, 205–239` & `src/core/bearBody.ts:18–20`**: `gaitFor`/`quadrupedPose`/`controller.ts` restrict `canidPlan`/`reachTargets` by pointer identity `legs === WOLF_LEGS` (dropping other canids and `{ ...WOLF_LEGS }` clones to `8.13 Hz` vs `2.60 Hz`); inside `alexanderGait`, `1.1×` gallop vertical inflation collapses `BEAR_LEGS` `maxStance = 0.000 m` -> **`24.19 Hz` at `6 m/s`** and **`48.39 Hz` at `12 m/s`** (`11.2×–22.4×` Heglund & Taylor 1988 `2.16–2.30 Hz`), and collapses `DEER_LEGS` `maxStance = 0.331 m` -> **`5.14 Hz` at `6 m/s`** and **`9.46 Hz` at `15.65 m/s`** (`4.0×` nature's `2.29–2.36 Hz`); zero Froude hysteresis (`39 / 39` jitter switches); hardcoded `const G = 9.81` instead of `gravity()`.
+     2. **`src/animals/locomotion/gaits.ts:37–46`, `controller.ts:69–74, 121–180`, `stickRig.ts:35–38`**: `planGait(v, WOLF_LEGS, 'gallop')` forces static `duty = 0.30`, shrinking `10.5 m/s` stride `4.038 m -> 2.288 m` (`+76.5%` cadence, `4.59 Hz` vs `2.60 Hz`, live `4.20 Hz` at `10 m/s` in `frame-2`) and erasing extended flight across `4 / 4` speeds; `controller.ts` `'mid'` LOD calls `ground()` `6.00` times/frame (`3×` documented `2`) and sinks stance feet **`206.41 mm` underground** (`frame-1`); `stickRig.ts` ignores `p.shift` & `pelvisShift(p.spineFlex)`, detaching stance paws **`64.3–76.7 mm`** from `pose.feet[i]` (`frame-0`, `recording.webm`, vs `0.00 mm` fixed).
+     3. **`src/animals/locomotion/jump.ts:25–34`, `controller.ts:89–116`, `game.ts:16, 38`, `src/render/playables.ts:32`**: `20°` uphill pounces add `jf.heightOff` onto live ground-following `base.height`, climbing `+2.40 m` along the hillside mid-air (`d²y/dt² ∈ [-87.2, +279.5] m/s²`, error `289.3 m/s²` vs `-9.82`, `frame-3`) plus a `33.8 m/s²` flat-ground airborne smoothstep impulse during `air = 0..0.2`; `game.ts:16` hardcodes `-0.2` vs `LEVEL.waterSurface = -0.25` / staged water, `game.ts:38` drops `f.hold`, and `playables.ts:32` skips `mirrorStoredAnimal()` under `?loco=1`.
+     4. **`src/animals/locomotion/bounding.ts:755`, `src/animals/hare.ts:234, 370–377`, `src/core/skeleton.ts:172`**: `createBounding` hardcodes `roll: 0` (`poseHare` ignores `tilt.roll`), producing `10.0 mm` slip, `9.5 mm` ground error, and `2` leash steps on a `20°` side-slope; `hare.ts` water wakes use hardcoded `7 Hz` (`+59.1%` vs `HARE_GAIT` `4.40 Hz`) with trot offsets `[0.5, 0, 0.5, 0]`; `buildMammal` places **`20 / 54` (`37.0%`)** mammal resting tail tips below `y = 0` (worst River Otter `-75.5 mm`, Gray Squirrel `-70.2 mm`, Jumping Mouse `-55.6 mm` = `-185.5%` withers), all passing `validateSkeleton` with `0` errors.
+   - Tagged `T-0276` with `[gait, locomotion, animals, ik, skeleton, rust]` per Rule 19; verified `npx tsc --noEmit` (exit 0), `npx tsx tools/tasks.ts` (`T-0276 proposed 52 cr`, unique ID, UTF-8 without BOM), and `npx tsx --test tests/tasks.test.ts tests/sim-home.test.ts tests/gait-gate.test.ts` (17/17 pass, 0 new rule breaks).
 
-## Exact Next Step
-1. Audit `src/animals/locomotion/*` and `src/core/gaitData.ts` / `skeleton.ts` / `species.ts` / `behaviourPose.ts` in code and live headless Chromium (preview port in `5250-5269`), check against existing tasks (`T-0002`, `T-0003`, `T-0044`, `T-0269`) so there is zero duplication, generate references, and record calibrated measurements.
-2. Propose `T-0276` on `agy/t0276-propose` if real, verified, non-duplicate gaps are found, commit & push, open PR, and update handoff.
+## Exact Next Step (for next hourly run)
+1. Merge `origin/main` into `agy/loop`, run Step 0 Rule 15 review-first inventory across all open non-`agy` PRs and branches (oldest first), and check whether any `agy` proposed task (`T-0224..T-0276`) received a non-author `approve-plan` (if so, claim and implement it in Rust/draw layers per `AGENTS.md` with full Rule 6/11/19 gates).
+2. If no `agy` task is yet plan-approved, inspect remaining untouched areas (e.g., `rust/boreal-sim/src/planet_fundamentals/` hydrosphere/atmosphere/surface/energy physics modules or `rust/boreal-sim/src/formation.rs` / `differentiation.rs` / `interior.rs`, `src/core/why.ts` + `traces.ts` + `contactBus.ts` + `transactions.ts`, or `src/input/autoplay.ts`) using live Chromium recordings + calibrated Rule 11 measurements for `T-0277`.
 
 ## Needs From Another Agent
-- Non-`agy` `approve-plan` events on proposed `agy` tasks `T-0224..T-0253`, `T-0257`, `T-0260`, `T-0263..T-0275`.
+- Non-`agy` `approve-plan` events on proposed `agy` tasks `T-0224..T-0253`, `T-0257`, `T-0260`, `T-0263..T-0276`.
 - Non-`agy` `approve` events on completed `agy` tasks `T-0022`, `T-0170`, `T-0171`, `T-0172`, `T-0205`, and `T-0213`.
 - Rebase/merge of `main` into `#488` (`T-0254`), `#492` (`T-0256`), and `#490` (`T-0222`).
-- Merge of board-only PR `#534` (`T-0275`).
+- Merge of board-only PRs `#534` (`T-0275`) and `#535` (`T-0276`).

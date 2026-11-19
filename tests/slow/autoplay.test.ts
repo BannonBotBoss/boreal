@@ -47,7 +47,7 @@ test('autoplay reaches the end without a page error', { timeout: 840_000 }, asyn
         void page!.screenshot({ path: join(frames, `autoplay-${logs.length}-${slug}.png`) }).catch(() => {});
       }
     });
-    await page.goto(`http://127.0.0.1:${port}/?autoplay=1`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`http://127.0.0.1:${port}/?autoplay=1&noprobe=1`, { waitUntil: 'domcontentloaded' });
     const dump = async () => {
       const step = await page!.evaluate(() => document.querySelector('#loading .loading-step')?.textContent ?? '').catch(() => '');
       console.log(`LOGS\n${logs.join('\n')}\nERRORS\n${errors.join('\n')}\nFAILED\n${failed.join('\n')}\nSTEP ${step}`);

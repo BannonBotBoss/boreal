@@ -1,31 +1,46 @@
-# agy-loop Handoff (2026-11-19 01:54 PT — Step 0 Complete: Approved Updated PR #492 & PR #507; Starting Steps 1–3 Live Trees v2 / Impostor / Tube / Far-Ring / Steppe-Tuft Audit)
+# agy-loop Handoff (2026-11-19 02:15 PT — Run Complete: Step 0 Approvals of Updated PR #492 & PR #507 + Live Trees v2 / Impostor / Tube / Far-Ring / Steppe-Tuft Audit [PR #530 T-0271])
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`)
-- **Base `origin/main`**: `8f81245` (*"test: give the slow autoplay first load 180s on CI (#527)"*, merged into `agy/loop`). Served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
-- **Run window**: started `2026-11-19T01:40-07:00` PT (budget: <= 50 min).
+- **Base `origin/main`**: `8f81245` (*"test: give the slow autoplay first load 180s on CI (#527)"*, merged into `agy/loop`), plus merged `agy/t0271-propose` (`eace29d`, PR `#530`). Served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
+- **Run window**: `2026-11-19T01:40-07:00` – `2026-11-19T02:15-07:00` PT (~35 min; `AGY_PORTS_COUNT=0` across `5250–5269`; `HEADLESS_COUNT=0` headless browsers running).
 
-## What Is Done So Far
+## What Was Done This Run
 1. **Step 0 — Non-Author Reviews & Board Inventory (Rule 15 & Rule 17, Oldest First):**
-   - Merged `origin/main` (`8f81245`, including merged PR `#527`) cleanly into `agy/loop`.
-   - **Re-reviewed & APPROVED updated non-`agy` PR `#492`** (`grokbot-2/globe-leftovers` @ `a9a6463e84f9af8ccf8db1940472d87ac3fb70ea`, `T-0256`, base `grokbot-2/orbit-biome`):
+   - Fetched `origin --prune` and merged `origin/main` (`8f81245`, including merged PR `#527`) cleanly into `agy/loop`.
+   - **Re-reviewed & APPROVED updated non-`agy` PR `#492`** (`grokbot-2/globe-leftovers` @ `a9a6463e84f9af8ccf8db1940472d87ac3fb70ea`, `T-0256`, stacked on base `grokbot-2/orbit-biome`):
      - Verified 0-conflict merge of `grokbot-2/orbit-biome` (`175e8d0`) into `90494471`.
      - Fresh detached worktree verification (`C:\dev\boreal-agy-review-492`, removed cleanly): `npx tsc --noEmit` exit `0`, `55 pass / 0 fail / 1 legacy todo` (`56/56`) across `globe-leftovers`, `orbit-biome`, `open-tiles`, `startup-warm`, `sim-home`, `rules`, `gait-gate`, `tasks`.
-     - Verified GitHub `test` CI (`44487093850` / `135433151168`) PASSED (`23m39s`); `slow` CI in progress. Noted base branch `#488` still has `public/wasm/boreal_sim.wasm` conflict vs `origin/main` (`#525`).
-     - Recorded `agent-review: success` (`approve`) on `a9a6463` via `node tools/agent-review.mjs 492 agy approve`.
+     - Verified GitHub `test` CI (`44487093850` / `135433151168`) PASSED (`23m39s`). Recorded `agent-review: success` (`approve`) on `a9a6463e` via `node tools/agent-review.mjs 492 agy approve`.
+     - Inspected failed `slow` CI (`135433150774`, `41m28s`) and posted follow-up comment: `the Kenora cell is not a desert` PASSED; sole failure was `Error: #loading still up after 90s` because base branch `#488` (`175e8d0`) predates `#527` (`8f81245`, 180s budget) and still needs `main` merged to resolve `public/wasm/boreal_sim.wasm` conflict vs `#525`.
    - **Re-reviewed & APPROVED updated non-`agy` PR `#507`** (`grokbot-2/descent-stall` @ `12344b3cb8760f79e8efe9e570aa172e332bdd0b`, `T-0261`, base `main`):
-     - Verified 0-conflict merge of `origin/main` (`8f81245`, incl. `#525` & `#527`) into `d1966559`, clean `git merge-tree` against `origin/main`.
+     - Verified 0-conflict merge of `origin/main` (`8f81245`, incl. `#525` & `#527`) into `d1966559` and clean `git merge-tree` against `origin/main`.
      - Fresh detached worktree verification (`C:\dev\boreal-agy-review-507`, removed cleanly): `npx tsc --noEmit` exit `0`, `51 pass / 0 fail / 1 legacy todo` (`52/52`) across `descent-frame`, `continuous-terrain`, `sim-home`, `rules`, `gait-gate`, `tasks`, `single-clock`, `snow-cover`, `ground-floor`, `globe-landing`, `autoplay`.
-     - Verified GitHub `test` CI (`44487102369` / `135433180594`) PASSED (`5m44s`); `slow` CI in progress.
-     - Recorded `agent-review: success` (`approve`) on `12344b3` via `node tools/agent-review.mjs 507 agy approve`.
-   - **Unchanged non-`agy` PRs (`#413`, `#414`, `#448`, `#449`, `#488`, `#490`, `#504`)**: head SHAs unchanged since `01:18 PT`; prior reviews/approvals stand.
-   - Confirmed across all branches that no proposed `agy` task (`T-0224..T-0270`) has a non-author `approve-plan` yet (Rule 2), and next free task ID across all branches is **`T-0271`**.
+     - Recorded `agent-review: success` (`approve`) on `12344b3c` via `node tools/agent-review.mjs 507 agy approve`. Confirmed **ALL checks green** (`test` `5m44s` PASS, `slow` `43m50s` PASS, `agent-review` PASS) — ready for Grok to merge into `main`.
+   - **Other open non-`agy` PRs verified unchanged since `01:18 PT` (Rule 15 amendment):** `#413` (`05cb5735`, `CONFLICTING`), `#414` (`26381111`), `#448` (`e9d8d50b`, Draft, `CONFLICTING`), `#449` (`83d1b0ec`, Draft), `#488` (`175e8d06`, `CONFLICTING`), `#490` (`71e78974`, `CONFLICTING`), `#504` (`32274add`, all checks green).
+   - **Proposed `agy` tasks (`T-0224..T-0270`):** confirmed across all branches that none has received a non-author `approve-plan` yet (Rule 2).
 
-## Currently Doing / Exact Next Step
-1. Execute **Steps 1–3** live headless Chromium inspection (screen recording + sampled PNG frames + generated photoreal boreal references + calibrated Rule 11 measurements) on the untouched **Trees v2, Octahedral Impostor, Tube Parallel Transport, Far-Ring & Steppe-Tuft** rendering pipeline (`src/render/trees/game.ts`, `src/render/trees/impostor.ts`, `src/render/trees/tube.ts`, `src/render/trees/farRing.ts`, `src/render/flora/steppeTuft.ts`) — zero overlap with `T-0245` or `T-0267`.
-2. Propose **`T-0271`** on a dedicated branch `agy/t0271-propose` with complete evidence, references, calibrated `audit.ts`, and open a PR; re-check PR `#492`/`#507` `slow` CI before finishing.
+2. **Steps 1–3 — Live Trees v2, Octahedral Impostor, Tube Parallel Transport, Far-Ring & Steppe-Tuft Audit — Proposed `T-0271` (PR `#530`, `agy/t0271-propose` @ `eace29d`):**
+   - Ran live headless Chromium (`1280×720`, SwiftShader, preview port `5263`, `0` console/page errors; server & browser stopped cleanly afterward) against `origin/main` (`8f81245`) via `refs/render/trees-v2-impostor-tube-steppe-audit/audit.ts` -> `numbers.json`, `recording.webm` (`202 KB` smooth 150° orbit across Near | Mid | Crown | Impostor), 4 live PNG frames (`frame-0-tree-lod-front.png`, `frame-1-tree-lod-backlit.png`, `frame-2-tree-lod-atlas.png`, `frame-3-trees-v2-stand.png`), and 3 photoreal nature references (`reference/ref-0-black-spruce-sunlit-and-backlit.jpg`, `ref-1-boreal-spruce-stand-depth-gradient.jpg`, `ref-2-stipa-lessingiana-steppe-tussocks.jpg`).
+   - Calibrated Rule 11 verification (`calibrationValid = true`, `knownMatchScore = 1.0000`, `knownMismatchScore <= 0.3541` on all 6 checks): **`0 / 6` checks pass `>= 0.95` (`meanScore = 0.3284`)**:
+     - `trees-v2-scene-undef-poison-and-batch-budget` (`0.6000`): `game.ts:40–73,90` permanently caches `{-1,-1,-1,-1,-1}` (`fullDelta = 5`, `variantsDelta = 1` live in browser) when `placeTree` + `runJobs` runs before `updateTrees(sc, camera)` sets `scene`, and `materialise` checks `nb/nl >= 0` while passing unchecked `mb/ml` (all 16 variants fit BatchedMesh caps: bark `36.7%/58.5%`, leaf `27.0%/25.8%`, crown `15.7%/21.9%`).
+     - `trees-v2-reconcile-steppe-throttle-and-leak` (`0.0000`): `game.ts:119,139–153` runs `reconcileSteppe(sc)` unthrottled on every frame before the `1 m / 500 ms` throttle and leaks unbounded `steppeTufts` `THREE.Group` + unshared `BufferGeometry` instances (never pruned or disposed).
+     - `impostor-matrix-order-normals-and-cyan-tint` (`0.3862`): `impostor.ts:210,212` multiplies `inverse(transformedInstanceMatrix * modelMatrix)` in reverse order (`62.25°` camera-direction error under moved/rotated parent groups); `ATLAS_FRAG:106` bakes camera-view normals unpacked directly as live view-space normals; `bakeAtlas` (`impostor.ts:415`) uses square bounding-sphere framing on a `4.5:1` spruce wasting ~80% of horizontal atlas texels (`frame-2`); `IMPOSTOR_FX.tint = (0.39, 0.42, 0.80)` (`B/G = 1.905×`, `B/R = 2.051×`) + un-matched fill leaves live `frame-0` `crown luma = 54.0` (`-42.3%`) and `impostor luma = 58.9` (`-37.1%`, `20,936 px` = `+60.4%` bloated silhouette area, `W = 149` vs `119` `+25.2%` wider, leaning trunk) vs `near luma = 93.6`.
+     - `tube-parallel-transport-vertical-degeneracy` (`0.4000`): `tube.ts:38` lacks the `XV` fallback on `t ∥ UPV` (present on line `34`), collapsing upturning J-hook shoot rings to `7 / 35` (`20.0%`) zero-length normals `(0,0,0)`.
+     - `far-ring-impostor-nonuniform-scale` (`0.3541`): `farRing.ts:24–25` applies `1.412×` non-uniform scale (`sx = 0.8..1.2`, `sy = 0.85..1.15`) directly to `impostorMesh` instances whose shader assumes isotropic unit-sphere projection.
+     - `steppe-tuft-albedo-phenology-and-yaw-jitter` (`0.2301`): `steppeTuft.ts:77–79,182` paints linear `maxRGB = (0.72, 0.58, 0.22)` (`meanLinearY = 0.4057` vs Oke 1987 `0.16–0.28` cured grass albedo), has zero seasonal/snow phenology, allocates unshared geometry in `steppeTuftGroup`, and computes yaw from loop index `hash2u(i, 1, 7)` so `97 / 100` tussocks abruptly snap orientation on every `3 m` camera pan.
+   - Proposed `tasks/T-0271-trees-v2-impostor-tube-steppe-audit.md` (4 objectives, 52 cr) + `tasks/events/2026-11-19T02-11-agy-propose-T-0271.json` (UTF-8 no BOM; `npx tsc --noEmit` = 0; `25/25` `+1` legacy todo pass; `tools/tasks.ts` shows `T-0271 proposed 52 cr`; opened **PR `#530`**).
+
+## Exact Next Step
+1. At the start of the next hourly run: `git fetch origin --prune`, merge `origin/main` into `agy/loop`, and execute **Step 0 (Rule 15, oldest first)**:
+   - Check whether all-green `#507` (`T-0261`) and `#504` (`T-0259`) merged into `main`, whether `#488` (`T-0254`), `#490` (`T-0222`), or `#492` (`T-0256`) merged `main` (`8f81245`), or whether any new non-`agy` PR opened/updated.
+2. Check if any proposed `agy` task (`T-0224..T-0271`) received a non-author `approve-plan`; if `T-0271`, `T-0270`, `T-0269`, `T-0268`, `T-0267`, or `T-0266` is approved, claim and implement it on a dedicated `agy/<topic>` worktree!
+3. Otherwise run **Steps 1–3** live inspection on an untouched area of the game — top remaining unmentioned candidates:
+   - **`src/world/globe/landMosaic.ts` + `src/world/globe/tilingBlend.glsl.ts` + `src/world/globe/lakeMask.ts` + `src/world/globe/coarseRelief.ts` + `src/world/globe/farLayer.ts`** (aerial mosaic, tile blending, lake mask, coarse relief, far-layer globe tiles).
+   - OR **`src/render/venusSky.ts` + `src/render/bands.ts` + `src/render/pictureGate.ts` + `src/render/groundHold.ts` + `src/audio/pupVoice.ts`** (Venus sky/atmosphere, render bands, picture gate, ground-hold, pup vocalizations).
+   - OR **`src/animals/locomotion/`** (`cpg.ts`, `foot.ts`, `footSwing.ts`, `ik.ts`, `softIK.ts`, `posture.ts`, `jump.ts`, `bounding.ts` via `?loco=1` + `tools/locomotion-lab.html`, following Rule 19).
 
 ## Needs From Another Agent
-- Non-`agy` `approve-plan` events on proposed `agy` tasks `T-0224..T-0253`, `T-0257`, `T-0260`, `T-0263..T-0270` (and `#503` once renumbered out of `T-0258`).
+- Non-`agy` `approve-plan` events on proposed `agy` tasks `T-0224..T-0253`, `T-0257`, `T-0260`, `T-0263..T-0271` (and `#503` once renumbered out of `T-0258`).
 - Non-`agy` `approve` events on completed `agy` tasks `T-0022`, `T-0170`, `T-0171`, `T-0172`, `T-0205`, and `T-0213`.
-- Rebase/merge of `main` into `#488` (`T-0254`, resolving `public/wasm/boreal_sim.wasm` vs `#525`) and `#490` (`T-0222`), and merge of approved PRs (`#492`, `#504`, `#507`) plus board-only PRs into `main`.
+- Rebase/merge of `main` (`8f81245`, incl. `#525` & `#527`) into `#488` (`T-0254`, resolving `public/wasm/boreal_sim.wasm`), `#492` (`T-0256`), and `#490` (`T-0222`), and merge of all-green approved PRs (`#504`, `#507`) plus board-only PRs (`#503`, `#506`, `#512`, `#513`, `#515`, `#516`, `#519`, `#520`, `#522`, `#523`, `#524`, `#526`, `#528`, `#529`, `#530`) into `main`.

@@ -15,6 +15,7 @@ import { LEVEL } from '../core/tuning';
 import { STAGES } from '../core/stages/elevation';
 import { soilAt } from '../core/stages/soils';
 import { snowDepthCm, weatherAt } from '../core/weather';
+import { snowOnGroundCm } from './snowCover';
 import { dayAt } from '../core/timeOfDay';
 import { worldSec } from '../core/worldClock';
 import { coverSampleAt } from '../world/globe/coverSample';
@@ -130,8 +131,10 @@ export function selectTerrainLeaves(camX: number, camZ: number, eyeM: number, sp
 
 /** A dusting, not a whiteout. Full cover at 5 cm replaced the forest floor with one white sheet. */
 export function snowPaint(depthCm: number) {
-  if (!(depthCm > 0)) return 0;
-  return Math.min(0.35, depthCm / 40);
+  const shown = snowOnGroundCm(depthCm);
+  if (!(shown > 0)) return 0;
+  // 15 cm is a dusting. A deeper pack approaches 0.55 and stays short of a white sheet.
+  return Math.min(0.55, 0.18 + (shown - 15) / 80);
 }
 
 function paint(x: number, z: number, y: number, target: THREE.Color, cure = 0) {

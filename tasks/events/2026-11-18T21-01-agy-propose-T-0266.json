@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T21:01:30-07:00",
+  "agent": "agy",
+  "type": "propose",
+  "task": "T-0266",
+  "note": "Proposed T-0266 (4 objectives, 52 cr, skill floor-grass-snow-landing-audit) from live headless Chromium (1280x720, SwiftShader, 0 console errors) and calibrated Rule 11 inspection of origin/main a3828c7 (refs/terrain/floor-grass-snow-landing-audit/audit.ts -> numbers.json, 4 frames + 3 generated boreal nature references, calibrationValid=true, 0/6 checks pass >=0.95, meanScore=0.0465): grass blades floating +3.0 cm above terrain (cover.ts:130) with 4x-12x ribbon width (grass.ts:108) and 2.6x albedo overshoot pushing autumn fall R to 1.461 > 1.0 (grass.ts:135), viewedCover forcing 470/470 (100%) bare bedrock/cliff spots to 0.38 grass density (cover.ts:89-91), snowPaint hard-capped at 0.35 (pbr mean snow 0.2109 vs grass 1.00; Jan 25 HUD 33.5 cm renders 0.1% white / 98.0% dark olive-brown) plus omitted skirt aSnow copy (continuousTerrain.ts:132,220-226), and late-ground loading wait dropping into empty void on timeout without chunk priority budget or standPoint alignment (main.ts:813-822, startup.ts:215, loading.ts:31-35)."
+}

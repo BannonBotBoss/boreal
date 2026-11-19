@@ -124,7 +124,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
   xrVignette.position.set(0, 0, -0.35); xrVignette.renderOrder = 20; xrVignette.visible = false; camera.add(xrVignette);
   const post = createPost(renderer, scene, camera);
   const photoreal = createPhotoreal(renderer, scene, camera, sky, BASE_RATIO); // PBR lighting, CSM, IBL, GTAO + quality governor
-  const ratio = () => Math.min(BASE_RATIO, 1.5) * photoreal.tier.resScale;
+  const ratio = () => { const want = Math.min(BASE_RATIO, 1.5) * photoreal.tier.resScale; const edge = Math.max(canvas.clientWidth || 1, canvas.clientHeight || 1) * want; return edge > 4096 ? want * 4096 / edge : want; };
   const chunks = new Map<string, { root: THREE.Group; entities: Entity[]; objects: Map<string, THREE.Object3D>; near: boolean; batch: import('./batch').ChunkBatch; contacts: Contact[] }>();
   const animals = new Map<string, { rig: ReturnType<typeof createDeerRig>; entity: Entity }>();
   let activeContext: EventContext;
@@ -581,7 +581,7 @@ export function buildScene(canvas: HTMLCanvasElement, onForage?: ForageHandler) 
       for (const row of animals.values()) { if (spots.length >= 24) break; const g = foot(row.entity.x, row.entity.z); spots.push({ x: row.entity.x, y: g.y, z: row.entity.z, s: 0.9, nx: g.nx, nz: g.nz }); }
       for (const hare of hares.list()) { if (spots.length >= 24) break; const g = foot(hare.x, hare.z); spots.push({ x: hare.x, y: g.y, z: hare.z, s: 0.35, nx: g.nx, nz: g.nz }); }
       const sun = 1 - Math.min(1, Math.max(0, darkness));
-      contacts.set(spots, { stretch: 0.85 + sun * 0.7, opacity: 0.22 + sun * 0.5, yaw: Math.atan2(lit.dir.x, lit.dir.z) });
+      contacts.set(spots, { stretch: 0.85 + sun * 0.7, opacity: 0.55 + sun * 0.35, yaw: Math.atan2(lit.dir.x, lit.dir.z) });
     }
     for (const child of scene.children) {
       const picture = child.userData.animalPicture || child.userData.wolfLod || child.name.startsWith('pup:');

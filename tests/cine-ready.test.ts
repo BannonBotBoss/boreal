@@ -61,6 +61,17 @@ test('the grace starts when the clamp engages, and a ready globe is not held', (
   assert.equal(cineArrivalDue(116, false, false, false, false), false);
 });
 
+test('a thrown earth picture still hands the planet over at the end', () => {
+  const w = installDom('', false);
+  let planets = 0;
+  const opening = createOpening(() => { planets++; }, () => {}, { show: () => { throw new Error('gpu'); }, ready: () => Promise.resolve() });
+  const probe = w.__borealOpening!;
+  probe.begin();
+  for (let i = 0; i < 200 && planets === 0; i++) opening.step(1);
+  assert.equal(planets, 1);
+  assert.ok(probe.elapsed >= CINE.b14End);
+});
+
 test('the boot hold shows loading the planet and falls back after 15 seconds', () => {
   assert.equal(CINE_BOOT_TIMEOUT_S, 15);
   const f = film({ ready: () => new Promise<void>(() => {}) });

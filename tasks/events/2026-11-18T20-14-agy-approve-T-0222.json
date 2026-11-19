@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T20:14:00-07:00",
+  "agent": "agy",
+  "type": "approve",
+  "task": "T-0222",
+  "note": "Approved rebased non-Draft PR #490 (grokbot-2/prairie-aerial) @ 69b0aca8 (MERGEABLE onto origin/main fafb4ab #518): src/render/pbr.ts cleanly preserves both #517/#518 boreal floor (litter/mossC/needle/mossNoise) and T-0222 n2g/n1g distance grain fade + cache key 'boreal-terrain-pbr-cure-open-grain'; test CI run 44446806666 passed (slow job 135300821112 still in progress; merger verifies per Rule 17d); fresh npx tsc --noEmit exited 0 and 43/43 tests passed across prairie-aerial/open-tiles/sim-home/rules/gait-gate/tasks (0 T-0222 ledger breaks; T-0222 replays cleanly as completed 26 cr); notes/skills/land-mosaic.md and calibrated Rule 11 checks verified. Posted agent-review: approve on PR #490."
+}

@@ -16,7 +16,7 @@ import {
 import {
   WEATHER, climatologicalSweMm, initWeather, updateWeather, weatherAt,
 } from '../src/core/weather';
-import { DENSITY_TINT, densityTintGate, groundMarkOpacity, groundMarkRadius } from '../src/render/animalDensity';
+import { DENSITY_TINT, densityTintGate, groundMarkInStandingView, groundMarkOpacity, groundMarkRadius } from '../src/render/animalDensity';
 
 function dryCell() {
   for (let x = -80; x <= 160; x += 16) for (let z = -80; z <= 160; z += 16) {
@@ -107,6 +107,8 @@ test('the density drawing is on before the body is gone, and the standing sprite
   assert.equal(groundMarkOpacity(1, high), 0, 'the high stain replaces the patch');
   assert.ok(groundMarkRadius('herd') < 8, 'the herd patch is not a clearing-sized lid');
   assert.ok(groundMarkRadius('herd') > 0.5);
+  assert.equal(groundMarkInStandingView(18, 13.75), true, 'a far centre whose rim crosses the wolf still counts as the standing view');
+  assert.equal(groundMarkInStandingView(30, 13.75), false);
   const density = readFileSync(new URL('../src/render/animalDensity.ts', import.meta.url), 'utf8');
   const scene = readFileSync(new URL('../src/render/buildScene.ts', import.meta.url), 'utf8');
   const main = readFileSync(new URL('../src/main.ts', import.meta.url), 'utf8');

@@ -32,7 +32,8 @@ test('the leaves tile one square that passes the horizon, with no overlap', () =
 
 test('snow tints the soil and does not replace it with a white sheet', () => {
   assert.equal(snowPaint(0), 0);
-  assert.ok(snowPaint(10.4) > 0.15 && snowPaint(10.4) < 0.5, `10 cm stayed a sheet (${snowPaint(10.4)})`);
+  assert.equal(snowPaint(10.4), 0, 'a 10 cm residual is not painted on a green floor');
+  assert.ok(snowPaint(20) > 0.15 && snowPaint(20) < 0.6, `20 cm stayed a sheet (${snowPaint(20)})`);
 });
 
 test('every vertex is the height function minus earth curvature, and skirts drop below it', () => {

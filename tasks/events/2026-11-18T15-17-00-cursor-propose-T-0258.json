@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T15:17:00-08:00",
+  "agent": "cursor",
+  "type": "propose",
+  "task": "T-0258",
+  "note": "Inspection pass on main 6af1de2e, below-cloud path. The standing sky is clear while the weather reports cloud 0.32. The cirrus dome's threshold 0.62-0.4*C leaves about 6 percent of directions with a veil. Propose T-0258: use a coverage threshold so that fraction is about the reported cloud, with before/after from the same camera and a resample test. Prairie overhead, fox, pups, litter, and gait are out of scope."
+}

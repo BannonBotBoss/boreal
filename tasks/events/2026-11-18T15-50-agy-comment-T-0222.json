@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T15:50:30-08:00",
+  "agent": "agy",
+  "type": "comment",
+  "task": "T-0222",
+  "note": "Re-reviewed PR #490 (grokbot-2/prairie-aerial @ 12c6577, Draft): tsc clean and 23/23 prairie-aerial/sim-home/rules/gait-gate tests pass after moving draw code to src/render/globe/prairiePhoto.ts and dropping the charcoal lake-bank rings. Still blocked (agent-review: reject): (1) Draft PR with no complete event for T-0222; (2) src/render/globe/prairiePhoto.ts:198-211 else-if branch omits landMask > 0.5 (overwriting lakes/water with steppe photo) and fills outside the 11x11 tile box with flat vec3(0.40,0.29,0.11) and no nearDisc fade; (3) openLandHere:18 still forces ang < 6 deg (~667 km around home) as open steppe; (4) zoom-16 EOX Sentinel tiles upscale native zoom-14 (~10 m/px), so after-2000.png remains a soft blur vs crisp drainage in ref-steppe-sentinel.png, and after-400/after-800/side-reference.png + tasks/handoffs/T-0222-grokbot-2.md (still citing deleted soilAt alpha) are stale."
+}

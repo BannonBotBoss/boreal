@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T22:00:00-07:00",
+  "agent": "agy",
+  "type": "propose",
+  "task": "T-0267",
+  "note": "Proposed T-0267 (4 objectives, 52 cr, skill shadows-trees-flora-audit) from live headless Chromium (1280x720, SwiftShader, 0 console errors) and calibrated Rule 11 inspection of origin/main a3828c7 (refs/render/shadows-trees-flora-audit/audit.ts -> numbers.json, 4 live frames + 3 generated boreal nature references, calibrationValid=true, 0/6 checks pass >=0.95, meanScore=0.1525): inverted contact-shadow solar stretch (noon 1.55 > low-sun 0.95), zero antisolar offset, 55% black toneMapped=false midnight discs, and un-divided 0.4 m slope gradient causing 2.50x under-tilt (13.0 deg vs 30.0 deg, +21.9 cm downhill hover, buildScene.ts:574-584 & contactShadow.ts:25,42-45); Weber-Penn Math.abs(amount) discarding negative tropism sign (n=361 L2 shoots identical +0.1820 m at +/-0.8) and unswept orients[i] (weberPenn.ts:30,49-52) plus >3x super-unitary conifer card vertex RGB (near maxRGB=1.578, mid maxRGB=3.023, 1.93x LOD jump, conifer.ts:167,260); horizonMesh uploading 64x64 canopyTile() (16384 B) as 32x32 (4096 B, 2x stride corruption, horizonMesh.ts:22) and rigid geometric triangle billboard sprites (0.50 px residual, billboardAtlas.ts:29-42); and prostrate juniper stems diving -41.4 cm underground (12.1% verts < -1 cm) plus flat upright clonal carpets hovering +13.3 cm on 25 deg slopes (flora/plant.ts:119-121,134-140 & flora.ts:167)."
+}

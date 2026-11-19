@@ -1,0 +1,187 @@
+{
+  "audit": "floor-grass-snow-landing-audit",
+  "baseCommit": "a3828c7",
+  "calibrationValid": true,
+  "passedCount": 0,
+  "totalChecks": 6,
+  "meanScore": 0.0465,
+  "consoleErrors": [],
+  "liveMetrics": {
+    "summer": {
+      "meanRGB": [
+        136,
+        119,
+        61
+      ],
+      "whiteShare": 0,
+      "darkOliveBrownShare": 0.965,
+      "hotOrangeShare": 0.0002,
+      "statusText": "10:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+      "grassInfo": {
+        "tiles": 15,
+        "blades": 53535,
+        "drawn": 8758,
+        "culled": 8170,
+        "tris": 59800,
+        "lods": [
+          2340,
+          4721,
+          1697
+        ],
+        "sliceMaxMs": 3,
+        "packMaxMs": 0.30000000074505806,
+        "packs": 10
+      }
+    },
+    "closeGrass": {
+      "meanRGB": [
+        137,
+        120,
+        61
+      ],
+      "whiteShare": 0.0015,
+      "darkOliveBrownShare": 0.9632,
+      "hotOrangeShare": 0.0034,
+      "statusText": "10:06 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+      "grassInfo": {
+        "tiles": 17,
+        "blades": 62797,
+        "drawn": 8835,
+        "culled": 11881,
+        "tris": 59954,
+        "lods": [
+          2340,
+          4721,
+          1774
+        ],
+        "sliceMaxMs": 3.900000002235174,
+        "packMaxMs": 0.3999999985098839,
+        "packs": 20
+      }
+    },
+    "midwinter": {
+      "meanRGB": [
+        62,
+        64,
+        36
+      ],
+      "whiteShare": 0.0007,
+      "darkOliveBrownShare": 0.9798,
+      "hotOrangeShare": 0.0004,
+      "statusText": "11:05 · WALK · Snow 33.5 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+      "grassInfo": {
+        "tiles": 23,
+        "blades": 84316,
+        "drawn": 9005,
+        "culled": 22471,
+        "tris": 60294,
+        "lods": [
+          2340,
+          4721,
+          1944
+        ],
+        "sliceMaxMs": 11.600000001490116,
+        "packMaxMs": 0.3999999985098839,
+        "packs": 11
+      }
+    },
+    "autumn": {
+      "meanRGB": [
+        125,
+        105,
+        50
+      ],
+      "whiteShare": 0,
+      "darkOliveBrownShare": 0.9898,
+      "hotOrangeShare": 0.0059,
+      "statusText": "10:06 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+      "grassInfo": {
+        "tiles": 26,
+        "blades": 97659,
+        "drawn": 9017,
+        "culled": 31928,
+        "tris": 60318,
+        "lods": [
+          2340,
+          4721,
+          1956
+        ],
+        "sliceMaxMs": 7.400000002235174,
+        "packMaxMs": 0.20000000298023224,
+        "packs": 22
+      }
+    }
+  },
+  "results": [
+    {
+      "id": "grass-root-hover-above-ground",
+      "label": "Grass blade basal root seating offset above terrain mesh (m)",
+      "measured": "authored +3.0 cm (mean over 500 blades: +2.94 cm, min 2.16 cm, max +3.89 cm)",
+      "expected": "<= 0.0 cm (basal crown rooted at -1..0 cm in soil/litter; cover.ts:7 spec)",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Flora of North America vol. 24 (basal culm insertion) & src/render/grass/cover.ts:7,130"
+    },
+    {
+      "id": "grass-ribbon-width-and-albedo-overshoot",
+      "label": "Grass near width vs FNA (mm) & linear albedo energy conservation (<= 1.0)",
+      "measured": "bluejoint near=24.0 mm (far=72.0 mm, 4x mult); linear albedo x2.6 -> summer tip G=0.718, fall R=1.461 (> 1.0!)",
+      "expected": "bluejoint <= 8 mm (FNA vol. 24: 3-8 mm); linear leaf reflectance <= 0.35 green / <= 1.00 energy-conserving (PROSPECT)",
+      "score": 0.1667,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "FNA vol. 24 (Calamagrostis canadensis 3-8 mm); Jacquemoud & Baret (1990) PROSPECT (Remote Sens. Environ. 34:75)"
+    },
+    {
+      "id": "midwinter-snowpack-hard-cap-and-skirt",
+      "label": "Terrain fractional snow cover at 50 cm midwinter snowpack & LOD skirt aSnow copy",
+      "measured": "snowPaint(50 cm)=0.35, snowPaint(120 cm)=0.35 -> pbr.ts mean snow=0.2109 (78.9% bare dirt!) vs grass snowCover=1.00; skirtCopiesSnow=false",
+      "expected": ">= 0.95 continuous snowpack at >= 15-50 cm depth (Wiscombe & Warren 1980; Baker et al. 1991) & skirtCopiesSnow=true",
+      "score": 0.111,
+      "knownMatchScore": 0.9948,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Wiscombe & Warren (1980) J. Atmos. Sci. 37:2712; Baker et al. (1991) J. Climate 4:721; continuousTerrain.ts:132,201,220-226"
+    },
+    {
+      "id": "viewedcover-bare-rock-cliff-override",
+      "label": "Bare bedrock outcrops & >40 deg cliffs keeping density=0 instead of 0.38 grass override",
+      "measured": "470/470 dry bare-rock/cliff spots (100.0%) forced to density=0.38 by cover.ts:89-91 (defaultCover cliff=0)",
+      "expected": "0% bare bedrock/cliff spots forced to 38% grass density (Baldwin & Sims 1997; cover.ts:64-68)",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Baldwin & Sims (1997) OMNR NWO Forest Plants & src/render/grass/cover.ts:64-68,89-91"
+    },
+    {
+      "id": "late-ground-loading-handoff-safety",
+      "label": "Late-ground loading wait invariants (abort-on-missing, priority budget, standPoint, timer cleanup)",
+      "measured": "0/4 invariants met (abortIfStillMissing=false, splashPriorityDuringWait=false, standPoint=false, loadingClearTimeout=false)",
+      "expected": "4/4 invariants met (never drop player into empty void on 90s timeout; keep chunk priority budget on during late wait; match standPoint; cancel loading card timer on finish)",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "src/main.ts:813-822 (#521), src/render/startup.ts:110-113,160,210-216,243, src/ui/loading.ts:28-36"
+    },
+    {
+      "id": "live-midwinter-ground-snow-brightness",
+      "label": "Live rendered lower-frame snow-white pixel share on Jan 25 (day=25, hour=11, HUD 33.5 cm snow)",
+      "measured": "whiteShare=0.1%, darkOliveBrownShare=98.0%, meanRGB=[62,64,36], status=\"11:05 · WALK · Snow 33.5 cm · Stamina 100/100 · Energy 75/100 · W\"",
+      "expected": ">= 60% snow-bright ground pixels in January boreal forest under 33.5 cm continuous snowpack",
+      "score": 0.0012,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Live SwiftShader 1280x720 frame-2-midwinter-snow-deficit.png & Wiscombe & Warren (1980)"
+    }
+  ],
+  "raw": {
+    "baseUrl": "http://127.0.0.1:5258",
+    "capturedAt": "2026-11-19T03:57:58.752Z"
+  }
+}

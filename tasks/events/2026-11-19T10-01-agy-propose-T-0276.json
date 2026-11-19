@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0276",
+  "agent": "agy",
+  "at": "2026-11-19T10:01:00-07:00",
+  "note": "Live Chromium (1280x720, SwiftShader, port 5260, 0 console/page errors) & calibrated Rule 11 audit (0/6 pass >= 0.95, meanScore 0.0727, calibrationValid=true) of multi-species gait kinematics, CPG/IK controller LOD & stickRig alignment, slope jump ballistics & ?loco=1 wiring, hare side-slope roll/wakes, and mammal skeleton resting tail grounding: 24.19-48.39 Hz bear & 5.14-9.46 Hz deer alexanderGait cadence collapse (plus 8.13 Hz pointer-identity lock, 39/39 jitter switches, hardcoded G=9.81), planGait gallop override +76.5% cadence / 0/4 extended flight loss, controller mid-LOD 206.4 mm underground foot sink & 6 ground() calls/frame, stickRig 76.7 mm paw detachment, non-ballistic slope jumps (d2y/dt2 -87.2..+279.5 m/s^2) & broken ?loco=1 wiring, hare side-slope roll=0 (10.0 mm slip, 2 leashes) & 7 Hz trot wakes, and 20/54 (37.0%) subterranean mammal resting tails (down to -75.5 mm). Evidence: refs/locomotion/gait-kinematics-lod-skeleton-audit/{audit.ts,numbers.json,recording.webm,frame-0..3.png,reference/ref-0..2.jpg}."
+}

@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T20:12:00-07:00",
+  "agent": "agy",
+  "type": "propose",
+  "task": "T-0265",
+  "note": "Proposed T-0265 (4 objectives, 52 cr, skill data-panel-wasm-menu-audit) from live headless Chromium inspection of origin/main fafb4ab (refs/ui/data-panel-wasm-menu-audit/audit.ts -> numbers.json, 6 frames, 0 console errors, calibrationValid=true, 0/7 checks pass >=0.95, meanScore=0.0476): Data Panel Rust drive-registry sync split-brain (cardH=0.751 vs liveH=1.000, cardP=0.011 vs liveP=0.264, 1 stale call), 8/8 planet params polluted into drive cards & 5 duplicate Dependency tree nodes, capture-phase U/F2 hijack during Controls .capturing + Escape/close-button gap, unwired WASM drives_reset/litter_reset across in-page re-landing, Menu <select> ArrowDown hijack & outside-focus Escape trap, settingsPanel Reset wiping rebuild notice & dropping focus to BODY, and timeHud overlay guard + dataPanel signed rewind/rAF gate."
+}

@@ -1,0 +1,128 @@
+{
+  "audit": "globe-tile-shader-relief-mask-audit",
+  "baseUrl": "http://127.0.0.1:5264",
+  "calibrationValid": true,
+  "checksPassed": 0,
+  "checksTotal": 6,
+  "meanScore": 0.1985,
+  "consoleErrors": [],
+  "pageErrors": [],
+  "liveMeasurements": {
+    "orbitProfile": {
+      "discLeftPx": 512,
+      "discRightPx": 928,
+      "discSpanPx": 416,
+      "peakLuma": 221.46,
+      "samplesByDiscFrac": {
+        "f15": 132.13,
+        "f30": 86.96,
+        "f50": 106.4,
+        "f70": 187.9,
+        "f85": 193.98
+      }
+    },
+    "panTelemetry": {
+      "altM": 2600,
+      "uExOn": 1,
+      "uCrownFloor": 0,
+      "uExMetres": 204.21,
+      "mpp": 2.9915,
+      "panShiftEastM": 160,
+      "expectedWorldDxPx": -53.48,
+      "measuredLakeWorldDxPx": -2,
+      "lakeCrossCorr": 0.3502,
+      "measuredStandPatternDxPx": -2,
+      "standPeakCrossCorr": 0.3534,
+      "standCorrAtZeroPx": 0.3501,
+      "groundRelativeSlipPx": 51.48,
+      "groundRelativeSlipRatio": 0.9626
+    },
+    "equatorAnisotropy": {
+      "meanGx": 0.7982,
+      "meanGy": 0.183,
+      "anisotropyRatio": 4.3622,
+      "isotropyScore": 0.2292,
+      "meanLuma": 47.01
+    },
+    "borealAnisotropy": {
+      "meanGx": 1.1515,
+      "meanGy": 0.8018,
+      "anisotropyRatio": 1.4361,
+      "isotropyScore": 0.6963,
+      "meanLuma": 49.69
+    },
+    "homeTelemetry": {
+      "altM": 2600,
+      "uExOn": 1,
+      "uCrownFloor": 0
+    }
+  },
+  "checks": [
+    {
+      "id": "globe-lambert-limb-flat-top",
+      "label": "Globe tile Lambertian cosine shading & sunlit slope sensitivity (tile.ts:564-566)",
+      "measured": "dotNL(15°)=1.0000 (3.86x), d(dotNL)/d(N·L)@30°=0.0000, dotNL(0°)=0.1478, flat-top=75% of sunlit hemisphere, flatTopCode=true",
+      "expected": "dotNL(15°)=0.2588 (sin 15°), d(dotNL)/d(N·L)@30°=1.0000, dotNL(0°)<0.02 (0.53° solar disc + refraction penumbra)",
+      "score": 0.3703,
+      "knownMatchScore": 0.9983,
+      "knownMismatchScore": 0.2529,
+      "pass": false,
+      "source": "Lambert (1760) Photometria; Reda & Andreas (2004), Solar Energy 76:577-589 (0.53° solar disc + 0.57° horizon refraction)"
+    },
+    {
+      "id": "globe-floating-origin-sliding-aerial",
+      "label": "Floating-origin world anchoring of vAerial, detN stands/shores, ocean chop & era normals (tile.ts:349,373-533)",
+      "measured": "pan +160m -> expected ground dx=-53.48px, live world-anchored lakes dx=-2px (r=0.3502), live forest stands dx=-2px (r=0.3534, slip=51.48px = 96.3%); vAerial=vDetW-uMorphCam=true, raw detN(vDetW)=20, raw snoise(vDetW)=3, camera-relative uEra normal=true",
+      "expected": "live texture dx=-53.48px (0% slip vs terrain), vAerial world-anchored (+uMorphCam / modular offset), 0 camera-relative detN/snoise/normalize calls",
+      "score": 0.0224,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Cozzi & Ring (2011) 3D Engine Design for Virtual Globes Ch. 5 (RTE floating-origin invariance); tile.ts:259,475"
+    },
+    {
+      "id": "globe-equator-aerial-xz-collapse",
+      "label": "Equatorial nadir aerial UV isotropy (tile.ts:407 vAerial.xz meridional projection collapse)",
+      "measured": "equator (0°N, -62°W) nadir |dI/dx|=0.7982, |dI/dy|=0.183, anisotropy=4.3622x (isotropy=0.2292); boreal 52°N isotropy=0.6963 (1.4361x); uses vAerial.xz=true",
+      "expected": "isotropic nadir rainforest canopy |dI/dx|/|dI/dy| ≈ 1.00 (isotropy >= 0.90) via local tangent-plane or cube-face UV projection",
+      "score": 0.2292,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.1,
+      "pass": false,
+      "source": "Snyder (1987) USGS Prof. Paper 1395 (spherical tangent-plane projection); Drusch et al. (2012) RSE 120 (isotropic nadir GSD)"
+    },
+    {
+      "id": "coarse-relief-half-pixel-shift",
+      "label": "coarseMetresLinear Web-Mercator pixel-center registration vs ETOPO1 grid (coarseRelief.ts:1501-1514)",
+      "measured": "5/3776 (0.13%) exact pixel centers match coarseMetres (meanAbsErr=162.43 m, maxErr=3165.5 m; cornerDiffs=0, proving 0.5 px = 78.3 km NW shift at equator)",
+      "expected": "100% of pixel centers (ix+0.5, iy+0.5) reproduce grid values (0.0 m error, 0.0 km shift)",
+      "score": 0.0013,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Amante & Eakins (2009) NOAA Tech. Memo NESDIS NGDC-24 (ETOPO1); OGC WMTS 1.0.0 pixel-center registration"
+    },
+    {
+      "id": "opentiles-antimeridian-center-conus",
+      "label": "openTiles antimeridian wrap, pixel-center bilinear shift & inConus Canada/Mexico false positives (openTiles.ts:40-42,114-142,268)",
+      "measured": "antimeridian 179.999°E=100.0m vs 227.2m (tilesAround unwrapped=true); px(50.5)=505.0m vs 500.0m (0.5 px NW shift); 7/7 non-US cities falsely inConus (Kenora ON (CA), Winnipeg MB (CA), Vancouver BC (CA), Toronto ON (CA), Ottawa ON (CA), Montreal QC (CA), Monterrey MX (MX))",
+      "expected": "antimeridian wraps tx mod 2^z (~227.2m), exact px center=500.0m, 0/7 Canadian/Mexican cities inConus",
+      "score": 0.394,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.1667,
+      "pass": false,
+      "source": "OGC WMTS 1.0.0 / EPSG:3857 Web Mercator; USGS The National Map Imagery Only CONUS coverage boundary"
+    },
+    {
+      "id": "lakemask-river-dropout-and-seam",
+      "label": "lakeMask 7.5 m Nyquist order 1-2 river dropout, non-periodic RepeatWrapping seam & binary step(0.5, vLoc.z) (lakeMask.ts:25-53, tile.ts:360)",
+      "measured": "river channel retention=39/204 (19.12% at 7.5 m texel spacing, 80.88% dropped); staged=false wrap seam jump=2.75 m; binary step(0.5, vLoc.z)=true",
+      "expected": ">=95% river channel continuity (signed distance / higher resolution or analytic channel width), 0 m wrap seam (ClampToEdge when non-periodic), smooth home blend",
+      "score": 0.1737,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.1,
+      "pass": false,
+      "source": "Bieger et al. (2015) JAWRA 51:842 Laurentian Upland bankfull width (3.3-12.4 m); Nyquist-Shannon sampling theorem"
+    }
+  ]
+}

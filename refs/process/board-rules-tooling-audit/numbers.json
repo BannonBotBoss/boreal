@@ -1,0 +1,260 @@
+{
+  "auditedCommit": "65f2375",
+  "auditedAt": "2026-11-19T00:57:51.879Z",
+  "calibrationValid": true,
+  "passed": 0,
+  "total": 12,
+  "meanScore": 0,
+  "liveBoardStats": {
+    "totalTasks": 216,
+    "totalEvents": 874,
+    "stateCounts": {
+      "proposed": 53,
+      "claimed": 30,
+      "completed": 72,
+      "done": 32,
+      "approved": 29
+    },
+    "namedSkillTasks": 188,
+    "namedSkillParsedTrue": 0,
+    "creditsHeaderPresent": 209,
+    "creditsHeaderMismatch": 18,
+    "creditsMismatchesSample": [
+      {
+        "id": "T-0035",
+        "header": 20,
+        "computed": 40
+      },
+      {
+        "id": "T-0064",
+        "header": 40,
+        "computed": 30
+      },
+      {
+        "id": "T-0065",
+        "header": 39,
+        "computed": 54
+      },
+      {
+        "id": "T-0066",
+        "header": 39,
+        "computed": 72
+      },
+      {
+        "id": "T-0067",
+        "header": 39,
+        "computed": 0
+      },
+      {
+        "id": "T-0068",
+        "header": 130,
+        "computed": 91
+      },
+      {
+        "id": "T-0070",
+        "header": 60,
+        "computed": 70
+      },
+      {
+        "id": "T-0072",
+        "header": 10,
+        "computed": 40
+      },
+      {
+        "id": "T-0073",
+        "header": 20,
+        "computed": 70
+      },
+      {
+        "id": "T-0084",
+        "header": 72,
+        "computed": 108
+      }
+    ],
+    "totalRuleBreaks": 38,
+    "nov2026RuleBreaks": 11,
+    "nov2026RuleBreakSample": [
+      "2026-11-08T19-23-40-grokbot-2-complete-T-0179.json: name the branch",
+      "2026-11-08T20-06-09-grokbot-2-complete-T-0180.json: name the branch",
+      "2026-11-08T20-14-10-grokbot-2-complete-T-0181.json: name the branch",
+      "2026-11-08T20-25-36-grokbot-2-complete-T-0182.json: name the branch",
+      "2026-11-09T15-06-10-grokbot-2-complete-T-0190.json: name the branch",
+      "2026-11-09T15-12-00-grokbot-2-complete-T-0191.json: name the branch",
+      "2026-11-10T11-14-00-grokbot-2-complete-T-0201.json: name the branch",
+      "2026-11-10T20-16-40-grokbot-2-complete-T-0212.json: name the branch",
+      "2026-11-10T20-22-40-grokbot-2-complete-T-0204.json: name the branch",
+      "2026-11-10T20-22-50-grokbot-2-approve-T-0204.json: task is claimed",
+      "2026-11-10T20-48-40-grokbot-2-complete-T-0214.json: name the branch"
+    ],
+    "warnings": [
+      "2026-10-21T18-42-claude-claim-T-0032.json: not valid JSON, skipped (Bad escaped character in JSON at position 217 (line 7 column 69))"
+    ],
+    "recentCrossBranchCollisions": [
+      {
+        "id": "T-0259",
+        "files": [
+          "tasks/T-0259-descent-stall.md",
+          "tasks/T-0259-ground-sky-clouds.md"
+        ]
+      },
+      {
+        "id": "T-0258",
+        "files": [
+          "tasks/T-0258-ground-sky-clouds.md",
+          "tasks/T-0258-pup-personal-space.md",
+          "tasks/T-0258-viewfinder-photo-gallery-post-audit.md"
+        ]
+      }
+    ],
+    "ciJobs": [
+      "test",
+      "slow"
+    ],
+    "agentReviewAgents": [
+      "grok-globe",
+      "grok-gait",
+      "grokbot-1",
+      "grokbot-2",
+      "grokbot-3",
+      "grok",
+      "claude",
+      "codex",
+      "agy",
+      "matthew"
+    ]
+  },
+  "checks": [
+    {
+      "id": "agent_review_cursor_prefix",
+      "metric": "agent-review.mjs recognizes cursor/* branch author",
+      "measured": 0,
+      "target": 1,
+      "knownMatch": 1,
+      "knownMismatch": 0,
+      "score": 0,
+      "pass": false,
+      "source": "tools/agent-review.mjs:19,27-28; PRs #413,#414,#448,#449,#497,#499,#501,#504"
+    },
+    {
+      "id": "repo_slug_current",
+      "metric": "Fraction of board tools/rules pointing to moved repo BannonBotBoss/boreal",
+      "measured": 0,
+      "target": 1,
+      "knownMatch": 1,
+      "knownMismatch": 0,
+      "score": 0,
+      "pass": false,
+      "source": "tools/agent-review.mjs:18; tools/board-github.ts:17; tasks/RULES.md:27"
+    },
+    {
+      "id": "agent_review_draft_guard",
+      "metric": "agent-review.mjs queries isDraft and blocks approve on Draft PRs",
+      "measured": 0,
+      "target": 1,
+      "knownMatch": 1,
+      "knownMismatch": 0,
+      "score": 0,
+      "pass": false,
+      "source": "tools/agent-review.mjs:26-33; Draft PRs #490,#492,#507,#510"
+    },
+    {
+      "id": "rule14_credits_header_honored",
+      "metric": "tools/tasks.ts ledger() honors overridden credits: header (99 vs formula 20)",
+      "measured": 20,
+      "target": 99,
+      "knownMatch": 1,
+      "knownMismatch": 0,
+      "score": 0,
+      "pass": false,
+      "source": "tasks/RULES.md:20 (Rule 14) vs tools/tasks.ts:72-81"
+    },
+    {
+      "id": "rule4_skill_name_parsed",
+      "metric": "Fraction of live tasks with named skill: <name> parsed as skill=true (0/188)",
+      "measured": 0,
+      "target": 1,
+      "knownMatch": 1,
+      "knownMismatch": 0,
+      "score": 0,
+      "pass": false,
+      "source": "tasks/RULES.md:6 (Rule 4) vs tools/tasks.ts:80,147 (skill-approve fails on named skills)"
+    },
+    {
+      "id": "rule4_complete_skill_exists_check",
+      "metric": "tools/tasks.ts rejects complete event missing skill / nonexistent notes/skills/<name>.md",
+      "measured": 0,
+      "target": 1,
+      "knownMatch": 1,
+      "knownMismatch": 0,
+      "score": 0,
+      "pass": false,
+      "source": "tasks/RULES.md:6 (Rule 4) vs tools/tasks.ts:142"
+    },
+    {
+      "id": "rule6_complete_handoff_exists_check",
+      "metric": "tools/tasks.ts rejects complete event missing tasks/handoffs/<task>-<agent>.md",
+      "measured": 0,
+      "target": 1,
+      "knownMatch": 1,
+      "knownMismatch": 0,
+      "score": 0,
+      "pass": false,
+      "source": "tasks/RULES.md:12 (Rule 6) vs tools/tasks.ts:142"
+    },
+    {
+      "id": "rule10_for_matthew_quote_and_agent_guard",
+      "metric": "tools/tasks.ts validates quoted words+time on for:matthew & guards non-veto agent:matthew",
+      "measured": 0,
+      "target": 1,
+      "knownMatch": 1,
+      "knownMismatch": 0,
+      "score": 0,
+      "pass": false,
+      "source": "tasks/RULES.md:16,25-26 (Rules 10,16) vs tools/tasks.ts:119,132-133"
+    },
+    {
+      "id": "tests_tasks_post_grandfather_gate",
+      "metric": "tests/tasks.test.ts fails CI on NEW post-grandfather rule breaks instead of permanent todo",
+      "measured": 0,
+      "target": 1,
+      "knownMatch": 1,
+      "knownMismatch": 0,
+      "score": 0,
+      "pass": false,
+      "source": "tests/tasks.test.ts:64 (38 total breaks, 11 in Nov 2026 silently skipped)"
+    },
+    {
+      "id": "board_github_tmpdir_cleanup",
+      "metric": "tools/board-github.ts cleans up mkdtempSync boreal-board-* directory",
+      "measured": 0,
+      "target": 1,
+      "knownMatch": 1,
+      "knownMismatch": 0,
+      "score": 0,
+      "pass": false,
+      "source": "tools/board-github.ts:32"
+    },
+    {
+      "id": "rule13_next_id_and_renumber_clarity",
+      "metric": "tools/tasks.ts has cross-branch next-id helper & RULES.md clarifies unmerged renumber",
+      "measured": 0,
+      "target": 1,
+      "knownMatch": 1,
+      "knownMismatch": 0,
+      "score": 0,
+      "pass": false,
+      "source": "tasks/RULES.md:16,19 (Rules 10,13); recent cross-branch collisions T-0254/T-0258/T-0259"
+    },
+    {
+      "id": "rule17_ci_jobs_and_cursor_documented",
+      "metric": "tasks/RULES.md Rule 17 names actual CI jobs (test, slow) and cursor agent",
+      "measured": 0,
+      "target": 1,
+      "knownMatch": 1,
+      "knownMismatch": 0,
+      "score": 0,
+      "pass": false,
+      "source": "tasks/RULES.md:27 vs .github/workflows/ci.yml (jobs: test, slow)"
+    }
+  ]
+}

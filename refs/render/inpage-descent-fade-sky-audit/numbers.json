@@ -1,0 +1,226 @@
+{
+  "audit": "inpage-descent-fade-sky-audit",
+  "baseUrl": "http://127.0.0.1:5262",
+  "capturedAt": "2026-11-19T08:00:39.792Z",
+  "calibrationValid": true,
+  "passCount": 0,
+  "totalChecks": 6,
+  "meanScore": 0.0852,
+  "live": {
+    "droneDay": {
+      "mode": "band",
+      "height": 400,
+      "fade": 1,
+      "skyScale": 100000,
+      "skyVisible": true,
+      "camFar": 82102,
+      "camNear": 4,
+      "camY": 402.5,
+      "bgIntensity": 5.2,
+      "toneMappingExposure": 0.75,
+      "effectiveBgExposure": 3.9,
+      "fogColor": [
+        0.45,
+        0.62,
+        0.9
+      ],
+      "chunkMeshes": 70,
+      "fadedChunkMeshes": 69,
+      "unfadedChunkMeshes": 1
+    },
+    "partialFade1200m": {
+      "height": 1200,
+      "fade": 0.6064,
+      "bgIntensity": 3.9405,
+      "toneMappingExposure": 0.75,
+      "effectiveBgExposure": 2.9554,
+      "totalChunkMeshes": 67,
+      "hiddenChunkMeshes": 17,
+      "patchFadeFlagged": 66
+    },
+    "droneMidnight": {
+      "mode": "band",
+      "height": 400,
+      "groundMidnightFogLinear": [
+        0.06224,
+        0.02904,
+        0.03842
+      ],
+      "droneMidnightFogLinear": [
+        0.45,
+        0.62,
+        0.9
+      ],
+      "groundFogLuma": 0.03678,
+      "droneFogLuma": 0.60407,
+      "brightnessRatio": 16.43
+    },
+    "postLand": {
+      "mode": "game",
+      "preLandCamY": 402.5,
+      "postLandCamY": 4.05,
+      "singleSnapDropM": 398.45,
+      "skyScale": 100000,
+      "skyHalfExtentM": 50000,
+      "skyVisible": true,
+      "camFar": 8000,
+      "skyClippedByFarPlane": true,
+      "playerPos": {
+        "x": 0,
+        "z": 0,
+        "yaw": 0
+      }
+    },
+    "coldStartControl": {
+      "mode": "game",
+      "skyScale": 600,
+      "skyHalfExtentM": 300,
+      "camFar": 8000,
+      "skyClippedByFarPlane": false
+    },
+    "failedUrls": [
+      "404 https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/22291/15566",
+      "404 https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/22291/15565",
+      "404 https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/22292/15565",
+      "404 https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/22291/15567",
+      "404 https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/22292/15566",
+      "404 https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/22293/15565",
+      "404 https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/22292/15567",
+      "404 https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/22293/15566",
+      "404 https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/22293/15567",
+      "404 https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/16/22292/15565"
+    ],
+    "pixelStats": {
+      "frame0_droneDay_upperSky": {
+        "r": 232.7,
+        "g": 242.7,
+        "b": 216.3,
+        "luma": 238.7,
+        "darkFrac": 0
+      },
+      "frame0_droneDay_midGround": {
+        "r": 244.6,
+        "g": 247.1,
+        "b": 235,
+        "luma": 245.7,
+        "darkFrac": 0
+      },
+      "frame1_droneMidnight_upper": {
+        "r": 232.5,
+        "g": 242.5,
+        "b": 216.1,
+        "luma": 238.5,
+        "darkFrac": 0
+      },
+      "frame1_droneMidnight_ground": {
+        "r": 244.6,
+        "g": 247.1,
+        "b": 235,
+        "luma": 245.7,
+        "darkFrac": 0
+      },
+      "frame2_postLand_upperSky": {
+        "r": 48.1,
+        "g": 49.2,
+        "b": 48.2,
+        "luma": 48.9,
+        "darkFrac": 0.5297
+      },
+      "frame3_coldStart_upperSky": {
+        "r": 73.8,
+        "g": 75.3,
+        "b": 79.6,
+        "luma": 75.3,
+        "darkFrac": 0.0056
+      }
+    },
+    "consoleErrors": [
+      "console.error: Failed to load resource: the server responded with a status of 404 ()",
+      "console.error: Failed to load resource: the server responded with a status of 404 ()",
+      "console.error: Failed to load resource: the server responded with a status of 404 ()",
+      "console.error: Failed to load resource: the server responded with a status of 404 ()",
+      "console.error: Failed to load resource: the server responded with a status of 404 ()",
+      "console.error: Failed to load resource: the server responded with a status of 404 ()",
+      "console.error: Failed to load resource: the server responded with a status of 404 ()",
+      "console.error: Failed to load resource: the server responded with a status of 404 ()",
+      "console.error: Failed to load resource: the server responded with a status of 404 ()",
+      "console.error: Failed to load resource: the server responded with a status of 404 ()",
+      "console.error: Failed to load resource: the server responded with a status of 404 ()",
+      "console.error: Failed to load resource: the server responded with a status of 404 ()",
+      "console.error: Failed to load resource: the server responded with a status of 404 ()",
+      "console.error: Failed to load resource: the server responded with a status of 404 ()",
+      "console.error: Failed to load resource: the server responded with a status of 404 ()",
+      "console.error: Failed to load resource: the server responded with a status of 404 ()",
+      "console.error: Failed to load resource: the server responded with a status of 404 ()",
+      "console.error: Failed to load resource: the server responded with a status of 404 ()"
+    ]
+  },
+  "checks": [
+    {
+      "id": "post-landing-physical-sky-scale-clipping",
+      "label": "physicalSky scale restoration & far-plane visibility after drone landing",
+      "measured": "post-land sky.scale=100000 (half-extent 50000 m > cam.far=8000 m, clipped=true); upper-30% sky mean sRGB=(48.1,49.2,48.2) luma=48.9 darkFrac=0.5297 vs cold-start control sky.scale=600 (half-extent 300 m < cam.far=8000 m) sRGB=(73.8,75.3,79.6) luma=75.3",
+      "expected": "sky.scale restored to 600 (half-extent 300 m < cam.far 8000 m) in restoreScene(), matching cold-start Preetham sky luma (75.3)",
+      "score": 0.3247,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "src/render/sky.ts:100 (scale=600) vs src/world/globe/inpage.ts:475 (scale=1e5), 228-234 (restoreScene omits sky.scale); Three.js r180 Sky BoxGeometry frustum culling"
+    },
+    {
+      "id": "drone-midnight-hardcoded-day-fog",
+      "label": "Drone-band fog colour tracks sky.ts solar/night elevation instead of hardcoded daytime blue",
+      "measured": "hour=00:00 at h=400 m: drone scene.fog.color linear=(0.45,0.62,0.9) Y=0.60407 vs sky.ts ground midnight fog linear=(0.06224,0.02904,0.03842) Y=0.03678 (16.43x brighter)",
+      "expected": "Drone fog preserves sky.ts solar/twilight/night fog chromaticity & luminance (ratio ~1.0x at midnight, Y=0.03678)",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "src/render/sky.ts:122,169-174 (fogNight=0x0d1422 / twilight skyLuminance) vs src/world/globe/inpage.ts:476 (unconditional setRGB(0.45, 0.62, 0.9))"
+    },
+    {
+      "id": "fade-far-layer-post-tonemap-linear-srgb-mix",
+      "label": "fade.ts far-layer colour mix occurs in linear HDR before tonemapping & sRGB encoding",
+      "measured": "addPatchFade injects uFarColor mix at byte 5183 AFTER tonemapping (3780), colorspace (3813), and fog (3845) via #include <dithering_fragment> (3911); direct-render canopy L=[0.14,0.19,0.11]*5.2 outputs raw sRGB=[0.728,0.988,0.572] vs ACES-sRGB=[0.740,0.805,0.681] (RMS=0.123, bright L=0.35 clips at 1.82->1.000, err=0.102)",
+      "expected": "uFarColor linear HDR blend injected BEFORE #include <tonemapping_fragment> (or tonemapped+encoded to match output space), RMS colour error <= 0.005",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Three.js r180 ShaderLib.standard.fragmentShader + src/render/fade.ts:59,67 + src/render/post.ts:143 (direct render bypass when !ao && !lightFx)"
+    },
+    {
+      "id": "drone-half-stop-and-far-layer-double-exposure",
+      "label": "Exact photographic +0.5 EV drone stop (sqrt(2)) & continuous far-layer exposure across 2 km handoff",
+      "measured": "DRONE_STOP=1.5 (+0.585 EV vs +0.500 EV / 1.4142); h=2000 m effective far-layer exposure jumps 1.000->1.165 (+16.5%); h=600 m actual=3.900 vs target=2.600 (+50.0%; live 400 m bgI=5.2 * exp=0.75 = 3.9)",
+      "expected": "DRONE_STOP = Math.SQRT2 (1.4142, +0.500 EV), and scene.backgroundIntensity divided by (EXPOSURE.base * DRONE_GRADE.exposure) so 2000 m step = 0% and 600 m effective gain = 2.60",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "ISO 2720 / Lagarde & de Rousiers 2014 (+0.5 EV = 2^0.5 = 1.4142); src/render/droneGrade.ts:14, post.ts:140, inpage.ts:473-474"
+    },
+    {
+      "id": "hide-for-band-uncompiled-patchfade-deadlock",
+      "label": "fadeOptIn marks materials immediately so hideForBand never deadlocks compilation or poisons WeakMap",
+      "measured": "fadeOptIn(mat, true) sets userData.patchFade=false before compile (only set inside onBeforeCompile at fade.ts:86); inpage.ts:239 permanently caches false in dithers WeakMap; live at h=1200 m (fade=0.6064): 17/67 chunk meshes hidden (66 flagged patchFade)",
+      "expected": "fadeOptIn sets m.userData.patchFade = true immediately upon wiring (or hideForBand checks opted-in set), 0 opted-in chunk meshes hidden by uncompiled deadlock",
+      "score": 0.1866,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "src/render/fade.ts:81-87 vs src/world/globe/inpage.ts:237-260"
+    },
+    {
+      "id": "forest-landing-seed-memo-and-400m-embody-snap",
+      "label": "forestLanding memo keys on world/stage seed & G-embody eases smoothly per nextMode contract",
+      "measured": "forestLanding({0,0}) seed 1400=(58.7,34.8) vs seed 4242 cached=(58.7,34.8) [STALE!] vs true seed 4242=(197.9,92.3, 150.6 m off); live G-embody snapped 398.45 m in 1 frame (402.5 m -> 4.05 m; handoverBlend no-op=true, transition.nextMode(400m)=band)",
+      "expected": "landingMemo key includes WORLD_SEED & STAGES.seed/on (0 m stale error), and embodying from glide eases smoothly (or lowers to floorAlt) without snapping 398 m in 1 frame",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "src/world/globe/forestLanding.ts:74-81 + src/world/globe/inpage.ts:412,444 + src/world/globe/transition.ts:118,173"
+    }
+  ]
+}

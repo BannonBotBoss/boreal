@@ -1,0 +1,161 @@
+{
+  "commit": "6f8a7f0",
+  "calibrationValid": true,
+  "passCount": 0,
+  "totalChecks": 8,
+  "meanScore": 0.0625,
+  "consoleErrors": [],
+  "checks": [
+    {
+      "id": "gs-clash-all-bindings",
+      "label": "Gamepad settings clash badge checks all pad bindings (pad[0..n]) AND keyboard bindings",
+      "measured": "kbClashRowsFlagged=0/2, secondaryPadFlagged=false",
+      "expected": "2/2 (both keyboard and pad[1] clashes flagged)",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "src/ui/gamepadSettings.ts:77 vs src/core/bindings.ts:201-214"
+    },
+    {
+      "id": "gs-swap-prompt-side",
+      "label": "Gamepad settings swap modal reports the side actually swapped by swapAssign (keys vs pad)",
+      "measured": "modal=\"S is already on Move back.A Swap (they get LS ↑) · X Keep both · B Cancel\"",
+      "expected": "Modal shows \"they get W\" (keys), not \"they get LS ↑\" (pad)",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "src/ui/gamepadSettings.ts:82 vs src/core/bindings.ts:216-221"
+    },
+    {
+      "id": "gs-pointer-controls",
+      "label": "Gamepad settings supports mouse clicks on tabs, rows, modal buttons, and close button",
+      "measured": "tabClick=false, rowClick=false, modalBtns=0, closeBtns=0",
+      "expected": "4/4 pointer controls working",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "src/ui/gamepadSettings.ts:68-84 + WAI-ARIA APG Dialog/Tabs"
+    },
+    {
+      "id": "padmenu-row-click",
+      "label": "PadMenu item rows (.it) activate on mouse click (parity with clickable tabs and scroll arrows)",
+      "measured": "gpsOpenedByRowClick=false, padMenuStillOpen=true",
+      "expected": "Clicking .it activates item (opens Gamepad settings)",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "src/ui/padMenu.ts:164, 215-222"
+    },
+    {
+      "id": "blur-key-release-guards",
+      "label": "Controls, Gamepad settings, and PadMenu clear held keys / hold-repeat on window blur (matching main.ts:456)",
+      "measured": "controlsStuckW=true, controlsCapDeadlock=true, gsCapDeadlock=true, padMenuDrift=true (blurListeners=0/3)",
+      "expected": "4/4 blur checks clean (0 stuck keys, 0 deadlocks, 0 runaway repeat)",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "src/ui/controls.ts:62-66, src/ui/gamepadSettings.ts:85-88, src/ui/padMenu.ts:223-234 vs src/main.ts:456-457"
+    },
+    {
+      "id": "help-overlay-escape-and-coverage",
+      "label": "Controls Help overlay (.padh) closes on Escape or close button and covers all 8 contexts (incl. Chronometer & Axis) + keyboard",
+      "measured": "stillVisibleAfterEsc=true, pauseBehind=true, closeBtns=0, headers=[Input, Game, Globe, Drone, Camera mode, Menus, Everywhere]",
+      "expected": "4/4: Escape closes .padh without opening Pause behind it, clickable close button, all 8 contexts shown",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "src/input/padRouter.ts:22-30, 43-49, 114"
+    },
+    {
+      "id": "keyaction-plus-and-combo",
+      "label": "keyAction() uses bindings.keyAtom() (so \"+\" -> \"k:plus\" works) and supports rebound modifier combos",
+      "measured": "plusResolved=undefined, comboResolved=undefined",
+      "expected": "2/2: \"+\" resolves menuSelect, Shift+Tab resolves menuTabNext",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "src/input/gamepad.ts:44-47 vs src/core/bindings.ts:156"
+    },
+    {
+      "id": "controls-copy-and-title-hygiene",
+      "label": "Controls screen fixed-key copy matches live bindings (no stale \"V flora view\") and tools/gamepad.html title has clean UTF-8",
+      "measured": "staleVFloraNote=true, gamepadHtmlTitle=\"Boreal · Gamepad settings\"",
+      "expected": "2/2: accurate key docs and clean UTF-8 title",
+      "score": 0.5,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "src/ui/controls.ts:58 vs src/core/bindings.ts:67, tools/gamepad.html:1"
+    }
+  ],
+  "raw": {
+    "baseUrl": "http://127.0.0.1:5255",
+    "capturedAt": "2026-11-19T01:54:23.804Z",
+    "gamepadSettings": {
+      "title": "Boreal · Gamepad settings",
+      "tabBefore": "Game",
+      "tabAfterClick": "Game",
+      "tabClickWorked": false,
+      "rowBefore": "moveForward",
+      "rowAfterClick": "moveForward",
+      "rowClickWorked": false,
+      "closeBtnCount": 0,
+      "swapModalText": "S is already on Move back.A Swap (they get LS ↑) · X Keep both · B Cancel",
+      "swapModalButtons": 0,
+      "swapModalMentionsOldKey": false,
+      "swapModalWronglyMentionsPad": true,
+      "msgAfterKeep": "Kept both (⚠ clash with Move back)",
+      "kbClashRowsFlagged": 0,
+      "modalAfterBlur": "Press the button or combination for Move back (hold together, let go to confirm). J · Esc / 8 s cancels",
+      "stillCapturingAfterBlur": true
+    },
+    "inGame": {
+      "gpsOpenedByRowClick": false,
+      "padMenuStillOpenAfterRowClick": true,
+      "focusBeforeBlur": 0,
+      "focusAfterDown": 1,
+      "focusAfterBlurWait": 3,
+      "padMenuDriftedAfterBlur": true,
+      "helpVisible": true,
+      "helpHeaders": [
+        "Input",
+        "Game",
+        "Globe",
+        "Drone",
+        "Camera mode",
+        "Menus",
+        "Everywhere"
+      ],
+      "helpCloseButtons": 0,
+      "helpStillVisibleAfterEsc": true,
+      "startMenuOpenedBehindHelp": true,
+      "staleVFloraNote": true,
+      "clearButtonsPerRow": 0,
+      "liveAfterBlur": "W: Move forward, Globe: orbit up, Drone: forward, Axis: aim north",
+      "controlsStuckOnW": true,
+      "controlsCaptureDeadlockedOnBlur": true,
+      "controlsCapTextAfterBlur": "Now press the input for “Howl”: J + K  (let go to confirm · Esc cancels)"
+    },
+    "deterministic": {
+      "plusAtom": "k:plus",
+      "bPlusMenuSelect": [
+        "k:plus"
+      ],
+      "plusResolved": null,
+      "bComboMenuTabNext": [
+        "k:shift+k:tab"
+      ],
+      "comboResolved": null,
+      "realConflictsSecPad": true,
+      "gsPredScrubEarlier": false,
+      "blurGuards": 0
+    }
+  }
+}

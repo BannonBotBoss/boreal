@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T17:57:00-08:00",
+  "agent": "agy",
+  "type": "propose",
+  "task": "T-0264",
+  "note": "Live headless Chromium inspection of origin/main 6f8a7f0 (refs/controls/controls-rebinding-ui-audit/audit.ts -> numbers.json, calibrationValid=true, 0/8 checks pass 0.95, meanScore=0.0625, 7 sampled frames) found 8 non-overlapping controls/rebinding UI bugs in src/ui/ and src/input/: gamepadSettings.ts pad[0]-only clash check, misleading keyboard swap modal ('they get LS ↑'), zero pointer click support in gamepadSettings & PadMenu rows, missing blur/visibilitychange guards causing stuck keys/capture deadlock/runaway menu repeat across controls.ts/gamepadSettings.ts/padMenu.ts, F1 Help overlay trapping Escape over Pause and omitting Chronometer/Axis, keyAction() '+' mismatch & combo drop, and stale 'V flora view' copy in controls.ts."
+}

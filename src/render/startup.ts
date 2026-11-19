@@ -31,11 +31,13 @@ export const GROUND_HOLD = {
 const within = <T,>(p: Promise<T>, ms: number) => Promise.race([p, new Promise<never>((_, no) => setTimeout(() => no(new Error('timeout')), ms))]);
 type View = ReturnType<typeof buildScene>;
 export const raf = () => new Promise<number>(r => requestAnimationFrame(r)), wait = (ms: number) => new Promise(r => setTimeout(r, ms));
+/** A wedged SwiftShader frame never fires requestAnimationFrame, so the time cap behind that await is never read. */
+const tick = (pump: () => Promise<unknown>) => Promise.race([pump(), wait(4000)]);
 const wall = () => performance.now();
 /** Wait until the interest job queue stays empty for `quietFrames` frames (or `maxMs`). Shared with ?bench. */
 export async function settle(quietFrames = 60, maxMs = 40000, onFrame?: (elapsed: number) => void, pump: () => Promise<unknown> = raf, now = wall, busy: () => unknown = queued) {
   const t = now(); let quiet = 0;
-  while (now() - t < maxMs && quiet < quietFrames) { await pump(); quiet = busy() ? 0 : quiet + 1; onFrame?.(now() - t); }
+  while (now() - t < maxMs && quiet < quietFrames) { await tick(pump); quiet = busy() ? 0 : quiet + 1; onFrame?.(now() - t); }
 }
 /**
  * Warm land wait (T-0168). The standing chunk is in the scene for `quietFrames` frames, or `maxMs` elapses.
@@ -44,7 +46,7 @@ export async function settle(quietFrames = 60, maxMs = 40000, onFrame?: (elapsed
 export async function settleWhenLandReady(quietFrames: number, maxMs: number, landReady: () => boolean, onFrame?: (elapsed: number) => void, pump: () => Promise<unknown> = raf, now = wall) {
   const t = now(); let quiet = 0;
   while (now() - t < maxMs && quiet < quietFrames) {
-    await pump();
+    await tick(pump);
     let ready = false; try { ready = landReady(); } catch { ready = false; }
     quiet = ready ? quiet + 1 : 0; onFrame?.(now() - t);
   }
@@ -54,7 +56,7 @@ export async function settleWhenLandReady(quietFrames: number, maxMs: number, la
 export async function benchFrames(view: View, frames = 40, warm = 10, pump: () => Promise<unknown> = raf, now = wall) {
   const xs: number[] = [], all: number[] = [];
   const t0 = now();
-  for (let i = 0; i < (frames + warm) * 3 && xs.length < frames && now() - t0 < 15000; i++) { const j = STATS.jobsRun; await pump(); if (i < warm) continue;
+  for (let i = 0; i < (frames + warm) * 3 && xs.length < frames && now() - t0 < 15000; i++) { const j = STATS.jobsRun; await tick(pump); if (i < warm) continue;
     const ms = Math.max(view.photoreal.INFO.workMs, view.photoreal.gpuMs ?? 0); all.push(ms); if (STATS.jobsRun === j) xs.push(ms); }
   return median(xs.length >= frames / 2 ? xs : all);
 }
@@ -216,7 +218,7 @@ export async function startup(view: View, ui: { step(label: string, f: number): 
   if (budget.compileBeforeProbe) { ui.step('Compiling shaders…', .45); await view.photoreal.compile(); }
   const compiled = JSON.stringify(applied());
   ui.step('Lighting the sky…', .6); const t0 = now();
-  while (now() - t0 < budget.skyMaxMs && view.photoreal.tier.ibl && !view.scene.environment) await pump();
+  while (now() - t0 < budget.skyMaxMs && view.photoreal.tier.ibl && !view.scene.environment) await tick(pump);
   let probe: ProbeResult | undefined = cached;
   if (!opts.skipProbe) {
     if (!probe) {
@@ -229,10 +231,10 @@ export async function startup(view: View, ui: { step(label: string, f: number): 
     console.log(`PROBE cap=${LADDER[probe.cap].name} ${JSON.stringify(probe)}`);
   }
   if (!budget.compileBeforeProbe) { ui.step('Compiling shaders…', .45); await view.photoreal.compile(); }
-  else if (JSON.stringify(applied()) !== compiled) { ui.step('Compiling shaders…', .9); await pump(); await view.photoreal.compile(); } // the probe moved the tier: its variants too, still covered
+  else if (JSON.stringify(applied()) !== compiled) { ui.step('Compiling shaders…', .9); await tick(pump); await view.photoreal.compile(); } // the probe moved the tier: its variants too, still covered
   await view.photoreal.warmUp(applied(GOVERNOR.tier + 1), budget.warmUpMs); // cold blocks; warm queues the next cheaper tier and returns
   const ground = land();
-  if (ground) { ui.step('Ready', 1); await pump(); await pump(); } // one more frame at the final tier before the reveal
+  if (ground) { ui.step('Ready', 1); await tick(pump); await tick(pump); } // one more frame at the final tier before the reveal
   else ui.step(GROUND_HOLD.missing, .35); // leave the loading card up: main does not fade it while the chunk is still out
   GOVERNOR.auto = auto; resetGovernor(); GOVERNOR.cool = GOVERNOR.cooldownMs; // grace: streaming right after the reveal is not the steady cost
   if (probe && buildId && ground) saveWarmStamp(warmStorage, { build: buildId, renderer: probe.renderer });

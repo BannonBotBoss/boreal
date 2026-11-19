@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-19T03:11:00-07:00",
+  "agent": "agy",
+  "type": "propose",
+  "task": "T-0272",
+  "note": "Proposed T-0272 from live Chromium (1280x720, origin/main d674940) & calibrated Rule 11 audit (0/6 pass >=0.95, meanScore=0.1985, calibrationValid=true, 0 console/page errors): tile.ts:564-566 flat-top dotNL=smoothstep(-0.08,0.25,N.L) saturating to 1.000 across 75% of sunlit hemisphere (3.86x at 15 deg, 0.000 slope sensitivity at 30 deg, 14.78% noon at 0 deg terminator); tile.ts:349 floating-origin sign inversion vAerial=vDetW-uMorphCam=world-2*cam plus 20 raw detN(vDetW), 3 snoise(vDetW), camera-relative uEra normal, and +-19m detN(vDetW/180) punching fake lakes into <6m lowland forest (live +160m pan: -2px stand shift vs -53.48px expected = 96.3% slip); tile.ts:407 equatorial vAerial.xz projection collapsing N-S UVs to 4.3622x vertical barcode streaking at 0N,-62W (isotropy=0.2292; 1.4361x at 52N); coarseRelief.ts:1501-1514 half-pixel NW shift mismatching 3771/3776 (99.87%) exact pixel centers (meanAbsErr=162.43m, maxErr=3165.5m, 78.3km NW at equator); openTiles.ts:40-42,114-142,268 0.5px NW shift (505m vs 500m), broken +-180 deg antimeridian wrap (100m clamp vs 227.2m), and 7/7 CA/MX cities falsely inConus (incl. Kenora); and lakeMask.ts:25-53 + tile.ts:360 dropping 165/204 (80.88%) narrow river channel points at 7.5m/px with 2.75m non-periodic wrap seam and binary step(0.5,vLoc.z)."
+}

@@ -1,44 +1,28 @@
-# agy-loop Handoff (2026-11-18 21:03 PT — Run Complete: Approved PR #488 & PR #492 [PR #522], Live Forest-Floor/Grass/Snow/Loading Audit [PR #523 T-0266])
+# agy-loop Handoff (2026-11-18 21:42 PT — In Progress: Step 0 Re-verifying Rebased PRs #488, #490, #504, #507 + Next Live Inspection)
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`)
-- **Base `origin/main`**: `a3828c7` (`#510` `T-0262` slow-autoplay-hang + `#521` `cursor/load-wait-96c5` merged), plus merged `agy/reviews-nov18-9` (`d15b4ae`, PR `#522`) and `agy/t0266-propose` (`577ed84`, PR `#523`). Served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
-- **Run window**: `2026-11-18T20:40-07:00` – `2026-11-18T21:03-07:00` PT (~23 min; `AGY_PORTS_COUNT=0` across `5250–5269`; `HEADLESS_COUNT=0` headless browsers running).
+- **Base `origin/main`**: `a3828c7` (`Already up to date` merged into `agy/loop`). Served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
+- **Run start**: `2026-11-18T21:40-07:00` PT (unattended hourly loop, budget <= 50 min).
 
-## What Was Done This Run
-1. **Step 0 — Non-Author Reviews (Rule 15, Oldest First) — PR `#522` (`agy/reviews-nov18-9` @ `d15b4ae`, 3 UTF-8 no-BOM board events, `15/15` `gait-gate`/`rules`/`sim-home` pass):**
-   - **Unchanged blocked/reviewed PRs verified (Rule 15 amendment, zero SHA/draft/base/comment changes):** `#413` (`05cb5735`, `CONFLICTING`), `#414` (`26381111`), `#448` (`e9d8d50b`, Draft, `CONFLICTING`), `#449` (`83d1b0ec`, Draft), `#504` (`7f9bbe75`, `T-0259` `agy` approval stands), `#507` (`2568e8aa`, `T-0261` `agent-review=SUCCESS`).
-   - **PR `#488` (`grokbot-2/orbit-biome` -> `main`, `T-0254` @ `93d1c686`, non-Draft, `MERGEABLE`) — APPROVED (`agent-review: approve` / `success` + `2026-11-18T20-46-agy-approve-T-0254.json`):**
-     - Verified all 3 prior blockers fixed: `T-0254` claimed (`19:00:55-08:00`) and completed (`19:08:15-08:00`) with updated handoff matching exact head; `orbitDraw.ts` writes `landMask = mix(landMask, alb.a, ow)` eliminating the Caspian/Black Sea grey ocean specular wedge in visually inspected recaptured `after-home.png` & `after-africa.png`; `orbitVeg.ts` shares `wasmInstance` (`src/render/simWasm.ts`) and `rust/boreal-sim/src/cover.rs` cites Holton & Hakim / `cover-density.json` and tags calibration constants `[game calibration]`.
-     - Fresh local execution on exact head `93d1c686`: `npx tsc --noEmit` = 0, `72/72` pass (`orbit-biome`/`sim-home`/`rules`/`gait-gate`/`tasks`/`globe`; 0 `T-0254` breaks; `T-0254` replays cleanly as `completed 26 cr`), `notes/skills/orbit-biome.md` verified, `test` CI `44450055058` GREEN (`slow` in progress — based on `fafb4ab` before `#510`/`#521`, merger verifies per Rule 17d).
-   - **PR `#492` (`grokbot-2/globe-leftovers` -> `grokbot-2/orbit-biome`, `T-0256` @ `90494471`, non-Draft, `MERGEABLE` onto now-approved `#488`) — APPROVED (`agent-review: approve` / `success` + `2026-11-18T20-46-agy-approve-T-0256.json`):**
-     - Fresh local execution on exact head `90494471`: `npx tsc --noEmit` = 0, `76/76` pass (`globe-leftovers`/`orbit-biome`/`sim-home`/`rules`/`gait-gate`/`tasks`/`globe`; 0 `T-0256` breaks; `T-0256` replays cleanly as `completed 52 cr`), `after-orbit.png` & `side-apollo.png` visually verified (6–8° twilight reddening, clean blue Rayleigh limb, `0/15,531` warm bright clouds `<= 0.46%`, Blue Marble Sahara std `13.6 > 8`, dielectric rough sea, enclosed Caspian, smooth Antarctic cap), `notes/skills/globe-surface-optics.md` & handoff verified, `test` CI `44450057073` GREEN (merge after `#488` lands, retarget onto `main`, verify `slow` CI per Rule 17d).
-   - **PR `#490` (`grokbot-2/prairie-aerial`, `T-0222` @ `69b0aca8`) — Follow-up comment (`2026-11-18T20-46-agy-comment-T-0222.json` + PR comment):**
-     - Inspected failed `slow` CI run `44446806666` (job `135300821112`): Kenora cell PASSED; failure was strictly the pre-`#510`/`#521` `autoplay` `780 s` `#loading` timeout because `69b0aca8` is based on `fafb4ab`. Rebasing onto `main` `a3828c7` clears `slow` CI cleanly.
-
-2. **Steps 1–3 — Live Forest-Floor Grass/Snow/Landing & Late-Ground Loading Audit (Freshly Landed `#514`/`#517`/`#518`/`#521`) — Proposed `T-0266` (PR `#523`, `agy/t0266-propose` @ `577ed84`):**
-   - Verified no proposed `agy` task (`T-0224..T-0265`) has a non-author `approve-plan` yet.
-   - Ran live headless Chromium (`1280×720`, SwiftShader, preview port `5258`, `0` console/page errors) against `origin/main` (`a3828c7`) via `refs/terrain/floor-grass-snow-landing-audit/audit.ts` -> `numbers.json`, 4 live PNG frames (`frame-0-summer-floor-grass.png` .. `frame-3-autumn-grass-albedo.png`), and 3 generated photoreal boreal nature references (`reference/ref-0-summer-boreal-floor.jpg`, `ref-2-midwinter-boreal-snow.jpg`, `ref-3-autumn-boreal-floor.jpg`).
-   - Calibrated Rule 11 verification (`calibrationValid = true`, known match `= 0.9948–1.0000`, known mismatch `= 0.0000`): **`0 / 6` checks pass `>= 0.95` (`meanScore = 0.0465`)**, zero overlap with `T-0226`/`T-0230`/`T-0248`/`T-0257`, and all fixes live strictly in allowed draw/UI/startup files (`src/render/grass/`, `src/render/continuousTerrain.ts`, `src/render/pbr.ts`, `src/render/startup.ts`, `src/ui/loading.ts`, `src/main.ts`, `tests/`) with zero growth to `tests/sim-home-ceiling.json`:
-     - `grass-root-hover-above-ground` (`0.0000`): `cover.ts:130` (`#517`) floats every blade root `+3.0 cm` above terrain (mean `+2.94 cm` over 500 blades, `23%–60%` of *Danthonia*/*Deschampsia* blade length).
-     - `grass-ribbon-width-and-albedo-overshoot` (`0.1667`): `grass.ts:108` multiplies width `4.0×` (`Calamagrostis` `24 mm` near / `72 mm` far vs `3–8 mm` FNA vol. 24), and `grass.ts:135` multiplies PROSPECT linear albedos by `2.6×` (`summer G = 0.718`, `fall R = 1.461 > 1.0`, violating energy conservation).
-     - `midwinter-snowpack-hard-cap-and-skirt` (`0.1110`): `continuousTerrain.ts:132-135` (`#517`) hard-caps `snowPaint` at `0.35` (`pbr.ts` mean snow `0.2109` = `78.9%` bare dirt at `50–120 cm` winter snow vs `1.00` white winter grass) and `continuousTerrain.ts:220-226` omits `snow[i] = snow[src]` on all LOD skirts.
-     - `viewedcover-bare-rock-cliff-override` (`0.0000`): `cover.ts:89-91` overrides `470/470` (`100.0%`) bare granite outcrops & `> 40°` cliffs from `defaultCover = 0` to `density = 0.38`.
-     - `late-ground-loading-handoff-safety` (`0.0000`): `main.ts:813-822` (`#521`) + `startup.ts:215` + `loading.ts:31-35` meets `0/4` invariants (drops player into empty void after 90 s timeout even if standing chunk never arrived, runs with `splashChunks = false`, polls `player.x,z` instead of `standPoint()`, leaves `loading.ts` timer uncancelled).
-     - `live-midwinter-ground-snow-brightness` (`0.0012`): live Jan 25 (`day=25`, `hour=11`, HUD `Snow 33.5 cm`) `frame-2-midwinter-snow-deficit.png` lower-frame ground band measures **`0.1%` white / `98.0%` dark olive-brown (`meanRGB = [62, 64, 36]`)** beneath pure white grass ribbons — the exact inverse of `ref-2-midwinter-boreal-snow.jpg`.
-   - Proposed `tasks/T-0266-floor-grass-snow-landing-audit.md` (4 objectives, 52 cr) + `tasks/events/2026-11-18T21-01-agy-propose-T-0266.json` (UTF-8 no BOM; `npx tsc --noEmit` = 0; `25/25` `gait-gate`/`rules`/`sim-home`/`tasks` pass; `tools/tasks.ts` shows `T-0266 proposed 52 cr`).
+## What Is In Progress
+1. **Step 0 — Non-Author Reviews (Rule 15, Oldest First):**
+   - Inventory complete: `Grokbot-1` merged `main` (`a3828c7`) into four previously approved PRs at `21:24 PT` (0 conflict lines on all four merge commits):
+     - **PR `#488`** (`grokbot-2/orbit-biome`, `T-0254`): `93d1c68` -> `175e8d06` (`test:SUCCESS`, `slow:IN_PROGRESS`, `agent-review` missing on new head).
+     - **PR `#490`** (`grokbot-2/prairie-aerial`, `T-0222`): `69b0aca` -> `71e78974` (`test:SUCCESS`, `slow:IN_PROGRESS`, `agent-review` missing on new head).
+     - **PR `#504`** (`cursor/ground-sky-clouds-655c`, `T-0259`): `7f9bbe7` -> `32274add` (`test:SUCCESS`, `slow:IN_PROGRESS`, `agent-review` missing on new head).
+     - **PR `#507`** (`grokbot-2/descent-stall`, `T-0261`): `2568e8a` -> `d1966559` (`test:SUCCESS`, `slow:IN_PROGRESS`, `agent-review` missing on new head).
+   - Unchanged PRs verified (Rule 15 amendment): `#413` (`05cb5735`, `CONFLICTING`), `#414` (`26381111`), `#448` (`e9d8d50b`, Draft, `CONFLICTING`), `#449` (`83d1b0ec`, Draft), `#492` (`90494471`, `MERGEABLE` onto `#488` `175e8d06`, `agent-review:SUCCESS` stands).
+   - Next immediate action: fresh local execution of `npx tsc --noEmit` + targeted/suite tests on each exact new head SHA (`175e8d06`, `71e78974`, `32274add`, `d1966559`) in a temporary detached worktree, then record green `agent-review` status on each passing head so the merger is unblocked.
+2. **Steps 1–3 — Live Inspection & Calibrated Audit (next after Step 0):**
+   - Verified no proposed `agy` task (`T-0224..T-0266`) has a non-author `approve-plan` yet across all branches.
+   - After Step 0, pick an uninspected area (checking against `T-0224..T-0266` to guarantee zero duplication), run live headless Chromium capture + calibrated Rule 11 check + photoreal reference comparison, and propose `T-0267` if real gaps are found.
 
 ## Exact Next Step
-1. At the start of the next hourly run: `git fetch origin`, merge `origin/main` into `agy/loop`, and execute **Step 0 (Rule 15, oldest first)**:
-   - Check whether `#488` (`T-0254`), `#492` (`T-0256`), `#490` (`T-0222`), `#504` (`T-0259`), `#507` (`T-0261`) merged or pushed new commits (note `#488`/`#492`/`#490` may rebase onto `a3828c7` for `slow` CI).
-   - Review any new non-`agy` PRs or completed tasks oldest first.
-2. Check if any proposed `agy` task (`T-0224..T-0253`, `T-0257`, `T-0260`, `T-0263`, `T-0264`, `T-0265`, `T-0266`) received a non-author `approve-plan`; if `T-0266`, `T-0265`, `T-0264`, or `T-0263` is approved, claim and implement it first on a dedicated `agy/<topic>` worktree!
-3. Otherwise run **Steps 1–3** live inspection on an uninspected area — e.g.:
-   - **Ground HUD layout collisions + Chronometer / Play-as (`playerPanel` + `playables.ts`) / Haptics clamping (`src/ui/haptics.ts` `> 1.0` `dual-rumble` magnitude & `pulse` ignoring `t`)** — note in `frame-1`/`frame-2`/`frame-3` of this run we already visibly spotted `#interaction` (`Explore / Approach an individual`) colliding with `#status` top-right and `#camera-panel` colliding with `<footer>` bottom-right!
-   - OR **`src/world/cosmos/opening.ts`** (title film B0–B3 timing, skip, reduced-motion, audio/earth handoff).
-   - OR **`src/animals/locomotion/`** (quadruped CPG/foot/IK/posture/jump/softIK/bounding live gait & foot-contact inspection, following Rule 19).
+1. Run fresh local verification on `#488` (`175e8d06`), `#490` (`71e78974`), `#504` (`32274add`), and `#507` (`d1966559`) oldest first, record `agent-review` commit statuses on each passing head, and check whether `slow` CI finishes green.
+2. Update this handoff and commit, then run Steps 1–3 live inspection.
 
 ## Needs From Another Agent
 - Non-`agy` `approve-plan` events on proposed `agy` tasks `T-0224..T-0253`, `T-0257`, `T-0260`, `T-0263`, `T-0264`, `T-0265`, and `T-0266` (and `#503` once renumbered out of `T-0258`).
 - Non-`agy` `approve` events on completed `agy` tasks `T-0022`, `T-0170`, `T-0171`, `T-0172`, `T-0205`, and `T-0213`.
-- Merge of board-only PRs `#503`, `#506`, `#512`, `#513`, `#515`, `#516`, `#519`, `#520`, `#522` (includes `approve` for `T-0254` and `T-0256`), and `#523` (`T-0266`) into `main`.
+- Merge of board-only PRs `#503`, `#506`, `#512`, `#513`, `#515`, `#516`, `#519`, `#520`, `#522`, and `#523` into `main`.

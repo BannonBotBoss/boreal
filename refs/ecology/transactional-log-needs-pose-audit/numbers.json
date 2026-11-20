@@ -1,0 +1,205 @@
+{
+  "generatedAt": "2026-11-20T00:25:23.506Z",
+  "baseUrl": "http://127.0.0.1:5263",
+  "calibrationValid": true,
+  "passCount": 0,
+  "totalChecks": 5,
+  "meanScore": 0.05586971654508146,
+  "checks": [
+    {
+      "id": "log-decay-moisture-class-and-why-chains",
+      "label": "Log decay fiber-saturation floor, sunlit-bog desiccation, decay-class shift & why/inspector",
+      "measured": "dry mf=0.6961 (t1/2=27.3 yr); sunlit bog(wet=1,light=1) mc=0.30 g/g, insects=0; age 99 yr (remain=0.0270) class=4, 27% remain class=2; freshLog nowText=\"resting on the ground, becoming forest floor (one more trunk cycle)\"; agentWhy=2/5 (throws on deer: no why for deer, bear: no why for bear, fox: no why for fox); inspectorHardcodesWolf=true",
+      "expected": "dry fiber-saturation mf<=0.05 (t1/2>150 yr); sunlit saturated bog retains mc>=0.85 g/g; Yatskov 27% remain = Class 4-5 & 99 yr (2.7%) = Class 5; fresh log nowText reports active decay class/rate; agentWhy covers all playable species & inspector uses active playable species",
+      "score": 0.05794781949902932,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.05714285714285715,
+      "pass": false,
+      "source": "Griffin (1977) via Bond-Lamberty et al. (2002) JGR 107(D23); Harmon et al. (1986) Adv. Ecol. Res. 15:133; Yatskov et al. (2003) CJFR 33:1211; Storaunet & Rolstad (2002) CJFR 32:1801"
+    },
+    {
+      "id": "traces-mark-lockout-stamina-exhausted-focus-blind",
+      "label": "Euclidean 450 m scent-mark lockout, wolfModes stuck exhausted at 100% stamina & hare/fox-blind focusLock",
+      "measured": "10 km territory patrol marks=1/22 (4.5%, lockout=23.0 d); after 20 s holding RT from exhausted: stamina=100.0/100, exhausted=true, mode=walk; FOCUS_KINDS=[plant,deer,person,forage], hareFocus=undefined",
+      "expected": "~22 marks along 10 km trail (1 per 450 m path travelled); exhausted clears once stamina >= 20% even if RT is held; Focus (LB/F) includes live non-catalog animals (hare, fox, pup)",
+      "score": 0.015151515151515152,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.015151515151515152,
+      "pass": false,
+      "source": "Peters & Mech (1975) Am. Sci. 63:628 (584 RLUs / 240 km trail); T-0035 focusLock contract; T-0036 stamina recovery"
+    },
+    {
+      "id": "needs-evasion-pup-allometry-and-simworld-thirst-temp",
+      "label": "Hare 30 m/s^2 (3.06 g) & 11.2 m/s tired speed, unscaled pup allometry, and SimWorld dead drinking/heat/rest",
+      "measured": "hare lateralAccel=30 m/s^2 (3.06 g vs 13 m/s^2 bound); tiredSpeed=11.2 m/s (game=7.59 m/s vs cited 7.35 m/s); 4 kg pup energy drain=9.11%/d vs Nagy 53.88%/d; SimWorld 60 s: wolfDrank=false, hareDrank=false, hareRested=false, simPassesTemp=false (40 C factor=1.80x), simCallsNearbyWater=false",
+      "expected": "lateralAccel<=13 m/s^2; tiredSpeed=7.35 m/s; pup FMR/water scaled by M^0.772 / M^0.818 (53.9%/d); SimWorld routes drink/rest/nocturnal goals via chooseGoal + nearbyWater and passes site tC",
+      "score": 0.09226332306481726,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.09224381738998777,
+      "pass": false,
+      "source": "Wilson et al. (2013) Nature 498:185 (13 m/s^2 cheetah peak); Nagy et al. (1999) Annu. Rev. Nutr. 19:247; Nagy & Peterson (1988) UC Publ. Zool. 120; Rule 5 (no bare-timer random wander)"
+    },
+    {
+      "id": "behaviour-pose-snout-ears-standing-sleep-flat-bound-unwired",
+      "label": "BehaviourPose snout-mounted ears, stiff-legged sleep == drink, 0 mm airborne hare-flee arc & 0 live callers",
+      "measured": "wolf ear-to-nose dx=0.000 m (18.9% bodyLength error vs 5% gate); wolfSleep==wolfDrink=true, hareSleep==hareDrink=true, sleepHipDrop=0.0%; hare-flee airborne=52.0% yet hip bob=0.0 mm vs ballistic 17.1 mm; wolf-drink noseY=0.065 m; hare-graze noseY=0.085 m; liveWired=false",
+      "expected": "ear on cranium (~0.25 m behind snout, <=5% error); sternal sleep drop>=60% distinct from drink; hare-flee ballistic hip arc ~17.1 mm; drink nose reaches water (y<=0.02 m); live rigs consume shared pose spec",
+      "score": 0.11398592501004556,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Mech & Boitani (2003) Wolves (~25 cm skull); Alexander (2003) ballistic suspension g*T_air^2/8; T-0020 5% bodyLength keypoint gate"
+    },
+    {
+      "id": "live-chromium-log-buried-deer-inspector-and-focus-blind",
+      "label": "Live WebGL Chromium: Decay Class 1 log Inspector \"becoming forest floor\", ?play=deer un-inspectable/Gray wolf & Focus blind to pups/hares/foxes",
+      "measured": "consoleErrors=0, pageErrors=0, recording.webm=27510 B; liveLogShowsBuried=true (class1=true, logKey=2:-1:12); liveDeerInspectorBroken=true; liveFocusMissedNonCatalog=true",
+      "expected": "Live Decay Class 1 fallen log Inspector reports active decay class/rate (not \"becoming forest floor\"); ?play=deer player is inspectable as White-tailed deer; Focus (F/LB) locks onto visible live animals",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Live WebGL Chromium frames frame-0..2.png + recording.webm against src/core/why.ts, src/ui/inspector.ts & src/core/focusLock.ts"
+    }
+  ],
+  "details": {
+    "logDecayAndWhy": {
+      "dryMf": 0.6960556844547564,
+      "dryHalfLifeYr": 27.296666666666667,
+      "sunlitBogMc": 0.30000000000000004,
+      "sunlitBogInsects": 0,
+      "sunlitBogInsects09": 0,
+      "arena99": {
+        "wet": 0.6,
+        "light": 0.2,
+        "age": 99,
+        "mc": 0.8376,
+        "moisture": 1,
+        "oxygen": 1,
+        "insects": 0.15,
+        "kLate": 0.03648143055578659,
+        "kEarly": 0.03648143055578659,
+        "k": 0.03648143055578659,
+        "remain": 0.02700693416505018,
+        "klass": 4
+      },
+      "classAtYatskovC5": 2,
+      "freshNow": "resting on the ground, becoming forest floor (one more trunk cycle)",
+      "agentWhySupported": 2,
+      "agentWhyErrors": [
+        "deer: no why for deer",
+        "bear: no why for bear",
+        "fox: no why for fox"
+      ],
+      "inspectorHardcodesWolf": true,
+      "gapLightVal": 0.42250000000026944
+    },
+    "tracesModesAndFocus": {
+      "patrolMarks": 1,
+      "expectedPatrolMarks": 22,
+      "lockoutDays": 23.025850929940454,
+      "wolfModesAfter20s": {
+        "stamina": 100,
+        "maxStamina": 100,
+        "mode": "walk",
+        "first": "right",
+        "left": false,
+        "right": true,
+        "sprintTime": 0,
+        "sprintSpent": false,
+        "exhausted": true
+      },
+      "stuckExhaustedAt100": true,
+      "focusKinds": [
+        "plant",
+        "deer",
+        "person",
+        "forage"
+      ],
+      "hareFocusFound": false
+    },
+    "needsEvasionAllometryAndSim": {
+      "hareLatAccel": 30,
+      "hareLatG": 3.058103975535168,
+      "hareTiredSpeed": 11.2,
+      "citedTiredSpeed": 7.352941176470589,
+      "hareTiredGameSpeed": 7.587096774193548,
+      "evadeBurstSpeedOnZeroStamina": 8.46774193548387,
+      "pupEnergyPctPerDay": 9.107356199172612,
+      "adultEnergyPctPerDay": 45.330689264410175,
+      "truePupEnergyPctPerDay": 53.87589023574275,
+      "pupWaterPctPerDay": 35.95508332798354,
+      "adultWaterPctPerDay": 17.896178365845262,
+      "wolfDrank": false,
+      "hareDrank": false,
+      "hareRested": false,
+      "simWolfEnd": {
+        "state": "graze",
+        "water": 19.346379626066295
+      },
+      "simHareEnd": {
+        "state": "graze",
+        "water": 9.289274753127103,
+        "rest": 5.617740438604514
+      },
+      "simPassesTemp": false,
+      "simCallsNearbyWater": false
+    },
+    "behaviourPose": {
+      "wolfBones": {
+        "hipX": 0,
+        "hipY": 0.56,
+        "shoulderX": 0.24,
+        "shoulderY": 0.55,
+        "noseX": 0.65,
+        "noseY": 0.81,
+        "ear": 0.1,
+        "tailX": -0.795,
+        "tailY": 0.56,
+        "bodyLength": 1.3250000000000002
+      },
+      "hareBones": {
+        "hipX": 0,
+        "hipY": 0.13,
+        "shoulderX": 0.12,
+        "shoulderY": 0.17,
+        "noseX": 0.27,
+        "noseY": 0.085,
+        "ear": 0.066,
+        "tailX": -0.0455,
+        "tailY": 0.13,
+        "bodyLength": 0.42
+      },
+      "earNoseDx": 0,
+      "earPlacementErrPctBody": 0.18867924528301885,
+      "wolfSleepIdenticalToDrink": true,
+      "hareSleepIdenticalToDrink": true,
+      "wolfSleepHipDropFrac": 0,
+      "hareAirFrac": 0.52,
+      "hareCycleS": 0.22727272727272727,
+      "hareExpectedArcM": 0.017126962809917354,
+      "hareMeasuredBobM": 0,
+      "wolfDrinkNoseY": 0.06451055624246582,
+      "hareGrazeNoseY": 0.085,
+      "liveWired": false
+    },
+    "liveBrowser": {
+      "consoleErrors": [],
+      "pageErrors": [],
+      "liveLogShowsBuried": true,
+      "liveLogIsClass1": true,
+      "liveDeerInspectorBroken": true,
+      "liveFocusMissedNonCatalog": true,
+      "focusStatus": "12:09 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nNothing close enough to focus\n0 remembered · 0 friends · 0 herbs",
+      "recordingBytes": 27510,
+      "logProbe": {
+        "touchingCount": 12,
+        "logKey": "2:-1:12",
+        "whyStr": "entity 2:-1:12\nvectors\nradii\nherd\nchunks\nReroll seed\nReset\nCHUNK\nworldSeed\nchunkSeed\nchunk\n2, -1\nRENDER\nquality tier\nUltra (Manual) · target 60 fps · measured 0 fps work · GPU 1367.24 ms · ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)\ntier knobs\nres ×1 · shadows 2 · AO 1 · IBL 1 · LOD ×1 · radii 100/180 m · trees ×1 · foliage ×1 · weather 12²\nDRAW\nx\nz\nseed\nrotation\nscale\nkind\nspruce\nrock\nlog\nplant\ndeer\nperson\nspruce\nrock\nlog\nplant\ndeer\nperson\nHYDROLOGY\nflow accumulation (cells)\nupslope area (ha)\nfill depth (m)\nTWI ln(a/tanβ)\nD8 receiver\ngrid build (ms)\nSOIL\nmaterial\nbedrock outcrop (RN)\nlandscape (Gharari 2011)\nplateau\nHAND (m)\nslope (m/m)\nTWI\nflow distance to drainage (m)\nsite wetness\nMASS\nbody\n0.8701 m³ × 512 kg/m³ (spruceWood 80%, bark 8%, water 12%) = 445.26 kg\nPHYSICS\nbody plan\nlog\nvolume (m³)\n0.870\nmass (kg)\n445.259\ng\n9.820\nweight (N)\n4372.543\nENTITY\nkind\nlog\ntitle\nFallen wood\nWHY\nnow\nFallen wood - resting on the ground, becoming forest floor (one more trunk cycle)\nchain\nphotosynthesis → formed a seed → seed dispersed → sprouted from the ground → grew in a sunlit gap (stand 126 years since fire) → weathered over time → a weak point built up → failed under its own mass → pulled down by gravity → tipped over → displaced the ground (the earth yields) → settled (forces balanced) → resting on the ground → no longer photosynthesizing → oxidizing (oxygen 1.00 of the well-drained rate) → decay class 1 → held in place by gravity → insects absent (too dry or airless) → wetted (moisture 0.30 g/g) → warmed by sunlight (light 0.86) → rotting at 0.0258 /yr → the other side collecting debris and growing other plants → becoming forest floor (one more trunk cycle)\n\nEdit a value or reroll: the generator re-runs with your change as a preview. Reset restores it."
+      },
+      "inspectorLogText": "title\nFallen wood\nWHY\nnow\nFallen wood - resting on the ground, becoming forest floor (one more trunk cycle)\nchain\nphotosynthesis → formed a seed → seed dispersed → sprouted from the ground → grew in a sunlit gap (stand 126 years since fire) → weathered over time → a weak point built up → failed under its own mass → pulled down by gravity → tipped over → displaced the ground (the earth yields) → settled (forces balanced) → resting on the ground → no longer photosynthesizing → oxidizing (oxygen 1.00 of the well-drained rate) → decay class 1 → held in place by gravity → insects absent (too dry or airless) → wetted (moisture 0.30 g/g) → warmed by sunlight (light 0.86) → rotting at 0.0258 /yr → the other side collecting debris and growing other plants → becoming forest floor (one more trunk cycle)\n\nEdit a value or reroll: the generator re-runs with your change as a preview. Reset restores it.",
+      "deerStatus": "12:18 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+      "deerInspectorText": "Click anything in the world: tree, rock, prop, ground, deer, hare or yourself. I closes."
+    }
+  }
+}

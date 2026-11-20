@@ -1,0 +1,70 @@
+{
+  "auditedAt": "2026-11-20T08:54:46.056Z",
+  "baseUrl": "http://127.0.0.1:5267",
+  "calibrationValid": true,
+  "passed": 0,
+  "total": 5,
+  "meanScore": 0,
+  "errors": [],
+  "recordingBytes": 91267,
+  "parcelsReadoutText": "",
+  "dataPanel11MeVExcerpt": "What is running Green is healthy. Yellow needs a look. Red is an error or outside the model. Grey has not been called, or is not active at this time. Time (cycles) 42.2684 cycles = 1.000e-2 seconds = 3.169e-10 years. quark Manual time. The engines stay here until you follow the game clock. Follow game clock Spawn log spacetime spawned at t=4.355e+17 s, because root. reheating spawned by spacetime ",
+  "dataPanel30GyrExcerpt": "What is running Green is healthy. Yellow needs a look. Red is an error or outside the model. Grey has not been called, or is not active at this time. Time (cycles) 62.2446 cycles = 9.466e+17 seconds = 3.000e+10 years. planet time — seasons and days Manual time. The engines stay here until you follow the game clock. Follow game clock Spawn log spacetime spawned at t=4.355e+17 s, because root. rehea",
+  "checks": [
+    {
+      "id": "rust-cosmology-reheating-gstar-future-freeze-and-clock",
+      "label": "Rust cosmology future a(t), inflation w, g_star_cmb, reheating QCD g*(T) & caching, and cosmic_time calendar drift",
+      "measured": "a(30 Gyr)=1.0000 (T=2.725 K, z=0.000); g*(11.5 MeV)=47.80 (free gluon n=3.86e+41 m^-3); 1 MeV cliff=40.42->3.36 (12.02x); infl(eps=0.396) w=-1.000 vs KG -0.736; t=1e-30s era=\"electroweak\" cosmo/reheat T=373.5x & a=14.2x; gStarCmbOk=false (off by c^2); reheatCached=false; planetClockYearLenOk=false",
+      "expected": "a(30 Gyr)~2.665 (T~1.022 K); g*(11.5 MeV)=10.75 (0 free gluons/quarks below 150 MeV); smooth e+e- crossover across 0.5-0.1 MeV (<1.3x step); Klein-Gordon w=-1+2*eps/3; continuous reheating->FRW handoff; g_star_cmb~3.36; cached reheating run; 365.25 d planet_clock",
+      "score": 0,
+      "knownMatchScore": 0.9975,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Planck Collaboration (2018) A&A 641 A6; Kolb & Turner (1990) Early Universe; Husdal (2016) arXiv:1609.04979; Saikawa & Shirai (2018) arXiv:1803.01038"
+    },
+    {
+      "id": "earth-interior-sph-bake-frozen-core-figure-and-slosh",
+      "label": "Earth SPH hot differentiation bake (earth-hot) liquid outer core, ICB radius, Earth radius/gravity, J2 & relaxation",
+      "measured": "core iron solid=1796/1796 (100.0%, overall 1803/1808=99.72%, min liquid Fe r=4671.4 km); icb=3117.4 km; r_vol=6532.1 km; g_eq=9.299 m/s^2; j2=7.878e-4 (-27.2%); inv_f=328.2; com=19.06 km; vmax=1469.3 m/s; rho_centre=14274 kg/m^3 (48k PREM bake: j2=8.315e-4, rho_centre=11106, vmax=568)",
+      "expected": "core solid ~4.4% by volume (liquid outer core 1,221.5-3,480 km); icb~1,221.5 km; r_vol~6,371.0 km; g_eq~9.780 m/s^2; j2~1.0826e-3 (inv_f~298.26); com<1 km; vmax<20 m/s; rho_centre~13,088 kg/m^3",
+      "score": 0,
+      "knownMatchScore": 0.9921,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "PREM (Dziewonski & Anderson 1981 PEPI 25:297); WGS84 / IERS Conventions (2010); Lay et al. (2008) Nat. Geosci. 1:25"
+    },
+    {
+      "id": "plates-handedness-sign-flip-dropped-edges-polar-bias-and-tileworker-race",
+      "label": "MORVEL plate kinematics handedness, North-edge drop, polar oversampling, area error & tileWorker STAGES race",
+      "measured": "dot(omega_N x (0N,0E), +East)=-1.000 (100% velocity & conv/div sign flip); droppedNorth=860/6098 (14.1%); polar(|lat|>70)/eq(|lat|<20) edge density=3.75x; MORVEL sum=12.2104 sr vs 4pi; max small-plate err=ri +50.8%; main-thread stall=444 ms; tileWorkerStagesSafe=false; tileWorkerMaskCancellable=false",
+      "expected": "right-handed dot=+1.000; 0% dropped North boundaries; ~1.0x isotropic boundary density; small-plate area error <= 10%; worker-local STAGES & cancellable mask()",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "NNR-MORVEL56 (Argus et al. 2011 G3 12:Q11001); Bird (2003) G3 4:1027; Web Worker isolation contract"
+    },
+    {
+      "id": "locomotion-foot-stop-teleport-jointswing-2x-bodyplan-scapula-and-sphere-glfinish",
+      "label": "foot.ts mid-swing stop teleport, jointSwing.ts forearm 2x gate breach, bodyPlan.ts scapula height, photo/fly.ts diagonal speed & sphere.ts gl.finish()",
+      "measured": "foot.ts mid-swing stop jump=2.255 m (z=-2.278->-0.024); jointSwing.ts forearm delta=0.200 rad (2.00x max=0.1); bodyPlan.ts fore.hip=0.2500 vs shoulder=0.2619 (diff=11.9 mm); photoFlyMove W+D+Space=10.392 m/s (1.732x 6.0); sphereNoGlFinishPerFrame=false; sphereRespectsTierBloom=false",
+      "expected": "smooth stop from current foot position (<0.05 m jump); forearm world delta <= 1.0x max gate; fore.hip === shoulder (<=1 mm); normalized diagonal fly speed = 1.0x; no per-frame gl.finish() & applyTier uses tier.bloom/msaa/segments",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Fischer et al. (2002) JEB 205:1315; Schmidt (2008) JEB 211:3775; WebGL2 best practices (no per-frame gl.finish)"
+    },
+    {
+      "id": "live-chromium-plates-interior-and-data-panel",
+      "label": "Live headless Chromium WebGL recording & 3 frames (3D plates globe, Earth-hot interior cutaway, Data Panel cosmology/reheating)",
+      "measured": "errors=0; recording.webm=91267 B; frames=3/3; platesHandednessOk=false (dot=-1.0, drop=14.1%); interiorOuterCoreLiquidOk=false (100.0% solid core, icb=3117 km); dataPanelCosmologyOk=false (g*=47.80, a30Gyr=1.00)",
+      "expected": "0 console/page errors; live WebGL video + 3 frames matching scientific references (right-handed continuous MORVEL boundaries, 95.6%-liquid PREM outer core with 1,222 km inner core, QCD-confined g*=10.75 & expanding future a(30 Gyr)=2.67)",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Live WebGL frame-0..2.png + recording.webm vs reference/ref-0..2.jpg"
+    }
+  ]
+}

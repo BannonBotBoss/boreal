@@ -1,0 +1,293 @@
+{
+  "generatedAt": "2026-11-20T01:59:37.856Z",
+  "baseUrl": "http://127.0.0.1:5264",
+  "calibrationValid": true,
+  "passCount": 0,
+  "totalChecks": 5,
+  "meanScore": 0.0017,
+  "consoleErrors": [],
+  "checks": [
+    {
+      "id": "gas-moist-dalton-o2-cliff-mercury-boot-stall",
+      "label": "gas.rs moist-air Dalton buoyancy, 120 km O2 & 86 km H2O cliffs, Mercury 1/r^2 exosphere & 256x gasAbove stall",
+      "measured": "q=0.02 p=104583.7 Pa (+3259 Pa), rho=1.24956 vs dry 1.22506 kg/m3 (+2.00% heavier); 120 km O2 drop -41.0%; 86 km H2O drop 10^15.0; Mercury 1 R_M He=2.67% of Chamberlain; 256x gasAbove=637.4 ms (3.36 ms/call)",
+      "expected": "p=101325 Pa, moist rho=1.2103 kg/m3 (-1.21% lighter); smooth O2 (<5% step) & H2O; Mercury Chamberlain 1/r^2 (100%); cached gasAbove LUT <20 ms",
+      "score": 0.0002,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.0002,
+      "pass": false,
+      "source": "Wallace & Hobbs (2006) §3.2; U.S. Standard Atmosphere 1976; Chamberlain (1963); Killen et al. (2007) SSR 132:433"
+    },
+    {
+      "id": "interior-exobase-plasmapause-seabed-moho-cliffs",
+      "label": "interior.rs 500 km exobase cliff, L=4.5 plasmapause +5x P inversion, +50.5 K seabed cliff & axisView -63.1 MPa Moho drop",
+      "measured": "500 km exobase rho drop 1584x (5.153e-13 -> 3.254e-16 kg/m3), T jump 11.61x (999.5 -> 11604.5 K), n_p=194536 cm^-3; L=4.5 P jumps +5.04x outward; seabed +50.5 K cliff; Moho -63.1 MPa drop; CO2=420 hardcoded",
+      "expected": "Smooth neutral+plasma exosphere transition; monotonically decreasing radial P across L=4.5; continuous seabed/land geotherm & continental Moho P; CO2=CO2_ppm_present (422.8 ppm)",
+      "score": 0.0045,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.0045,
+      "pass": false,
+      "source": "Carpenter & Anderson (1992) JGR 97:1097; Dziewonski & Anderson (1981) PREM; Turcotte & Schubert (2014)"
+    },
+    {
+      "id": "rt-glint-inversion-grazing-albedo-eccentricity-static-snow",
+      "label": "rt.rs + axisView 180 deg inverted ocean glint, 0.247 horizon albedo cap, missing 1/r^2 eccentricity & static lat snow/ice",
+      "measured": "axisView mirror phi=0.00 -> glint BRF=2.02e-9 vs backscatter phi=3.14 -> BRF=0.3270 (inverted!); mu=0.05 albedo=0.2221 vs Fresnel 0.7337 (mu=0.001: 0.2466 vs 0.9938); Jan3/Jul4 TOA ratio=1.00005 vs 1.06913; axisUsesLiveSnowIce=false",
+      "expected": "Mirror reflection peaks glint (BRF ~0.327) & backscatter ~0; grazing ocean albedo approaches Fresnel 1.0; orbital 1/r^2 ratio=1.0691; axisView reads live PlanetSim snow/ice/albedo",
+      "score": 0.0007,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.0018,
+      "pass": false,
+      "source": "Cox & Munk (1954) JOSA 44:838; Taylor et al. (1996) QJRMS 122:839; Spencer (1971); Fresnel optics"
+    },
+    {
+      "id": "species-biogeography-spatial-noise-wetland-frozen-year",
+      "label": "species.rs 2.16x 2.2 km cycle jump, frozen LANDING_YEAR=2026 & IUCN Alaska/Amazon/Cuba/Finland/Wetland errors",
+      "measured": "2.2 km adjacent hare ratio=2.160x (1.58 vs 3.41/ha); landingUsesClockYear=false; W-t Deer AK=39, Amazon=3, Cuba=195; Black Bear Cuba=1, KS=2; Finland Moose=0; Wetland (wetland) Eagle=0, Hare=0",
+      "expected": "Smooth spatial cycle (<1.15x per 2.2 km); live clock year; 0 W-t Deer in AK/Amazon/Cuba; 0 Black Bear in Cuba/KS; Finland Moose >0; Wetland Bald Eagle & Snowshoe Hare >0",
+      "score": 0.0029,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.0029,
+      "pass": false,
+      "source": "IUCN Red List spatial ranges; Krebs et al. (2001); Buehler (2000) BNA; Hundertmark (2016) Alces alces"
+    },
+    {
+      "id": "live-chromium-axis-rt-exobase-and-boreal-census",
+      "label": "Live WebGL Axis RT Jan-15 Kenora snow, 500 km Exobase cliff & 2031 Eurasian boreal landing census",
+      "measured": "errors=0; recording.webm=34491 B; Jan15 Kenora live RT snow=false (mu=0.191, reads \"surface land α 0.200\", TSI=1361.8); live 494->505 km Exobase drops ρ 5.67e-13->3.24e-16 kg/m3 (1750x) & jumps T 999.4->11604.5 K while gas line contradicts ρ by 1478x (continuous=false); live 2031 boreal census (49.77N, 65.54E) Moose=0, clockYearHonored=false",
+      "expected": "0 errors; Jan 15 Kenora RT reports live snow; continuous exobase without 1478x self-contradiction; Eurasian boreal census includes Moose & honors 2031 clock year",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Live WebGL frame-0..2.png + recording.webm vs reference/ref-0..2.jpg"
+    }
+  ],
+  "raw": {
+    "gas": {
+      "dry0": {
+        "T": 288.15,
+        "p": 101325.53363825909,
+        "rho": 1.225061739059139,
+        "n": 2.5469299068676793e+25,
+        "x": [
+          0.7807868542351597,
+          0.20944574367104188,
+          0.009339364298135816,
+          0.00042277122326036675,
+          0,
+          2.6599999292440017e-8,
+          0,
+          0,
+          0.000005239972403160597
+        ]
+      },
+      "hum0": {
+        "T": 288.15,
+        "p": 104583.68999251956,
+        "rho": 1.2495614303058737,
+        "n": 2.6288272881293717e+25,
+        "x": [
+          0.756462548498469,
+          0.20292075893715628,
+          0.009048409665201169,
+          0.0004096003861292351,
+          0.031153580013226816,
+          2.5771314086131214e-8,
+          0,
+          0,
+          0.000005076728503631634
+        ]
+      },
+      "expectedMoistRho": 1.2102950778441104,
+      "nO2_11995": 74440127344536510,
+      "nO2_12000": 43950000000000000,
+      "o2JumpFrac120km": 0.40959262742011304,
+      "h2o_859": 0.0000039999838817614954,
+      "h2o_861": 3.720004111149662e-21,
+      "merc0_n": 16000000000,
+      "nHeGame1R": 4280013.080848625,
+      "nHeChamberlain1R": 160250049.86477378,
+      "mercuryHeRatioErr": 0.026708341647695543,
+      "bootLutMs": 637.4181,
+      "singleGasAboveMs": 3.3559999999999945
+    },
+    "interior": {
+      "rExoBelow": {
+        "layer": 5,
+        "rho": 5.15274234319047e-13,
+        "T": 999.4839191417005,
+        "P": 2.935795969619836e-7,
+        "g": 8.443266941726096
+      },
+      "rExoAbove": {
+        "layer": 6,
+        "rho": 3.253842263293332e-16,
+        "T": 11604.5,
+        "P": 6.233599866101807e-8,
+        "g": 8.442775425429675
+      },
+      "exobaseRhoFactor": 1583.587010753002,
+      "exobaseTFactor": 11.610491952652204,
+      "nProtonsExobaseCm3": 194535.65443994047,
+      "rPpBelow": {
+        "layer": 6,
+        "rho": 3.3155678438793494e-19,
+        "T": 11604.5,
+        "P": 6.351851625019773e-11,
+        "g": 0.48711183766473165
+      },
+      "rPpAbove": {
+        "layer": 6,
+        "rho": 1.6726199999999998e-21,
+        "T": 11600000,
+        "P": 3.20310568e-10,
+        "g": 0.4828011346308405
+      },
+      "plasmapauseOutwardPRatio": 5.042790463465885,
+      "rSeaBot": {
+        "layer": 4,
+        "rho": 1020,
+        "T": 277,
+        "P": 30166596.849283937,
+        "g": 9.82859753018334
+      },
+      "rCrustTop": {
+        "layer": 3,
+        "rho": 2600,
+        "T": 327.4912000000029,
+        "P": 30422141.56318027,
+        "g": 9.828606592591719
+      },
+      "seabedTJumpK": 50.49120000000289,
+      "p24_3patched": 671771563.046627,
+      "p24_5unpatched": 608628529.92206,
+      "mohoPDropMPa": 63.14303312456703,
+      "co2MatchesPresent": false
+    },
+    "rt": {
+      "axisNegatesDot": true,
+      "phiAtMirror": 0,
+      "phiAtBackscatter": 3.141592653589793,
+      "rtAtMirror": {
+        "toa": 1089.421122437089,
+        "reflAtm": 48.53774048133379,
+        "reflSurf": 31.16473289699461,
+        "absAtm": 176.412229784715,
+        "absSurf": 833.3064192740455,
+        "albedo": 0.03874926214970011,
+        "glint": 2.0226893666454253e-9,
+        "tsi": 1361.776403046361
+      },
+      "rtAtBack": {
+        "toa": 1089.421122437089,
+        "reflAtm": 48.53774048133379,
+        "reflSurf": 31.16473289699461,
+        "absAtm": 176.412229784715,
+        "absSurf": 833.3064192740455,
+        "albedo": 0.03874926214970011,
+        "glint": 0.32703695245772163,
+        "tsi": 1361.776403046361
+      },
+      "rtGrazing05_albedo": 0.22209685431647722,
+      "fresnel05": 0.7336547360539435,
+      "rtGrazing001_albedo": 0.24655258627891694,
+      "fresnel001": 0.9937527708144537,
+      "orbitalRatioGame": 1.0000458508811223,
+      "orbitalRatioReal": 1.0691250680740105,
+      "axisUsesLiveSnowIce": false
+    },
+    "species": {
+      "d5449": 1.5775857383781908,
+      "d5451": 3.407531742107929,
+      "adjacentValleyMaxRatio": 2.159966117347753,
+      "landingUsesClockYear": false,
+      "alaskaDeer": 39,
+      "amazonDeer": 3,
+      "cubaDeer": 195,
+      "cubaBear": 1,
+      "kansasBear": 2,
+      "finlandMoose": 0,
+      "wetlandCover": {
+        "kind": "wetland",
+        "stemsPerHa": 442,
+        "heightM": 5.615577397263296
+      },
+      "wetlandEagle": 0,
+      "wetlandHare": 0,
+      "hareAlaska2026": 3195,
+      "hareAlaska2031": 10708
+    },
+    "live": {
+      "recordingBytes": 34491,
+      "axisKenoraPre": "û  lat 49.77°  lon -94.49°\nr  6371.0 km   altitude 4.98 km\n   above sea 5.32 km, above mean R -0.01 km\nlayer atmosphere · troposphere\nρ 0.738 kg/m³   T 255.8303 K\nP 54171.912 Pa   g 9.794 m/s² (figure)\ngas  n 1.53e+25 m⁻³  N2 77.96% O2 20.91% Ar 9325.1ppm H2O 1526.8ppm\nabove: 5531.342 kg/m²  O₃ 328.9 DU  H₂O 1.14 mm\n  sim day 15 18.3 h UTC  q 0.37 g/kg  cloud 0.50 τ 6.0\nRT  TSI 1361.8  μ☉ 0.190  surface land α 0.200\n  in 258.7  refl atm 74.3 surf 20.9  abs atm 48.1 surf 115.4 W/m²",
+      "axisExobaseBelowPre": "û  lat 49.77°  lon -94.49°\nr  6860.0 km   altitude 493.98 km\n   above sea 494.32 km, above mean R 488.99 km\nlayer atmosphere · thermosphere\nρ 5.67e-13 kg/m³   T 999.4234 K\nP 3.21e-7 Pa   g 8.446 m/s² (figure)\ngas  n 2.32e+13 m⁻³  O 86.47% He 12.21% N2 1.30% O2 246.3ppm\nabove: 3.80e-8 kg/m²  O₃ 0.0 DU  H₂O 0.00 mm",
+      "axisExobaseAbovePre": "û  lat 49.77°  lon -94.49°\nr  6871.1 km   altitude 505.08 km\n   above sea 505.42 km, above mean R 500.09 km\nlayer magnetosphere · exosphere\nρ 3.24e-16 kg/m³   T 11604.5000 K\nP 6.21e-8 Pa   g 8.419 m/s² (figure)\ngas  n 1.97e+13 m⁻³  O 85.10% He 13.76% N2 1.12% O2 202.4ppm\nabove: 3.23e-8 kg/m²  O₃ 0.0 DU  H₂O 0.00 mm",
+      "liveAlaskaLanding": {
+        "ready": true,
+        "remote": false,
+        "lat": 49.77016727002087,
+        "lon": 65.53577344371742,
+        "elevM": 370,
+        "vegetation": 1,
+        "water": false,
+        "biome": "boreal",
+        "clickLat": null,
+        "clickLon": null,
+        "census": [
+          {
+            "species": "gray_wolf",
+            "display": "Gray Wolf",
+            "count": 1
+          },
+          {
+            "species": "caribou",
+            "display": "Woodland Caribou",
+            "count": 2
+          },
+          {
+            "species": "red_fox",
+            "display": "Red Fox",
+            "count": 24
+          }
+        ],
+        "shown": [
+          {
+            "species": "Red Fox",
+            "count": 1,
+            "x": 50.15773330713505,
+            "z": -7.056703505803208
+          },
+          {
+            "species": "Woodland Caribou",
+            "count": 1,
+            "x": 58.60646605686178,
+            "z": -16.05090373993787
+          },
+          {
+            "species": "Gray Wolf",
+            "count": 1,
+            "x": 58.257923677828956,
+            "z": -16.71499575917778
+          }
+        ],
+        "frameMs": 567.4666666664781,
+        "lighting": {
+          "hour": 12.07,
+          "dayOfYear": 166,
+          "latitude": 49.79,
+          "sunElevation": 63.5,
+          "day": 1,
+          "golden": 0,
+          "night": 0,
+          "state": "day"
+        },
+        "note": "",
+        "coastM": 72214.89784980303,
+        "censusLat": 49.77016727002087,
+        "censusLon": 65.53577344371742,
+        "shore": false
+      }
+    }
+  }
+}

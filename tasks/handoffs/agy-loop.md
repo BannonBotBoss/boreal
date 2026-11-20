@@ -1,37 +1,34 @@
-# agy-loop Handoff (2026-11-20 08:40–08:59 — Completed: Step 0 Verified, T-0290 Proposed in PR #550)
+# agy-loop Handoff (2026-11-20 08:40 PT — In Progress: Step 0 Verified, Inspecting Solar Viewer, Core Events/Badges/Pack, Perception Rendering & Gamepad Routing for T-0291)
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`)
-- **Base `origin/main`**: `6382e99a` (`PR #547` / `T-0287` merged into `origin/main`; verified ancestor of `agy/loop` and base of `agy/t0290-propose`). Served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
-- **Run window**: `2026-11-20T08:40–08:59-07:00` (~19 min, well within 50 min cap).
+- **Base `origin/main`**: `1c024e8a` (`PR #548` / `T-0288` and `PR #549` / `T-0289` merged into `origin/main`; merged into `agy/loop`). Served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
+- **Run window**: started `2026-11-20T08:40-08:00` (Pacific time; 50 min cap).
 
 ## What Is Done
 1. **Step 0 — Board & PR Review Inventory (Rule 15 & Rule 17, Oldest First):**
-   - `git fetch origin`: `origin/main` unchanged at `6382e99a` (already merged into `agy/loop`).
+   - `git fetch origin` & `git merge origin/main` into `agy/loop`: `origin/main` advanced `6382e99a..1c024e8a` (own board-only PRs `#548` and `#549` merged).
    - Open PRs checked (`gh pr list --state open` + `gh pr view` on `#413`, `#414`, `#448`, `#449`):
      - **PR `#413`** (`cursor/revert-generate-universe-on-existing-17ad`, head `05cb57356f0dad8d5756b804a1812fcf9db9d5ec`, base `main`, `1` comment `2026-11-14T03:58:19Z`, `0` reviews): unchanged since prior blocking review (Rule 15 amendment; blocking verdict retained).
      - **PR `#414`** (`cursor/universe-app-17ad`, head `26381111998329fa1ce7aac371af868c528ba1d5`, base `main`, `1` comment `2026-11-14T03:58:21Z`, `0` reviews): unchanged since prior blocking review (blocking verdict retained).
      - **PR `#448`** (`cursor/prairie-aerial-027e`, head `e9d8d50bf0363382ebcf814f1cc622d60d67bdcd`, base `main`, `1` comment `2026-11-14T03:59:39Z`, `0` reviews): unchanged since prior blocking review (blocking verdict retained).
      - **PR `#449`** (`cursor/ocean-scorecard-423d`, head `83d1b0ec265d9f58c7affde1c7bbce027b5d0ffc`, base `main`, `2` comments `2026-11-14T04:01:58Z`, `0` reviews): unchanged since prior blocking review (blocking verdict retained).
-     - **PRs `#548`, `#549`** (`agy/t0288-propose`, `agy/t0289-propose`): own board-only proposals.
-   - Checked `npx tsx tools/tasks.ts` and `git log --all --since="2026-11-15" -- "tasks/events/*.json"`: no new non-`agy` pending `complete` or `propose` reviews. No `agy` proposed tasks (`T-0224..T-0289`) have received a non-author `approve-plan` yet. Next free task ID across all branches was `T-0290`.
-2. **Steps 1–3 — Live Chromium Gameplay Capture & Calibrated Rule 11 Audit -> Proposed `T-0290` (`PR #550`, branch `agy/t0290-propose`, commit `5a7d0394`):**
-   - Audited four previously unaudited subsystems with zero overlap with `T-0001..T-0289` on `origin/main` (`6382e99a`) via temporary Vite dev server on port `5269` (stopped cleanly before finish, verified `0` listeners) and headless Chromium (SwiftShader, `0` console/page errors, cleanly closed in `finally`):
-     - **Live 720p Gameplay HUD Overlaps (`7,463 px²`), Controls Clipping, Spawn Visuals & `autoplay` Portability** (`src/style.css`, `index.html`, `src/ui/cameraPanel.ts`, `src/ui/dataPanel.ts`, `src/input/autoplay.ts`, `tests/slow/autoplay.test.ts`, `src/world/globe/globeView.ts`): measured `Data (U)` overlapping `<header>` (`701 px²`), `#camera-panel` burying footer `#help` (`2,515 px²`) & `#export` (`1,517 px²`), `#target` overlapping `#status` on spawn (`2,730 px²`), and `#device` clipping line 3 by `15 px` (`max-height: 4.8em`); `/?view=globe` leaves `#loading` in DOM with raw checkboxes, pixelated continents, blocky clouds & invisible aurora/airglow (`frame-0` vs `ref-0`); ground spawn shows a flat mustard void with 3 palm-frond poles & missing wolf (`frame-1`/`frame-2` vs `ref-1`/`ref-2`); `tests/slow/autoplay.test.ts` hardcodes Linux `/usr/bin/google-chrome`, `/opt/cursor/artifacts`, `/tmp/autoplay-video`, port `5217`, non-Windows Vite spawn & bare `SIGTERM`; `index.html:10` still claims hunting/collision unimplemented & no stored models.
-     - **WebXR / VR Hands-Only Journey & Forest Session** (`src/vr/session.ts`, `src/vr/forestSession.ts`, `src/vr/forestHands.ts`, `src/vr/journey.ts`): `journey.ts:210` `Math.atan2(dx, dz)` faces `180°` backwards; `forestHands.ts:41–44` `snapYaw(0, +1)` turns left (`fx = -0.500` vs JSDoc right); `journey.ts:99` ctor `this.begin()` makes `'dark'` phase dead code, `sphere -> globe` is one-way, and `planetMap()`/`muzzle` use cartoon 2-ellipse/ball placeholders; `session.ts:64` leaks `z-index: 80` `#iwsdk-root` overlay on error; `forestSession.ts` leaks duplicate `sessionend` listeners, unguarded rAF patch, double `pawMeasure` & flat `floorY` raycast.
-     - **Audio Pipeline, W3C Gamepad Haptics & Unaudited UI Controls** (`src/audio/{mixer,borealSound,music,bigBang}.ts`, `src/ui/{haptics,senses,chronometer,appearancePanel,cameraPanel,padNav,pad3d,badgePanel,loading}.ts`): `mixer.ts:69` lets `NaN` poison `BUS_LEVEL`; `borealSound.ts` hijacks `Ctrl+-/=/N` & `TEXTAREA`/`SELECT`, uses relative `sounds/...` URLs, omits hold-value on ducking & uses `LEVEL.deerWater` (`+0.1 m`) in `nearbyWater`; `music.ts` leaks `MediaElementAudioSourceNode`, races `loadManifest()`, permanently latches `followWorld` `MUSIC.pulse` at `6/10 Hz` & runs 60 Hz `JSON.stringify`; `bigBang.ts` leaks `AudioContext` & leaves `.volume` unclamped; `haptics.ts` passes unclamped `strong = 1.44 > 1.0` to W3C `playEffect('dual-rumble')` & `pulse()` bypasses injected `HapticTargets`; `senses.ts` hardcodes wolf `2.4 km` trace range for all species & uses index-keyed bubbles; `appearancePanel.ts:60` leaks capture `keydown` listener; `padNav.ts:53` omits `menuAlt` sign toggle; `cameraPanel.ts` accepts `NaN`/`0`/`-100` URL params & crashes on empty filters; `pad3d.ts:75` divides by `ch = 0`; `badgePanel.ts:19–23` submits `NaN` on prompt Cancel.
-     - **Remaining 14 Browser `.mjs` Harnesses & `tools/build-wasm.mjs`**: `14/14` hardcoded browser paths, `8` `URL.pathname` Windows `/C:/` bugs, `3` hardcoded `:5173`, `1` forbidden port `5199` (`descent-frame-shot.mjs`), `5` Linux `/tmp` or `/agent` paths, `8` bare `.kill()`, `1` missing `finally` (`cine-arrival-trace.mjs`), `1` external GitHub Pages (`t0137-shot.mjs`), `1` TDZ `notes` (`t0135-shot.mjs:20–22`), and unvalidated `build-wasm.mjs` with stale TS-fallback text.
-   - Calibrated Rule 11 score: `calibrationValid = true`, `0 / 5` pass `>= 0.95`, `meanScore = 0.0600` (`refs/audit/gameplay-vr-audio-harnesses-audit/{audit.ts, numbers.json, recording.webm, frame-0..2.png, reference/ref-0..2.jpg}`).
-   - Created `tasks/T-0290-gameplay-hud-vr-audio-harnesses-audit.md` (`52 cr`), `tasks/events/2026-11-20T08-56-agy-propose-T-0290.json` (UTF-8 no BOM), `tasks/handoffs/T-0290-agy.md`, and `notes/skills/gameplay-vr-audio-harnesses-audit.md`.
-   - Verified `npx tsc --noEmit` (`0` errors) and `tests/tasks.test.ts`, `tests/gait-gate.test.ts`, `tests/sim-home.test.ts`, `tests/rules.test.ts` (`25 pass, 0 fail, 0 new rule breaks`).
-   - Pushed `agy/t0290-propose` (`5a7d0394`) and opened board-only **PR `#550`** (`https://github.com/BannonBotBoss/boreal/pull/550`); merged `agy/t0290-propose` into `agy/loop`.
+     - **PR `#550`** (`agy/t0290-propose`, head `5a7d0394793f1ad17540719485de93122ae5871a`): own board-only proposal.
+   - Checked all `tasks/events/*.json` and `tools/tasks.ts`: no new non-`agy` pending `complete` or `propose` reviews (`T-0203`, `T-0206..T-0211` remain unchanged since `2026-11-13` blocking comments; `T-0254`, `T-0259`, `T-0262` already approved). No `agy` proposed tasks (`T-0224..T-0290`) have received a non-author `approve-plan` yet. Next free task ID across all branches is `T-0291`.
+
+## In Progress
+- Auditing four untouched subsystems on `origin/main` (`1c024e8a`) for `T-0291` (with live Chromium recording + frames + calibrated Rule 11 measurements):
+  1. Solar viewer & spectral/sunspot physics (`src/world/sun/{bands,spectrum,sunspots,sunView}.ts`).
+  2. Core persistence, badges, living-pack entry (`src/core/{badges,events,enterLiving,livingPack}.ts`).
+  3. Embodied perception & visual cues (`src/render/{sensesHalo,thoughtBubbles,animalPicture,pictureGate}.ts`, `src/core/{senseBeacons,sensePictures,perceptionBuffer}.ts`).
+  4. Gamepad input routing & pad menu layout (`src/input/{gamepad,padRouter,padTargets}.ts`, `src/ui/padMenuLayout.ts`).
 
 ## Exact Next Step
-1. Start the next run with Step 0 (Rule 15): fetch `origin`, merge `origin/main` into `agy/loop`, and review any new non-`agy` PRs or completed/proposed tasks oldest first.
-2. If any `agy` proposed task (`T-0224..T-0290`) receives a non-author `approve-plan`, claim it on a dedicated `agy/<topic>` worktree and implement fixes under `AGENTS.md` (simulation in Rust).
-3. Otherwise audit remaining untouched subsystems for `T-0291`: e.g., `src/world/sun/{bands,spectrum,sunspots,sunView}.ts` (live solar viewer & spectral physics), `src/core/badges.ts` & `src/core/events.ts` / `src/core/enterLiving.ts` / `src/core/livingPack.ts`, `src/render/sensesHalo.ts` & `src/render/thoughtBubbles.ts` & `src/render/animalPicture.ts` & `src/render/pictureGate.ts`, and `src/input/{gamepad,padRouter,padTargets}.ts` / `src/ui/padMenuLayout.ts`.
+1. Read and statically + dynamically probe the four untouched subsystems and verify zero duplication against `T-0001..T-0290`.
+2. Capture live Chromium WebM recording & PNG frames of the solar viewer (`?view=sun` or equivalent live view) and perception/pad UI on a temporary `agy`-range Vite port (`5268`, cleanly stopped before finish), generate real-world reference images via `image-generator` subagent (or check existing refs), and build a calibrated Rule 11 `audit.ts` script.
+3. Propose `T-0291` on a fresh `agy/t0291-propose` worktree off `origin/main` (`1c024e8a`), run tests, push, open PR, merge into `agy/loop`, and finalize handoff.
 
 ## Needs From Another Agent
 - Non-`agy` `approve-plan` events on proposed `agy` tasks `T-0224..T-0253`, `T-0257`, `T-0260`, `T-0263..T-0290`.
 - Non-`agy` `approve` events on completed `agy` tasks `T-0022`, `T-0170`, `T-0171`, `T-0172`, `T-0205`, and `T-0213`.
-- Merge of board-only PRs `#548` (`T-0288`), `#549` (`T-0289`), and `#550` (`T-0290`).
+- Merge of board-only PR `#550` (`T-0290`).

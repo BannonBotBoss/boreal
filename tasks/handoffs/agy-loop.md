@@ -1,9 +1,9 @@
-# agy-loop Handoff (2026-11-20 11:40 PT — In Progress: Step 0 Verified, Auditing Untouched Shipped Assets, Audio Waveforms, Autoplay & Unaudited Code)
+# agy-loop Handoff (2026-11-20 11:40–11:58 PT — Completed: Step 0 Verified, T-0294 Proposed in PR #554)
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`)
-- **Base `origin/main`**: `37713319` (`PR #552` / `T-0292` merged; `PR #553` / `T-0293` still open on `agy/t0293-propose`). Local served `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
-- **Run start**: `2026-11-20T11:40-08:00` (local OS clock `12:40-07:00` British Columbia Standard Time; 50 min cap).
+- **Base `origin/main`**: `37713319` (`PR #552` / `T-0292` merged; `PR #553` / `T-0293` and `PR #554` / `T-0294` open). Served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
+- **Run window**: `2026-11-20T11:40–11:58-08:00` (~18 min, well within 50 min cap).
 
 ## What Is Done
 1. **Step 0 — Board & PR Review Inventory (Rule 15 & Rule 17, Oldest First):**
@@ -13,16 +13,24 @@
      - **PR `#414`** (`cursor/universe-app-17ad`, head `26381111998329fa1ce7aac371af868c528ba1d5`, `1` comment `2026-11-14T03:58:21Z`, `0` reviews): unchanged (blocking verdict retained).
      - **PR `#448`** (`cursor/prairie-aerial-027e`, head `e9d8d50bf0363382ebcf814f1cc622d60d67bdcd`, `1` comment `2026-11-14T03:59:39Z`, `0` reviews, DRAFT): unchanged (blocking verdict retained).
      - **PR `#449`** (`cursor/ocean-scorecard-423d`, head `83d1b0ec265d9f58c7affde1c7bbce027b5d0ffc`, `2` comments `2026-11-14T04:01:58Z`, `0` reviews, DRAFT): unchanged (blocking verdict retained).
-   - Verified full board ledger via `tools/tasks.ts`: zero new non-`agy` events since `2026-11-18T19:08:15-08:00`, zero `approve-plan` events on `agy` proposed tasks (`T-0224..T-0293`), and next free task ID across all branches is **`T-0294`**.
-
-## Currently Doing
-- Surveying untouched `src/`, `rust/boreal-sim/src/`, and `public/` assets (shipped audio waveforms, `STEP_SLICES` onsets, production bundle bloat/licencing, and live end-to-end `?autoplay=1` capture) to identify real gaps without duplicating `T-0001..T-0293`.
+   - Audited full task board via `tools/tasks.ts` (`ledger('tasks')`): zero new non-`agy` events since `2026-11-18T19:08:15-08:00`, zero `approve-plan` events on `agy` proposed tasks (`T-0224..T-0293`), next free task ID across all branches was **`T-0294`**.
+2. **Steps 1–3 — Binary Asset Forensics (`177` `public/` Files, `43.39 MB`), Live Headless Edge Capture & Calibrated Rule 11 Audit -> Proposed `T-0294` (`PR #554`, branch `agy/t0294-propose`, commit `4ea161f1`):**
+   - Audited four previously untouched shipped-asset, audio-mastering, impostor-baking, and live-boot surfaces on `origin/main` (`37713319`, zero overlap with `T-0001..T-0293`) via `ffprobe`/`ffmpeg ebur128`, raw PCM silence-end detection, binary glTF 2.0 JSON inspection, temporary Vite server on port `5261` (stopped cleanly, `0` `LISTENING` sockets), and headless Microsoft Edge (SwiftShader, `0` console/page errors, cleanly closed in `finally`):
+     - **Shipped Audio Clipping (`+3.4 dBTP`), `27.3 LU` Pup Spread, `1.05 s` Music Loop Gaps & `big-bang` Mastering (`public/sounds/**`, `public/audio/big-bang/**`, `src/audio/{borealSound,mixer}.ts`)**: `13 / 51` active runtime files (`18 / 86` total in `public/`) clip at `>= 0.0 dBTP` (up to `+3.4 dBTP` on `pups/yip_01.ogg` & `yip_02.ogg`, `+3.1 dBTP` `yip_03.ogg`, `+1.7 dBTP` `call_01.ogg`, `+0.6 dBTP` `stone-roll.mp3` vs ITU-R BS.1770-4 / EBU R128 `<= -1.0 dBTP`); `call_01.ogg` (`-7.9 LUFS`) vs `call_02.ogg` (`-35.2 LUFS`) spans `27.3 LU` with flat `0.45` gain (`pupHasPerClipTrim = false`) and `.ogg`-only Safari-breaking fetch; `music-day.mp3` (`694.2 ms`) and `music-night.mp3` (`1,047.0 ms`) drop to `-90 dB` on every 60 s loop wrap; `ui-click.mp3` (`-56.5 LUFS`) and `paw-walk.mp3` (`-50.5 LUFS`) stay `12.5–18.5 LU` below `-20 LUFS` even at `+18 dB` trim clamp; `big-bang/vo-b14-home.mp3` (`-24.6 LUFS`) is `8.4 LU` below `narration.mp3` (`5.805 s` vs `5.851429 s` README) and `bed`/`cue2-emergence` are `48 kHz` vs `44.1 kHz`.
+     - **`public/` Production Bundle Bloat (`5.89 MB`), Unlicenced Binary Assets (`19.03 MB`), Broken Base-Path URLs & `detect-gpu`**: `5,891,995 B` (`13.58%`) dead/placeholder/build-input files ship verbatim in `public/` (`cinematic/refs/PLACEHOLDER_*` `4.09 MB`, `bake/earth-{parcels,mix-6k}.*` `1.29 MB`, unused `pups/*.mp3` `172 KB`, unused `SN_m_tot_V2.0.csv` `130 KB`, `aerial/source/*.png` `110 KB`, `big-bang/*-alt1.mp3` `101 KB`); `19.03 MB` across `public/models/animals/`, `public/sounds/`, and `public/globe/` lacks `LICENCE`/`CREDITS` (`0/21` animal GLB `copyright`); `parcels.ts:17` `'/bake/earth-hot'` and `opening.ts:414` `'cinematic/refs/...'` omit `asset()`; `sunView.ts:50` double-bundles `public/data/silso/SN_d_tot_V2.0.csv`; `public/detect-gpu/` has `0` RTX 5060 entries.
+     - **Tree/Animal GLB PBR, Decapitated Double-Gamma `cc0Impostors` Atlas & `39.1 km/px` `blue-marble-200408.jpg`**: `5/5` `public/models/trees/*.glb` export `metallicFactor = 1.0` without `metallicRoughnessTexture`; live `bakeTreeAtlas()` (`frame-3-live-tree-impostor-atlas.png`) slices off the top **`26.3%`** of every tree crown (`visibleTopY = 0.7366`), tags `NoToneMapping` linear RT bytes (`meanOpaqueRGB = [22.1, 37.0, 13.2]`) as `SRGBColorSpace` (`0.0143` linear green), flattens all 5 species to uniform green/brown (zero white birch bark), and never disposes GLB geometries/materials; `21/21` `public/models/animals/*.glb` set `doubleSided: true` on closed solid meshes (`ermine.glb` `26,004` vs `moose.glb` `26,006` tris); `blue-marble-200408.jpg` is `1024×512` (`39.14 km/px`, `4×` coarser than `cloud_combined_2048.jpg`).
+     - **Live `?autoplay=1` `40+ s` Double-Boot & Visual Fidelity**: `/?autoplay=1&noprobe=1` takes `21.7 s` in initial `#loading` (with `"Data (U)"` floating over the splash, `frame-0`), clicks `Generate`, reloads into a second `>17 s` loading screen (`hasLoading = true` at `t = 40.64 s`); `?view=globe` leaves `#loading` in DOM and shows blurred `39 km/px` land (`frame-1` vs `ref-1`); forest spawn (`frame-2`, `recording.webm = 574,165 B`) shows a treeless mustard-ochre plain with `"E / click · drink"` on dry ground.
+   - Calibrated Rule 11 score: `calibrationValid = true`, `0 / 4` pass `>= 0.95`, `meanScore = 0.1000` (`refs/audit/shipped-assets-audio-impostors-autoplay-audit/{audit.ts, numbers.json, live-capture.json, recording.webm, frame-0..3.png, reference/ref-0..1.jpg}`).
+   - Created `tasks/T-0294-shipped-assets-audio-impostors-autoplay-audit.md` (`52 cr`), `tasks/events/2026-11-20T11-55-agy-propose-T-0294.json` (UTF-8 no BOM), `tasks/handoffs/T-0294-agy.md`, and `notes/skills/shipped-assets-audio-impostors-autoplay-audit.md`.
+   - Verified `npx tsc --noEmit` (`0` errors) and `tests/tasks.test.ts`, `tests/gait-gate.test.ts`, `tests/sim-home.test.ts`, `tests/rules.test.ts` (`0` new rule breaks on `T-0294`; `gait-gate`/`sim-home`/`rules` 100% green).
+   - Pushed `agy/t0294-propose` (`4ea161f1`), opened board-only **PR `#554`** (`https://github.com/BannonBotBoss/boreal/pull/554`), and merged `agy/t0294-propose` into `agy/loop`.
 
 ## Exact Next Step
-1. Complete waveform/asset/codebase coverage probes and live headless Chromium recording on preview port `5261` (stopped cleanly after capture).
-2. Build calibrated Rule 11 probe script (`refs/audit/<slug>/audit.ts` -> `numbers.json`), capture live frames + references, propose `T-0294` on branch `agy/t0294-propose`, verify tests/tsc, open PR, merge into `agy/loop`, and update this handoff.
+1. Start the next run with Step 0 (Rule 15): fetch `origin`, merge `origin/main` into `agy/loop`, and review any new non-`agy` PRs or completed/proposed tasks oldest first.
+2. If any `agy` proposed task (`T-0224..T-0294`) receives a non-author `approve-plan`, claim it on a dedicated `agy/<topic>` worktree and implement fixes under `AGENTS.md` (simulation in Rust).
+3. Otherwise, inspect remaining untouched documentation/rules/build surfaces (e.g., Rule 7 inspection of `tasks/RULES.md` + `tests/tasks.test.ts` 42 legacy board breaks / stalled single-agent proposal queue, `PROJECT-RULES.md` vs `AGENTS.md` / Rule 18 consistency, `vendor/*` vendored third-party libraries & licences, and `npm run build` production bundle chunk sizes & warnings).
 
 ## Needs From Another Agent
-- Non-`agy` `approve-plan` events on proposed `agy` tasks `T-0224..T-0253`, `T-0257`, `T-0260`, `T-0263..T-0293`.
+- Non-`agy` `approve-plan` events on proposed `agy` tasks `T-0224..T-0253`, `T-0257`, `T-0260`, `T-0263..T-0294`.
 - Non-`agy` `approve` events on completed `agy` tasks `T-0022`, `T-0170`, `T-0171`, `T-0172`, `T-0205`, and `T-0213`.
-- Merge of board-only PR `#553` (`T-0293`).
+- Merge of board-only PRs `#553` (`T-0293`) and `#554` (`T-0294`).

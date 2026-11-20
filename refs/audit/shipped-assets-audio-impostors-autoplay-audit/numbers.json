@@ -1,0 +1,150 @@
+{
+  "taskId": "T-0294",
+  "commit": "37713319",
+  "auditedAt": "2026-11-20T11:52-08:00",
+  "calibrationValid": true,
+  "passCount": 0,
+  "totalChecks": 4,
+  "meanScore": 0.1,
+  "checks": [
+    {
+      "id": "shipped-audio-mastering-and-loop-seams",
+      "score": 0,
+      "pass": false,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "metrics": {
+        "activeFilesMeasured": 51,
+        "clippingActiveCount": 13,
+        "clippingActiveFiles": [
+          "public/sounds/deer-snort.mp3 (0.1 dBTP)",
+          "public/sounds/friend-chime.mp3 (0.1 dBTP)",
+          "public/sounds/hare-squeak.mp3 (0.1 dBTP)",
+          "public/sounds/pups/call_01.ogg (1.7 dBTP)",
+          "public/sounds/pups/huff_01.ogg (0.5 dBTP)",
+          "public/sounds/pups/yip_01.ogg (3.4 dBTP)",
+          "public/sounds/pups/yip_02.ogg (3.4 dBTP)",
+          "public/sounds/pups/yip_03.ogg (3.1 dBTP)",
+          "public/sounds/raven.mp3 (0.2 dBTP)",
+          "public/sounds/stone-roll.mp3 (0.6 dBTP)",
+          "public/sounds/wolf-growl.mp3 (0 dBTP)",
+          "public/sounds/wolf-howl.mp3 (0.1 dBTP)",
+          "public/sounds/woodpecker.mp3 (0.1 dBTP)"
+        ],
+        "maxTruePeakDb": 3.4,
+        "pupCall1Lufs": -7.9,
+        "pupCall2Lufs": -35.2,
+        "pupCallSpreadLu": 27.3,
+        "pupHasPerClipTrim": false,
+        "pupHasMp3Fallback": false,
+        "musicDayGapMs": {
+          "leadMs": 375.7,
+          "trailMs": 318.5,
+          "totalGapMs": 694.2
+        },
+        "musicNightGapMs": {
+          "leadMs": 465,
+          "trailMs": 582,
+          "totalGapMs": 1047
+        },
+        "maxMusicLoopGapMs": 1047,
+        "underMasteredSfxCount": 2,
+        "underMasteredSfxFiles": [
+          "public/sounds/paw-walk.mp3 (-50.5 LUFS)",
+          "public/sounds/ui-click.mp3 (-56.5 LUFS)"
+        ],
+        "bigBangSampleRateMismatch": 2,
+        "bigBangVoSpreadLu": 8.4,
+        "narrationDurMeasuredS": 5.805,
+        "narrationDurReadmeS": 5.851429
+      }
+    },
+    {
+      "id": "public-bundle-bloat-licencing-and-basepath",
+      "score": 0,
+      "pass": false,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "metrics": {
+        "totalPublicMB": 43.39,
+        "deadPublicBytes": 5891995,
+        "deadPublicMB": 5.89,
+        "deadSharePct": 13.58,
+        "deadByGroupBytes": {
+          "cinematicPlaceholders": 4092809,
+          "unusedBakes": 1286520,
+          "unusedPupMp3s": 171875,
+          "unusedSilsoMonthly": 129987,
+          "aerialBuildSources": 109530,
+          "bigBangSpareTakes": 101274
+        },
+        "unlicencedBinaryDirs": 3,
+        "missingLicenceDirs": [
+          "public/models/animals",
+          "public/sounds",
+          "public/globe"
+        ],
+        "unlicencedBinaryMB": 19.03,
+        "parcelsHardcodedRoot": true,
+        "openingRawCineRefs": true,
+        "brokenBasePathUrls": 2,
+        "silsoPublicImportBug": true,
+        "rtx5060DetectGpuHits": 0
+      }
+    },
+    {
+      "id": "tree-impostors-glb-pbr-and-blue-marble",
+      "score": 0,
+      "pass": false,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "metrics": {
+        "treeGlbCount": 5,
+        "treeGlbMetallicCount": 5,
+        "cc0ImpostorsVisibleTopShare": 0.7366,
+        "cc0ImpostorsTopClipPct": 26.3,
+        "cc0ImpostorsLinearTaggedSrgb": true,
+        "cc0ImpostorsDisposesGlb": false,
+        "animalGlbCount": 21,
+        "animalGlbDoubleSidedCount": 21,
+        "animalGlbCopyrightCount": 0,
+        "ermineTris": 26004,
+        "mooseTris": 26006,
+        "blueMarbleWidthPx": 1024,
+        "blueMarbleHeightPx": 512,
+        "blueMarbleKmPerPxEq": 39.14
+      }
+    },
+    {
+      "id": "live-autoplay-atlas-and-visual-fidelity",
+      "score": 0.4,
+      "pass": false,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "metrics": {
+        "consoleErrors": 0,
+        "pageErrors": 0,
+        "framesPresent": 4,
+        "refsPresent": 2,
+        "webmBytes": 574165,
+        "autoplayLogs": [
+          "AUTOPLAY step 1: waiting through loading t=0.0s",
+          "AUTOPLAY step 2: title menu is up t=21.7s",
+          "AUTOPLAY step 3: set universe seed 1400 and clicked Generate t=22.1s",
+          "AUTOPLAY step 4: waiting through loading t=23.8s"
+        ],
+        "autoplayElapsedS": 40.64,
+        "autoplayStillInSecondLoadingAfter40s": true,
+        "autoplaySingleBootUnder15s": false,
+        "globeLoadingCleared": false,
+        "atlasMeanOpaqueRGB": [
+          22.1,
+          37,
+          13.2
+        ],
+        "atlasLinearGreenReflectance": 0.0143,
+        "forestVisualNaturalMatch": false
+      }
+    }
+  ]
+}

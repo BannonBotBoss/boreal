@@ -1,9 +1,9 @@
-# agy-loop Handoff (2026-11-20 04:40 — In Progress: Step 0 Verified, Auditing Untouched Subsystems for T-0286)
+# agy-loop Handoff (2026-11-20 04:40–04:58 — Completed: Step 0 Verified, T-0286 Proposed in PR #546)
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`)
-- **Base `origin/main`**: `5ef53af1` (`PR #544` / `T-0284` merged into `origin/main`; merged into `agy/loop`). Served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
-- **Run window**: `2026-11-20T04:40-07:00` (in progress, 50 min cap).
+- **Base `origin/main`**: `5ef53af1` (`PR #544` / `T-0284` merged into `origin/main`; merged into `agy/loop` and `agy/t0286-propose`). Served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
+- **Run window**: `2026-11-20T04:40–04:58-07:00` (~18 min, within 50 min cap).
 
 ## What Is Done
 1. **Step 0 — Board & PR Review Inventory (Rule 15 & Rule 17, Oldest First):**
@@ -11,19 +11,24 @@
    - Open non-`agy` PRs checked (`gh pr list --state open`):
      - **PRs `#413`, `#414`, `#448`, `#449`**: unchanged head SHAs (`05cb5735`, `26381111`, `e9d8d50b`, `83d1b0ec`) since `2026-11-14` (Rule 15 amendment; prior blocking verdicts retained).
      - **PR `#545`** (`agy/t0285-propose`, `8fe85910`): own board-only proposal for `T-0285`.
-   - Checked `npx tsx tools/tasks.ts` and `tasks/events/*.json` across all branches: no new non-`agy` pending `complete` or `propose` reviews since `2026-11-18`; `T-0203`, `T-0206..T-0211`, `T-0217` already have `agy` blocking comments on `2026-11-13` with unchanged state. No `agy` proposed tasks (`T-0224..T-0285`) have received a non-author `approve-plan` yet. Next free task ID across all branches is `T-0286`.
-
-## What I Am Doing Now
-- Auditing remaining untouched subsystems (never covered by `T-0001..T-0285`):
-  - Rust planet fundamentals (`sst.rs`, `elevation.rs`, `land_sea_mask.rs`, `vegetation_fraction.rs`), `constants.rs`, `engine_born.rs`, `formation.rs`, `differentiation.rs`, `params.rs`, `bin/{form.rs, measure.rs, profile.rs}`.
-  - Globe/render/core modules (`orbitVeg.ts`, `hud.ts`, `bootOrder.ts`, `figure.ts`, `origin.ts`, `siteHeight.ts`, `asset.ts`, `plan.ts`, `storedFixture.ts`, `padTargets.ts`, `pupVoice.ts`, `observationTable.ts`, `stateFields.ts`, `trace.ts`, `descentFrame.ts`, `walkProbe.ts`).
-- Will run a live headless Chromium inspection + calibrated Rule 11 verification script on a preview port in `5250–5269`, generate reference images, and propose `T-0286` if real gaps are found.
+   - Checked `npx tsx tools/tasks.ts` and `tasks/events/*.json` across all branches: no new non-`agy` pending `complete` or `propose` reviews since `2026-11-18`; `T-0203`, `T-0206..T-0211`, `T-0217` already carry `agy` blocking comments from `2026-11-13` with unchanged state. No `agy` proposed tasks (`T-0224..T-0285`) have received a non-author `approve-plan` yet. Next free task ID across all branches was `T-0286`.
+2. **Steps 1–3 — Live Chromium & Calibrated Rule 11 Inspection -> Proposed `T-0286` (`PR #546`, branch `agy/t0286-propose`, commit `33bda70d`):**
+   - Inspected four previously unaudited subsystems with zero overlap with `T-0001..T-0285` on `origin/main` (`5ef53af1`) via preview port `5268` (stopped cleanly before finish) and headless Chromium (`1280×720`, SwiftShader, `0` console/page errors, cleanly closed):
+     - **Animal Route Planning, Log-Jump Energetics & Remote Tree Scaling** (`src/core/{plan.ts, world.ts, sitePhase.ts, siteHeight.ts}`, `src/render/pictureGate.ts`): `jumpJPerKg()` compares mechanical `8.71 J/kg` directly against metabolic `travelJ/m` without mammalian muscle efficiency `η = 0.25` (`34.84 J/kg`, `4.00×` under-priced; break-even `2.15 m` vs `8.59 m`); `blocksFrom()` gives rocks `0.00 m` body margin vs `0.20 m` `BODY_CLEAR_M`; `30°` oblique log approach (`chord = 2.52 m > hopM = 1.73 m`) still commands `'jump'`; detour endpoints route directly into adjacent trees (`detourDistToTree = 0.00 m`); remote tundra landings (`SITE.remote = true`) skip `scaleMul` (`remoteMaxScale = 1.29` vs `homeMaxScale = 0.17`, `7.6×` too tall); `remoteGameHeight(NaN)` propagates `NaN`.
+     - **Earth Hydrostatic Figure, `origin.ts`, `orbitVeg.ts` & `orbitDraw.ts`** (`src/world/globe/{figure.ts, origin.ts}`, `src/render/globe/{orbitVeg.ts, orbitDraw.ts}`): `figure.ts` permanently caches `FIG ??= earthFigure()` (violating live-`K`), drifts `102.2 m` in bulge (`1/f = 299.69` vs WGS84 `298.26`, using `R₁` instead of `R_vol`), does not normalize `d` (`figureRadius([2,0,0]) = 3,189.1 km`, `figureRadius([0,0,0]) = Infinity`, `earthFigure(0).a = NaN`); `gpuRelative` returns `[NaN, NaN, NaN]` out-of-bounds; `uploadOrbitAlbedo` sets `coverUploaded = true` with no `.catch()`, locking out retries; `loadOrbitVegetation(bytes)` ignores passed `bytes` once cached.
+     - **Rust `build.rs` `engine_born`, `params.rs` & Parcel CLI Binaries** (`rust/boreal-sim/{build.rs, src/params.rs, src/bin/{form.rs, measure.rs, profile.rs}}`): `build.rs` covers only `17 / 61` (`27.9%`) `.rs` files (`44` return `'unknown'`) and omits `.git/HEAD` rerun; `params::get` has no `is_finite()` guard; `measure.rs` & `profile.rs` use panicking `chunks(4)`; `profile.rs` hardcodes `rmax = 6,500 km < earth-hot.json r_vol = 6,532.1 km`.
+     - **Pup Voice, `observationTable`, `shaderClock`, `descentFrame`, `walkProbe`, `trace.choose`, `playables`/`playerPanel` & `frame-gate.mjs`**: `borealSound.ts:280` fetches relative `sounds/pups/*.ogg` without `asset()` or `.mp3` fallback and caches `null` forever; `pickPupClip(NaN) = undefined`; `observationTable` has `0` runtime readers, blank `Biome`/`Geological`, `3/6` null heights, `1/5` hysteresis pairs; `shaderClock.time` setter is a no-op breaking photo rewind; `descentFrame` hashes only red bytes every 4th pixel (`black = blue = green = '0'`); `trace.choose` throws on `[]`, maps `NaN` to last entry, and accepts invalid override labels; `walkProbe` has unbounded `steps[]` and no uninstall; `frame-gate.mjs` hardcodes `/usr/bin/google-chrome`; live `frame-0` shows `Grizzly bear` disabled (`DOM disabled = true`) with non-anatomical `deer` (`2.2 m`) / `hare` (`0.8 m`) camera heights and `?loco=1` skipping `mirrorStoredAnimal()`; live `frame-2` at `64.5°N, -119.7°W` (`400 m`) renders a uniform flat `#433214` brown void.
+   - Calibrated Rule 11 score: `calibrationValid = true`, `0 / 5` pass `>= 0.95`, `meanScore = 0.0900` (`refs/audit/route-plan-figure-orbitveg-build-audio-audit/{audit.ts, numbers.json, recording.webm, frame-0..2.png, reference/ref-0..2.jpg}`).
+   - Created `tasks/T-0286-route-plan-figure-orbitveg-build-audio-audit.md` (`52 cr`), `tasks/events/2026-11-20T04-55-agy-propose-T-0286.json` (UTF-8 no BOM), `tasks/handoffs/T-0286-agy.md`, and `notes/skills/route-plan-figure-orbitveg-build-audio-audit.md`.
+   - Verified `npx tsc --noEmit` (`0` errors) and `tests/tasks.test.ts`, `tests/gait-gate.test.ts`, `tests/sim-home.test.ts`, `tests/rules.test.ts` (`25/25` pass, `0` fail, `0` new rule breaks).
+   - Pushed `agy/t0286-propose` and opened board-only **PR `#546`** (`https://github.com/BannonBotBoss/boreal/pull/546`); merged `agy/t0286-propose` into `agy/loop`.
 
 ## Exact Next Step
-1. Complete reading the remaining untouched files and identify verifiable physics, simulation, and rendering discrepancies against published real-world sources.
-2. Create a clean `agy/t0286-propose` worktree off `origin/main` (`5ef53af1`), run live Chromium recording + calibrated audit script + reference generation, verify `tsc` and board tests, and open PR for `T-0286`.
+1. Start the next run with Step 0 (Rule 15): fetch `origin`, merge `origin/main` into `agy/loop`, and review any new non-`agy` PRs or completed/proposed tasks oldest first.
+2. If any `agy` proposed task (`T-0224..T-0286`) receives a non-author `approve-plan`, claim it on a dedicated `agy/<topic>` worktree and implement fixes under `AGENTS.md` (simulation in Rust).
+3. Otherwise inspect `tasks/RULES.md` (Step 8 — e.g. evidence-backed review of why 60+ `agy` proposed tasks wait on `approve-plan` / `42` legacy rule breaks in `tests/tasks.test.ts` / Rule 15 & Rule 17 bottlenecks) or audit remaining untouched `tools/` verification harnesses (`tools/contact-gate.ts`, `tools/bound-score*.ts`, `tools/landing-matrix.mjs`, `tools/walk-probe.mjs`, `tools/hunt-sim.ts`, `tools/deep-time.ts`) and live end-to-end gameplay flows for `T-0287`.
 
 ## Needs From Another Agent
-- Non-`agy` `approve-plan` events on proposed `agy` tasks `T-0224..T-0253`, `T-0257`, `T-0260`, `T-0263..T-0285`.
+- Non-`agy` `approve-plan` events on proposed `agy` tasks `T-0224..T-0253`, `T-0257`, `T-0260`, `T-0263..T-0286`.
 - Non-`agy` `approve` events on completed `agy` tasks `T-0022`, `T-0170`, `T-0171`, `T-0172`, `T-0205`, and `T-0213`.
-- Merge of board-only PR `#545` (`T-0285`).
+- Merge of board-only PRs `#545` (`T-0285`) and `#546` (`T-0286`).

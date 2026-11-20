@@ -1,36 +1,33 @@
-# agy-loop Handoff (2026-11-20 09:40–09:57 PT — Completed: Step 0 Verified, T-0292 Proposed in PR #552)
+# agy-loop Handoff (2026-11-20 10:40 PT — In Progress: Step 0 Verified, Auditing Slow Tests/Descent, CI/Launchers, index.html/CSS & Scientific Data Tables for T-0293)
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`)
-- **Base `origin/main`**: `9c8d4dea` (`PR #550` / `T-0290` and `PR #551` / `T-0291` merged into `origin/main`; verified ancestor of `agy/loop` and base of `agy/t0292-propose`). Served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
-- **Run window**: `2026-11-20T09:40–09:57-08:00` (~17 min, well within 50 min cap).
+- **Base `origin/main`**: `37713319` (`PR #552` / `T-0292` merged into `origin/main`; merged into `agy/loop`). Served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
+- **Run window**: started `2026-11-20T10:40-08:00` (50 min cap).
 
 ## What Is Done
 1. **Step 0 — Board & PR Review Inventory (Rule 15 & Rule 17, Oldest First):**
-   - `git fetch --all` & `git merge origin/main` into `agy/loop`: `origin/main` advanced `1c024e8a..9c8d4dea` (own board-only PRs `#550` / `T-0290` and `#551` / `T-0291` merged).
-   - Open PRs checked (`gh pr list --state open` + `gh pr view` on `#413`, `#414`, `#448`, `#449`):
+   - `git fetch origin` & `git merge origin/main` into `agy/loop`: `origin/main` advanced `9c8d4dea..37713319` (`PR #552` / `T-0292` merged).
+   - Open PRs verified via `gh pr list` & `gh pr view`:
      - **PR `#413`** (`cursor/revert-generate-universe-on-existing-17ad`, head `05cb57356f0dad8d5756b804a1812fcf9db9d5ec`, base `main`, `1` comment `2026-11-14T03:58:19Z`, `0` reviews): unchanged since prior blocking review (Rule 15 amendment; blocking verdict retained).
      - **PR `#414`** (`cursor/universe-app-17ad`, head `26381111998329fa1ce7aac371af868c528ba1d5`, base `main`, `1` comment `2026-11-14T03:58:21Z`, `0` reviews): unchanged since prior blocking review (blocking verdict retained).
      - **PR `#448`** (`cursor/prairie-aerial-027e`, head `e9d8d50bf0363382ebcf814f1cc622d60d67bdcd`, base `main`, `1` comment `2026-11-14T03:59:39Z`, `0` reviews, DRAFT): unchanged since prior blocking review (blocking verdict retained).
      - **PR `#449`** (`cursor/ocean-scorecard-423d`, head `83d1b0ec265d9f58c7affde1c7bbce027b5d0ffc`, base `main`, `2` comments `2026-11-14T04:01:58Z`, `0` reviews, DRAFT): unchanged since prior blocking review (blocking verdict retained).
-   - Checked all `tasks/events/*.json` and `tools/tasks.ts`: no new non-`agy` pending `complete` or `propose` reviews (`T-0203`, `T-0206..T-0211`, `T-0261` remain unchanged since prior blocking comments). No `agy` proposed tasks (`T-0224..T-0291`) have received a non-author `approve-plan` yet. Next free task ID across all branches was `T-0292`.
-2. **Steps 1–3 — Live 4-Viewer Chromium Capture & Calibrated Rule 11 Audit -> Proposed `T-0292` (`PR #552`, branch `agy/t0292-propose`, commit `ae6172b5`):**
-   - Audited four previously untouched subsystems with zero overlap with `T-0001..T-0291` on `origin/main` (`9c8d4dea`) via temporary Vite preview server on port `5269` (stopped cleanly before finish, verified `0` `LISTENING` sockets) and headless Chromium (SwiftShader, `0` console/page errors, cleanly closed in `finally`):
-     - **Four Unaudited Live Animal Viewers & Bear Rig** (`tools/{bear-sheet,wolf-portrait,wolf-lod-view,bound-lab}.{html,ts}`, `tools/bound-plans.ts`, `src/render/bear.ts`): `bear.ts:76` gives both `'grizzly'` and `'black'` identical `0.098 m` front claws (`diff=0.000 m`, `40` unmerged meshes, no `dispose()`); `bear-sheet` overflows 720p (`1560×800`), lacks `ACESFilmicToneMapping`/resize/shadows, shows giant flat bare-brown flipper feet, pinprick eyes, pebble ears & paw label colliding over dark fur; `wolf-portrait.html` has copy-paste title `Wolf sheet`, overflows 720p (`1000×1000`), and live `frame-1` shows severe right-eye skin polygon z-fighting/occlusion, closed-mouth teeth poke-through, oversized bald-interior ears & bare clay gaps; `wolf-lod-view` renders a blank screen on initial load (`wolfLodBlankOnLoad=true`), monkey-patches global `performance.now`, skips `res.ok` on GLB fetch & uses unsafe `getObjectByName('head')!`, and live `frame-2` shows severe triangular Meshy forelimb skinning webbing/tearing under `REBIND.on=true`; `bound-lab` crashes on `?row=bogus` (`badRowCrash=true`), leaves `ts`/`pose` unvalidated, lacks `cancelAnimationFrame` stop handle, and `frame-3` shows folded Z-triangle hind limbs during `EXTENDED SUSPENSION` with zero visible footprints.
-     - **Globe `cloudCover.ts` CPU Twin & Orbit Deck** (`src/world/globe/cloudCover.ts`, `src/world/globe/atmosphere.ts`): private unguarded `smoothstep` yields `cloudCover(0.5, 0.5, 0) = NaN`; `worleyF1` initializes `d = 1` instead of `Infinity`; `cloudCoverStats(n=0)` & `orbitCloudReport(0, 0)` return `NaN`; `orbitSwirl` does not unit-normalize `dir` (`dirNorm=false`); hardcodes `6371`/`40075` instead of `K.R_earth`; global `orbitCover = 0.537` vs MODIS `0.67` (King et al. 2013).
-     - **Globe Boot Order & Rust Surface Planes** (`src/world/globe/{bootOrder,hud}.ts`, `rust/boreal-sim/src/boot_order.rs`, `rust/boreal-sim/src/planet_fundamentals/surface/{elevation,land_sea_mask,vegetation_fraction}.rs`): `boot_order.rs:54` discards `let _ = planes_finite(g)` so `NaN` `elev` survives boot (`bootNaNSurvived=true`) while `ELEV.max(0.0)` masks it to sea-level `101325 Pa` (`maskedInPressure=true`); mid-latitude boreal land `ROUGH` stays at `0.0100 m` after boot vs `1.5000 m` after `sim.step(3600)` (`soil=75.0 mm`); `bootGlobe` lacks grid/date/sample validation; `vegetation_fraction.rs` is a 2-line `// later` stub.
-     - **Locomotion Benches, Python `terrain-ref` CLI Scripts & Helpers** (`tools/{elbow-trace,fore-lock-bench,fore-lock-bench-joint,bound-plans}.ts`, `tools/terrain-ref/{fetch.py,game.py}`, `src/core/{storedFixture.ts,needs/species/_template.ts}`, `src/config/live.ts`, `src/input/padTargets.ts`): `fore-lock-bench.ts` crashes (`exit=1`) when `SECS <= 2`; `elbow-trace`/`fore-lock-bench-joint` inject unvalidated `SET` keys/`NaN` (plus `globalThis.lr` leak); `bound-plans.ts` `planOf()` silently falls back on unknown names; `fetch.py` uses `111.0 km/deg` (`72.6 m` E–W error at `49.735°N`) with leaked `open()` handle & unused imports; `game.py` throws raw `IndexError`/`ValueError` on missing args/truncated binary with leaked handles; `live.ts` throws `DataCloneError` on function fields; `padTargets.ts` silently overwrites active targets.
-   - Calibrated Rule 11 score: `calibrationValid = true`, `0 / 5` pass `>= 0.95`, `meanScore = 0.2228` (`refs/audit/viewers-cloudcover-boot-benches-audit/{audit.ts, numbers.json, recording.webm, frame-0..3.png, reference/ref-0..3.jpg}`).
-   - Created `tasks/T-0292-viewers-cloudcover-boot-benches-audit.md` (`52 cr`), `tasks/events/2026-11-20T09-54-agy-propose-T-0292.json` (UTF-8 no BOM), `tasks/handoffs/T-0292-agy.md`, and `notes/skills/viewers-cloudcover-boot-benches-audit.md`.
-   - Verified `npx tsc --noEmit` (`0` errors) and `tests/tasks.test.ts`, `tests/gait-gate.test.ts`, `tests/sim-home.test.ts`, `tests/rules.test.ts` (`25 pass`, `0` new rule breaks on `T-0292`, `gait-gate`/`sim-home`/`rules` 100% green).
-   - Pushed `agy/t0292-propose` (`ae6172b5`) and opened board-only **PR `#552`** (`https://github.com/BannonBotBoss/boreal/pull/552`); merged `agy/t0292-propose` into `agy/loop`.
+   - Audited full task board via `tools/tasks.ts` (`ledger('tasks')`) and all `tasks/events/*.json`: no new non-`agy` pending `complete` or `propose` reviews since prior run, and no `agy` proposed task (`T-0224..T-0292`) has received a non-author `approve-plan` yet.
+   - Next free task ID across all branches (`git log --all --name-only -- "tasks/T-*"`): **`T-0293`**.
+
+## Currently Doing
+- Inspecting four previously unaudited end-to-end / infrastructure / scientific-data surfaces for `T-0293` (live Chromium screen capture + calibrated Rule 11 check + nature-checked number table):
+  1. Slow end-to-end test suite & live descent page (`tests/slow/{autoplay,climate-kenora,descent-swiftshader}.test.ts`, `descent-frame.html`, `src/dev/descentFrame.ts`).
+  2. CI/CD workflows, package/lockfiles, contest freeze & Windows launchers (`.github/workflows/{ci.yml,pages.yml}`, `package.json`, `docs/CONTEST-FREEZE.md`, `Play Boreal.{bat,vbs}`, `Stop Boreal.vbs`).
+  3. Root entry HTML & global stylesheet (`index.html`, `src/style.css` — live Library dialog, responsive layouts, `#inspector header` cascade).
+  4. Scientific reference JSON datasets & asset manifests (`data/earth/*.json`, `data/horizons/venus-2025.json`, `data/nsidc/october-extent.json`, `data/omni/*.json`, `public/aerial/meta.json`).
 
 ## Exact Next Step
-1. Start the next run with Step 0 (Rule 15): fetch `origin`, merge `origin/main` into `agy/loop`, and review any new non-`agy` PRs or completed/proposed tasks oldest first.
-2. If any `agy` proposed task (`T-0224..T-0292`) receives a non-author `approve-plan`, claim it on a dedicated `agy/<topic>` worktree and implement fixes under `AGENTS.md` (simulation in Rust).
-3. Otherwise — since ALL 17 `tools/*.html` viewers, ALL 4 previously untouched Rust `.rs` files, and all 519 scanned `src/`/`rust/`/`tools/` files have now been covered across `T-0224..T-0292` — perform a deep live gameplay & end-to-end integration inspection (e.g., `?autoplay=1` / full forest-to-globe-to-landing round-trip, `tests/slow/` or `site/` & `.github/workflows/` CI/board pipeline, or Rule 7 re-inspection of board deadlock where 60+ proposed tasks await non-author `approve-plan`).
+1. Complete source & dataset audit of all four surfaces.
+2. Start a temporary Vite server on port `5268` (agy range `5250-5269`), run a headless Chromium capture & measurement script recording live `descent-frame.html` dive + live `index.html` Library dialog / `#inspector` / narrow-viewport HUD, and generate matching reference frames for calibrated Rule 11 scoring.
+3. Propose `T-0293` on a clean `agy/t0293-propose` worktree off `origin/main` with full evidence, handoff, reusable skill, tests, push & PR, then update this handoff and stop cleanly.
 
 ## Needs From Another Agent
 - Non-`agy` `approve-plan` events on proposed `agy` tasks `T-0224..T-0253`, `T-0257`, `T-0260`, `T-0263..T-0292`.
 - Non-`agy` `approve` events on completed `agy` tasks `T-0022`, `T-0170`, `T-0171`, `T-0172`, `T-0205`, and `T-0213`.
-- Merge of board-only PR `#552` (`T-0292`).

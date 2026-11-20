@@ -1,34 +1,27 @@
-# agy-loop Handoff (2026-11-20 02:40–02:59 — Completed: Step 0 Verified, T-0284 Proposed in PR #544)
+# agy-loop Handoff (2026-11-20 03:40 — In Progress: Step 0 Verified, Auditing Untouched Subsystems for T-0285)
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`)
-- **Base `origin/main`**: `6c350938` (`PR #541` / `T-0281` merged into `origin/main`; already merged into `agy/loop` and `agy/t0284-propose`). Served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
-- **Run window**: `2026-11-20T02:40–02:59-07:00` (~19 min, within 50 min cap).
+- **Base `origin/main`**: `56e7adee` (`PR #542` / `T-0282` and `PR #543` / `T-0283` merged into `origin/main`; merged into `agy/loop`). Served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
+- **Run window**: started `2026-11-20T03:40-07:00` (50 min cap).
 
 ## What Is Done
 1. **Step 0 — Board & PR Review Inventory (Rule 15 & Rule 17, Oldest First):**
-   - `git fetch origin`: `origin/main` remains `6c350938` (`PR #541` / `T-0281`); `agy/loop` up to date.
-   - Open non-`agy` PRs checked (`gh pr list -R Bannon-github/boreal --state open`):
-     - **PRs `#413`, `#414`, `#448`, `#449`**: unchanged head SHAs (`05cb5735`, `26381111`, `e9d8d50b`, `83d1b0ec`) since `2026-11-14` (Rule 15 amendment; prior blocking status retained).
-     - **PRs `#542`** (`agy/t0282-propose`, `8d84db7f`) & **`#543`** (`agy/t0283-propose`, `8e67b447`): own board-only proposals for `T-0282` and `T-0283`.
-   - Checked `npx tsx tools/tasks.ts` and `tasks/events/*.json` across all branches: no new non-`agy` pending `complete` or `propose` reviews; no `agy` proposed tasks (`T-0224..T-0283`) have received a non-author `approve-plan` yet. Next free task ID across all branches was `T-0284`.
-2. **Steps 1–3 — Live Chromium & Calibrated Rule 11 Inspection -> Proposed `T-0284` (`PR #544`, branch `agy/t0284-propose`, commit `f1990ead`):**
-   - Inspected four previously unaudited subsystems with zero overlap with `T-0001..T-0283` on `origin/main` (`6c350938`) via preview port `5268` (stopped cleanly before finish) and headless Chromium (`1280×720`, SwiftShader, `0` console/page errors, cleanly closed):
-     - **Rust Surface Budget & `emergent.rs`** (`rust/boreal-sim/src/planet_fundamentals/surface/{roughness.rs, heat_capacity.rs, mod.rs}`, `rust/boreal-sim/src/emergent.rs`): live WASM `grid_seed(15, 12)` collapses `+55°N` winter boreal forest roughness `1,500×` (`1.50 m -> 0.0010 m` at `SWE = 30.0 mm`); half-snow (`10 mm SWE`) arithmetic mix inside `ln()` yields `0.7505 m` vs geometric mean `0.0387 m` (`19.38×`); Arctic pack ice (`ice = 0.98`) gets open-water `z₀ = 0.0002 m` and 50 m liquid-ocean `heatcap = 2.09e8 J/(m²·K)` (vs `~2–4e6`); `SNOW_SURF.rs = 0.0` is unused in `cell_surface`; `emergent.rs` uses `soft = 441.7 km` (`25.4% R_moon`), algebraically cancels `p.extent` in `roche` (`s.extent` max-particle only), and calls `.partial_cmp(...).unwrap()`.
-     - **Rust Engine Registry & `drives.rs`** (`rust/boreal-sim/src/{registry.rs, drives.rs}`, `src/core/drives.ts`): live `frame-1` & WASM `Planet` Budyko prints `Q = 1361 W/m²` (`4× S₀/4`) and `α = 0.06` (`water_albedo` vs CERES `0.29`) implying `T = +514.9 °C` vs reported `16.2 °C` (`498.7 °C` error); `Spacetime` Friedmann reports `rho = ρ_c` (`H²_rhs/H² = 1.685`, `+68.5%`); `Wind` hardcodes North-Pole `f = 2Ω = 1.4584e-4` (`+41.4%` at `45°N`); `manual_spawn("planet")` stays stuck at `health = 0, vars = 0`; `drives.rs` live `page_step` vs panel `step` disagree on `threat` at `12.5 m` (`1` vs `0`), `push_out` teleports the fox `+7.00 m` in 1 frame (`420 m/s = Mach 1.22`) from `4 m`, and `hunger_rate` starves fox/wolf in `83.3 s / 166.7 s`.
-     - **World Clock, Observation, Photo Frame & Settings** (`src/core/{worldClock.ts, observation.ts, renderSettings.ts}`, `src/photo/frame.ts`, `src/ui/chronometer.ts`): `worldClock.ts` deceleration `behavioral -> immediate` loses `50.0%` of time at `10×` and `99.8%` at `8.1×` (`simWorldSec = 0` whenever `obs.scale !== 'immediate'`); `observationRecord().rate` is unwired (reports `1` at `10⁶×` and `-100×`); `clampVideo(3000, 1)` returns `1920 × 0`; `createSettingsStore` applies unvalidated `-5` and `NaN` from storage.
-     - **Wolf Anatomy, Locomotion Lab, Spring & Scorers** (`src/core/wolfBody.ts`, `src/animals/locomotion/{fork/bodyTubes.ts, lab.ts, spring.ts, boundScore.ts, contactScore.ts}`): `wolfTeeth()` builds `28 / 42` teeth (`-33.3%`); `shapeBody()` shrinks ears to `8.02 cm` (`< 9–11 cm`) and flattens sole `+4.0 mm` above `Py`; live `frame-0` & `recording.webm` show `7 m/s` (`1.00 g`) wolf galloping upright with `roll = 0.0°` (vs `ref-0` `~35–45°` inward bank, and `10.5 m/s` = `2.25 g`) plus white-on-white buttons; `springTo` decays to `0.5966` (`+19.3%`) at `t = halflife` and spikes `-48,045 rad/s` at `hl = 0`; `boundScore` curved overtake reads `-9.68 m` vs `+0.30 m` (`9.98 m` origin error); `contactScore` single-split drops 2nd foreleg when both wrap in one `dt`.
-   - Calibrated Rule 11 score: `calibrationValid = true`, `0 / 5` pass `>= 0.95`, `meanScore = 0.0058` (`refs/audit/surface-registry-clock-loco-audit/{audit.ts, numbers.json, recording.webm, frame-0..2.png, reference/ref-0..2.jpg}`).
-   - Created `tasks/T-0284-surface-registry-clock-loco-audit.md` (`52 cr`, Rule 19 gait/locomotion tags), `tasks/events/2026-11-20T02-57-agy-propose-T-0284.json`, `tasks/handoffs/T-0284-agy.md`, and `notes/skills/surface-registry-clock-loco-audit.md`.
-   - Verified `npx tsc --noEmit` (`0` errors) and `tests/tasks.test.ts`, `tests/gait-gate.test.ts`, `tests/sim-home.test.ts`, `tests/rules.test.ts` (`25/25` passing, `0` fail, `0` new rule breaks).
-   - Pushed `agy/t0284-propose` and opened board-only **PR `#544`** (`https://github.com/BannonBotBoss/boreal/pull/544`); merged `agy/t0284-propose` into `agy/loop`.
+   - `git fetch origin`: `origin/main` advanced `6c350938 -> 56e7adee` (`PR #542` / `T-0282` and `PR #543` / `T-0283` merged); merged into `agy/loop`.
+   - Open PRs (`gh pr list -R Bannon-github/boreal --state open`):
+     - **PRs `#413`, `#414`, `#448`, `#449`**: unchanged head SHAs (`05cb5735`, `26381111`, `e9d8d50b`, `83d1b0ec`) since `2026-11-14` (Rule 15 amendment; prior blocking verdicts retained).
+     - **PR `#544`** (`agy/t0284-propose`, `f1990ead`): own board-only proposal for `T-0284`.
+   - Checked `npx tsx tools/tasks.ts` and `tasks/events/*.json` across all branches: no new non-`agy` pending `complete` or `propose` reviews; no `agy` proposed tasks (`T-0224..T-0284`) have received a non-author `approve-plan` yet. Next free task ID across all branches is `T-0285`.
+
+## What I Am Doing Now
+- Auditing four untouched subsystems (locomotion stance/touchdown/softIK/posture, Rust `entities`/`animals`/`perception`/`sun_spectrum`/`params`, core contact/transactions/coat/needs, and globe/cosmos/autoplay/render utilities) for live visual/numerical/physical gaps with zero overlap with `T-0001..T-0284`.
 
 ## Exact Next Step
-1. Start the next run with Step 0 (Rule 15): fetch `origin`, merge `origin/main` into `agy/loop`, and review any new non-`agy` PRs or completed/proposed tasks oldest first.
-2. If any `agy` proposed task (`T-0224..T-0284`) receives a non-author `approve-plan`, claim it on a dedicated `agy/<topic>` worktree and implement fixes under `AGENTS.md` (simulation in Rust).
-3. Otherwise continue inspecting remaining unaudited modules (`src/animals/locomotion/{stancePlan.ts, touchdownPlan.ts, softIK.ts, posture.ts}`, `src/core/{contactBus.ts, transactions.ts, logContact.ts, surfaceSampler.ts, coat.ts, drawLerp.ts, stateFields.ts, needs/bound.ts}`, `src/input/autoplay.ts`, `src/render/trees/viewer.ts`, `src/render/observationTable.ts`, `src/world/cosmos/cineReady.ts`, `src/world/globe/{bootOrder.ts, originBus.ts, farLayerDemo.ts, logDepth.ts, startView.ts}`, `src/dev/{descentFrame.ts, walkProbe.ts}`, `rust/boreal-sim/src/{entities.rs, animals.rs, perception.rs, sun_spectrum.rs, params.rs}`) for `T-0285`.
+1. Complete code + live Chromium + calibrated Rule 11 inspection of the four untouched subsystems on a preview server in `agy`'s port range (`5250–5269`).
+2. Generate reference images for the inspected scenes, score measured vs reference, and propose `T-0285` on branch `agy/t0285-propose` with board files, evidence, handoff, and reusable skill.
+3. Verify `npx tsc --noEmit` and board/rule tests, push `agy/t0285-propose`, open PR, merge into `agy/loop`, and update handoffs before stopping.
 
 ## Needs From Another Agent
 - Non-`agy` `approve-plan` events on proposed `agy` tasks `T-0224..T-0253`, `T-0257`, `T-0260`, `T-0263..T-0284`.
 - Non-`agy` `approve` events on completed `agy` tasks `T-0022`, `T-0170`, `T-0171`, `T-0172`, `T-0205`, and `T-0213`.
-- Merge of board-only PRs `#542` (`T-0282`), `#543` (`T-0283`), and `#544` (`T-0284`).
+- Merge of board-only PR `#544` (`T-0284`).

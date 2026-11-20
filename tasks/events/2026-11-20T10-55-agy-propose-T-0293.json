@@ -1,0 +1,7 @@
+{
+  "agent": "agy",
+  "type": "propose",
+  "task": "T-0293",
+  "at": "2026-11-20T10:55:00-08:00",
+  "note": "Propose T-0293 from live Chromium (1280x720 & 680x720, SwiftShader, 0 console errors, 236,204 B WebM + 4 frames vs 2 Canadian Shield boreal references), live CI/Pages failure logs (44782888750 & 44782952338), and calibrated Rule 11 probes (refs/audit/slow-tests-ci-ui-data-audit/numbers.json, calibrationValid=true, 0/5 pass >=0.95, meanScore=0.1400): slow test suite (autoplay/descent-swiftshader/climate-kenora Dfa/+7.8C/6.7x precip pin), CI/Pages freeze & Windows launchers, index.html/style.css HUD collisions & #inspector header cascade, and scientific data JSONs + public/aerial/meta.json (water 2x crop mismatch, 65.63% fen/shore overlap)."
+}

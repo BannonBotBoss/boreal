@@ -1,0 +1,68 @@
+{
+  "auditedAt": "2026-11-20T08:01:56.239Z",
+  "baseUrl": "http://127.0.0.1:5266",
+  "calibrationValid": true,
+  "passed": 0,
+  "total": 5,
+  "meanScore": 0.0104,
+  "errors": [],
+  "locoReadout": "gait gallop  Fr 15.00  duty 0.21  2.52 Hz  ground  1 sec / sec\nstride 3.57 m  pitch -1.2°  roll 0.0°\nLF φ 0.72 swing\nLH φ 0.27 swing\nRF φ 0.87 swing\nRH φ 0.17 down",
+  "antarcticaHud": "Camera ◉ Photo Gallery Clouds Sunlight Atmosphere Aurora Snow / ice Vegetation Ocean Field lines Plates Venus Airglow (OI 557.7)",
+  "checks": [
+    {
+      "id": "locomotion-cpg-ik-footswing-and-fork-tail",
+      "label": "CPG antiphasic transitions, IK abduct/clampLimb paw leveling, uphill footSwing clearance & fork wolf gallop tail",
+      "measured": "trot->pace=7.1 strides; trot->pronk 1s err=0.500; stop30s r=0.0456; above-hip abduct=135.0 deg; clampLimb pawTilt=64.2 deg & soleErr=184.5 mm; 25 deg uphill swing min=-119.7 mm @ ph=0.61; 9 m/s fork wolf tail=40.1 deg",
+      "expected": "trot->pace <= 1.5 strides; trot->pronk 1s err < 0.05; above-hip abduct <= 85 deg; clampLimb pawTilt <= 2 deg & soleErr <= 15 mm; 25 deg uphill swing min >= +50 mm; 9 m/s wolf gallop tail <= 15 deg",
+      "score": 0,
+      "knownMatchScore": 0.9971,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Ijspeert (2008) Neural Networks 21:642; Formenton et al. (2019); MIT Cheetah swing clearance; Mech & Boitani (2003) Wolves"
+    },
+    {
+      "id": "rust-polar-summer-albedo-boreal-snow-ocean-fresnel-and-bucket",
+      "label": "Rust climate_seed polar summer ice sheets, boreal conifer snow albedo, ocean Fresnel & soil bucket conservation",
+      "measured": "Jan 15 Antarctica (n=164): meanT=+25.5 C (max +34.3 C), snow>1mm=0/164 (0.0%), alb=0.100, PW=37.3; Jul 15 Greenland (n=14): meanT=+25.8 C (max +29.9 C), snow>1mm=0/14, alb=0.100, PW=37.2; Jan 15 boreal snow alb=0.800 (n=133); ocean low-sun vs tropic alb delta=0.000; Budyko -10 C cliff=+0.285; tropic ocean PW=37.8 kg/m2; bucketReturnsActualEvap=false; initRunsCloudsAfterWind=false",
+      "expected": "Jan 15 Antarctica < -5 C & >=95% permanent ice (alb ~0.82); Jul 15 Greenland <= 0 C & >=85% ice; boreal winter conifer alb 0.11-0.21; low-sun ocean Fresnel delta >= +0.14; smooth Budyko transition; tropic PW 45-55 kg/m2; mass-conserving bucket_step; wind/energy before clouds at init",
+      "score": 0.0519,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.0519,
+      "pass": false,
+      "source": "ERA5/NSIDC polar ice climatology; Betts & Ball (1997) BOREAS JGR 102:28901; Payne (1972) JAS 29:959; Trenberth & Smith (2005) J. Climate 18:864"
+    },
+    {
+      "id": "forest-surface-lattice-flora-blooms-tail-cartilage-log-mass-and-scatter",
+      "label": "Forest micro-relief grid/seed, blueberry/Labrador-tea blooms, mammal tail cartilage, boreal log mass & collinear scatter",
+      "measured": "surface.ts empty x%12 bands=6/12 (50.0%), usesWorldSeed=false; blueberry/labradortea flowers=0/2; tail cartilage=44% (density=1069.5 kg/m3); boreal log mass=1001.92 kg; collinear scatterBend=[-25.8, -25.8] deg (spread=0.0 deg)",
+      "expected": "isotropic seeded micro-relief (<5% empty bands, WORLD_SEED-driven); blueberry & Labrador tea spring/June blooms (2/2); mammal tail cartilage <= 5%; boreal spruce log 100-250 kg; collinear scatterBend opposite spread >= 40 deg",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Hall et al. (1979) / FNA Vol. 8 (Vaccinium & Rhododendron); ICRU 44 / Prothero (1995); USDA FPL GTR-190 (boreal spruce); Landeau & Terborgh (1986) confusion effect"
+    },
+    {
+      "id": "streaming-worker-stages-groundhold-chunk-explosion-and-moult-hemisphere",
+      "label": "terrainWorker stages sync, groundHold matching-chunk guard, landingStream chunk budget & rigBody moult hemisphere/wrap",
+      "measured": "workerSyncsStagesOnBuild=false; groundHold(true,true,true)='swap' (skipsMatchingSwap=false); chunks@1000m=361 (r=9); 85.0->85.1 m jump=49->81 (+65.3%); moultSupportsHemisphere=false; Dec 31->Jan 1 wrap=0.778->1.000 (jump=0.222)",
+      "expected": "terrainWorker syncs STAGES on every build; groundHold keeps matching chunk; chunks@1000m <= 121 with smooth <25% ramp; hemisphere-aware seasonalWhiteness with continuous year-end wrap (<0.03 jump)",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Mills et al. (2013) PNAS 110:7360 (photoperiod/hemisphere moult); Boreal streaming & worker contracts"
+    },
+    {
+      "id": "live-chromium-gallop-tail-antarctica-jan15-and-june-floor",
+      "label": "Live headless Chromium WebGL recording & 3 frames (9 m/s wolf gallop tail, Jan 15 Antarctica orbit, June 4 forest floor)",
+      "measured": "errors=0; recording.webm=96073 B; frames=3/3; gallopTailLevelOk=false (40.1 deg); antarcticaIceSheetOk=false (+25.5 C, 0% snow); juneUnderstoryAndFloorOk=false (0/2 shrub blooms, 50.0% empty lattice)",
+      "expected": "0 console/page errors; live WebGL video + 3 frames matching photoreal references (level wolf gallop tail, white permanent Jan 15 Antarctica ice sheet, flowering June blueberry/Labrador tea on irregular moss floor)",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Live WebGL frame-0..2.png + recording.webm vs reference/ref-0..2.jpg"
+    }
+  ]
+}

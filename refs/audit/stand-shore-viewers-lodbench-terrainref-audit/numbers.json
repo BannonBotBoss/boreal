@@ -1,0 +1,376 @@
+{
+  "task": "T-0288",
+  "baseUrl": "http://127.0.0.1:5269",
+  "capturedAt": "2026-11-20T13:55:08.844Z",
+  "calibrationValid": true,
+  "passCount": 0,
+  "totalChecks": 5,
+  "meanScore": 0.1179,
+  "consoleErrors": [],
+  "frames": [
+    "frame-0-skeleton-sheet-nine-vertebrates.png",
+    "frame-1-gait-sheet-deer-and-wolf-strips.png",
+    "frame-2-tree-viewer-black-spruce-lods.png"
+  ],
+  "recording": {
+    "path": "recording.webm",
+    "bytes": 542370
+  },
+  "details": {
+    "stand": {
+      "aspenAge0": 46500,
+      "spruceAge0": 13200,
+      "dbhSpruceAge0": 10.2,
+      "bogFeathermoss": 0.5378958309037041,
+      "bogSphagnum": 0.6152276673253692,
+      "bogMossSum": 1.1531234982290732,
+      "bogCoverSum": 1.546812236534477,
+      "ageNegU": -40.546510810816436,
+      "ageGt1U": null,
+      "formKeys": [
+        "black-spruce"
+      ],
+      "totalSpecies": 7,
+      "hAge0": 1.3,
+      "hNegAge": null,
+      "dbhSpruce165": 20.257897222339043,
+      "dbhSpruce22": 41.928589555303546,
+      "farD1": 130,
+      "farD2": 128,
+      "fillD1": 1233.5625,
+      "fillD2": 2467.125,
+      "maxShoreLat": 90.01245777937477,
+      "maxShoreLon": 182.23577793747756,
+      "dryOffsetM": 150.00000000028564,
+      "blankAxis": [
+        1,
+        0,
+        0
+      ],
+      "lat999Axis": [
+        0.15643446504022931,
+        -0.987688340595138,
+        0
+      ],
+      "unnormLenKm": 3
+    },
+    "wolfLod": {
+      "wrapWalk": {
+        "tris": 899,
+        "p01": 0.284565019493746,
+        "min": 0.015694307243952484,
+        "median": 0.9999998741945161,
+        "p99": 4.926591491429009,
+        "max": 28.405409445293277,
+        "under10pct": 0.0008342602892102336
+      },
+      "wrapTrot": {
+        "tris": 899,
+        "p01": 0.24502685536700566,
+        "min": 0.011774292474824357,
+        "median": 0.9999988680968783,
+        "p99": 5.40827778354475,
+        "max": 35.485993015323984,
+        "under10pct": 0.0015758249907304412
+      },
+      "wrapGallop": {
+        "tris": 899,
+        "p01": 0.20687076820043304,
+        "min": 0.02581132390199939,
+        "median": 0.9897913462323582,
+        "p99": 5.77715365020356,
+        "max": 27.184644795654112,
+        "under10pct": 0.0027808676307007787
+      },
+      "slipRbGallop": {
+        "slipMm": [
+          1.8698310176805677,
+          1.7092301466418436,
+          1.7779882057431529,
+          1.7037027501003998
+        ],
+        "meshSlipMm": [
+          3.0432296331439623,
+          6.544140259839404,
+          1.7780065801442646,
+          2.915600382305872
+        ],
+        "driftMm": [
+          0.18524841354855548,
+          0.6721261507051934,
+          0.5911283566618075,
+          0.8759207222795717
+        ],
+        "pawWeight": [
+          0.9999999925494194,
+          1,
+          1.0000000149011612,
+          1
+        ],
+        "pawToBoneMm": [
+          134.4355579678019,
+          166.39530064676376,
+          74.24511347830214,
+          125.32545368549802
+        ]
+      },
+      "slipMeshyTrot": {
+        "slipMm": [
+          1.6342536079578807,
+          1.5980188546840246,
+          1.5991557534209555,
+          1.6331529045677806
+        ],
+        "meshSlipMm": [
+          294.84491859435894,
+          628.4762127150531,
+          268.70030674001777,
+          218.65238466366955
+        ],
+        "driftMm": [
+          75.33836528429744,
+          179.81032493374417,
+          231.75371273997004,
+          87.57928809582033
+        ],
+        "pawWeight": [
+          0.37013961374759674,
+          0,
+          0.4117393046617508,
+          0.5457932949066162
+        ],
+        "pawToBoneMm": [
+          134.3436481330664,
+          192.25386286325482,
+          170.3260532982829,
+          142.66903899870826
+        ]
+      },
+      "popDefault": {
+        "blendS": 0.2,
+        "midHz": 30,
+        "switches": 4,
+        "pop": {
+          "rad": 0.4314674735069275,
+          "m": 0.005352183245122433,
+          "pawMm": 47.01387317641987,
+          "at": "tilt d=36.8 mid"
+        },
+        "base": {
+          "rad": 0.4674234390258789,
+          "m": 0.005621548742055893,
+          "pawMm": 46.74227086403321,
+          "at": "lower1 d=54.8 mid"
+        },
+        "byKind": {
+          "near>mid": {
+            "rad": 0.4314674735069275,
+            "pawMm": 47.01387317641987,
+            "d": 34.16666666666667
+          },
+          "mid>far": {
+            "rad": 0,
+            "pawMm": 0,
+            "d": 129
+          },
+          "far>mid": {
+            "rad": 0.4240347146987915,
+            "pawMm": 46.728246880563105,
+            "d": 121.83333333333334
+          },
+          "mid>near": {
+            "rad": 0.052825625985860825,
+            "pawMm": 12.378023968168742,
+            "d": 29.833333333333357
+          }
+        }
+      },
+      "popNoBlend": {
+        "blendS": 0,
+        "midHz": 30,
+        "switches": 4,
+        "pop": {
+          "rad": 0.4314688444137573,
+          "m": 0.005352183245122433,
+          "pawMm": 46.73708591868406,
+          "at": "tilt d=36.8 mid"
+        },
+        "base": {
+          "rad": 0.4674234390258789,
+          "m": 0.005621548742055893,
+          "pawMm": 46.74227086403321,
+          "at": "lower1 d=54.8 mid"
+        },
+        "byKind": {
+          "near>mid": {
+            "rad": 0.4314688444137573,
+            "pawMm": 46.73708591868406,
+            "d": 34.16666666666667
+          },
+          "mid>far": {
+            "rad": 0,
+            "pawMm": 0,
+            "d": 129
+          },
+          "far>mid": {
+            "rad": 0.4240347146987915,
+            "pawMm": 46.728246880563105,
+            "d": 121.83333333333334
+          },
+          "mid>near": {
+            "rad": 0.2513340711593628,
+            "pawMm": 40.346893558976056,
+            "d": 29.833333333333357
+          }
+        }
+      },
+      "terrCheck": {
+        "beforeMm": 175.05717459263036,
+        "afterMm": 66.57541039927182
+      }
+    },
+    "forePop": {
+      "el5_60": {
+        "gate": 53.22249300128086,
+        "hum": 107.60068764002277,
+        "elbow": 92.2469133276322,
+        "overHum": 18,
+        "overElbow": 25,
+        "plantMissMax": 53.56751749487094
+      },
+      "el5_120": {
+        "gate": 26.61124650064043,
+        "hum": 52.72323986802038,
+        "elbow": 57.56340997147521,
+        "overHum": 50,
+        "overElbow": 35
+      },
+      "el85_60": {
+        "gate": 90.47824041522385,
+        "hum": 125.29966980815264,
+        "plantMissMax": 104.22597361073493,
+        "swingMissMax": 131.75673694329365
+      },
+      "el116_60": {
+        "gate": 123.47617549646306,
+        "hum": 157.18049275849344,
+        "overHum": 5,
+        "plantMissMax": 113.12918327524883,
+        "swingMissMax": 177.04023197560429
+      },
+      "td5_60": {
+        "overPlant": 0,
+        "overRest": 0,
+        "hum": 107.60068764002277,
+        "fore": 64.55300697863902
+      },
+      "td116_60": {
+        "overPlant": 0,
+        "overRest": 0,
+        "hum": 157.18049275849344,
+        "fore": 131.49185599600358
+      },
+      "hareForeReach116": {
+        "speed": 11.6,
+        "stride": 2.6363636363636362,
+        "hindDutyData": 0.2,
+        "hindDuty": 0.18542861964018084,
+        "hindNeed": 0.5272727272727272,
+        "hindCap": 0.5270905999279025,
+        "hindShort": 0.00018212734482470072,
+        "foreDutyData": 0.13999999999999999,
+        "foreDuty": 0.10452758691927883,
+        "foreNeed": 0.369090909090909,
+        "foreCap": 0.30618975877761867,
+        "foreShort": 0.06290115031329035,
+        "hindDutyAtDogRatio": 0.15202758620689655
+      },
+      "hareForeReach3": {
+        "speed": 3,
+        "stride": 0.7161022620800428,
+        "hindDutyData": 0.5585794392523366,
+        "hindDuty": 0.5585794392523366,
+        "hindNeed": 0.4000000000000001,
+        "hindCap": 0.5270905999279025,
+        "hindShort": -0.12709059992790245,
+        "foreDutyData": 0.48785607476635523,
+        "foreDuty": 0.384823205491434,
+        "foreNeed": 0.3493548387096775,
+        "foreCap": 0.30618975877761867,
+        "foreShort": 0.043165079932058814,
+        "hindDutyAtDogRatio": 0.5596965981308412
+      }
+    },
+    "aerialAndTerrainRef": {
+      "waterRowDiff": 0,
+      "waterColDiff": 0,
+      "flatDryError": "IndexError: index -1 is out of bounds for axis 0 with size 0",
+      "circleDl": 0.8872652322323723,
+      "circleBeta": null
+    },
+    "live": {
+      "skeletonInfo": "9 skeletons (1320x990): Gray Wolf · canid · 53 bones · 18 sourced | White-tailed Deer · cervid · 45 bones · 5 sourced | American Black Bear · ursid · 41 bones · 6 sourced",
+      "gaitWolfRunLabel": "deer walk0.8 m/s · walk | deer run3 m/s · trot | deer back0.65 m/s · walk | deer jump | wolf walk0.8 m/s · walk | wolf walk2 m/s · trot | wolf run7 m/s · gallop | wolf back0.8 m/s · walk | wolf jump",
+      "wolfSheetBufferNonBlank": false,
+      "treeViewerHud": "age 90 seed 7, 13.4 m: near 13736 | mid 2484 | crown 38 | impostor 2 triangles",
+      "boundLabHud": "t 0.16 s  timescale 0.35  plan hare  row half-bound\nspeed 0.93 m/s  3.38 Hz  stride 0.27 m\nduty hind 0.600 fore 0.540 (data 0.600 / 0.540)  phase 0.43\npitch -4.5°  hip rise 1.0 cm (derived)  chords fore 0.306 hind 0.432 m\ncontact LF LH RF ··  \nspine flex 0.00 rad  pitch -0.08  pose stand\nmax planted slip 0.0 mm  leash steps 0\nprints: fore ● blue, hind ● orange (top row left, bottom row right)"
+    }
+  },
+  "checks": [
+    {
+      "id": "stand-allometry-shore-and-radial-bounds",
+      "label": "Stand post-fire dynamics, TREE_FORMS allometry, farTreesInTile, nearestShore & radial frame bounds",
+      "measured": "age=0 stems(aspen=46500/ha, spruce=13200/ha) & spruceDbh=10.2 cm; bog(age=120,wet=1.0) feathermoss=0.538 + sphagnum=0.615 (mossSum=1.153, coverSum=1.547); ageFromU(-0.5)=-40.5, ageFromU(1.5)=NaN; TREE_FORMS=1/7 (black-spruce), heightAt(0)=1.30 m, heightAt(-5)=NaN, dbhAt(black-spruce,16.5m)=20.3 cm (22m=41.9 cm); farTrees(d=1:130, d=2:128, fillD2=2467/ha clamped); nearestShore(pole maxLat=90.012, maxLon=182.236, dryOffset=150.0 m); radial(blank=[1,0,0], lat999=true, axisPoint(|3u|,1km)=3.00 km)",
+      "expected": "age=0 post-fire stems/DBH recruit from 0; wet bog feathermoss<=0.15 & coverSum<=1.0; ageFromU bounded; all 7 species in TREE_FORMS with heightAt(0)<0.5 m & species-bounded DBH; nearestShore returns dry origin & clamps lat/lon; parseAxisDir rejects blank/out-of-range & axisPoint normalizes u",
+      "score": 0.0179,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.0179,
+      "pass": false,
+      "source": "Heinselman (1973) Quat. Res. 3:329; Van Wagner (1978) CJFR 8:220; Sims et al. (1997) NW Ontario FEC; Bisbee et al. (2001) CJFR 31:1563; Peng et al. (2001) For. Chron. 77:285"
+    },
+    {
+      "id": "wolf-lod-and-forelimb-pop-reach-diagnostics",
+      "label": "Wolf-LOD mesh distortion/pop/terrainFeet, hare elbow-pop vs touchdown-pop, bound-reach & ref-prompt",
+      "measured": "wolfLod wrapper(trot min=0.012 max=35.49x, walk max=28.41x, gallop max=27.18x); pawToBoneMm=[134.4,166.4,74.2,125.3], meshyTrotSlipMax=628.5 mm; pop(default blend=0.2 midHz=30: 24.7 deg / 47.0 mm vs blend=0: 24.7 deg / 46.7 mm); terrainFeet(before=175.1 mm, after=66.6 mm); elbowPop(5m/s 60Hz hum=107.6 deg/f [18 over] elbow=92.2 deg/f [25 over]; 11.6m/s 60Hz hum=157.2 deg/f, plantMiss=113.1 mm, swingMiss=177.0 mm) vs touchdownPop(overPlant=0/0, overRest=0/0); boundReach(hare 11.6m/s foreShort=62.9 mm = 83%); refPromptSelfDiagram=true",
+      "expected": "wolf-LOD leg triangle ratio in [0.1, 4.0], LOD switch pop <=5 deg / <=10 mm, terrainFeet <=15 mm; touchdown-pop checks all 4 forelimb segments; elbow-pop 0 stance overshoots & plant miss <=25 mm; hare fore reach covers 100% of stance sweep; ref-prompt does not self-score its own diagram",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Maes et al. (2008) J. Exp. Biol. 211:138; Schmidt (2008) J. Exp. Biol. 211:3775 Table 4; Fischer et al. (2002) J. Exp. Biol. 205:1315; Rule 11"
+    },
+    {
+      "id": "species-skeleton-gait-and-tree-viewer-pages",
+      "label": "Interactive viewers: gait-sheet, wolf/bear/portrait sheets, skeleton-sheet, wolf-lod-view, bound-lab & tree-viewer",
+      "measured": "gaitSheetModeAndPhase=false (hardcodes 'walk' for 7 m/s run & jump, skips prevPhase); preserveDrawingBuffer(wolf/bear/portrait)=false; wolfSheetCoatsFront=false (eye +4.3z rear view); skeletonSheetXSpanAndSafeNorm=false; wolfLodViewSafePerfAndFetch=false; boundLabResizeAndWrap=false; treeViewerMultiSpeciesAndFinite=false",
+      "expected": "gait-sheet passes row mode & syncs prevPhase; all still-sheet renderers set preserveDrawingBuffer:true; wolf-sheet coats view faces front/3-4; skeleton-sheet fits X wingspan & guards L=0; wolf-lod-view avoids global performance.now patch & guards fetch/head; bound-lab redraws on resize & handles wrap-around suspension; tree-viewer selects any species & guards NaN params",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Three.js WebGLRenderer spec (preserveDrawingBuffer); tools/{gait,skeleton,wolf,bear}-sheet.ts; tools/{bound-lab,wolf-lod-view,wolf-portrait}.ts; src/render/trees/viewer.ts"
+    },
+    {
+      "id": "aerial-exemplar-baker-and-terrain-ref-pipeline",
+      "label": "Aerial exemplar baker (2x2 water blocks, sRGB Gaussian, /tmp) & terrain-ref metrics.py/compare.py/topmap.ts",
+      "measured": "bakePortableCache=false (/tmp/naip); water2x2MaxDiff(row=0, col=0) -> not2x2=false (cropPx=64 upscaled to 128); metaPerCropMpp=false (fen y=22835 vs canopy y=22755); gaussianizeLinear=false; metricsPy(flatDryError='IndexError: index -1 is out of bounds for axis 0 with size 0', circleD_L=0.8873 (<1.0 impossible), circleBeta=null); terrainRefPortablePaths=false",
+      "expected": "portable cache dir; native 128px water crop (no 2x2 nearest blocks); per-crop mpp metadata; linear-light Deliot-Heitz transform; metrics.py handles flat/lake-free DEMs without crashing, yields D_L>=1.0 on circle & finite spectral_slope_beta; portable paths in topmap.ts/compare.py",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Deliot & Heitz (2019) GPU Zen 2; Hutchinson (1957) Treatise on Limnology (D_L >= 1.0); USGS NAIP Web Mercator scale"
+    },
+    {
+      "id": "live-chromium-viewers-recording-and-visual-verification",
+      "label": "Live Chromium inspection of bound-lab video, skeleton-sheet, gait-sheet, tree-viewer & wolf-sheet buffer",
+      "measured": "consoleErrors=0; frames=3/3; recording=542370 B; skeletonSheet='9 skeletons (1320x990): Gray Wolf · canid · 53 bones · 18 sourced | White-tailed Deer · cervid · 45 bones · 5 sourced | American Black Bear · ursid · 41 bones · 6 sourced'; gaitSheetWolfRunUsesWalkMode=true; wolfSheetReadbackNonBlank=false (preserveDrawingBuffer=false); treeViewerHud='age 90 seed 7, 13.4 m: near 13736 | mid 2484 | crown 38 | impostor 2 triangles'",
+      "expected": "0 console errors; 3/3 frames + >10 kB WebM; all 9 vertebrate skeletons unclipped; gait-sheet wolf run uses run mode; wolf-sheet canvas preserves drawing buffer; tree-viewer displays multi-species LODs matching boreal conifer references",
+      "score": 0.5714,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Live Chromium WebGL/Canvas frames (frame-0..2 + recording.webm) vs natural/scientific references (ref-0..2)"
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "task": "T-0289",
+  "baseUrl": "http://127.0.0.1:5268",
+  "measuredAt": "2026-11-20T14:57:27.211Z",
+  "calibrationValid": true,
+  "passed": 0,
+  "total": 5,
+  "meanScore": 0.0857,
+  "consoleErrors": [],
+  "recordingBytes": 57755,
+  "checks": [
+    {
+      "id": "hare-sheet-run-strip-and-forelock-locomotion-diagnostics",
+      "label": "Hare-sheet, wolf run-strip, forelock bound-score, contact-exact, plant-path, excursion-probe & rig-trace",
+      "measured": "bound-score-forelock mean=94.7% (3/5 planted FAIL: 1.68m/s max slip 10.9 mm, 0 leash steps [0 %]; 5m/s max slip 2.3 mm, 0 leash steps [77 %]; 8.5m/s max slip 16.1 mm, 0 leash steps [0 %]); plant-path 60Hz(8.5m/s dLand=13.3mm dFloor=-57.5mm; 11.6m/s dLand=17.8mm dFloor=-54.4mm), hardcoded .07/.08m vs sk.legs.upper=0.0712m/lower=0.0803m; contact-exact 60Hz frame max(8.5m/s=26.5 deg vs exact 16.3 deg, 11.6m/s=28.9 deg vs exact 18.1 deg); run-strip 3.5m/s forced='gallop' (duty 0.30) vs auto='trot' (duty 0.45), tail-drift animate(1+f); excursion-probe walk pitch=[-3.6, -1.6] deg & truncated 57.3; hare-sheet ?day=150 label='Summer (day 227), side'; rig-trace unguarded argv",
+      "expected": "foreLock passes all 5 speeds (>=95%, <=1 mm slip); plant-path 60Hz dLand<=5 mm, |dFloor|<=10 mm & reads sk.legs; contact-exact 60Hz within <=22 deg; run-strip steady tail & auto gait; excursion-probe auto gait & 180/PI; hare-sheet dynamic day label; rig-trace guards argv",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Hildebrand (1977) J. Mammal. 58:131; Mech & Boitani (2003) Wolves; Volf (2023) Lynx 54:193; Sheriff et al. (2009) J. Mammal. 90:761"
+    },
+    {
+      "id": "padmenu-layout-measure-glowbench-and-capture-harnesses",
+      "label": "PadMenu vertical margin/scroll/row clipping, menu-frame-measure tabs, glowBench disposal & portable capture harnesses",
+      "measured": "padMenu on 1280x720: top=0px height=720px (0px margin), slicedRowUnderDownArrow=true, upHold(scroll=58px, upHidden=false, rowTop=-0.4px); menu-frame-measure tests nonexistent 'time' tab (dupOfCamera=true) & skips 'layers'; glowBench(ok=true, glowMedMs=42.26ms vs off=6.54ms, disposes=false); captureScripts(hardcodedBrowser=12/12, hardcoded5173=3, bareKill=2)",
+      "expected": "padMenu top>=16px & height<=688px on 720p, no sliced row behind arrow, upHold returns scroll=0 & upHidden=true; menu-frame-measure tests 'layers' (not 'time'); glowBench disposes WebGL resources; capture scripts detect browser/port cleanly & tree-kill on Windows",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "src/ui/padMenu.ts; tools/menu-frame-measure.html; tools/glowBench.ts; WCAG / console modal safe-area & scroll-snap conventions"
+    },
+    {
+      "id": "core-catalog-statefields-constants-and-rust-sst",
+      "label": "Core catalog audio/species fidelity, STATE_FIELDS SimAnimal coverage, dry-air mole fraction & Rust sst.rs bounds",
+      "measured": "catalog invalidAudioIds=[forage:gather-rustle, plant:gather-rustle] (missing from SOUND_IDS), demoCopyPresent=true, kinds=7 (missing hare/wolf/clover); STATE_FIELDS omits SimAnimal (21 runtime fields) & stateFields.test skips needs/agent/cloverPatch; dryAir+CO2=1.0000628 (>1.0 by +62.8 ppm), g_earth_mean=9.82022 m/s2; rust sst.rs lacks -1.8 C seawater freezing floor & is_finite guard",
+      "expected": "all catalog audio IDs in SOUND_IDS, real boreal descriptions & active species covered; STATE_FIELDS tags SimAnimal & test checks all groups; dry-air + CO2 <= 1.0; sst.rs enforces >= -1.8 C seawater freezing floor and finite guard",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "UNESCO (1983) Algorithms for Fundamental Properties of Seawater (Tf ~ -1.8 C at 35 PSU); NOAA/CRC Dry Air Composition; src/audio/borealSound.ts SOUND_IDS; src/core/sim/index.ts"
+    },
+    {
+      "id": "terrain-ref-analyse-beta-sweep-and-s2-pipeline",
+      "label": "tools/terrain-ref analyse.py wrap/D_L/crop, beta.py NaN/cell, sweep.py dead code/temp leak & s2.py/s2m.py safety",
+      "measured": "analyse.py mode='wrap' inflates 1km ramp relief 1.97x (12.4m vs 6.3m), circle D_L=0.8918 (<1.0 impossible), crop on single 180m cell shrinks 64x64 to 1x1; beta.py flat=[null,null,null], z15(cell=15)=[null,null,-1.93] vs bands() hardcoded cell=30=[-1.96,-2,-1.98]; sweep.py dead code after continue & temp leak=true; s2/s2m guard+close=false",
+      "expected": "analyse.py uses non-periodic boundary on real DEM, Euclidean/Crofton D_L>=1.0, safe nodata crop; beta.py filters P>0 & accepts cell size; sweep.py has no dead code & cleans temp files; s2.py/s2m.py guard empty results & close rasterio handles",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Hutchinson (1957) Treatise on Limnology (D_L >= 1.0); Copernicus GLO-30 DEM non-periodic boundary geometry; Welch/radial PSD estimation"
+    },
+    {
+      "id": "live-chromium-hare-runstrip-padmenu-recording-verification",
+      "label": "Live Chromium inspection of hare-sheet, run-strip, padmenu, glowBench & locomotion-lab WebM recording",
+      "measured": "consoleErrors=0; frames=3/3; recording=57755 B; hareSheet(?day=150 label='Summer (day 227), side', detached neck/forearm & stubby ears); runStrip(wolf3.5='wolf35 default game wolf, run 3.5 m/s, gallop: 2.27 stride', wolf6='wolf6 default game wolf, run 6 m/s, gallop: 2.39 strides', tail climb & ground-touching 'all feet off'); padMenu(height=720px/720px, slicedRow=true, upHoldScroll=58px); glowBench(ok=true, 42.26ms)",
+      "expected": "0 console errors; 3/3 frames + >=10 KB WebM; natural snowshoe hare proportions/moult vs ref-0; unclipped flexed wolf gallop with airborne suspensions & steady tail vs ref-1; clean margined unclipped pad menu vs ref-2; disposing glowBench",
+      "score": 0.4286,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Live Chromium frames (frame-0..2.png + recording.webm) vs references (reference/ref-0..2.jpg)"
+    }
+  ]
+}

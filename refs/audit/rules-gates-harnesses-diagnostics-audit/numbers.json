@@ -1,0 +1,365 @@
+{
+  "task": "T-0287",
+  "baseUrl": "http://127.0.0.1:5269",
+  "capturedAt": "2026-11-20T12:51:24.286Z",
+  "calibrationValid": true,
+  "passCount": 0,
+  "totalChecks": 5,
+  "meanScore": 0.2014,
+  "consoleErrors": [],
+  "frames": [
+    "frame-0-wolf-follow-camera-and-framing.png",
+    "frame-1-planet-layers-global-tair-jan15.png",
+    "frame-2-deep-time-engulfed-and-earth-history.png"
+  ],
+  "recording": {
+    "path": "recording.webm",
+    "bytes": 77600
+  },
+  "details": {
+    "board": {
+      "totalTasks": 244,
+      "totalProposed": 67,
+      "agyProposedUnapproved": 56,
+      "totalCompletedUnapproved": 54,
+      "namedSkillCount": 224,
+      "namedRecognized": 0,
+      "ledgerSkillTrue": 0,
+      "creditsMismatchesCount": 18,
+      "creditsMismatchesSample": [
+        {
+          "id": "T-0035",
+          "header": 20,
+          "award": 40
+        },
+        {
+          "id": "T-0064",
+          "header": 40,
+          "award": 30
+        },
+        {
+          "id": "T-0065",
+          "header": 39,
+          "award": 54
+        },
+        {
+          "id": "T-0066",
+          "header": 39,
+          "award": 72
+        },
+        {
+          "id": "T-0067",
+          "header": 39,
+          "award": 0
+        },
+        {
+          "id": "T-0068",
+          "header": 130,
+          "award": 91
+        },
+        {
+          "id": "T-0070",
+          "header": 60,
+          "award": 70
+        },
+        {
+          "id": "T-0072",
+          "header": 10,
+          "award": 40
+        }
+      ],
+      "legacyErrorCount": 43,
+      "warningCount": 1
+    },
+    "wolfView": {
+      "liveWolfFrame": {
+        "ndcX": 0,
+        "ndcY": -0.2679932826979175,
+        "bearingDeg": 0,
+        "withersNdcY": -0.13422928533849932
+      },
+      "liveWolfScore": 0.46475550733135,
+      "legacyWolfFrame": {
+        "ndcX": 0,
+        "ndcY": -0.3674019793593998,
+        "bearingDeg": 0,
+        "withersNdcY": -0.17969457770492367
+      },
+      "legacyWolfScore": 0.5594304565327617,
+      "leftFlankFrame": {
+        "ndcX": 0,
+        "ndcY": -0.2679932826979175,
+        "bearingDeg": 0,
+        "withersNdcY": -0.13422928533849932
+      },
+      "leftFlankScore": 0.46475550733135
+    },
+    "huntSim": {
+      "skilled": {
+        "rate": 0.3,
+        "caught": 12,
+        "tries": 40,
+        "ambush": 0,
+        "seconds": 5273
+      },
+      "naive": {
+        "rate": 0.475,
+        "caught": 19,
+        "tries": 40,
+        "ambush": 0,
+        "seconds": 1762
+      }
+    },
+    "seamBaseline": [
+      {
+        "name": "boreal forest",
+        "movedDeg": 0,
+        "lat": 50,
+        "lon": -94,
+        "dLatDeg": 0,
+        "dLonDeg": 0,
+        "datumM": 389,
+        "landingDeltaM": 0,
+        "seamMaxM": {
+          "28": 0,
+          "100": 0,
+          "300": 0,
+          "600": 0
+        },
+        "localReliefM": 0.04,
+        "planetReliefM": 0,
+        "errors": []
+      },
+      {
+        "name": "tundra",
+        "movedDeg": 0,
+        "lat": 68.5,
+        "lon": -133.7,
+        "dLatDeg": 0,
+        "dLonDeg": 0,
+        "datumM": 11,
+        "landingDeltaM": 0,
+        "seamMaxM": {
+          "28": 0,
+          "100": 0,
+          "300": 0,
+          "600": 0
+        },
+        "localReliefM": 0.04,
+        "planetReliefM": 0,
+        "errors": []
+      },
+      {
+        "name": "alpine",
+        "movedDeg": 2,
+        "lat": 44.5,
+        "lon": 6,
+        "dLatDeg": 0,
+        "dLonDeg": 0,
+        "datumM": 1864,
+        "landingDeltaM": 0,
+        "seamMaxM": {
+          "28": 0,
+          "100": 0,
+          "300": 0,
+          "600": 0
+        },
+        "localReliefM": 0.04,
+        "planetReliefM": 0,
+        "errors": []
+      },
+      {
+        "name": "coast",
+        "movedDeg": 9,
+        "lat": 54.3,
+        "lon": -132.2,
+        "dLatDeg": 0,
+        "dLonDeg": 0,
+        "datumM": 92,
+        "landingDeltaM": 0,
+        "seamMaxM": {
+          "28": 0,
+          "100": 0,
+          "300": 0,
+          "600": 0
+        },
+        "localReliefM": 0.04,
+        "planetReliefM": 0,
+        "errors": []
+      },
+      {
+        "name": "desert",
+        "movedDeg": 0,
+        "lat": 23.4,
+        "lon": 25.700000000000045,
+        "dLatDeg": 0,
+        "dLonDeg": 0,
+        "datumM": 868,
+        "landingDeltaM": 0,
+        "seamMaxM": {
+          "28": 0,
+          "100": 0,
+          "300": 0,
+          "600": 0
+        },
+        "localReliefM": 0.04,
+        "planetReliefM": 0,
+        "errors": []
+      },
+      {
+        "name": "tropics",
+        "movedDeg": 0,
+        "lat": -3.1,
+        "lon": -60,
+        "dLatDeg": 0,
+        "dLonDeg": 0,
+        "datumM": 36,
+        "landingDeltaM": 0,
+        "seamMaxM": {
+          "28": 0,
+          "100": 0,
+          "300": 0,
+          "600": 0
+        },
+        "localReliefM": 0.04,
+        "planetReliefM": 0,
+        "errors": []
+      },
+      {
+        "name": "ocean edge",
+        "movedDeg": 1,
+        "lat": 35.6,
+        "lon": -122.89999999999998,
+        "dLatDeg": 0,
+        "dLonDeg": 0,
+        "datumM": 0,
+        "landingDeltaM": 0,
+        "seamMaxM": {
+          "28": 0.02,
+          "100": 0.02,
+          "300": 0.02,
+          "600": 0.01
+        },
+        "localReliefM": 0,
+        "planetReliefM": 0,
+        "errors": []
+      },
+      {
+        "name": "polar",
+        "movedDeg": 0,
+        "lat": 78.2,
+        "lon": 15.600000000000023,
+        "dLatDeg": 0,
+        "dLonDeg": 0,
+        "datumM": 334,
+        "landingDeltaM": 0,
+        "seamMaxM": {
+          "28": 0,
+          "100": 0,
+          "300": 0,
+          "600": 0
+        },
+        "localReliefM": 0.04,
+        "planetReliefM": 0,
+        "errors": []
+      },
+      {
+        "name": "prairie",
+        "movedDeg": 1,
+        "lat": 51,
+        "lon": -107,
+        "dLatDeg": 0,
+        "dLonDeg": 0,
+        "datumM": 885.59,
+        "landingDeltaM": 0,
+        "seamMaxM": {
+          "28": 0,
+          "100": 0,
+          "300": 0,
+          "600": 0
+        },
+        "localReliefM": 56.7,
+        "planetReliefM": 56.69,
+        "errors": []
+      },
+      {
+        "name": "wetland (lake)",
+        "movedDeg": 24,
+        "lat": 47.9,
+        "lon": -104.89999999999998,
+        "dLatDeg": 0,
+        "dLonDeg": 0,
+        "datumM": 149.31,
+        "landingDeltaM": 0,
+        "seamMaxM": {
+          "28": 0.02,
+          "100": 0.02,
+          "300": 0.02,
+          "600": 0.01
+        },
+        "localReliefM": 0,
+        "planetReliefM": 44.72,
+        "errors": []
+      }
+    ],
+    "planetLayersInfoText": "air temperature: -43.36 … 35.44 °C · day 18 · rust/wasm · 180×90 cells",
+    "deepTimeCardText": "7.59 Gyr from now · The swollen SunThe Sun fills much of the sky and strips the atmosphere; the surface is molten.Sun: not modelled (the Gough fit ends with the main sequence) · embodiable: nonenearest milestone: Now"
+  },
+  "checks": [
+    {
+      "id": "rule7-board-governance-and-ledger-enforcement",
+      "label": "Rule 7 board governance, tools/tasks.ts skill/credits headers, CI todo swallow, agent-review & board-github",
+      "measured": "namedSkillRecognized=0/224 (0.0%, ledgerSkillTrue=0); creditsHeaderHonored=false (18 live tasks diverge from header); ciFailsNewRuleBreaks=false (43 legacy errors turn tests/tasks.test.ts:64 into todo, 1 malformed JSON warning); agentReviewSupportsCursor=false; boardGithubCleansTemp=false guardsStatus=true; liveBoard(total=244, proposed=67, agyProposedUnapproved=56, completedUnapproved=54)",
+      "expected": "100% named skill headers recognized (Rule 4); credits header honored (Rule 14); CI fails on any new post-cutoff rule break (Rule 7); agent-review lists cursor; board-github cleans tmpdir & guards !status",
+      "score": 0.1667,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "tasks/RULES.md (Rules 2, 4, 7, 14, 15, 17, 19); tools/tasks.ts; tests/tasks.test.ts; tools/agent-review.mjs; tools/board-github.ts"
+    },
+    {
+      "id": "verification-gates-anim-contact-wolfview-and-huntsim",
+      "label": "Verification & scoring gates: anim-gate, contact-gate, wolf-view-score & huntSim",
+      "measured": "animGateReadsRecordHz=false; silhouetteIoU(NaN,NaN)=1; scoreAnimation(frames=0)=NaN; frozenWolfWalkScore=0.250; contactTimingScore(-5,10)=1.5 (unclamped>1, pos0=1); wolfView(live=0.465 at bearing=0.0deg, legacy=0.559, leftFlank=0.465 at 0.0deg, ndcX=0 vs imageX=0.52->+0.04); huntSim(skilled=30.0% ambush=0 vs naive=47.5% ambush=0, sameTurnRate=true)",
+      "expected": "anim-gate measures Hz from recording, scores NaN/blank IoU=0 & guards frames=0; contactTimingScore clamped to [0,1]; wolf-view-score symmetric on +/-bearing & consistent ndcX; huntSim skilled stealth outperforms naive walk-in with slower naive turnRate",
+      "score": 0.1429,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Rule 11 (calibrated gates); Mech & Boitani (2003) Wolves: Behavior, Ecology, and Conservation; GitHub issue #52"
+    },
+    {
+      "id": "landing-matrix-seam-baseline-and-capture-harnesses",
+      "label": "Landing matrix coordinates, globe-seam-baseline relief/ocean-edge & cross-platform capture harnesses",
+      "measured": "landingMatrix(indianOceanAlpine=true, inlandOregonCoast=true, portableTmp=false); seamBaseline(flatDry=7/8 planetReliefM<1m, alpine=0m/0.04m at datum=1864m, wetlandMoved=24deg, oceanEdgeNearShore=false); harnesses(fallLinux=true, fallFinally=false, menuOpt=true, menuFinally=false, cineFinally=false, walkPort5199=true, smokePort5173=true); benchLock(nanGuarded=false, killsChrome=false)",
+      "expected": "valid real-world coordinates + os.tmpdir(); realistic dry-land & alpine 600 m relief + true ocean-edge predicate; cross-platform browser discovery with try/finally cleanup & non-reserved default ports; NaN-safe Chrome-aware bench-lock",
+      "score": 0.0208,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.0208,
+      "pass": false,
+      "source": "GEBCO/SRTM Earth topography; Natural Earth coastlines; house rules (kill headless browser, never reserve 5173-5209)"
+    },
+    {
+      "id": "deep-time-planet-layers-and-system-map-diagnostics",
+      "label": "Deep Time bounds/milestones/Gough pole, planet-layers NaN/legend & system-map module coverage",
+      "measured": "dialToYears(-1)=-18.10 Myr (<0 before formation); lum(+12 Gyr)=-19.87 (negative past +11.425 Gyr pole); futureMilestones=0 (engulfed->nearest='now'); moistGreenhouse.embody='animal'; deepTimeUrlZero=false; planetLayers(guardsNan=false, fallbackReady=false, hasLegend=false); systemMap=103/413 (24.9% of 352 TS + 61 Rust modules)",
+      "expected": "dialToYears(-1)>=0; positive/clamped post-MS luminosity; future milestones for moist-greenhouse/red-giant/engulfed; moist-greenhouse embody='none' (330-340 K lethal); ?t=0 honored; NaN-safe planet-layers with colorbar legend & fallback ready; >=80% system-map coverage",
+      "score": 0.039,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.0156,
+      "pass": false,
+      "source": "Connelly et al. (2012) Science 338:651; Gough (1981) Sol. Phys. 74:21; Schröder & Smith (2008) MNRAS 386:155; Wolf & Toon (2015) JGR 120:5775; Sherwood & Huber (2010) PNAS 107:9552"
+    },
+    {
+      "id": "live-chromium-wolf-framing-planet-layers-and-deep-time",
+      "label": "Live Chromium wolf follow camera, planet-layers diagnostic map & deep-time review page",
+      "measured": "consoleErrors=0; frames=3/3; recording=77600 B; wolfFollowScore=0.465; planetLayersInfo='air temperature: -43.36 … 35.44 °C · day 18 · rust/wasm · 180×90 cells' (wasm=true, colorbarDom=false); deepTimeCard='7.59 Gyr from now · The swollen SunThe Sun fills much of the sky and strips the atmosphere; the surface is molten.Sun: not modelled (the Gou' (engulfNearestNotNow=false)",
+      "expected": "0 console errors; 3/3 frames + >10 kB WebM; wolf follow framing >=0.95 matching ref-0; planet-layers WASM + calibrated colorbar matching ref-1; deep-time future milestone accurate matching ref-2",
+      "score": 0.6378,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.0143,
+      "pass": false,
+      "source": "Live Chromium WebGL/DOM frames (frame-0..2 + recording.webm) vs natural/scientific references (ref-0..2)"
+    }
+  ]
+}

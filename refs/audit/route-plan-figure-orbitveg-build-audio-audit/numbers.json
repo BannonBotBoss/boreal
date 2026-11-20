@@ -1,0 +1,76 @@
+{
+  "task": "T-0286",
+  "baseUrl": "http://127.0.0.1:5268",
+  "capturedAt": "2026-11-20T11:54:25.159Z",
+  "calibrationValid": true,
+  "passCount": 0,
+  "totalChecks": 5,
+  "meanScore": 0.09,
+  "consoleErrors": [],
+  "frames": [
+    "frame-0-ground-wolf-route-plan-and-player-panel.png",
+    "frame-1-globe-orbit-figure-and-orbitveg.png",
+    "frame-2-subarctic-tundra-remote-scale.png"
+  ],
+  "recording": {
+    "path": "recording.webm",
+    "bytes": 59492
+  },
+  "checks": [
+    {
+      "id": "route-plan-energetics-clearance-and-remote-scale",
+      "label": "Route plan metabolic jump cost, rock clearance, oblique jump & remote tree scaleMul",
+      "measured": "jumpJ=8.71 J/kg mechanical vs 34.84 J/kg metabolic (0.25x, 4.00x under-priced; break-even 2.15 m vs 8.59 m); rockMargin=0.00 m; oblique30deg(chord=2.52 m > hop=1.73 m)->motion='jump'; detourDistToTree=0.00 m; remoteMaxScale=1.29 vs homeMaxScale=0.17 (scaleMul=0.125 skipped); remoteGameHeight(NaN)=NaN",
+      "expected": "metabolic jumpJ ~34.84 J/kg (eta=0.25); rockMargin=0.20 m; oblique30deg!='jump'; detour avoids adjacent blockers; remote tundra applies scaleMul (~0.125); remoteGameHeight guards NaN",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Taylor, Heglund & Maloiy (1982) JEB 97:1; Heglund et al. (1982) JEB 97:57; Alexander (2003); Viereck & Johnston (1990) Silvics of North America"
+    },
+    {
+      "id": "earth-figure-origin-and-orbitveg-pipeline",
+      "label": "Earth hydrostatic figure live-K/normalization, origin.ts bounds & orbitVeg/orbitDraw error handling",
+      "measured": "figureTracksK=false (cached FIG ??=); bulgeErr=102.2 m (1/f=299.69 vs WGS84 298.26); figureRadius([2,0,0])=3189.1 km (0.50x Earth); figureRadius([0,0,0])=Infinity; earthFigure(0).a=NaN; gpuRelative(oob)=[NaN,NaN,NaN]; renderOffset(NaN)[0]=NaN; orbitDraw.catch=false; orbitVegHonorsBytes=false; veg(52)=0.688 veg(-52)=0.688",
+      "expected": "figureRadius recomputes on K changes, normalizes d, guards d=0 & rSurf<=0; gpuRelative bounds-checks k; uploadOrbitAlbedo catches errors & allows retry; loadOrbitVegetation honors passed bytes",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "WGS84 NGA TR8350.2; Moritz (2000) GRS80 R_vol vs R1; src/core/constants.ts live-K contract"
+    },
+    {
+      "id": "rust-build-born-params-and-parcel-bins",
+      "label": "Rust engine_born coverage, params::get NaN guard & parcel CLI binary safety/rmax",
+      "measured": "build.rs covers 17/61 (27.9%) .rs files (44 return 'unknown'); rerunOnGitHead=false; params.rs is_finite=false; binsChunksExact=false; profile.rs rmax=6500 km < earth-hot r_vol=6532.1 km",
+      "expected": "build.rs covers 100% of rust/boreal-sim/src/**/*.rs & tracks .git/HEAD; params::get guards is_finite(); measure/profile use chunks_exact(4); profile rmax >= body max radius",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Cargo build-script spec; IEEE 754 finite checks; Dziewonski & Anderson (1981) PREM / public/bake/earth-hot.json"
+    },
+    {
+      "id": "pup-voice-observation-table-probes-trace-and-shaderclock",
+      "label": "Pup voice asset/mp3/NaN, observationTable wiring, shaderClock rewind, descentFrame RGB hash, trace.choose, walkProbe & frame-gate",
+      "measured": "pupAsset=false pupMp3Fallback=false pickPupClip(NaN)=undefined; obsTableReaders=0 blankTimeLevels=[Biome,Geological] nullHeights=[ground,continental,orbital] hystPairs=1/5; shaderClockRewinds=false (before=1.20, afterSet12345=1.20); descentHash(black='0', blue='0', green='0'); trace.choose emptyThrows=true nanPick='b' invalidOverride='BOGUS_LABEL'; walkProbeBoundedCleanable=false; frameGateCrossPlatform=false",
+      "expected": "pupVoice uses asset() + .mp3 fallback + NaN guard; observationTable wired with complete rates/stations/hysteresis; shaderClock supports rewind offset; descentFrame hashes R+G+B; trace.choose guards empty/NaN/override; walkProbe caps steps[] & returns uninstall; frame-gate resolves OS browser",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "GitHub issues #107 & #109; W3C Web Audio Safari Ogg/MP3 support; src/core/asset.ts; main.ts photo-rewind contract"
+    },
+    {
+      "id": "live-chromium-route-globe-and-player-panel",
+      "label": "Live Chromium ground/player-panel, orbital Earth figure & subarctic remote-scale frames",
+      "measured": "consoleErrors=0; frames=3/3; recording=59492 B; bearAvailable=false (DOM disabled=true); cameraHeights(wolf=1.55m, deer=2.2m vs 0.95m shoulder, hare=0.8m vs 0.20m eye); locoPreservesMirror=false; orbitCoverUploaded=true",
+      "expected": "0 errors; 3/3 frames + >10 kB WebM; grizzly bear available in living store; anatomical camera heights; ?loco=1 preserves mirrorStoredAnimal; orbitCover uploaded cleanly",
+      "score": 0.45,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Mech (1974) Mammalian Species 37; Feldhamer et al. (2003); Murray (2003); live Chromium WebGL frames vs ref-0..2"
+    }
+  ]
+}

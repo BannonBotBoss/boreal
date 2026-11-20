@@ -1,0 +1,311 @@
+{
+  "audit": "T-0278 cloud-hydro-budget-venus-audit",
+  "baseUrl": "http://127.0.0.1:5262",
+  "capturedAt": "2026-11-19T23:01:18.625Z",
+  "consoleErrors": [],
+  "pageErrors": [],
+  "calibrationValid": true,
+  "passCount": 0,
+  "totalChecks": 5,
+  "meanScore": 0.0442,
+  "checks": [
+    {
+      "id": "hydro-layer-bypass-midlat-sea-ice-kenora-precip",
+      "label": "Live uHydroLayer Rust bypass, -5.2 C Kenora bias, frozen 45-60 N Atlantic, global Kenora precip & sub-sea land",
+      "measured": "coldBias=-1.74 C (Kenora 2.73 vs zonal 4.48 C); Jan Atlantic 45-60 N iceFree=0/7 (50 N SST=-16.21 C, ice=1); uHydroTex Jan NH ice reaches 39.4 N (433/433 40-60 N ocean cells frozen), Jul SH ice reaches -39.4 S; annual precip Sahara=689 / Amazon=689 / Antarctica=689 mm/yr (Sahara Jul soil=17.6%); DeadSea(-430 m) sea=1; uHydroLayer skips Rust uLayerTex=true & ignores uLayers=true",
+      "expected": "Zero global cold bias (<=0.5 C); Jan North Atlantic 45-60 N open water (+6..+12 C, ice=0, Arctic sea ice >=68 N in Atlantic); Sahara <100 mm/yr (soil <5%), Amazon >2000 mm/yr, Antarctica <200 mm/yr; inland sub-sea depressions sea=0; Rust uLayerTex owns snow/ice/soil with snowIceOn & camera/cine gates active",
+      "score": 0.0626,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.0051,
+      "pass": false,
+      "source": "NSIDC Sea Ice Index (Jan Atlantic ice edge ~70 N, Okhotsk ~50-55 N); NOAA WOA23 (Jan 50 N Atlantic SST +9..+11 C); GPCP v2.3 (Sahara <50 mm/yr, Amazon ~2300 mm/yr, Antarctica ~160 mm/yr); AGENTS.md Rust sim rule"
+    },
+    {
+      "id": "solar-olr-kenora-atmosphere-diurnal-cloud-wind",
+      "label": "solarBudget.ts Kenora-constant surface OLR & atmosphereBudget.ts diurnal cloud/geostrophic-wind artifacts",
+      "measured": "Jul 15 clear-sky outgoing: Eq=427.4, Sahara=427.4, Kenora=427.4, SouthPole=427.4 W/m2 (pole-eq delta=0.00 W/m2, SouthPole err=287.4 W/m2); atmosphereBudget peak diurnal cloudFraction at 65 N (day 15)=0.000..0.547 (swing=0.547), peak diurnal meridional v at 10 N=-1.84..1.47 m/s (range=3.31 m/s)",
+      "expected": "TOA OLR varies ~135 W/m2 (winter South Pole) to ~285 W/m2 (subtropics/equator) from local T/q/cloud (delta >=120 W/m2); 850 hPa stratiform RH uses consistent column T (diurnal cloud swing <=0.15, no fake diurnal thermal-tide geostrophic wind)",
+      "score": 0.0634,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.0084,
+      "pass": false,
+      "source": "NASA CERES EBAF Ed4.2 (Loeb et al. 2018: Jul South Pole OLR ~135-145 W/m2, Sahara ~300 W/m2, global mean ~240 W/m2); Holton (2004) Dynamic Meteorology §3.2 (geostrophic balance on synoptic, not diurnal-boundary-layer, gradients)"
+    },
+    {
+      "id": "rust-cloud-fraction-dry-ridge-overlap-thetaes",
+      "label": "Rust cloud_fraction.rs dry-ridge raw-TAIR lift, saturated overlap -25 pp deficit & theta_es latent bias",
+      "measured": "2500 m dry desert plateau (RH=25%, u=12 m/s): raw-TAIR liftFactor=3.95x (dz=3000 m) -> analytical dryCloud=0.783, live WASM 6h dryCloud=0.148 (RH=24.9%, u=-1.5 m/s at lon=21); saturated overlap (c_rh=0.50, RH*lift>=1): combined=0.750 vs 1.000 (deficit=25.0 pp); tropical 28 C T700=10.91 vs Bolton 11.52 C (bias=-0.60 K -> LTS bias=0.67 K, Sc cover 84.5% vs 88.3%)",
+      "expected": "Synoptic warm advection uses sea-level / potential temperature (0.00 fake cloud on RH=25% desert ridge); saturated lifted boundary layer yields cloud=1.00 (0 pp deficit); T700 moist adiabat within <=0.3 K of Bolton (1980)",
+      "score": 0.0936,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.0025,
+      "pass": false,
+      "source": "Holton (2004) §6.4 (advection on isobaric/potential-temperature surface, not raw terrain-lapsed T); Sundqvist et al. (1989) Mon. Wea. Rev. 117:1641; Bolton (1980) Mon. Wea. Rev. 108:1046; Klein & Hartmann (1993) J. Clim. 6:1587"
+    },
+    {
+      "id": "venus-overcast-depth-eot-and-land-mosaic-albedo",
+      "label": "venusSky.ts overcast/fog blindness, 500 m square point & EoT omission; landMosaic.ts 4x broadleaf albedo",
+      "measured": "venusSky.ts cloudAware=false (fog:false=true, squarePoints=true, dist=500 m vs >2000 m terrain); 2026-06-15 dusk ratio=408.4 (alt=10.2 deg, sunAlt=-9.2 deg, mObs=-2.90) unchanged under 100% overcast; omitted EoT peak=16.45 min on day 304 (4.11 deg); OVERHEAD_STAND leaf green=0.3 (4.00x ref 0.075), moss green=0.22, fen red=0.2",
+      "expected": "Venus attenuated by weather cloud optical depth & fog (invisible under overcast tau>=5), placed on sky dome beyond terrain with round PSF, UT includes Equation of Time (err <=0.5 min); boreal broadleaf visible green albedo 0.06-0.09 linear",
+      "score": 0.0001,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.0001,
+      "pass": false,
+      "source": "Schaefer (1993) Vistas Astron. 36:311 (cloud extinction); Spencer (1971) / USNO Equation of Time (-14.2..+16.4 min); Lukeš et al. (2013) Remote Sens. Environ. 136:364 & Sentinel-2 L2A boreal visible BOA reflectance (~0.06-0.09 broadleaf green)"
+    },
+    {
+      "id": "live-webgl-hydro-layer-and-venus-visual-audit",
+      "label": "Live Chromium WebGL globe (Jan 15 Atlantic hydro ON vs OFF vs ?hide=snowice, Jul 15 Sahara) & ground Venus",
+      "measured": "0 console/page errors (0/0); recording.webm=25563 bytes; Jan 15 Atlantic (52 N, 12 W) hydro=ON luma=0.5508 iceWhiteFrac=99.7% RGB=[0.5487,0.5469,0.5952] vs hydro=OFF luma=0.0777 iceWhiteFrac=0.2% RGB=[0.0266,0.0834,0.1707] (deltaLuma=0.4731); ?hide=snowice honored=false; Jul 15 Sahara RGB=[0.2626,0.3256,0.2885] (soilDarkeningInput=17.6%); live __venus={\"lat\":49.79,\"lon\":-94.36,\"alt\":9.260605944368011,\"az\":292.49229453492444,\"sunAlt\":-9.775172270174059,\"ratio\":416.64401460772626,\"mObs\":-2.7926672858860973,\"visible\":true,\"opacity\":1,\"size\":2.7926672858860973,\"ndc\":[1.5658010417542894,0.8302195192162038,0.9987421109228257]}",
+      "expected": "Jan 15 North Atlantic 52 N open dark-blue ocean (<5% ice pixels) matching Rust layer (deltaLuma <=0.03), ?hide=snowice clears snow/ice, dry Sahara not darkened by Kenora rain, live Venus cloud-aware",
+      "score": 0.0013,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.002,
+      "pass": false,
+      "source": "Live Chromium 1280x720 WebGL frames frame-0..frame-3 vs generated documentary references ref-0..ref-2"
+    }
+  ],
+  "details": {
+    "globalColdBiasC": -1.742,
+    "annualKenoraC": 2.733,
+    "zonalKenoraC": 4.475,
+    "janAtlantic": [
+      {
+        "lat": 45,
+        "sstC": -11.12,
+        "ice": 1,
+        "tC": -6.95
+      },
+      {
+        "lat": 48,
+        "sstC": -14.2,
+        "ice": 1,
+        "tC": -10.03
+      },
+      {
+        "lat": 50,
+        "sstC": -16.21,
+        "ice": 1,
+        "tC": -12.04
+      },
+      {
+        "lat": 52,
+        "sstC": -18.18,
+        "ice": 1,
+        "tC": -14.02
+      },
+      {
+        "lat": 55,
+        "sstC": -21.05,
+        "ice": 1,
+        "tC": -16.88
+      },
+      {
+        "lat": 58,
+        "sstC": -23.78,
+        "ice": 1,
+        "tC": -19.62
+      },
+      {
+        "lat": 60,
+        "sstC": -25.52,
+        "ice": 1,
+        "tC": -21.35
+      },
+      {
+        "lat": 65,
+        "sstC": -29.5,
+        "ice": 1,
+        "tC": -25.34
+      }
+    ],
+    "southernmostNhIceLat": 39.38,
+    "northernmostShJulIceLat": -39.38,
+    "nhMidLatOceanCells": 433,
+    "nhMidLatFrozenCells": 433,
+    "precipMmYr": {
+      "sahara": 689,
+      "amazon": 688.9,
+      "antarctica": 688.9
+    },
+    "saharaJulSoilMm": 26.37,
+    "saharaSoilFrac": 0.1758,
+    "deadSeaSurf": {
+      "land": 1,
+      "sea": 1,
+      "kind": "moss"
+    },
+    "olrClearJul15": {
+      "equator": 427.43,
+      "sahara": 427.43,
+      "kenora": 427.43,
+      "southPole": 427.43
+    },
+    "hourlyAtmo30N": [
+      {
+        "hour": 0,
+        "rh": 0.5399,
+        "cf": 0,
+        "u": 3.16,
+        "v": 0.71
+      },
+      {
+        "hour": 3,
+        "rh": 0.719,
+        "cf": 0,
+        "u": 3.06,
+        "v": 0.9
+      },
+      {
+        "hour": 6,
+        "rh": 0.9037,
+        "cf": 0.3062,
+        "u": 2.96,
+        "v": 0.58
+      },
+      {
+        "hour": 9,
+        "rh": 0.9569,
+        "cf": 0.5358,
+        "u": 2.93,
+        "v": -0.04
+      },
+      {
+        "hour": 12,
+        "rh": 0.8488,
+        "cf": 0.1304,
+        "u": 2.97,
+        "v": -0.63
+      },
+      {
+        "hour": 15,
+        "rh": 0.6737,
+        "cf": 0,
+        "u": 3.06,
+        "v": -0.85
+      },
+      {
+        "hour": 18,
+        "rh": 0.4887,
+        "cf": 0,
+        "u": 3.17,
+        "v": -0.6
+      },
+      {
+        "hour": 21,
+        "rh": 0.458,
+        "cf": 0,
+        "u": 3.21,
+        "v": 0.08
+      }
+    ],
+    "diurnalCloudSwing": 0.5473,
+    "fakeDiurnalWindMs": 3.305,
+    "maxAbsV": 1.839,
+    "rustCloud": {
+      "dryAnalyticalLiftFactor": 3.953,
+      "dryAnalyticalDzM": 3000,
+      "dryAnalyticalCloud": 0.7834,
+      "liveWasmDryRidgeCloud": 0.1482,
+      "liveWasmDryRidgeRh": 0.2486,
+      "liveWasmDryRidgeU": -1.488,
+      "liveWasmDryRidgeLon": 21,
+      "saturatedOverlapCombined": 0.75,
+      "saturatedOverlapDeficit": 0.25,
+      "t700CodeC": 10.913,
+      "t700BoltonC": 11.515,
+      "t700BiasK": -0.603,
+      "ltsCodeK": 24.595,
+      "ltsBoltonK": 25.264,
+      "stratoCodeFrac": 0.8449,
+      "stratoBoltonFrac": 0.8831
+    },
+    "venusAndMosaic": {
+      "venusOvercastBlocked": false,
+      "venusDistM": 500,
+      "venusUsesSquarePoints": true,
+      "venusFogOff": true,
+      "aug15Dusk": {
+        "altDeg": 10.2,
+        "azDeg": 291.36,
+        "sunAltDeg": -9.19,
+        "mObs": -2.9,
+        "ratio": 408.44
+      },
+      "maxEotAbsMin": 16.45,
+      "maxEotDay": 304,
+      "overheadStand": {
+        "conifer": [
+          0.035,
+          0.055,
+          0.025
+        ],
+        "moss": [
+          0.16,
+          0.22,
+          0.07
+        ],
+        "leaf": [
+          0.2,
+          0.3,
+          0.08
+        ],
+        "fen": [
+          0.2,
+          0.13,
+          0.05
+        ]
+      },
+      "leafGreenAlbedoRatioToRef": 4
+    },
+    "liveWebgl": {
+      "recordingBytes": 25563,
+      "janOnStats": {
+        "meanLuma": 0.5508,
+        "iceWhiteFrac": 0.9973,
+        "rgb": [
+          0.5487,
+          0.5469,
+          0.5952
+        ]
+      },
+      "janOffStats": {
+        "meanLuma": 0.0777,
+        "iceWhiteFrac": 0.0022,
+        "rgb": [
+          0.0266,
+          0.0834,
+          0.1707
+        ]
+      },
+      "hydroVsRustDeltaLuma": 0.4731,
+      "hydroToggleHonored": false,
+      "saharaStats": {
+        "meanLuma": 0.3095,
+        "iceWhiteFrac": 0,
+        "rgb": [
+          0.2626,
+          0.3256,
+          0.2885
+        ]
+      },
+      "venusLiveInfo": {
+        "lat": 49.79,
+        "lon": -94.36,
+        "alt": 9.260605944368011,
+        "az": 292.49229453492444,
+        "sunAlt": -9.775172270174059,
+        "ratio": 416.64401460772626,
+        "mObs": -2.7926672858860973,
+        "visible": true,
+        "opacity": 1,
+        "size": 2.7926672858860973,
+        "ndc": [
+          1.5658010417542894,
+          0.8302195192162038,
+          0.9987421109228257
+        ]
+      }
+    }
+  }
+}

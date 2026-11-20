@@ -1,0 +1,115 @@
+{
+  "audit": "T-0292",
+  "baseUrl": "http://127.0.0.1:5269",
+  "calibrationValid": true,
+  "passCount": 0,
+  "totalChecks": 5,
+  "meanScore": 0.2228,
+  "consoleErrors": [],
+  "recordingBytes": 231310,
+  "boundLabPeakMeta": {
+    "t": 2.151,
+    "hud": "t 2.15 s  timescale 1  plan hare  row half-bound\nspeed 8.50 m/s  4.40 Hz  stride 1.93 m\nduty hind 0.207 fore 0.143 (data 0.207 / 0.158)  phase 0.98\npitch -7.1°  hip rise 1.0 cm (derived)  chords fore 0.306 hind 0.432 m\ncontact ·· ·· ·· ··  EXTENDED SUSPENSION\nspine flex -0.08 rad  pitch -0.12  pose stand\nmax planted slip 0.0 mm  leash steps 0\nprints: fore ● blue, hind ● orange (top row left, bottom row right)"
+  },
+  "details": {
+    "grizzlyClaws": {
+      "lengthM": 0.09825448301321148,
+      "clawMeshCount": 40,
+      "hasDispose": false
+    },
+    "blackClaws": {
+      "lengthM": 0.09825448301321148,
+      "clawMeshCount": 40,
+      "hasDispose": false
+    },
+    "statsUltra": {
+      "cover": 0.16140066820561347,
+      "mean": 0.4933777044162903,
+      "sd": 0.11341814883975666
+    },
+    "statsUltraNoConv": {
+      "cover": 0.16140066820561347,
+      "mean": 0.4933777044162903,
+      "sd": 0.11341814883975666
+    },
+    "orbitRep": {
+      "cover": 0.5369206776223181,
+      "clear": 0.448378213472446,
+      "thick": 0.5269280454933155,
+      "corrKm": 667.9166666666666
+    },
+    "ORBIT_DECK": {
+      "cellKm": 1800,
+      "octaves": 2,
+      "persistence": 0.42,
+      "swing": 0.62,
+      "warpGain": 2.4,
+      "contrast": 1.45,
+      "cover": 0.62,
+      "corrKm": 220
+    },
+    "kmPerDegLatExact": 111.22395264268397,
+    "kmPerDegLonExact": 72.08906853233272,
+    "kmPerDegLonApprox": 71.74193861337864,
+    "fetchLonFramingErrorM": 72.57886927717117,
+    "storedPackCount": 4,
+    "storedPackFirstSpecies": "wolf"
+  },
+  "checks": [
+    {
+      "id": "animal-viewers-bear-rig",
+      "label": "Four unaudited live animal viewers (bear-sheet, wolf-portrait, wolf-lod-view, bound-lab) & bear.ts",
+      "measured": "grizzlyClaw=0.098m vs blackClaw=0.098m (diff=0.000m, clawMeshes=40, dispose=false); bearOverflow=true (toneMap=false, resize=false); portraitTitleOk=false, portraitOverflow=true; wolfLodBlankOnLoad=true, perfPatch=true, unsafeHead=true, ladderOk=true, midOk=true; boundLabNegTs=0.005s, badRowCrash=true",
+      "expected": "Distinct grizzly (~8.5 cm) vs black bear (~4 cm) front claws & dispose(); tone-mapped responsive viewers; wolf-lod-view renders initial frame without monkey-patching performance.now or unsafe head!; bound-lab clamps ts>=0, validates row/pose & exposes stop handle",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Herrero 2002 Bear Attacks / USFWS Bear Identification; Three.js r180; Rule 6"
+    },
+    {
+      "id": "globe-cloudcover-calibration",
+      "label": "Globe cloudCover.ts CPU twin, Worley F1, smoothstep & orbit cloud deck calibration",
+      "measured": "halfZero=NaN; sharedSmoothstep=false; worleyInitInf=false; statsN0={\"cover\":null,\"mean\":null,\"sd\":null}; ultraCover=0.161 (noConv=0.161, doc=0.16); orbitCover=0.537 (clear=0.448, thick=0.527, corrKm=667.9, MODIS=0.67); orbitRep0=NaN; dirNorm=false; physRadius=false",
+      "expected": "Guarded shared smoothstep (no NaN on half=0); worleyF1 d=Infinity; finite n=0/0x0 reports; unit-normalized dir; K.R_earth radius; CPU twin cover matches atmosphere.ts & MODIS 0.67",
+      "score": 0.2222222222222222,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "King et al. 2013 MODIS cloud fraction 0.67; Schneider & Vos 2015 Perlin-Worley; WGS84/K.R_earth"
+    },
+    {
+      "id": "globe-boot-order-rust-surface",
+      "label": "Globe bootOrder.ts, Rust boot_order.rs ROUGH/finalize & vegetation_fraction.rs stub",
+      "measured": "borealRoughBoot=0.0100m vs afterStep=1.5000m (soil=75.0mm); bootNaNSurvived=true (maskedInPressure=true); bootGlobeValidates=false; vegFracImplemented=false; bootListsSynced=true",
+      "expected": "finalize rejects/reports non-finite planes instead of discarding planes_finite(g); bootGlobe validates dims/day/hour/sample; ROUGH consistent with post-bucket surface (or refreshed in finalize without violating #47 order); vegetation_fraction.rs implemented",
+      "score": 0.16666666666666666,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Stull 1988 Boundary Layer Meteorology (forest z0 0.5-1.5 m vs bare 0.005 m); Issue #46/#47"
+    },
+    {
+      "id": "benches-terrainref-fixtures-padtargets",
+      "label": "Locomotion benches, terrain-ref fetch.py/game.py CLI guards & storedFixture/live/padTargets",
+      "measured": "benchShortSecsSafe=false (exit=1); setValidate=false; fetchLonErrM=72.6m (cleanWgs84=false); gamePyNoArgsExit=1, truncExit=1 (guards=false); storedPack=4 animals ok=true; templateEntries=46; liveFnSafe=false; padTargetSilentOverwrite=true; planOfUnknownStrict=false",
+      "expected": "fore-lock-bench guards SECS<=warm; SET parsers validate known keys & finite numbers without globalThis leak; fetch.py uses WGS84 & with-open; game.py validates argv & binary length; live/padTargets/bound-plans guard edge inputs",
+      "score": 0.125,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "WGS84 ellipsoid (NIMA TR8350.2); Rule 5 & Rule 11"
+    },
+    {
+      "id": "live-visual-fidelity",
+      "label": "Live 4-viewer capture (bear-sheet, wolf-portrait, wolf-lod-view, bound-lab) & WebM vs nature references",
+      "measured": "frames=4/4, recordingBytes=231310, consoleErrors=0, bearOverflow=true, portraitOverflow=true, wolfLodBlankOnLoad=true",
+      "expected": "4/4 responsive non-blank viewer frames, live WebM > 10 KB, 0 console errors, >= 95% fidelity to real-world grizzly/black bear, gray wolf & snowshoe hare references",
+      "score": 0.6,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Rule 6 & Rule 11 live visual gate"
+    }
+  ]
+}

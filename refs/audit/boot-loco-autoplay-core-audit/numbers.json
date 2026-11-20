@@ -1,0 +1,232 @@
+{
+  "task": "T-0285",
+  "auditedAt": "2026-11-20T10:52:32.985Z",
+  "baseUrl": "http://127.0.0.1:5269",
+  "calibrationValid": true,
+  "passing": 0,
+  "total": 5,
+  "meanScore": 0.0111,
+  "consoleErrors": [],
+  "pageErrors": [],
+  "recordingBytes": 155410,
+  "raw": {
+    "cellLat": 25,
+    "cellLon": 25,
+    "bootSoil": 75,
+    "bootRough": 0.009999999999999995,
+    "seedRough": 1.5,
+    "bootPsl": 100741.93880555224,
+    "seedPsl": 100741.93880555224,
+    "bootRh": 0.7499999999999999,
+    "seedRh": 0.7499999999999999,
+    "bootOlr": 0,
+    "seedOlr": 264.64239872132816,
+    "bootReflsw": 0,
+    "seedReflsw": 135.988782287218,
+    "bootAbsatm": 0,
+    "bootPmean": 0,
+    "bootCloud": 0,
+    "bootPressure": 97944.90326210838,
+    "coastManhattanKm": 6045.2,
+    "minGeoKm": 4651.9,
+    "coastDiagInflationRatio": 1.2995,
+    "sunRadInside": "NaN",
+    "sunTrans550Low": 0.1026,
+    "codeGamma": 66.5,
+    "trueGamma4000": 39.78,
+    "backForearmDeg": 15,
+    "backForearmPassesBand": true,
+    "negBlendU": -4,
+    "explodedPlan": {
+      "blade": 176,
+      "psi": 176
+    },
+    "tdCont": {
+      "dphi": -0.050000000000000044,
+      "tRem": -0.01666666666666668
+    },
+    "tdFrame": {
+      "dphi": 0.05,
+      "tRem": 0.016666666666666666
+    },
+    "s2bZero": {
+      "a1": -4.712386480387952,
+      "knee": 3.141587653567382,
+      "d": 0,
+      "dSoft": 0.000001
+    },
+    "sSplitOver": {
+      "soft": 1.2,
+      "hard": -0.19999999999999996
+    },
+    "sDistOver": 0.0257,
+    "stanceNegDt": 0.030000000000000002,
+    "gatherExtend": -0.03,
+    "boundHindAt10": 0.08000000000000002,
+    "boundForeAt10": 0.08000000000000002,
+    "speedFr055": 1.724,
+    "gaitFromWalk": "walk",
+    "gaitFromTrot": "trot",
+    "readoutFr055": {
+      "gait": "trot",
+      "froude": 0.5499874903886468,
+      "hz": 1.6434869915978227,
+      "stride": 1.0487021598409634,
+      "duty": 0.45,
+      "airborne": false
+    },
+    "revPose": {
+      "heading": 0,
+      "x": 0,
+      "z": 5
+    },
+    "spinInPlace": {
+      "heading": -2.2,
+      "x": 0,
+      "z": 0
+    },
+    "svAutoplay1": "ground",
+    "bsAutoplay1": null,
+    "autoplay0HijackedLive": true,
+    "cinePre": 107.99,
+    "cineStep": {
+      "elapsed": 107.95,
+      "held": 0.016,
+      "gaveUp": false
+    },
+    "cineHoldDeltaMs": -40,
+    "staleShiftApplied": [
+      2500,
+      0,
+      0
+    ],
+    "nanShiftApplied": [
+      "NaN",
+      "0",
+      "0"
+    ],
+    "ldZero": "Infinity",
+    "tsZero": 1,
+    "tsHalf": 1,
+    "emptySurfSamples": [
+      {
+        "tri": 0,
+        "u": 0.2928932188134524,
+        "v": 0.3535533905932738,
+        "w": 0.3535533905932738
+      },
+      {
+        "tri": 0,
+        "u": 0.2928932188134524,
+        "v": 0.3535533905932738,
+        "w": 0.3535533905932738
+      },
+      {
+        "tri": 0,
+        "u": 0.2928932188134524,
+        "v": 0.3535533905932738,
+        "w": 0.3535533905932738
+      }
+    ],
+    "zeroWeightSamples": [
+      {
+        "tri": 0,
+        "u": 0.2928932188134524,
+        "v": 0.3535533905932738,
+        "w": 0.3535533905932738
+      },
+      {
+        "tri": 0,
+        "u": 0.2928932188134524,
+        "v": 0.3535533905932738,
+        "w": 0.3535533905932738
+      }
+    ],
+    "coatMid": [
+      0.5,
+      0.5,
+      0,
+      1
+    ],
+    "coatMidLinSum": 0.4281,
+    "drawNan": {
+      "x": "NaN",
+      "yaw": "NaN"
+    },
+    "sepPair": [
+      "hare:2",
+      "wolf:1"
+    ],
+    "repCrlf": {
+      "version": "",
+      "era": "Present\r"
+    },
+    "treeStats": {
+      "near": 13736,
+      "mid": 2484,
+      "crown": 38,
+      "impostor": 2,
+      "buildMs": 36.400000005960464,
+      "height": 13.449051936142833
+    },
+    "farLayerLog": "",
+    "playAsLabels": []
+  },
+  "checks": [
+    {
+      "id": "rust-boot-order-coast-dijkstra-and-sun-spectrum",
+      "label": "Rust grid_boot roughness/planes, 4-conn Manhattan coast_m, sun_spectrum NaN & GAMMA_PSY",
+      "measured": "bootRough=0.0100m vs seed=1.50m (150x); 4/6 diag planes=0 (PSL=100741.93880555224, OLR=0, RH=0.7499999999999999); cloud_seed before pressure; diag coast=6045km vs geo=4652km (1.300x); angularRadius(1e8)=NaN; GAMMA_PSY=66.5 vs 4000m 39.78 (+67.2%)",
+      "expected": "bootRough=seedRough (1.0x); 0/6 zero planes; cloud_seed after pressure; coast<=1.05x geodesic; finite angularRadius; pressure-scaled GAMMA_PSY (<5% err)",
+      "score": 0.0556,
+      "knownMatchScore": 0.9933,
+      "knownMismatchScore": 0.0556,
+      "pass": false,
+      "source": "ISO 2533; Loeb et al. (2018) CERES EBAF; Stull (1988); Allen et al. (1998) FAO-56 Eq. 8; IAU 2015 B3"
+    },
+    {
+      "id": "locomotion-touchdown-softik-stance-bound-and-gaitreadout",
+      "label": "Touchdown backward forearm & negative Bezier, softIK d=0 flip & ratio>1, bound foreMin, gaitReadout & steerWolf",
+      "measured": "backForearm=15.0deg passesBand=true; planBlendU(-1,0.6)=-4.00 -> blade=176.0; tdCont=-0.0167s vs tdFrame=+0.0167s; softTwoBone(0)=-270.0deg; softSplit(1,1.2).hard=-0.20; boundForeDuty=0.08<0.13; gaitReadout omits prevGait (walk/trot @ Fr=0.55); steerWolf rev=5.0m/s spin=-2.20rad/s",
+      "expected": "backForearm rejected; planBlendU clamped [0,1]; consistent td sign; softTwoBone(0) downward; ratio clamped <1; foreMin>=0.13 respected; gaitReadout supports prevGait hysteresis; asymmetric reverse/turn limits",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Schmidt (2008) JEB 211:3775; Hildebrand (1977) J. Mammal. 58:131; Nicholas (2006) Soft IK; Alexander & Jayes (1983)"
+    },
+    {
+      "id": "autoplay-startview-cineready-and-originbus",
+      "label": "Autoplay ?autoplay=0 hijack / #loading hang / startView(?autoplay=1), cineReady -40ms sawtooth & originBus",
+      "measured": "startView(?autoplay=1)=ground (bareStart=null); live ?autoplay=0 hijacked=true; #loading bypasses stuck(); codeOf(' ')='Key '; cineReady B13 hold delta=-40.0ms; originBus staleFlush=[2500,0,0], NaN origin=[null,0,0]; logDepthFC(0)=Infinity",
+      "expected": "startView(?autoplay=1)=sphere; ?autoplay=0 clears session & never starts; loading timeout guarded; codeOf(\" \")=\"Space\"; monotonic cineReady hold; originBus clears stale pending & rejects NaN; finite logDepthFC",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "AGENTS.md Self-playing test contract; GitHub issue #537; W3C UI Events KeyboardEvent.code; Fiedler/floating-origin invariants"
+    },
+    {
+      "id": "core-transactions-coat-surface-drawlerp-simwasm-and-animals-ecs",
+      "label": "SurfaceSampler empty/0-weight, Coat sRGB -57% darkening, drawLerp NaN, ContactBus/Txn, CRLF, simWasm & Rust ECS",
+      "measured": "emptyMesh=3 / zeroW=2 bogus tris; coatMid linSum=0.4281 (-57.2%); drawBetween(NaN).x=NaN; contactBus.end order=[\"hare:2\",\"wolf:1\"]; txnChecksKind=false; CRLF ver=''; simWasmRetries=false; animals temp_c=0.0; perceptionWasmExport=false",
+      "expected": "empty/0-weight returns []; linear-light coat blend (linSum=1.0); NaN alpha snaps to to; contactBus preserves stored (a,b); txn checks Contact.kind; CRLF-safe parser; simWasm clears failed promise; NaN/valid default temp; #106 WASM export",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "IEC 61966-2-1 sRGB transfer; Osada et al. (2002); Fiedler (2004); GitHub issue #106 packed perception contract"
+    },
+    {
+      "id": "live-chromium-tree-viewer-farlayer-autoplay-and-play-panel",
+      "label": "Live Chromium: tree viewer LODs + video, farLayer harness, live ?autoplay=0 hijack & ground Play-As panel",
+      "measured": "errors=0; recording.webm=155410B; frames=3; live ?autoplay=0 hijacked=true; treeViewer flat disc/hardcoded 2-tri impostor; farLayer boot zeroPlanes=4",
+      "expected": "0 errors; live WebGL video + 3 frames matching natural/scientific references; ?autoplay=0 inactive; initialized globe boot planes; natural tree viewer lighting/floor",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Live WebGL frame-0..2.png + recording.webm vs reference/ref-0..2.jpg"
+    }
+  ]
+}

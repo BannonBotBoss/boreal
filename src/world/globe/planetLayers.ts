@@ -103,12 +103,12 @@ export const LAYERS_FRAG = `
     vec4 L = texture2D(uLayerTex, luv);
     float lw = clamp(uLayers.w, 0.0, 1.0);
     diffuseColor.rgb *= 1.0 - uLayers.z * ${LAYER_LOOK.soilDark.toFixed(3)} * L.b * landMask * lw; // wet soil darker
-    diffuseColor.rgb = mix(diffuseColor.rgb, uSnowC, uLayers.x * L.r * landMask * lw); // snow cover
+    diffuseColor.rgb = mix(diffuseColor.rgb, uSnowC, uLayers.x * L.r * landMask * lw * (1.0 - step(0.5, uSteppeBox.w))); // snow cover. The overhead photo already has the ground; this coarse field was pale grey blobs.
     diffuseColor.rgb = mix(diffuseColor.rgb, uIceC, uLayers.y * L.g * (1.0 - landMask) * lw); }
   if (uHydroLayer > 0.5) { // T-0058: pure-function snow, sea ice, wet soil. Skips the spin-up paint above so the two do not stack.
     vec3 hd = normalize(vDetW + uCamP); vec2 huv = vec2(atan(hd.z, hd.x) / 6.2831853 + 0.5, asin(clamp(hd.y, -1.0, 1.0)) / 3.1415927 + 0.5);
     vec4 H = texture2D(uHydroTex, huv);
     diffuseColor.rgb *= 1.0 - ${LAYER_LOOK.soilDark.toFixed(3)} * H.b * landMask;
-    diffuseColor.rgb = mix(diffuseColor.rgb, uSnowC, H.r * landMask);
+    diffuseColor.rgb = mix(diffuseColor.rgb, uSnowC, H.r * landMask * (1.0 - step(0.5, uSteppeBox.w)));
     diffuseColor.rgb = mix(diffuseColor.rgb, uIceC, H.g * (1.0 - landMask)); }`;
 export const LAYERS_PARS = 'uniform sampler2D uLayerTex; uniform vec4 uLayers; uniform vec3 uCamP, uSnowC, uIceC;\nuniform sampler2D uHydroTex; uniform float uHydroLayer;\n';

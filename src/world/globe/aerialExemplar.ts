@@ -9,7 +9,7 @@
  * Source and licence: public/aerial/CREDITS.md. Ground sample distance is about 1.6 m
  * (USGS Imagery Only / NAIP, zoom 16). One 128 px crop is uExMetres of world.
  */
-import * as THREE from 'three';
+import * as THREE from 'three'; import { attachPrairie } from '../../render/globe/prairiePhoto';
 import { asset } from '../../core/asset';
 
 export const AERIAL_EXEMPLAR = {
@@ -64,7 +64,7 @@ function adopt(slot: { value: THREE.Texture }, tex: THREE.Texture, repeat: boole
 }
 
 /** Load the four Gaussian exemplars and the lookup table. Safe to call once from the globe view. */
-export function loadAerialExemplars() {
+export function loadAerialExemplars() { attachPrairie(AERIAL as unknown as Record<string, { value: unknown }>);
   const g = globalThis as { __aerial?: typeof AERIAL; __aerialReady?: boolean };
   g.__aerial = AERIAL;
   if (g.__aerialReady) return;

@@ -62,7 +62,7 @@ export function coverSampleLatLon(lat: number, lon: number, dir?: Vec3, planet: 
     scaleMul,
   };
 }
-
+export { openLandHere } from '../../render/globe/prairiePhoto';
 /** The sample under a game-local point, the same frame landingContext uses. */
 export function coverSampleAt(x: number, z: number): CoverSample {
   const planet = planetFor(WORLD_SEED, undefined, '', true);

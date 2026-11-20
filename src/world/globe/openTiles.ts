@@ -1,19 +1,8 @@
 /**
- * Open elevation and ground photographs for a landing (issue #156).
- *
- * Elevation is the AWS Terrain Tiles set (Mapzen joerd), terrarium PNGs:
- * https://registry.opendata.aws/terrain-tiles/
- * Attribution required, from https://github.com/tilezen/joerd/blob/master/docs/attribution.md :
- * USGS 3DEP, SRTM and GMTED2010 (public domain, courtesy U.S. Geological Survey);
- * ETOPO1 (NOAA); EU-DEM (Copernicus, European Union); Canada (Open Government Licence);
- * and the other national sets named in that file. Height is
- * (R * 256 + G + B / 256) − 32768 metres.
- *
- * Ground colour is EOX Sentinel-2 cloudless, CC BY 4.0:
- * https://s2maps.eu — "Sentinel-2 cloudless by EOX (Contains modified Copernicus Sentinel data)".
- * The 2021 layer is the one fetched.
- *
- * Both are cached. A missing tile returns null and the caller keeps the planet function.
+ * Open elevation and ground photographs (issue #156). AWS Terrain Tiles terrarium
+ * (https://registry.opendata.aws/terrain-tiles/, USGS 3DEP, SRTM, ETOPO1, EU-DEM)
+ * and EOX Sentinel-2 cloudless, CC BY 4.0 (https://s2maps.eu). Height is
+ * (R * 256 + G + B / 256) − 32768 metres. A missing tile returns null.
  */
 import { smoothstep } from '../../proc/math';
 
@@ -21,6 +10,7 @@ export const OPEN_TILES = {
   demZoom: [8, 11] as const,
   /** 8 covers the horizon. 10 and 12 step in. 14 is about a Sentinel pixel (~10 m) under the drone. */
   photoZoom: [8, 10, 12, 14] as const,
+  overheadZoom: 16,
   /** Public-domain USGS orthoimage. Only the continental United States has coverage. */
   orthoZoom: 16,
   orthoUrl: (z: number, x: number, y: number) => `https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/tile/${z}/${y}/${x}`,
@@ -191,6 +181,13 @@ export function sampleDem(latDeg: number, lonDeg: number): number | null {
   return v ? v[0] : null;
 }
 
+export function photoTileAt(z: number, x: number, y: number) { const rgb = photo.get(key(z, x, y)); const size = OPEN_TILES.size; return rgb && rgb.length >= size * size * 3 ? { z, x, y, rgb, size } : null; }
+export function finestPhotoTile(latDeg: number, lonDeg: number) {
+  const zooms = [...OPEN_TILES.photoZoom, OPEN_TILES.overheadZoom, ...(inConus(latDeg, lonDeg) ? [OPEN_TILES.orthoZoom] : [])];
+  for (let i = zooms.length - 1; i >= 0; i--) { const z = zooms[i], s = slippy(latDeg, lonDeg, z), x = Math.floor(s.x), y = Math.floor(s.y), rgb = photo.get(key(z, x, y)), size = OPEN_TILES.size; if (rgb && rgb.length >= size * size * 3) return { z, x, y, rgb, size }; }
+  return null;
+}
+
 /** Linear RGB, or null when no photograph is cached. A USGS ortho tile wins inside the continental US. */
 export function samplePhoto(latDeg: number, lonDeg: number): [number, number, number] | null {
   if (inConus(latDeg, lonDeg)) {
@@ -328,7 +325,8 @@ function pull(kind: 'dem' | 'photo', z: number, x: number, y: number) {
   inflight.set(id, job);
   (kind === 'photo' ? photoPump : demPump).schedule(id, async () => {
     try {
-      const url = kind === 'dem' ? OPEN_TILES.demUrl(z, x, y) : (z >= 15 ? OPEN_TILES.orthoUrl(z, x, y) : OPEN_TILES.photoUrl(z, x, y));
+      const n = 2 ** z, lon = (x + 0.5) / n * 360 - 180, lat = Math.atan(Math.sinh(Math.PI * (1 - 2 * (y + 0.5) / n))) * 180 / Math.PI;
+      const url = kind === 'dem' ? OPEN_TILES.demUrl(z, x, y) : (z >= OPEN_TILES.orthoZoom && inConus(lat, lon) ? OPEN_TILES.orthoUrl(z, x, y) : OPEN_TILES.photoUrl(z, x, y));
       const res = await fetch(url, { signal: AbortSignal.timeout(12000) });
       if (!res.ok) { (kind === 'dem' ? storeTerrarium : storePhoto)(z, x, y, null); return; }
       const tile = await decode(await res.blob());
@@ -360,7 +358,7 @@ export function tileRing(kind: 'dem' | 'photo', z: number, latDeg = 50, radiusM?
   const radius = radiusM ?? (z <= 8 ? 160_000 : z <= 10 ? 40_000 : kind === 'photo' ? 14_000 : 18_000);
   const need = Math.ceil(radius / Math.max(1, tileMetres(z, latDeg)));
   // Zoom 12 stays a small valley. A 11×11 ring sat in front of the next landing's horizon tiles.
-  const cap = z >= 14 ? 1 : z >= 12 ? 2 : z >= 10 ? 1 : 2;
+  const cap = z >= 16 ? 5 : z >= 14 ? 1 : z >= 12 ? 2 : z >= 10 ? 1 : 2;
   const min = z <= 8 ? 2 : 1;
   return Math.max(min, Math.min(cap, need));
 }
@@ -428,6 +426,7 @@ export function globeMatch(albedo: readonly [number, number, number]): [number, 
 export function warmDemTiles(latDeg: number, lonDeg: number) { warm('dem', latDeg, lonDeg); }
 /** Sentinel-2 cloudless tiles. Safe to call every frame. */
 export function warmPhotoTiles(latDeg: number, lonDeg: number) { warm('photo', latDeg, lonDeg); }
+export function warmOverheadTiles(latDeg: number, lonDeg: number) { const z = OPEN_TILES.overheadZoom; for (const t of tilesAround(latDeg, lonDeg, z, tileRing('photo', z, latDeg))) void pull('photo', t.z, t.x, t.y); }
 
 /** Test hook. */
 export function resetOpenTiles() {

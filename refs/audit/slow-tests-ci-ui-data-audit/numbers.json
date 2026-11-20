@@ -1,0 +1,156 @@
+{
+  "audit": "T-0293",
+  "baseUrl": "http://127.0.0.1:5268",
+  "calibrationValid": true,
+  "passCount": 0,
+  "totalChecks": 5,
+  "meanScore": 0.14,
+  "consoleErrors": [],
+  "recordingBytes": 236204,
+  "diveResult": {
+    "max": 26,
+    "renderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+    "gapsCount": 144,
+    "shots": {
+      "28": {
+        "ms": 1.6000000014901161,
+        "hash": "b936f2c0",
+        "mean": 291,
+        "pending": 0
+      },
+      "300": {
+        "ms": 4.699999995529652,
+        "hash": "9befb219",
+        "mean": 298.77647569444446,
+        "pending": 0
+      },
+      "1200": {
+        "ms": 2.5,
+        "hash": "ad2f1278",
+        "mean": 298.66796875,
+        "pending": 0
+      }
+    },
+    "distinctHashes": 3
+  },
+  "liveInspectorMetrics": {
+    "headerPosition": "missing",
+    "headerPointerEvents": "missing",
+    "headerOverlapsGroupsPx2": 0,
+    "rerollClickable": false,
+    "helpCoveredByOverlay": true,
+    "desktopInteractionOverlapsStatusPx2": 12343,
+    "dialogVisible": false,
+    "dialogTextLen": 2577
+  },
+  "liveNarrowHudMetrics": {
+    "viewportWidth": 680,
+    "viewportHeight": 720,
+    "interactionTopPx": 56,
+    "interactionHeightPx": 61,
+    "interactionOverlapsStatusPx2": 6171,
+    "interactionOverlapsFooterPx2": 0,
+    "headerOverlapsStatusPx2": 0,
+    "footerHeightPx": 135
+  },
+  "details": {
+    "glbCount": 26,
+    "hasNpmLock": true,
+    "hasPnpmLock": true,
+    "pagesFrozenFileExists": false,
+    "freezeDeadlineIso": "2026-11-18T12:00:00-08:00",
+    "pastFreezeDeadline": true,
+    "freezeDocLines": 15,
+    "missingSpeciesSources": [
+      "red_fox"
+    ],
+    "holarcticMissingLon2": [
+      "moose",
+      "grizzly_bear",
+      "beaver",
+      "canada_lynx"
+    ],
+    "wetlandLatMin": 50,
+    "tundraStems": [
+      0,
+      0
+    ],
+    "prairieStems": [
+      30,
+      120
+    ],
+    "desertStems": [
+      150,
+      900
+    ],
+    "duniteRho0": 3500,
+    "duniteRhoErrPct": 5.42,
+    "ironRho0": 7800,
+    "ironRhoErrPct": 0.76,
+    "oceanMassKg": 1.4e+21,
+    "oceanMassErrPct": 2.51,
+    "invF": 298.257,
+    "invFErr": 0.0002236,
+    "waterCropPx": 64,
+    "fenShoreSameTile": true,
+    "fenShoreOverlapPx": 10752,
+    "fenShoreOverlapPct": 65.63
+  },
+  "checks": [
+    {
+      "id": "slow-tests-descent-climate",
+      "label": "Slow test suite (autoplay, descent-swiftshader, climate-kenora) & live descent-frame.html",
+      "measured": "autoplay(winChrome=false, portablePaths=false, viteSpawn=false, dynPort=false, pkgPlaywright=false); descent(sandboxFlags=false, winChrome=false, cleanTmp=false, waitVite=false, liveMaxMs=26, distinctHashes=3/3); climateKenoraRealDfb=false (CI logged July 27.47 C vs ECCC 19.7 C, MAP 4818.0 mm vs 715.8 mm, Dec 977.3 mm, pinned Dfa)",
+      "expected": "Cross-platform Chrome/Edge & Vite spawn, repo-local temp/artifacts, dynamic ports, playwright-core in devDependencies, --no-sandbox/--disable-dev-shm-usage for CI SwiftShader, and real Kenora Dfb climate calibration (19.7 C July, 715.8 mm/yr)",
+      "score": 0.1,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "ECCC 1981-2010 Kenora A (ID 6034075); Peel et al. 2007 Koeppen-Geiger; CI run 44782888750; DIVE_FRAME_MS=250"
+    },
+    {
+      "id": "ci-pages-freeze-launchers",
+      "label": "CI/CD workflows (ci.yml, pages.yml), contest freeze, lockfiles & Windows launchers",
+      "measured": "pastFreezeDeadline=true (PAGES_FROZEN=false); uploadPagesArtifactModern=false (run 44782952338 failed Found 0 artifacts); ciLockfileAccurate=false (npmLock=true, pnpmLock=true); ciRustAndBuild=false; playVbsSafe=false; stopVbsExact=false",
+      "expected": "Contest freeze honored or updated past Nov 18 2026 PT, modern Pages artifact upload, single synced lockfile with npm ci + cargo test + vite build in CI, --strictPort in Play Boreal.vbs, exact port+process check in Stop Boreal.vbs",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "docs/CONTEST-FREEZE.md; GitHub Actions pages/ci runs 44782952338 & 44782888750; Windows netstat/taskkill safety"
+    },
+    {
+      "id": "index-html-style-css-hud",
+      "label": "Root index.html Library dialog, src/style.css #inspector header cascade & narrow 680x720 HUD",
+      "measured": "glbFiles=26 (dialogNoModels=true, dialogNoHunting=true, zoomContradiction=true); inspectorHeader(pos=missing, pe=missing, overlapPx2=0, rerollClickable=false); desktopHud(helpCovered=true, interStatusOverlap=12343px2); narrow680(interH=61px, interStatusOverlap=6171px2, interFootOverlap=0px2); reducedMotion=false",
+      "expected": "Accurate #info dialog matching 26 stored GLBs, hunting & wheel zoom; #inspector header position:static & pointer-events:auto with 0 overlap and clickable controls; compact non-stretched narrow #interaction; prefers-reduced-motion support",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Rule 18 / Issue #110 (26 GLBs in public/models/); WCAG 2.1 / CSS Cascade; live Chromium DOM audit"
+    },
+    {
+      "id": "scientific-data-tables-aerial-meta",
+      "label": "Scientific reference datasets (data/**/*.json) & aerial exemplar manifest (public/aerial/meta.json)",
+      "measured": "missingSpeciesSources=[red_fox]; holarcticNoLon2=[moose,grizzly_bear,beaver,canada_lynx]; wetlandLatMin=50 (excludes Kenora 49.77N); tundraStems=[0,0], prairie=[30,120], desert=[150,900]; duniteRho0=3500 (+5.42% vs 3320), ironRho0=7800 (-0.76% vs 7860), oceanMass=1.400e+21 (+2.51% vs 1.366e21); invFErr=2.24e-4, trailingNL=false, dynTropopause=false; aerialWaterCropPx=64 (vs 128), fenShoreOverlap=65.63% (10752px2)",
+      "expected": "Every species row cited in _sources (Rule 5); Holarctic lon2 parity; cause-based wetland class without 50 N cutoff; literature-exact dunite/iron/ocean/WGS84 constants; consistent 128px aerial crops with <5% fen/shore overlap",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "PROJECT-RULES Rule 5; Marinova 2011 Icarus 211:960; Melosh 1989; Charette & Smith 2010; WGS84 NIMA TR8350.2; NAIP meta.json"
+    },
+    {
+      "id": "live-visual-fidelity",
+      "label": "Live 4-frame capture (descent 1200m/28m, inspector+library, narrow 680px HUD) & WebM vs nature references",
+      "measured": "frames=4/4, recordingBytes=236204, consoleErrors=0, inspectorHeaderIntact=false, narrowCompact=false",
+      "expected": "4/4 non-blank frames, live WebM > 10 KB, 0 console errors, intact inspector/narrow HUD layout, >= 95% boreal visual fidelity vs matched aerial references",
+      "score": 0.6,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Rule 6 & Rule 11 live visual gate"
+    }
+  ]
+}

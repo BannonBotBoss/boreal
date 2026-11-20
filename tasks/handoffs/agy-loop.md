@@ -1,34 +1,27 @@
-# agy-loop Handoff (2026-11-20 05:40–05:57 — Completed: Step 0 Verified, T-0287 Proposed in PR #547)
+# agy-loop Handoff (2026-11-20 06:40 — In Progress: Step 0 Verified, Auditing Unaudited Viewers, Gait Sheets & Diagnostic Tools for T-0288)
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`)
-- **Base `origin/main`**: `ab748944` (`PR #545` / `T-0285` merged into `origin/main`; merged into `agy/loop` and `agy/t0287-propose`). Served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
-- **Run window**: `2026-11-20T05:40–05:57-07:00` (~17 min, within 50 min cap).
+- **Base `origin/main`**: `61eb666c` (`PR #546` / `T-0286` merged into `origin/main`; merged into `agy/loop`). Served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
+- **Run window**: started `2026-11-20T06:40-07:00` (50 min cap).
 
 ## What Is Done
 1. **Step 0 — Board & PR Review Inventory (Rule 15 & Rule 17, Oldest First):**
-   - `git fetch origin`: `origin/main` advanced `5ef53af1 -> ab748944` (`PR #545` / `T-0285` merged); merged into `agy/loop`.
+   - `git fetch origin --prune`: `origin/main` advanced `ab748944 -> 61eb666c` (`PR #546` / `T-0286` merged); merged into `agy/loop`.
    - Open non-`agy` PRs checked (`gh pr list --state open`):
      - **PRs `#413`, `#414`, `#448`, `#449`**: unchanged head SHAs (`05cb5735`, `26381111`, `e9d8d50b`, `83d1b0ec`) since `2026-11-14` (Rule 15 amendment; prior blocking verdicts retained).
-     - **PR `#546`** (`agy/t0286-propose`, `33bda70d`): own board-only proposal for `T-0286`.
-   - Checked `npx tsx tools/tasks.ts` and `tasks/events/*.json` across all branches: no new non-`agy` pending `complete` or `propose` reviews since `2026-11-18` (`T-0258` and `T-0261` carry Rule 16b `for: matthew` approvals and `T-0261` already has `agy`'s `2026-11-18` approval comment; `T-0180..T-0214`, `T-0203`, `T-0206..T-0211` carry `agy`'s `2026-11-13` blocking comments with unchanged state). No `agy` proposed tasks (`T-0224..T-0286`) have received a non-author `approve-plan` yet. Next free task ID across all branches was `T-0287`.
-2. **Step 8 (Rule 7) + Steps 1–3 — Live Chromium & Calibrated Rule 11 Inspection -> Proposed `T-0287` (`PR #547`, branch `agy/t0287-propose`, commit `512c8176`):**
-   - Inspected four previously unaudited subsystems with zero overlap with `T-0001..T-0286` on `origin/main` (`ab748944`) via temporary Vite preview port `5269` (stopped cleanly before finish) and headless Chromium (`1280×720`, SwiftShader, `0` console/page errors, cleanly closed):
-     - **Rule 7 Board Governance & Ledger Enforcement** (`tasks/RULES.md`, `tools/tasks.ts`, `tests/tasks.test.ts`, `tools/agent-review.mjs`, `tools/board-github.ts`): `tools/tasks.ts:79` checks `skill === 'true'` so **`0 / 224` (`0.0%`)** of named-skill tasks are recognized (`ledgerSkillTrue = 0`, breaking `skill-approve`); ignores `credits:` front-matter headers (`18` live tasks diverge from Rule 14); `tests/tasks.test.ts:64` skips the entire rule-compliance test as `todo` due to `43` legacy breaks (silently swallowing ALL new rule breaks in CI); `67` tasks sit `proposed` (`56` `agy`, `0` with non-author `approve-plan`) and `54` sit `completed` unapproved; `tools/agent-review.mjs` omits `'cursor'` from `AGENTS`; `tools/board-github.ts` leaks `tmpdir()/boreal-board-*` copies (no `rmSync`) and dereferences `status.id` inside `if (!status || ...)`.
-     - **Verification & Scoring Gates** (`tools/anim-gate.ts`, `tools/contact-gate.ts`, `tools/wolf-view-score.ts`, `tests/huntSim.ts`): `anim-gate.ts` computes `hz` from `b` ignoring `record`, returns `silhouetteIoU(NaN, NaN) = 1`, `scoreAnimation(..., 0) = NaN`, and `0.250` on frozen `hare-flee`; `contactTimingScore(-5, 10) = 1.5` (unclamped `> 1`); `wolf-view-score.ts` live `frameSample()` scores `0.465` at `bearing = 0.0°` (worse than `legacyFrame = 0.559`), `ndcX = 0` contradicts `imageX = 0.52 -> +0.04`, asymmetric on `-bearing`; `tests/huntSim.ts` inverts stealth vs naive (`skilled = 30.0%`, `0` ambush, `5,273 s` vs `naive = 47.5%`, `0` ambush, `1,762 s`, identical `turnRate = 2.2`).
-     - **Landing Matrix, Globe Seam Baseline & Headless Capture Harnesses** (`tools/landing-matrix.mjs`, `tools/globe-seam-baseline.ts`, `tools/fall-shot.mjs`, `tools/menu-frame-capture.mjs`, `tools/cine-boot-measure.mjs`, `tools/walk-probe.mjs`, `tools/smoke-tiers.mjs`, `tools/bench-lock.mjs`): `landing-matrix.mjs` places `alpine` at `(0.5, 54)` in the Somali Basin Indian Ocean (`-4,900 m`) and `coast` at `(44.3, -122.2)` `140 km` inland Oregon Cascades with hardcoded `/tmp/`; `globe-seam-baseline.ts` reports `planetReliefM = 0 m` (`localReliefM = 0.04 m`) on **`7 / 8`** dry sites (incl. `alpine` at `1,864 m`), inverted `ocean edge` (`!p.oceanNear`), and `wetland` moving `24°`; capture scripts hardcode Chrome/Edge, omit `try/finally` browser kills, and default to reserved/served ports `5199`/`5173`; `bench-lock.mjs` deadlocks on `NaN` start age and ignores `chrome.exe`.
-     - **Deep Time, `planet-layers` & `system-map` Diagnostics** (`src/core/deepTime.ts`, `tools/deep-time.ts`, `tools/planet-layers.ts`, `tools/planet-layers.html`, `tools/system-map.ts`, `src/config/systemProperties.ts`): `dialToYears(-1) = -18.10 Myr` (`< 0` before solar system formation); `luminosityRatio(+12 Gyr) = -19.87` past `+11.425 Gyr` Gough pole; `0` future milestones (live `frame-2` at `?t=7590000000` shows `The swollen Sun` + **`nearest milestone: Now`** + raw `[verify]` & future `ICS v2026-06`); `moist-greenhouse.embody = 'animal'` despite `330–340 K` lethal heat; `?t=0` ignored; live `frame-1` `planet-layers` renders procedural blobs with `+35 °C` hot Antarctic edge, no colorbar legend, `NaN` ramp crash, and fallback missing `ready`; `system-map` covers only **`103 / 413` (`24.9%`)** of `352` TS + `61` Rust modules.
-   - Calibrated Rule 11 score: `calibrationValid = true`, `0 / 5` pass `>= 0.95`, `meanScore = 0.2014` (`refs/audit/rules-gates-harnesses-diagnostics-audit/{audit.ts, numbers.json, recording.webm, frame-0..2.png, reference/ref-0..2.jpg}`).
-   - Created `tasks/T-0287-rules-gates-harnesses-diagnostics-audit.md` (`52 cr`), `tasks/events/2026-11-20T05-53-agy-propose-T-0287.json` (UTF-8 no BOM), `tasks/handoffs/T-0287-agy.md`, and `notes/skills/rules-gates-harnesses-diagnostics-audit.md`.
-   - Verified `npx tsc --noEmit` (`0` errors) and `tests/tasks.test.ts`, `tests/gait-gate.test.ts`, `tests/sim-home.test.ts`, `tests/rules.test.ts` (all pass, `0` new rule breaks).
-   - Pushed `agy/t0287-propose` and opened board-only **PR `#547`** (`https://github.com/BannonBotBoss/boreal/pull/547`); merged `agy/t0287-propose` into `agy/loop`.
+     - **PR `#547`** (`agy/t0287-propose`, `512c8176`): own board-only proposal for `T-0287` (`ci` `test` + `slow` green).
+   - Checked `npx tsx tools/tasks.ts` and `git log --all --since="2026-11-18" -- tasks/`: no new non-`agy` pending `complete` or `propose` reviews since `2026-11-18`. No `agy` proposed tasks (`T-0224..T-0287`) have received a non-author `approve-plan` yet. Next free task ID across all branches is `T-0288`.
+
+## What I Am Doing Now
+- Surveying remaining unaudited viewers, species/gait/skeleton sheet tools, diagnostic/baking/constant-generation scripts, and live end-to-end flows on `origin/main` (`61eb666c`) with zero overlap with `T-0001..T-0287`.
+- Will run a temporary Vite preview server on port `5269`, capture live Chromium frames + video + calibrated Rule 11 measurements, and propose `T-0288` on branch `agy/t0288-propose`.
 
 ## Exact Next Step
-1. Start the next run with Step 0 (Rule 15): fetch `origin`, merge `origin/main` into `agy/loop`, and review any new non-`agy` PRs or completed/proposed tasks oldest first.
-2. If any `agy` proposed task (`T-0224..T-0287`) receives a non-author `approve-plan`, claim it on a dedicated `agy/<topic>` worktree and implement fixes under `AGENTS.md` (simulation in Rust).
-3. Otherwise audit remaining untouched tooling, viewer pages (`tools/bound-lab.ts`, `tools/gait-sheet.ts`, `tools/skeleton-sheet.ts`, `tools/wolf-lod-view.ts`, `tools/tree-viewer.html`, `tools/padmenu.html`, `tools/gamepad.html`), VR (`src/vr/`), or end-to-end `?autoplay=1` / title-menu-to-ground flows for `T-0288`.
+1. Complete audit of unaudited viewers/diagnostic tools and live browser/gameplay checks, build calibrated `refs/audit/<slug>/audit.ts`, capture frames/video/references, and propose `T-0288`.
+2. Push `agy/t0288-propose`, open board-only PR, merge into `agy/loop`, verify `npx tsc --noEmit` + tests, stop all temporary servers/browsers, and finalize handoff.
 
 ## Needs From Another Agent
 - Non-`agy` `approve-plan` events on proposed `agy` tasks `T-0224..T-0253`, `T-0257`, `T-0260`, `T-0263..T-0287`.
 - Non-`agy` `approve` events on completed `agy` tasks `T-0022`, `T-0170`, `T-0171`, `T-0172`, `T-0205`, and `T-0213`.
-- Merge of board-only PRs `#546` (`T-0286`) and `#547` (`T-0287`).
+- Merge of board-only PR `#547` (`T-0287`).

@@ -1,34 +1,27 @@
-# agy-loop Handoff (2026-11-20 06:40–07:02 — Completed: Step 0 Verified, T-0288 Proposed in PR #548)
+# agy-loop Handoff (2026-11-20 07:40 — In Progress: Step 0 Verified, Auditing Remaining Untouched Core/Input/UI/Tools & Live Gameplay Flow for T-0289)
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`)
-- **Base `origin/main`**: `61eb666c` (`PR #546` / `T-0286` merged into `origin/main`; merged into `agy/loop` and `agy/t0288-propose`). Served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
-- **Run window**: `2026-11-20T06:40–07:02-07:00` (~22 min, well within 50 min cap).
+- **Base `origin/main`**: `6382e99a` (`PR #547` / `T-0287` merged into `origin/main`; merged into `agy/loop`). Served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
+- **Run window**: `2026-11-20T07:40-07:00` (50 min cap -> stop by `08:30`).
 
 ## What Is Done
 1. **Step 0 — Board & PR Review Inventory (Rule 15 & Rule 17, Oldest First):**
-   - `git fetch origin --prune`: `origin/main` advanced `ab748944 -> 61eb666c` (`PR #546` / `T-0286` merged); merged into `agy/loop`.
-   - Open non-`agy` PRs checked (`gh pr list --state open`):
+   - `git fetch origin`: `origin/main` advanced `61eb666c -> 6382e99a` (`PR #547` / `T-0287` merged); merged into `agy/loop` (`90061f1b`).
+   - Open PRs checked (`gh pr list --state open`):
      - **PRs `#413`, `#414`, `#448`, `#449`**: unchanged head SHAs (`05cb5735`, `26381111`, `e9d8d50b`, `83d1b0ec`) since `2026-11-14` (Rule 15 amendment; prior blocking verdicts retained).
-     - **PR `#547`** (`agy/t0287-propose`, `512c8176`): own board-only proposal for `T-0287` (`ci` `test` + `slow` green).
-   - Checked `npx tsx tools/tasks.ts` and `git log --all --since="2026-11-18" -- tasks/`: no new non-`agy` pending `complete` or `propose` reviews since `2026-11-18`. No `agy` proposed tasks (`T-0224..T-0287`) have received a non-author `approve-plan` yet. Next free task ID across all branches was `T-0288`.
-2. **Steps 1–3 — Live Chromium & Calibrated Rule 11 Inspection -> Proposed `T-0288` (`PR #548`, branch `agy/t0288-propose`, commit `3ee2e413`):**
-   - Inspected four previously unaudited subsystems with zero overlap with `T-0001..T-0287` on `origin/main` (`61eb666c`) via temporary Vite dev server on port `5269` (stopped cleanly before finish) and headless Chromium (SwiftShader, `0` console/page errors, cleanly closed in `finally`):
-     - **Boreal Stand Post-Fire Dynamics, `TREE_FORMS`, `farTreesInTile`, `landingShore` & `radial`** (`src/core/stand.ts`, `src/core/flora/trees/forms.ts`, `src/core/flora/stands.ts`, `src/core/landingShore.ts`, `src/world/globe/radial.ts`): `age = 0` fresh burn yields `46,500 stems/ha` aspen & `13,200/ha` black-spruce (`>= 1 cm DBH`) with `10.2 cm` DBH; saturated bog (`age = 120, wet = 1.0`) keeps `53.8%` feathermoss + `61.5%` sphagnum (`coverSum = 154.7%`); `ageFromU(-0.5) = -40.5`, `ageFromU(1.5) = NaN`; `TREE_FORMS` defines only `1 / 7` species (`black-spruce`), `heightAt(0) = 1.30 m`, `heightAt(-5) = NaN`, hardcoded `80 cm` DBH cap; `farTreesInTile` clips `density = 2` (`128 < 130`); `nearestShore` skips `r = 0` (`150.0 m` dry offset) & overflows `lat = 90.012°` / `lon = 182.236°`; `parseAxisDir(' , ') = [1,0,0]`, accepts `lat = 999`, `axisPoint([3,0,0], 1) = 3.00 km`.
-     - **Wolf-LOD & Fore-Limb Pop/Reach Diagnostics** (`tools/wolf-lod-bench.ts`, `src/render/gaitLod.ts`, `tools/elbow-pop.ts`, `tools/touchdown-pop.ts`, `tools/bound-reach.ts`, `tools/ref-prompt.ts`): rebound wolf leg triangles span `0.012..35.49×` area ratio in trot (`28.41×` walk, `27.18×` gallop), `pawToBone = 74.2–166.4 mm`, raw Meshy trot slip = `628.5 mm`; default `near>mid` LOD pop = `24.7° / 47.0 mm` (identical to `blendS = 0`); `terrainFeet` leaves `66.6 mm` error on `1:4` slope & `terrainCheck` captures `pawY0` mid-walk; `touchdown-pop.ts` reports `0 / 0` overshoots because line 20 ignores `hum`/`fore` while `elbow-pop.ts` records `107.6–157.2°/f` hum pops (`18–50` over), `92.2°/f` elbow pops (`25` over), `113.1 mm` plant miss & `177.0 mm` swing miss; `bound-reach` hare fore capacity is `62.9 mm` short (`83%`) at `11.6 m/s`; `ref-prompt.ts` self-scores diagram `1.000`.
-     - **Interactive Species, Skeleton, Gait, Bound-Lab, Wolf-LOD & Tree Viewers** (`tools/skeleton-sheet.ts`, `tools/gait-sheet.ts`, `tools/wolf-sheet.ts`, `tools/bear-sheet.ts`, `tools/wolf-portrait.ts`, `tools/wolf-lod-view.ts`, `tools/bound-lab.ts`, `src/render/trees/viewer.ts`): live `frame-0` (`skeleton-sheet`) shows bat folded wings plunging through diagonal ground plank & ruler-flat mammal spines, ignores `size.x` & `L = 0`; live `frame-1` (`gait-sheet`) renders llama-blob deer, clips every wolf snout (`±0.85 m`), hardcodes mode `'walk'` for `7 m/s` gallop & jump, skips `prevPhase`, paws dip below ground; `wolf/bear/portrait` sheets omit `preserveDrawingBuffer: true` (`wolfSheetReadbackNonBlank = false`) & `wolf-sheet` cell 6 views coats from `+4.3z` rear; live `frame-2` + `recording.webm` (`542,370 B`) `tree-viewer` hardcodes `black-spruce` and exposes jagged `38`-tri origami crown & `2×`-wide tilted pixelated shadowless impostor; `wolf-lod-view` monkey-patches global `performance.now` & omits fetch/`head` guards; `bound-lab` wipes on resize & drops wrap-around suspension windows.
-     - **Aerial Exemplar Baker & `terrain-ref` Pipeline** (`tools/bake-aerial-exemplars.py`, `public/aerial/`, `tools/terrain-ref/metrics.py`, `tools/terrain-ref/compare.py`, `tools/terrain-ref/topmap.ts`): hardcodes `/tmp/naip`, upscales `64 px` water `2×` via `scale_nearest` producing exact `2×2` blocks in shipped `public/aerial/source/water.png` (`rowDiff = 0, colDiff = 0`) while `meta.json` claims `128 px @ 1.5954 m/px`, applies `canopy` `mpp` to tiles `13 km` south, Gaussianizes sRGB bytes; `terrain-ref/metrics.py` crashes (`IndexError`) on flat/lake-free terrain, computes impossible circle `D_L = 0.8873 < 1.0` & `spectral_slope_beta = NaN`; `topmap.ts`/`compare.py` hardcode `/workspace/tmp` & `/usr/share/fonts`.
-   - Calibrated Rule 11 score: `calibrationValid = true`, `0 / 5` pass `>= 0.95`, `meanScore = 0.1179` (`refs/audit/stand-shore-viewers-lodbench-terrainref-audit/{audit.ts, numbers.json, recording.webm, frame-0..2.png, reference/ref-0..2.jpg}`).
-   - Created `tasks/T-0288-stand-shore-viewers-lodbench-terrainref-audit.md` (`52 cr`), `tasks/events/2026-11-20T06-56-agy-propose-T-0288.json` (UTF-8 no BOM), `tasks/handoffs/T-0288-agy.md`, and `notes/skills/stand-shore-viewers-lodbench-terrainref-audit.md`.
-   - Verified `npx tsc --noEmit` (`0` errors) and `tests/tasks.test.ts`, `tests/gait-gate.test.ts`, `tests/sim-home.test.ts`, `tests/rules.test.ts` (`25 pass, 0 fail, 0 new rule breaks`).
-   - Pushed `agy/t0288-propose` and opened board-only **PR `#548`** (`https://github.com/BannonBotBoss/boreal/pull/548`); merged `agy/t0288-propose` into `agy/loop`.
+     - **PR `#548`** (`agy/t0288-propose`, `3ee2e413`): own board-only proposal for `T-0288`.
+   - Checked `npx tsx tools/tasks.ts` and `git log --all --since="2026-11-18" -- "tasks/events/*.json"`: no new non-`agy` pending `complete` or `propose` reviews since `2026-11-18`. No `agy` proposed tasks (`T-0224..T-0288`) have received a non-author `approve-plan` yet. Next free task ID across all branches is `T-0289`.
+
+## What I Am Doing Now
+- Surveying untouched files across `src/`, `tools/`, and `rust/boreal-sim/src/` plus live browser gameplay/UI flows (`?autoplay=1`, title-menu-to-ground, gamepad menu / `padTargets` / `menu-frame-measure`, locomotion/contact/rig probe tools, `catalog`/`stateFields`/`bootOrder`) to run a calibrated Rule 11 inspection and propose `T-0289`.
 
 ## Exact Next Step
-1. Start the next run with Step 0 (Rule 15): fetch `origin`, merge `origin/main` into `agy/loop`, and review any new non-`agy` PRs or completed/proposed tasks oldest first.
-2. If any `agy` proposed task (`T-0224..T-0288`) receives a non-author `approve-plan`, claim it on a dedicated `agy/<topic>` worktree and implement fixes under `AGENTS.md` (simulation in Rust).
-3. Otherwise audit remaining untouched tooling/code (`tools/run-strip.ts`, `tools/bench-contacts.ts`, `tools/contact-exact.ts`, `tools/elbow-trace.ts`, `tools/excursion-probe.ts`, `tools/fore-lock-bench*.ts`, `tools/plant-path.ts`, `tools/rig-trace.ts`, `tools/find-targets.ts`, `tools/glowBench.ts`, `tools/padmenu.html`, `tools/menu-frame-measure.html`, `src/core/catalog.ts`, `src/core/stateFields.ts`, `src/world/globe/bootOrder.ts`, `src/input/padTargets.ts`) or end-to-end `?autoplay=1` / title-menu-to-ground live gameplay flow for `T-0289`.
+1. Complete code + live Chromium recording & calibrated Rule 11 inspection on untouched subsystems.
+2. Save evidence (`audit.ts`, `numbers.json`, `recording.webm`, `frame-*.png`, reference frames), create `tasks/T-0289-*.md`, propose event, handoff, and skill on a fresh `agy/t0289-propose` worktree.
+3. Verify `npx tsc --noEmit` and board/rule tests, push branch, open PR, merge into `agy/loop`, and finalize this handoff.
 
 ## Needs From Another Agent
 - Non-`agy` `approve-plan` events on proposed `agy` tasks `T-0224..T-0253`, `T-0257`, `T-0260`, `T-0263..T-0288`.
 - Non-`agy` `approve` events on completed `agy` tasks `T-0022`, `T-0170`, `T-0171`, `T-0172`, `T-0205`, and `T-0213`.
-- Merge of board-only PRs `#547` (`T-0287`) and `#548` (`T-0288`).
+- Merge of board-only PR `#548` (`T-0288`).

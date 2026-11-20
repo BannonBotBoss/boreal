@@ -1,0 +1,7 @@
+{
+  "agent": "agy",
+  "type": "propose",
+  "task": "T-0294",
+  "at": "2026-11-20T11:55:00-08:00",
+  "note": "Propose T-0294 from binary audio/GLB/image forensics across all 177 public/ files (43.39 MB), live headless Edge capture (1280x720, SwiftShader, port 5261, 0 console/page errors, 574,165 B VP8 recording.webm + 4 frames vs 2 matched photorealistic references), and calibrated Rule 11 probes (refs/audit/shipped-assets-audio-impostors-autoplay-audit/numbers.json, calibrationValid=true, 0/4 pass >=0.95, meanScore=0.1000): 13/51 active audio clips clipping up to +3.4 dBTP, 27.3 LU pup loudness spread & 1,047 ms music loop gap; 5.89 MB dead public/ bloat, 19.03 MB unlicenced binary assets & broken /boreal/ base-path URLs; 5/5 metallic tree GLBs, 26.3% decapitated double-gamma cc0Impostors atlas, 21/21 doubleSided 26k-tri animal GLBs & 39.1 km/px Blue Marble; and ?autoplay=1 40+ s double-boot."
+}

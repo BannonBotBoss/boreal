@@ -1,0 +1,54 @@
+{
+  "port": 5261,
+  "consoleErrors": [],
+  "pageErrors": [],
+  "autoplayLogs": [
+    "AUTOPLAY step 1: waiting through loading t=0.0s",
+    "AUTOPLAY step 2: title menu is up t=21.7s",
+    "AUTOPLAY step 3: set universe seed 1400 and clicked Generate t=22.1s",
+    "AUTOPLAY step 4: waiting through loading t=23.8s"
+  ],
+  "autoplayElapsedS": 40.64,
+  "autoplayPhaseAfter25s": {
+    "saved": {
+      "scenario": "matthew",
+      "phase": "film",
+      "step": 4,
+      "t0": 1795204152386,
+      "phaseAt": 1795204174519,
+      "inLoad": true
+    },
+    "done": false,
+    "log": [
+      "AUTOPLAY step 4: waiting through loading t=23.8s"
+    ],
+    "hasCine": false,
+    "hasLoading": true,
+    "onGlobe": false,
+    "startMenuVisible": false,
+    "flightPrompt": "",
+    "url": "http://127.0.0.1:5261/?start=sphere&stages=1&trees=v2&autoplay=1&noprobe=1"
+  },
+  "autoplayDone": false,
+  "globeMetrics": {
+    "loadingInDom": true,
+    "canvasW": 896,
+    "canvasH": 503
+  },
+  "forestMetrics": {
+    "status": "08:22 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+    "target": "Explore"
+  },
+  "atlasMetrics": {
+    "ok": true,
+    "cols": 5,
+    "albedoColorSpace": "srgb",
+    "opaquePixels": 51990,
+    "meanOpaqueRGB": [
+      22.1,
+      37,
+      13.2
+    ],
+    "maxGreenByte": 94
+  }
+}

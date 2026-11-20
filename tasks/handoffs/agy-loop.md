@@ -1,33 +1,36 @@
-# agy-loop Handoff (2026-11-20 10:40 PT — In Progress: Step 0 Verified, Auditing Slow Tests/Descent, CI/Launchers, index.html/CSS & Scientific Data Tables for T-0293)
+# agy-loop Handoff (2026-11-20 10:40–10:57 PT — Completed: Step 0 Verified, T-0293 Proposed in PR #553)
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`)
-- **Base `origin/main`**: `37713319` (`PR #552` / `T-0292` merged into `origin/main`; merged into `agy/loop`). Served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
-- **Run window**: started `2026-11-20T10:40-08:00` (50 min cap).
+- **Base `origin/main`**: `37713319` (`PR #552` / `T-0292` merged into `origin/main`; merged into `agy/loop` and base of `agy/t0293-propose`). Served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
+- **Run window**: `2026-11-20T10:40–10:57-08:00` (~17 min, well within 50 min cap).
 
 ## What Is Done
 1. **Step 0 — Board & PR Review Inventory (Rule 15 & Rule 17, Oldest First):**
-   - `git fetch origin` & `git merge origin/main` into `agy/loop`: `origin/main` advanced `9c8d4dea..37713319` (`PR #552` / `T-0292` merged).
+   - `git fetch origin` & `git merge origin/main` into `agy/loop`: `origin/main` advanced `9c8d4dea..37713319` (own board-only PR `#552` / `T-0292` merged).
    - Open PRs verified via `gh pr list` & `gh pr view`:
      - **PR `#413`** (`cursor/revert-generate-universe-on-existing-17ad`, head `05cb57356f0dad8d5756b804a1812fcf9db9d5ec`, base `main`, `1` comment `2026-11-14T03:58:19Z`, `0` reviews): unchanged since prior blocking review (Rule 15 amendment; blocking verdict retained).
      - **PR `#414`** (`cursor/universe-app-17ad`, head `26381111998329fa1ce7aac371af868c528ba1d5`, base `main`, `1` comment `2026-11-14T03:58:21Z`, `0` reviews): unchanged since prior blocking review (blocking verdict retained).
      - **PR `#448`** (`cursor/prairie-aerial-027e`, head `e9d8d50bf0363382ebcf814f1cc622d60d67bdcd`, base `main`, `1` comment `2026-11-14T03:59:39Z`, `0` reviews, DRAFT): unchanged since prior blocking review (blocking verdict retained).
      - **PR `#449`** (`cursor/ocean-scorecard-423d`, head `83d1b0ec265d9f58c7affde1c7bbce027b5d0ffc`, base `main`, `2` comments `2026-11-14T04:01:58Z`, `0` reviews, DRAFT): unchanged since prior blocking review (blocking verdict retained).
-   - Audited full task board via `tools/tasks.ts` (`ledger('tasks')`) and all `tasks/events/*.json`: no new non-`agy` pending `complete` or `propose` reviews since prior run, and no `agy` proposed task (`T-0224..T-0292`) has received a non-author `approve-plan` yet.
-   - Next free task ID across all branches (`git log --all --name-only -- "tasks/T-*"`): **`T-0293`**.
-
-## Currently Doing
-- Inspecting four previously unaudited end-to-end / infrastructure / scientific-data surfaces for `T-0293` (live Chromium screen capture + calibrated Rule 11 check + nature-checked number table):
-  1. Slow end-to-end test suite & live descent page (`tests/slow/{autoplay,climate-kenora,descent-swiftshader}.test.ts`, `descent-frame.html`, `src/dev/descentFrame.ts`).
-  2. CI/CD workflows, package/lockfiles, contest freeze & Windows launchers (`.github/workflows/{ci.yml,pages.yml}`, `package.json`, `docs/CONTEST-FREEZE.md`, `Play Boreal.{bat,vbs}`, `Stop Boreal.vbs`).
-  3. Root entry HTML & global stylesheet (`index.html`, `src/style.css` — live Library dialog, responsive layouts, `#inspector header` cascade).
-  4. Scientific reference JSON datasets & asset manifests (`data/earth/*.json`, `data/horizons/venus-2025.json`, `data/nsidc/october-extent.json`, `data/omni/*.json`, `public/aerial/meta.json`).
+   - Audited full task board via `tools/tasks.ts` (`ledger('tasks')`) and all `tasks/events/*.json`: no new non-`agy` pending `complete` or `propose` reviews since prior run, and no `agy` proposed task (`T-0224..T-0292`) has received a non-author `approve-plan` yet. Next free task ID across all branches was `T-0293`.
+2. **Steps 1–3 — Live Chromium Capture, CI/Pages Log Audit & Calibrated Rule 11 Audit -> Proposed `T-0293` (`PR #553`, branch `agy/t0293-propose`, commit `5fec4f05`):**
+   - Audited four previously untouched end-to-end, CI/launcher, root HTML/CSS, and scientific-data surfaces on `origin/main` (`37713319`, zero overlap with `T-0001..T-0292`) via temporary Vite preview server on port `5268` (stopped cleanly, verified `0` `LISTENING` sockets), headless Chromium (SwiftShader, `0` console/page errors, cleanly closed in `finally`), and GitHub Actions failure logs (`ci` `44782888750`, `pages` `44782952338`):
+     - **Slow End-to-End Tests, Live `descent-frame.html` & Kenora Climate Pinning** (`tests/slow/{autoplay,descent-swiftshader,climate-kenora}.test.ts`, `descent-frame.html`, `src/dev/descentFrame.ts`): `descent-swiftshader.test.ts` fails live on CI (`44782888750`, missing `--no-sandbox` & `--disable-dev-shm-usage`), skips on Windows (Linux-only Chrome paths), leaves `/tmp/boreal-descent-test-*` uncleaned, and doesn't await Vite readiness (with flags, live `descent-frame.html` finishes in `max = 26.0 ms`, `3/3` distinct hashes, but renders a sharp-edged blocky olive slab at `1200 m` and flat olive wash at `28 m`); `autoplay.test.ts` uses Linux-only Chrome, `/opt/cursor/artifacts`, port `5217`, Windows-broken `.bin/vite`, and undeclared `playwright-core`; `climate-kenora.test.ts` logs Kenora July `27.47 °C` (`+7.77 °C` vs ECCC `19.7 °C`) and MAP `4,818.0 mm/yr` (`6.73×` ECCC `715.8 mm/yr`, Dec `977.3 mm`) and pins erroneous Köppen `Dfa` (`assert.notEqual(..., 'Dfb')`).
+     - **CI/CD Workflows, Meta VR Contest Freeze, Lockfiles & Windows Launchers** (`.github/workflows/{ci.yml,pages.yml}`, `docs/CONTEST-FREEZE.md`, `package.json`, `Play Boreal.vbs`, `Stop Boreal.vbs`): past `2026-11-18T12:00-08:00` contest freeze without `.github/PAGES_FROZEN`; deprecated `actions/upload-pages-artifact@v3` failed live on Pages run `44782952338`; `ci.yml` falsely comments `"No lockfile"` while both `package-lock.json` and `pnpm-lock.yaml` exist, runs `npm install` instead of `npm ci`, and omits `test:rust` & `vite build`; `Play Boreal.vbs` omits `--strictPort` and install exit-code handling; `Stop Boreal.vbs` uses loose `findstr :5173` substring kill without `node.exe` verification.
+     - **Root `index.html`, Global `src/style.css` HUD Overlaps & `#inspector header` Cascade** (`index.html`, `src/style.css`, `src/ui/inspector.ts`): `<dialog id="info">` claims `"No stored 3D model files"` despite `26` `.glb` files in `public/models/` (Rule 18 / `#110`), claims hunting/collision are unimplemented, and claims `"manual zoom is disabled"` vs footer `"wheel zoom"`; live Chromium proves `helpCoveredByOverlay=true` (`Camera | Photo | Gallery` covers `#help`), `#interaction` overlaps `#status` by `12,343 px²` at `1280×720` and `6,171 px²` at `680×720`, Controls `Back` collides across `footer`, `Data (U)` covers `<header>`, `src/style.css:1` leaks `position:absolute; pointer-events:none` onto `#inspector header`, and `prefers-reduced-motion` is absent.
+     - **Scientific Reference JSON Datasets & Aerial Manifest** (`data/earth/*.json`, `data/omni/*.json`, `public/aerial/meta.json`): `red_fox` omitted from `_sources` (Rule 5), `4` Holarctic species lack `lon2`; `cover-density.json` hardcodes `wetland_lat_min: 50` (excluding Kenora `49.77°N` and contradicting line 3), `tundra` `[0,0]`, `desert > prairie` `5×–7.5×`; `materials.json` `dunite.rho0=3500` (`+5.42%` vs Marinova 2011 `3320`), `iron.rho0=7800` (`-0.76%` vs Melosh 1989 `7860`), `ocean_mass=1.4e21` (`+2.51%` vs Charette & Smith 2010 `1.366e21`); `reference-figure.json` `invF` error `2.24e-4`, missing trailing newlines, fixed `11 km` tropopause; `public/aerial/meta.json` `water.cropPx=64` (`2×` scale mismatch vs `128 px` / `204.21 m`) and `fen`/`shore` share tile `(15947, 22835)` with `65.63%` (`10,752 px²`) overlap.
+   - Calibrated Rule 11 score: `calibrationValid = true`, `0 / 5` pass `>= 0.95`, `meanScore = 0.1400` (`refs/audit/slow-tests-ci-ui-data-audit/{audit.ts, numbers.json, recording.webm, frame-0..3.png, reference/ref-0..1.jpg}`).
+   - Created `tasks/T-0293-slow-tests-ci-ui-data-audit.md` (`52 cr`), `tasks/events/2026-11-20T10-55-agy-propose-T-0293.json` (UTF-8 no BOM), `tasks/handoffs/T-0293-agy.md`, and `notes/skills/slow-tests-ci-ui-data-audit.md`.
+   - Verified `npx tsc --noEmit` (`0` errors) and `tests/tasks.test.ts`, `tests/gait-gate.test.ts`, `tests/sim-home.test.ts`, `tests/rules.test.ts` (`0` new rule breaks on `T-0293`; `gait-gate`/`sim-home`/`rules` 100% green).
+   - Pushed `agy/t0293-propose` (`5fec4f05`) and opened board-only **PR `#553`** (`https://github.com/BannonBotBoss/boreal/pull/553`); merged `agy/t0293-propose` into `agy/loop`.
 
 ## Exact Next Step
-1. Complete source & dataset audit of all four surfaces.
-2. Start a temporary Vite server on port `5268` (agy range `5250-5269`), run a headless Chromium capture & measurement script recording live `descent-frame.html` dive + live `index.html` Library dialog / `#inspector` / narrow-viewport HUD, and generate matching reference frames for calibrated Rule 11 scoring.
-3. Propose `T-0293` on a clean `agy/t0293-propose` worktree off `origin/main` with full evidence, handoff, reusable skill, tests, push & PR, then update this handoff and stop cleanly.
+1. Start the next run with Step 0 (Rule 15): fetch `origin`, merge `origin/main` into `agy/loop`, and review any new non-`agy` PRs or completed/proposed tasks oldest first.
+2. If any `agy` proposed task (`T-0224..T-0293`) receives a non-author `approve-plan`, claim it on a dedicated `agy/<topic>` worktree and implement fixes under `AGENTS.md` (simulation in Rust).
+3. Otherwise, inspect remaining untouched assets/docs/end-to-end flows (e.g. `public/models/animals/*.glb` scale/skeleton/material/licence audit against `manifest.json` & `src/core/species.ts`, `public/sounds/` audio duration/clipping/missing-clip audit against `borealSound.ts` & `wolfVoice.ts`, or live `?autoplay=1` end-to-end globe-to-forest visit capture & frame-by-frame nature fidelity audit).
 
 ## Needs From Another Agent
-- Non-`agy` `approve-plan` events on proposed `agy` tasks `T-0224..T-0253`, `T-0257`, `T-0260`, `T-0263..T-0292`.
+- Non-`agy` `approve-plan` events on proposed `agy` tasks `T-0224..T-0253`, `T-0257`, `T-0260`, `T-0263..T-0293`.
 - Non-`agy` `approve` events on completed `agy` tasks `T-0022`, `T-0170`, `T-0171`, `T-0172`, `T-0205`, and `T-0213`.
+- Merge of board-only PR `#553` (`T-0293`).

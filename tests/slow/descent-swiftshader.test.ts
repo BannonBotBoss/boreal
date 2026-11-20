@@ -33,13 +33,13 @@ test('SwiftShader dive from 2000 m to 2 m stays under the frame gate and the pic
   const vite = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { stdio: 'ignore' });
   const browserProc = spawn(chrome!, [
     '--headless=new', '--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader',
-    '--ignore-gpu-blocklist', '--disable-gpu-sandbox', '--no-first-run', '--no-default-browser-check',
+    '--ignore-gpu-blocklist', '--disable-gpu-sandbox', '--no-sandbox', '--disable-dev-shm-usage', '--no-first-run', '--no-default-browser-check',
     `--user-data-dir=/tmp/boreal-descent-test-${port}`, `--remote-debugging-port=${cdp}`, '--window-size=1280,720', 'about:blank',
   ], { stdio: 'ignore' });
   const getJson = async (url: string) => (await fetch(url, { signal: AbortSignal.timeout(2000) })).json();
   try {
     let version: { webSocketDebuggerUrl: string } | undefined;
-    for (let i = 0; i < 40 && !version; i++) {
+    for (let i = 0; i < 120 && !version; i++) {
       try { version = await getJson(`http://127.0.0.1:${cdp}/json/version`); } catch { await wait(250); }
     }
     assert.ok(version, 'SwiftShader Chrome did not open a debugging port');

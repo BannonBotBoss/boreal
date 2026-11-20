@@ -1,0 +1,68 @@
+{
+  "audit": "T-0291",
+  "baseUrl": "http://127.0.0.1:5268",
+  "capturedAt": "2026-11-20T16:51:28.489Z",
+  "calibrationValid": true,
+  "passCount": 0,
+  "totalChecks": 5,
+  "meanScore": 0.12,
+  "consoleErrors": [],
+  "recordingBytes": 52528,
+  "checks": [
+    {
+      "id": "solar-viewer-and-physics",
+      "label": "Live solar viewer passes/resize/SILSO-default & spectral/sunspot physics",
+      "measured": "bloomAndOutputCommentedOut=true, defaultDate=2026-10-21 (silsoLast=2026-09-30, R=null, groups=0), resized=false, invalidDateCrash=true, halphaQuiet=1.00 (exp 0.90), cycle1980=23, privateRng=true, seedSafeInt=false, chromBelowHorizon=[null,null]",
+      "expected": "Bloom+OutputPass active, default date clamped to SILSO range, resize & query validation, quiet/constants/cycles/shared-RNG/safe-seed/finite-Planck",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "IAU 2015 B3, Lemen et al. 2012 (SDO/AIA), Hathaway 2011 (Sol. Phys. 273:221), SILSO V2.0, Spencer et al. 1995 (veiling glare)"
+    },
+    {
+      "id": "badges-events-livingpack",
+      "label": "Core badges quiz/cap/CSP, events parse/forage-why & enterLiving/storedPack safety",
+      "measured": "quizPools=1/10, badgeNullSafe=false, nanEarns=10/10, negLessBal=5, avoidsNewFn=false, emptyHintsScore=0, shortQuizPass=true, parseNullDocErr=false, foragePreservesWhy=false, enterLivingChecksSpecies=false, rosterImmutable=false, packRejectsNaNTrail=false",
+      "expected": "All 10 controls testable, JSON-safe badges, finite/clamped earn(), CSP-safe eval, full perAttempt & empty-hints grading, why preserved, species-matched immutable roster & strict pack parser",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Boreal transactional why-chain invariant, W3C CSP Level 3 (no unsafe-eval), OpenStax Astronomy/Physics badge pools, ANM1 binary contract"
+    },
+    {
+      "id": "perception-halo-bubbles-animalpicture",
+      "label": "AnimalPicture crossfade/impostors/arrestGlide, sensesHalo spawn/dispose, thoughtBubbles & perception validation",
+      "measured": "setOpacityTransparent=false, impostorTextured=false, picDispose=false, uHUsedInMain=false, arrestGlideV=8/8, haloFirstFrameOpacity=0.058 (exp 0.320), haloDispose=false, thoughtCamUpDispose=false, zeroSalienceFiltered=false, strongAtCap=false, perceptionRejectsNaN=false",
+      "expected": "True opacity crossfade (transparent=true), silhouetted per-instance impostors, real speed clamp, clean spawn halo, camera-up thought bubbles, finite validated perception stream & dispose()",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Three.js r180 Material.transparent contract, Boreal issue #106 packed perception & #156 non-popping LOD crossfade"
+    },
+    {
+      "id": "gamepad-padrouter-padmenulayout",
+      "label": "Gamepad HID support/NaN-safety, padRouter clock/radial/ownership/dispose & padMenuLayout edge guards",
+      "measured": "nonStdPad=false, readerNaNSafe=false, routerClockConsistent=false, routerRadialDispose=false, routerOwnsAxisGlobe=false, holdStepRate0=Infinity, menuFrameNaN={\"height\":null,\"top\":null}, unselectableFocus=3, stopDoubleRepeat=true",
+      "expected": "Standard+HID fallback, NaN-safe pad reader, single clock in padRouter, n>0 escaped radial & dispose(), true ownership return, finite menuFrame/holdStepCount, -1 unselectable focus, safe stop()",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "W3C Gamepad API, Boreal padMenuLayout T-0077 & padRouter ownership contract"
+    },
+    {
+      "id": "live-solar-visual-fidelity",
+      "label": "Live Chromium solar recording & 3 band frames vs SDO/HMI, SDO/AIA 171 & H-alpha references",
+      "measured": "consoleErrors=0, frames=3/3, recordingBytes=52528, activeVis={\"ev\":30.259095581140134,\"target\":30.259095581140134,\"Lavg\":0.04277957183879636,\"Lpeak\":2312958905.450399,\"groups\":18,\"R\":172,\"spotPx\":6.170192351919811,\"discPx\":390.65022450622723,\"canvasW\":1280,\"canvasH\":720,\"centreRgb\":[255,255,255],\"offLimbRgb\":[0,0,0]}, euv171={\"ev\":33.18991294698022,\"target\":33.18991294698022,\"Lavg\":62967218.69044788,\"Lpeak\":17637289991.64613,\"groups\":18,\"R\":172,\"spotPx\":6.170192351919811,\"discPx\":390.65022450622723}, halpha={\"ev\":30.42786757068504,\"target\":30.42786757068504,\"Lavg\":0.04323216982724185,\"Lpeak\":2600000000,\"groups\":18,\"R\":172,\"spotPx\":6.170192351919811,\"discPx\":390.65022450622723}",
+      "expected": "0 console errors, 3/3 frames, WebM >10 kB, ACESFilmic+Bloom active, >=95% visual fidelity to SDO/HMI visible, SDO/AIA 171 corona & H-alpha chromosphere references",
+      "score": 0.6,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Rule 6 & Rule 11 live frame-by-frame comparison against reference/ref-0..2.jpg (SDO/HMI, SDO/AIA 171, H-alpha)"
+    }
+  ]
+}

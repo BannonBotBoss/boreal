@@ -1,0 +1,68 @@
+{
+  "audit": "T-0290",
+  "baseUrl": "http://127.0.0.1:5269",
+  "capturedAt": "2026-11-20T15:55:12.279Z",
+  "calibrationValid": true,
+  "passCount": 0,
+  "totalChecks": 5,
+  "meanScore": 0.06,
+  "consoleErrors": [],
+  "recordingBytes": 153227,
+  "checks": [
+    {
+      "id": "gameplay-hud-layout-and-autoplay",
+      "label": "Live 720p gameplay HUD overlap/clipping, globe #loading cleanup & autoplay portability",
+      "measured": "dataOverlap=701px2, camOverlapLib=2515px2, camOverlapExp=1517px2, targetOverlapStatus=2730px2, hintClip=15px, globeLoadingDOM=true, autoplayTestPortable=false, infoStale=true",
+      "expected": "0 px2 HUD overlaps, 0 px controls hint clip, globe removes #loading, cross-platform autoplay test & accurate #info copy",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "W3C WCAG 2.1 Reflow (1.4.10) & Boreal AGENTS.md / Rule 18 (#110) / live 1280x720 DOM bounding boxes"
+    },
+    {
+      "id": "vr-hands-journey-and-forest-session",
+      "label": "WebXR hands-only VR journey & forestSession orientation, lifecycle and terrain raycast",
+      "measured": "journeyGlideForward=false (atan2(dx,dz) 180deg flip), snapYaw(+1) fx=-0.500 (expected >0 right, headingEast=-1.571), darkReachable=false, errOverlayCleaned=false, doublePawMeasure=true, heightAtUsed=false",
+      "expected": "Forward -Z facing atan2(-dx,-dz), snapYaw(+1) turns right (+x), reachable/reversible phases, overlay cleaned on error, terrain raycast & single pawMeasure",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "W3C WebXR Device API & Hand Input Level 1 + Three.js right-handed -Z forward convention (forestHands.ts:4)"
+    },
+    {
+      "id": "audio-mixer-music-haptics-and-ui",
+      "label": "Audio mixer/music/bigBang/borealSound, W3C Gamepad haptics & unaudited UI controls",
+      "measured": "masterAfterNaN=NaN, hapticsStrong=1.44 (>1.0 unclamped), customTargetRumble=false, signToggle=false, camBadN=NaN, wolfRangeHardcoded=true, captureListenerFixed=false",
+      "expected": "NaN-safe mixer, modifier-safe asset() audio, leak/race-free music & bigBang, [0,1] clamped target-routed haptics, species-aware senses, sign toggle & clean UI listeners",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "W3C Web Audio API (AudioParam finite / cancelAndHoldAtTime), HTMLMediaElement volume [0,1], W3C Gamepad Haptics [0,1] & Mech 1970 species scent ranges"
+    },
+    {
+      "id": "remaining-mjs-harnesses-and-wasm-build",
+      "label": "Remaining 14 browser .mjs harnesses portability/teardown & tools/build-wasm.mjs validation",
+      "measured": "hardcodedBrowser=14/14, urlPathnameWinBug=8, hardcoded5173=3, port5199=1, linuxPaths=5, bareKill=8, noFinallyClose=1, externalPages=1, tdzNotes=true, wasmValidates=false",
+      "expected": "0 hardcoded browsers, fileURLToPath on all ESM paths, no :5173/5199 or /tmp|/agent paths, clean try/finally + Windows tree kill, validated WASM build",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Node.js fileURLToPath cross-platform ESM spec, Boreal House Rules (ports 5173-5209 forbidden, kill browsers), WebAssembly binary magic 0x0061736d"
+    },
+    {
+      "id": "live-visual-fidelity-and-recording",
+      "label": "Live Chromium gameplay recording & 3 frames vs real-world Earth/boreal-wolf/HUD references",
+      "measured": "consoleErrors=0, frames=3/3, recordingBytes=153227, medianFrameMs=229.6, globeDrawn=11, autoplaySteps=1, totalHudOverlapPx2=7463",
+      "expected": "0 console errors, 3/3 frames, WebM >10 kB, >=95% match to ref-0 (NASA Earth), ref-1 (Kenora boreal forest + wolf), ref-2 (clean non-overlapping HUD)",
+      "score": 0.30000000000000004,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Rule 6 & Rule 11 live frame-by-frame comparison against reference/ref-0..2.jpg"
+    }
+  ]
+}

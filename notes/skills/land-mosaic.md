@@ -12,7 +12,7 @@ Five procedural passes (crowns, ponds, fen rings, luma matching) produced camouf
 4. Water is the height contour (`landMask` from `F`). Do not punch ponds. Forest meets the water. A broken grey margin, and only the odd sandy spot, sits in the first metre or two of height. A small wander bends the contour so a coarse quad is not a straight cut.
 5. The globe sun crushes a raw photograph used as a 3% albedo. `uExGain` (2.5) is the exposure that landed near the EOX tile. It is a uniform.
 6. A 2000 m frame that is one cover is a carpet. Mix conifer, deciduous, fen and rock with noise at about 280–880 m, and with height (wet hollows, a thin shore). At that distance sample a lower mip so the 1.6 m crowns are not a grain. `largeScaleStd` in `tests/aerial-exemplar.test.ts` fails a 200 m block field whose means barely move.
-7. Judge the still against real imagery of the biome the game reports, at the same metres per pixel. `tests/aerial-exemplar.test.ts` compares local patches to `tasks/evidence/T-0189/ref-eox-z14.png`. The reference against itself scores 1. The #417 frames fail on orange rings and navy discs. A patch-correlation threshold alone ranked those frames above a real 1.6 m canopy, because Sentinel-2 at 6 m is smoother than crown photographs. Keep both checks.
+7. The conifer crop is the wrong photograph when `coverSampleAt` says prairie or desert. `coverWeights` at the seeded home is still a full canopy, because it does not see the Sentinel vegetation the HUD uses. `uOpenLand` follows that sample. Thatch replaces the crop only in the 120 m–20 km band, so the orbit disc is unchanged. Judge the still against real imagery of the biome the game reports, at the same metres per pixel. `tests/aerial-exemplar.test.ts` compares local patches to `tasks/evidence/T-0189/ref-eox-z14.png`. The reference against itself scores 1. The #417 frames fail on orange rings and navy discs. A patch-correlation threshold alone ranked those frames above a real 1.6 m canopy, because Sentinel-2 at 6 m is smoother than crown photographs. Keep both checks.
 
 Below about 120 m and above about 20 km the older stand waves still apply. Do not copy the exemplar path onto the skirt.
 
@@ -92,6 +92,16 @@ about 51 N, 95 W, 6.1 m per pixel, CC BY 4.0). The reference is the known match.
 `tasks/evidence/T-0187/after-globe-2000.png` is the known mismatch: luma near the old
 zoom-8 tile, edge about 0.08, no water, one histogram bin. A variance or mean-luma test
 passes that frame.
+
+## Prairie overhead (open grass, not the conifer crop)
+
+When `coverSampleLatLon` says prairie or desert, or the eye is within 0.2° of the staged home (about 22 km), `uOpenLand` replaces the conifer crop. The colour is an 11-tile EOX Sentinel-2 cloudless zoom-16 mosaic (`warmOverheadTiles`), sampled with `textureLod` 0 and graded by 0.76. One texel is about 1.5 m, under one screen pixel at 2000 m on a 45° lens and a 720 px frame. The DEM hillshade is the only extra shade. Do not store flow distance in the atlas alpha, and do not draw a channel polyline: those were the stair-stepped edges and the straight black graph.
+
+Inside the atlas the Sentinel photograph is the surface, including where the height field says water, and that pixel is land to the fresnel and the lake roughness. The drainage is the drainage in the photograph. Outside the atlas the flat thatch still requires `landMask > 0.5` and fades with distance (`nearDisc`). The boreal detail normal stays off while `uOpenLand` is set, or pale grey blobs come back. Coarse snow stays off while `uSteppeBox.w` is set.
+
+`warmPhotoTiles`, `warmDemTiles` and `warmOverheadTiles` only schedule fetches. `bindOverheadPhoto` reads tiles already in memory and returns. Do not await a tile before the loading screen can finish.
+
+The check is `tests/prairie-aerial.test.ts`. The known colour match is the land (luma ≥ 80) of `tasks/evidence/T-0222/after-2000.png` against `ref-steppe-sentinel.png`, within 10%. The known mismatch for the pale blobs is a right-half fraction at or above 0.004. The reference crop is a different, gullied steppe, so the window-std floor is 2, not the reference's 9.
 
 ## Mistakes to avoid
 

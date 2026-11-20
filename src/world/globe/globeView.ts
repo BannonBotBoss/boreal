@@ -29,7 +29,7 @@ import { children, edgeMetres, faceDir, roots, centre as nodeCentre, type QNode 
 import { renderOffset } from './origin';
 import { CLOUDS, createAtmosphere } from './atmosphere';
 import { loadBlueMarbleClouds, ORBIT_FADE, setOrbitView } from './orbitAlbedo';
-import { across } from './cube';
+import { across } from './cube'; import { stepPrairieOverhead } from '../../render/globe/prairiePhoto';
 import { CLOCK, loadClock, setClockRate, worldSec } from '../../core/worldClock';
 import { timescaleFrom } from '../../core/timescale';
 import { createChronometer } from '../../ui/chronometer';
@@ -678,7 +678,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
     const octRow = Math.max(0, Math.min(CLOUDS.octaves.length - 1, GOVERNOR.tier));
     const orbit = alt > ORBIT_FADE.fullM;
     if (atmos && orbit) atmos.setLayers(false, isOn('atmosphere'), isOn('airglow'));
-    setOrbitView(alt, orbit ? 0 : (atmos ? CLOUDS.octaves[octRow] : 0));
+    setOrbitView(alt, orbit ? 0 : (atmos ? CLOUDS.octaves[octRow] : 0)); { const L = Math.hypot(camPos[0], camPos[1], camPos[2]) || 1; const d = [camPos[0] / L, camPos[1] / L, camPos[2] / L] as Vec3; const ll = toLatLon(d); stepPrairieOverhead(ll.lat * 180 / Math.PI, ll.lon * 180 / Math.PI, d, planet, alt); }
     setGlobeDetail(camPos, alt, GLOBE_LOD[Math.min(GLOBE_LOD.length - 1, Math.max(0, worldTier()))].detail, seed); // tile.ts ground detail (uniforms)
     setGlobeMorph(morphRadius, morphSplit, morphFull, morphBoost, morphReach, camPos); // fade each leaf onto its parent before the LOD ring
     LAKE_FADE.uHide.value = alt < COARSE_LAKE.below ? 1 : 0; // vertex lakes off below 8 km; one value for every tile this frame
@@ -698,7 +698,7 @@ export function createGlobe(renderer: THREE.WebGLRenderer, opts: GlobeOptions) {
       const w = weatherAtLatLon(latD, lonD, simRef), envSec = q.has('shot') ? shotSec : worldSec();
       fillEnvironmentGlobe(latD, lonD, dayAt(envSec), hourAt(envSec), simRef); // T-0089: the environment record at the sub-point (cloud drift, Mie haze)
       colIn = w ? { tsC: w.tC, q: w.q, cover: Math.max(0, Math.min(1, w.cloud)) } : null; }
-    if (localClouds) localClouds.update(camPos, R + ground, alt, sunDir, isOn('clouds') ? colIn : null, ground);
+    if (localClouds) localClouds.update(camPos, R + ground, alt, sunDir, isOn('clouds') && !(globalThis as { __photoDown?: number }).__photoDown ? colIn : null, ground);
     const prev = renderer.getRenderTarget(); renderer.setRenderTarget(target); renderer.render(scene, camera); renderer.setRenderTarget(prev);
     camera.position.set(camPos[0], camPos[1], camPos[2]); camera.updateMatrixWorld();
   }

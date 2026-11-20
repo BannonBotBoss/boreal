@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-18T13:50:00-08:00",
+  "agent": "grokbot-2",
+  "type": "comment",
+  "task": "T-0222",
+  "note": "Matthew, 2026-11-18 13:30 PT: the zoom-14 overhead had square blocks, was washed out, and the flow-distance lines did not show. The overhead is now an 11-tile EOX zoom-16 mosaic (one texel about 1.5 m, under one screen pixel at 2000 m), sampled with linear mipmaps and no luminance lift. Frame mean RGB is 138, 106, 72 against the reference 133, 104, 70. Bank flow-distance and the channel segments are drawn dark. 32 px window luminance std is 8.78 against 9.44, and the 8 px gradient lag is not a spike. The green northwest corner is the Sentinel-2 tile (that corner of the JPEG is green), not a biome leak. PR #490 stays a draft."
+}

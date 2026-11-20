@@ -1,0 +1,186 @@
+{
+  "generatedAt": "2026-11-20T02:56:34.665Z",
+  "baseUrl": "http://127.0.0.1:5265",
+  "calibrationValid": true,
+  "passCount": 0,
+  "totalChecks": 5,
+  "meanScore": 0.0336,
+  "consoleErrors": [],
+  "checks": [
+    {
+      "id": "orbit-cover-enclosed-seas-coast-blur-and-distance",
+      "label": "orbitCover.ts enclosed-sea matte-land mask, 195 km RGBA blur, 2.65x Arctic coastDistanceKm & 540 ms sync stall",
+      "measured": "Red Sea a=255, Baltic a=255, Persian Gulf a=255, Caspian a=255 (0/4 water); Honshu a=194/255 (76.1%), Black Sea a=41; 69N coastDistanceKm=167.7 vs 444.5 km (2.65x short); eq diag=1553.1 vs 1106.0 km (1.404x); build=532.9 ms; sRGB-25 linearByte err=19.3%; seasonalOrbitSnow=false",
+      "expected": "All 4 seas water (a<128); Honshu sharp land (a>=245) via premultiplied/alpha-only edge AA; spherical geodesic coastDistanceKm (<10% error); async/worker <40 ms; seasonal snow & bilinear float Blue Marble",
+      "score": 0.1092,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.1092,
+      "pass": false,
+      "source": "GEBCO/ETOPO1 global bathymetry; Stöckli et al. (2005) NASA Blue Marble Next Generation; spherical geodesic distance"
+    },
+    {
+      "id": "prairie-overhead-lod0-winter-green-hillshade-and-water-box",
+      "label": "pbr.ts Jan-15 green steppeCure=0 & prairiePhoto.ts disabled mipmaps (lod=0), water override, 8x static hillshade & box seam",
+      "measured": "steppeCure(Dec 31)=1.00 -> Jan 1=0.00, Jan 15=0.00, Feb 15=0.00; usesMipmappedSample=false (hardcodes textureLod(..., 0.0)); openLandOnWater=true; hillshadeUsesLiveSun=false (ex=8, flipped -0.45*-sx, 1.18x clip); farGlslFadesAndKeepsLakes=false",
+      "expected": "Winter Jan-Mar steppeCure >= 0.90 (dormant straw, no Jan 1 cliff); mipmapped texture2D() honoring anisotropy=8; openLandHere respects !cover.water; live-sun shading without 8x static bake; farGlsl fades via nearDisc and preserves lake mask",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Flora of China Vol. 22 (Stipa dormancy); OpenGL/WebGL mipmap filtering; Horn (1981) hillshading"
+    },
+    {
+      "id": "globe-quadtree-2to1-handoff-corridor-slope-and-farlayer",
+      "label": "cube.ts tier-0 2:1 quadtree crack (12 edges), handoff.ts midpoint corridor miss & flat-slope viewBlocked, farLayer 4x cliff",
+      "measured": "cube.ts split=1.25 maxNeighbourLevelDiff=2 (12 edges with >=2-level jump); eyeClearOfTrees(tree at 1.1,-1.25)={\"x\":0,\"z\":0} (cleared=false); viewBlockedUsesTerrainSlope=false; farLayerScale(150.1->149.9)=1->0.5 (4x pixel cliff)",
+      "expected": "2:1 balanced quadtree (maxNeighbourLevelDiff <= 1) with terrain elevation in wantsSplit; segment-based eyeClearOfTrees + isDry check; terrain-height-aware viewBlocked; smooth farLayerScale ramp",
+      "score": 0.0338,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.0338,
+      "pass": false,
+      "source": "von Herzen & Barr (1987) restricted 2:1 quadtrees; Boreal tile.ts 1-level edge stitching"
+    },
+    {
+      "id": "rust-instability-cot-moisture-conservation-planet-eval-and-milankovitch",
+      "label": "Rust instability (0/339 tropical), COT (3.18 cumulus vs 11.65 polar), precip +15.4% mass drift & 90.3% sub-sat rain, planet_eval & milankovitch",
+      "measured": "Tropical ocean unstable=0/339 (0.0%, mean -3.24 K/km); scattered cumulus COT=3.18 vs polar overcast COT=11.65; sub-sat (78-92% RH) ocean raining=784/868 (90.3%, max 33.5 mm/d at RH 80.2%); 3d PW drift=+3.93 mm (+15.4%, P/E=1.553); planetEvalUsesRealEarth=false; milankovitch(0).e=0.02400 (+43.6% vs 0.0167086), milankovitch(-25kyr).prec=-65.9 deg, seasons=365.2564 d",
+      "expected": "Moist tropical instability >35% of tropical ocean; in-cloud cumulus COT 10-25 & cold ice COT 1.5-4.0; sub-sat ocean rain <5%; flux-form spherical moisture conservation (<2% drift, P/E~1.0); real-Earth planet_eval (29.2% land); milankovitch(0).e=0.01671, prec in [0,360), tropical year 365.2422 d",
+      "score": 0.0248,
+      "knownMatchScore": 0.9939,
+      "knownMismatchScore": 0.0248,
+      "pass": false,
+      "source": "Wallace & Hobbs (2006) §3.5; Rossow & Schiffer (1999) ISCCP; Trenberth et al. (2007) JHM 8:758; Laskar et al. (2004) A&A 428:261"
+    },
+    {
+      "id": "live-chromium-orbit-prairie-and-winter-steppe",
+      "label": "Live WebGL uncut orbit Jan-15 Red Sea/Eurasia, 2000 m prairie overhead & Tropical Pacific clouds",
+      "measured": "errors=0; recording.webm=67978 B; orbitCoverReady=true (Jan-15 orbit uses August Blue Marble & Red Sea/Baltic/Persian/Caspian a=255); prairie2000m={\"openLand\":1,\"steppeZ\":0,\"photoDown\":0} (textureLod 0.0 active); tropicalOrbit=(5 N, -140 W, day 172; 0/339 tropical ocean unstable, steppeCure(15)=0.00)",
+      "expected": "0 errors; live WebM recording; seasonal winter snow & water-masked enclosed seas from orbit; mipmapped prairie overhead; convective tropical cumulus & dormant Jan-15 winter steppe",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Live WebGL frame-0..2.png + recording.webm vs reference/ref-0..2.jpg"
+    }
+  ],
+  "raw": {
+    "orbitCover": {
+      "buildMs": 532.9054999999998,
+      "redSea": {
+        "r": 4,
+        "g": 6,
+        "b": 8,
+        "a": 255
+      },
+      "balticSea": {
+        "r": 3,
+        "g": 5,
+        "b": 8,
+        "a": 255
+      },
+      "persianGulf": {
+        "r": 12,
+        "g": 11,
+        "b": 9,
+        "a": 255
+      },
+      "caspianSea": {
+        "r": 3,
+        "g": 5,
+        "b": 8,
+        "a": 255
+      },
+      "blackSea": {
+        "r": 2,
+        "g": 3,
+        "b": 6,
+        "a": 41
+      },
+      "honshu": {
+        "r": 10,
+        "g": 12,
+        "b": 7,
+        "a": 194
+      },
+      "trueKm69": 444.52,
+      "gotKm69": 167.67213439941406,
+      "arcticCoastDistRatio": 2.6511262684895684,
+      "diagTrue": 1105.9993221649743,
+      "diagGot": 1553.0623779296875,
+      "eqDiagDistRatio": 1.4042163921851192,
+      "linearByteErrPct": 19.31939183610327,
+      "seasonalOrbitSnow": false
+    },
+    "prairie": {
+      "dec31SteppeCure": 1,
+      "jan1SteppeCure": 0,
+      "jan15SteppeCure": 0,
+      "feb15SteppeCure": 0,
+      "usesMipmappedSample": false,
+      "openOnWater": true,
+      "hillshadeUsesLiveSun": false,
+      "farGlslFadesAndKeepsLakes": false
+    },
+    "globeHandoff": {
+      "leavesCount": 330,
+      "maxNeighbourLevelDiff": 2,
+      "diff2Edges": 12,
+      "clearedMid": {
+        "x": 0,
+        "z": 0
+      },
+      "midpointTreeCleared": false,
+      "viewBlockedUsesTerrainSlope": false,
+      "scaleAbove": 1,
+      "scaleBelow": 0.5
+    },
+    "rustHydroOrbit": {
+      "tropCount": 339,
+      "tropUnstable": 0,
+      "tropMeanInstab": -3.238568624352421,
+      "scatteredCumulusCot": 3.1752638075387174,
+      "polarIceCot": 11.65455259777977,
+      "subSatCells": 868,
+      "subSatRainN": 784,
+      "maxSubSatRain": 33.475146661035424,
+      "maxSubSatRh": 0.8021705100180323,
+      "pw0": 25.51521618078145,
+      "pw1": 28.71839497153776,
+      "netFluxMm": -0.7247130078327121,
+      "waterDriftMm": 3.92789179858902,
+      "waterDriftPct": 15.39431126414513,
+      "globalPrecip": 3.6732413935202306,
+      "globalEvap": 2.365063735762452,
+      "peRatio": 1.553125752163312,
+      "planetEvalUsesRealEarth": false,
+      "mil0": {
+        "obliquityDeg": 23.4393,
+        "e": 0.024,
+        "precessionDeg": 282.937,
+        "approximate": true
+      },
+      "milPast": {
+        "obliquityDeg": 23.95086089044871,
+        "e": 0.039108687631226685,
+        "precessionDeg": -65.90020930232555,
+        "approximate": true
+      },
+      "seasonSumDays": 365.25636000000003
+    },
+    "live": {
+      "recordingBytes": 67978,
+      "orbitCoverReady": true,
+      "prairieState": {
+        "openLand": 1,
+        "steppeZ": 0,
+        "photoDown": 0
+      },
+      "jan15Landing": {
+        "biome": "tropical_ocean",
+        "lat": 5,
+        "lon": -140,
+        "day": 172
+      }
+    }
+  }
+}

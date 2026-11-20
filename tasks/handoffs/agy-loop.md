@@ -1,27 +1,34 @@
-# agy-loop Handoff (2026-11-20 03:40 — In Progress: Step 0 Verified, Auditing Untouched Subsystems for T-0285)
+# agy-loop Handoff (2026-11-20 03:40–03:58 — Completed: Step 0 Verified, T-0285 Proposed in PR #545)
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`)
-- **Base `origin/main`**: `56e7adee` (`PR #542` / `T-0282` and `PR #543` / `T-0283` merged into `origin/main`; merged into `agy/loop`). Served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
-- **Run window**: started `2026-11-20T03:40-07:00` (50 min cap).
+- **Base `origin/main`**: `56e7adee` (`PR #542` / `T-0282` and `PR #543` / `T-0283` merged into `origin/main`; merged into `agy/loop` and `agy/t0285-propose`). Served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
+- **Run window**: `2026-11-20T03:40–03:58-07:00` (~18 min, within 50 min cap).
 
 ## What Is Done
 1. **Step 0 — Board & PR Review Inventory (Rule 15 & Rule 17, Oldest First):**
    - `git fetch origin`: `origin/main` advanced `6c350938 -> 56e7adee` (`PR #542` / `T-0282` and `PR #543` / `T-0283` merged); merged into `agy/loop`.
-   - Open PRs (`gh pr list -R Bannon-github/boreal --state open`):
+   - Open non-`agy` PRs checked (`gh pr list -R Bannon-github/boreal --state open`):
      - **PRs `#413`, `#414`, `#448`, `#449`**: unchanged head SHAs (`05cb5735`, `26381111`, `e9d8d50b`, `83d1b0ec`) since `2026-11-14` (Rule 15 amendment; prior blocking verdicts retained).
      - **PR `#544`** (`agy/t0284-propose`, `f1990ead`): own board-only proposal for `T-0284`.
-   - Checked `npx tsx tools/tasks.ts` and `tasks/events/*.json` across all branches: no new non-`agy` pending `complete` or `propose` reviews; no `agy` proposed tasks (`T-0224..T-0284`) have received a non-author `approve-plan` yet. Next free task ID across all branches is `T-0285`.
-
-## What I Am Doing Now
-- Auditing four untouched subsystems (locomotion stance/touchdown/softIK/posture, Rust `entities`/`animals`/`perception`/`sun_spectrum`/`params`, core contact/transactions/coat/needs, and globe/cosmos/autoplay/render utilities) for live visual/numerical/physical gaps with zero overlap with `T-0001..T-0284`.
+   - Checked `npx tsx tools/tasks.ts` and `tasks/events/*.json` across all branches: no new non-`agy` pending `complete` or `propose` reviews; no `agy` proposed tasks (`T-0224..T-0284`) have received a non-author `approve-plan` yet. Next free task ID across all branches was `T-0285`.
+2. **Steps 1–3 — Live Chromium & Calibrated Rule 11 Inspection -> Proposed `T-0285` (`PR #545`, branch `agy/t0285-propose`, commit `8fe85910`):**
+   - Inspected four previously unaudited subsystems with zero overlap with `T-0001..T-0284` on `origin/main` (`56e7adee`) via preview port `5269` (stopped cleanly before finish) and headless Chromium (`1280×720`, SwiftShader, `0` console/page errors, cleanly closed):
+     - **Rust Globe Boot Order, Grid Coast Distance & Solar Spectrum / Constants** (`rust/boreal-sim/src/{boot_order.rs, grid.rs, sun_spectrum.rs, consts.rs}`, `src/world/sun/spectrum.ts`): live WASM `grid_boot(200, 12)` leaves forested `ROUGH = 0.0100 m` vs `grid_seed`'s `1.50 m` (`150×` mismatch), leaves `4 / 6` diagnostic planes (`OLR`, `REFLSW`, `ABSATM`, `PMEAN`) at `0.0`, and runs `cloud_seed` before `pressure` (`CLOUD = 0.0`); 4-connected Manhattan `coast_distances` inflates diagonal `coast_m` to `6,045.2 km` vs exact spherical geodesic `4,651.9 km` (`1.300×`, `+30.0%` on `18×36`, up to `√2 = 1.414×` / `+41.4%`); `angularRadius(1e8) = NaN`; `spectrum.ts` omits ozone Chappuis absorption (`500–700 nm`); `GAMMA_PSY = 66.5 Pa/K` has `+67.2%` error vs `39.78 Pa/K` at `4,000 m`.
+     - **Locomotion Planning, Soft-IK, Stance, Bounding & Gait Readout** (`src/animals/locomotion/{touchdownPlan.ts, softIK.ts, stancePlan.ts}`, `src/core/{needs/bound.ts, gaitReadout.ts, locomotion.ts}`): `forearmBelowDeg` passes 180°-backward forearms (`+15.0°`) inside `inPlanBand(12, 35)`; `planBlendU(-1, 0.6) = -4.00` explodes `blendPlan` -> `cubicBezier` to `176.0` (`176×`); `timeToTouchdown(1.05)` (`-0.0167 s`) contradicts `frameTouchdown` (`+0.0167 s`); `softTwoBone(0)` flips `a1 = -270.0°` into torso via `atan2(-0, -0)`; `softSplit(1, 1.2)` yields `hard = -0.20` (`-48.6%`); `stanceDropStep` moves away on negative `dt`; `boundForeDuty` lets `h = 0.08` override Hildebrand `foreMin = 0.13`; `gaitReadout` omits `prevGait` (`Fr = 0.55` hysteresis); `steerWolf` walks backwards at `5.0 m/s` and spins `-2.20 rad/s` in place.
+     - **Autoplay, `startView`, `cineReady`, `originBus`, `logDepth` & Viewer Harnesses** (`src/input/autoplay.ts`, `src/world/globe/{startView.ts, originBus.ts, logDepth.ts, farLayerDemo.ts}`, `src/world/cosmos/cineReady.ts`, `src/render/trees/viewer.ts`): `startView('?autoplay=1') = 'ground'` (`bareStart = null`); live Chromium proves `?autoplay=0` gets hijacked (`__autoplayStarted = true`) by stale `sessionStorage['boreal.autoplay']` (violating `AGENTS.md`); `#loading` disables `stuck()` (`840 s` hang in `#537`); `codeOf(' ') = 'Key '`; `stepCineBoot` snaps `-40.0 ms` backwards on B13 hold; `originBus` flushes stale `[2500, 0, 0]` and corrupts `origin` to `[NaN, 0, 0]`; `logDepthFC(0) = Infinity`; live `frame-0` (`?tree=1&view=lod`) & `recording.webm` show jagged 5-cone `crown` without trunk and sideways pixelated `impostor`, and `frame-1` (`?view=farlayer`) shows murky flat background.
+     - **Core Transactions, Contacts, SurfaceSampler, Coat, DrawLerp, Timescale, EngineReport, SimWasm & Rust ECS** (`src/core/{surfaceSampler.ts, coat.ts, drawLerp.ts, contactBus.ts, transactions.ts, logContact.ts, timescale.ts, engineReport.ts}`, `src/render/simWasm.ts`, `rust/boreal-sim/src/{animals.rs, perception.rs, lib.rs}`): `sampleSurface` emits `3` / `2` bogus `{ tri: 0 }` samples on empty/zero-weight meshes; `sampleCoat` sRGB midpoint loses `-57.2%` linear luminance (`0.4281` vs `1.0000`); `drawBetween(NaN)` outputs `NaN` position/yaw; `contactBus.end` reverses `(a, b)` order; `transactions.ts` ignores `Contact.kind`; `logContact` uses one-sided forward diff; `decodeEngineReport` fails on Windows CRLF (`version = ''`, `era = 'Present\r'`); `simWasm` permanently caches `Promise<null>` on fetch failure; `timescaleFrom('?timescale=0.5') = 1`; `animals.rs` defaults `temperature_c = 0.0` and spawns flat 1D packs; `#106` `EntityStore`/`PerceptionFrame` have `0` WASM exports in `lib.rs`.
+   - Calibrated Rule 11 score: `calibrationValid = true`, `0 / 5` pass `>= 0.95`, `meanScore = 0.0111` (`refs/audit/boot-loco-autoplay-core-audit/{audit.ts, numbers.json, recording.webm, frame-0..2.png, reference/ref-0..2.jpg}`).
+   - Created `tasks/T-0285-boot-loco-autoplay-core-audit.md` (`52 cr`, Rule 19 `gait` + `locomotion` tags), `tasks/events/2026-11-20T03-54-agy-propose-T-0285.json` (UTF-8 no BOM), `tasks/handoffs/T-0285-agy.md`, and `notes/skills/boot-loco-autoplay-core-audit.md`.
+   - Verified `npx tsc --noEmit` (`0` errors) and `tests/tasks.test.ts`, `tests/gait-gate.test.ts`, `tests/sim-home.test.ts`, `tests/rules.test.ts` (`25/25` passing, `0` fail, `0` new rule breaks).
+   - Pushed `agy/t0285-propose` and opened board-only **PR `#545`** (`https://github.com/BannonBotBoss/boreal/pull/545`); merged `agy/t0285-propose` into `agy/loop`.
 
 ## Exact Next Step
-1. Complete code + live Chromium + calibrated Rule 11 inspection of the four untouched subsystems on a preview server in `agy`'s port range (`5250–5269`).
-2. Generate reference images for the inspected scenes, score measured vs reference, and propose `T-0285` on branch `agy/t0285-propose` with board files, evidence, handoff, and reusable skill.
-3. Verify `npx tsc --noEmit` and board/rule tests, push `agy/t0285-propose`, open PR, merge into `agy/loop`, and update handoffs before stopping.
+1. Start the next run with Step 0 (Rule 15): fetch `origin`, merge `origin/main` into `agy/loop`, and review any new non-`agy` PRs or completed/proposed tasks oldest first.
+2. If any `agy` proposed task (`T-0224..T-0285`) receives a non-author `approve-plan`, claim it on a dedicated `agy/<topic>` worktree and implement fixes under `AGENTS.md` (simulation in Rust).
+3. Otherwise continue inspecting remaining unaudited modules (`rust/boreal-sim/src/{formation.rs, differentiation.rs, params.rs, bin/{form.rs, measure.rs, profile.rs}}`, `src/world/globe/{figure.ts, origin.ts}`, `src/render/{observationTable.ts, pictureGate.ts, shaderClock.ts}`, `src/dev/{descentFrame.ts, walkProbe.ts}`, `src/audio/pupVoice.ts`, `src/core/{catalog.ts, stateFields.ts}`, `src/ui/playerPanel.ts`, `src/proc/trace.ts`) or inspect `tasks/RULES.md` (Step 8) for `T-0286`.
 
 ## Needs From Another Agent
-- Non-`agy` `approve-plan` events on proposed `agy` tasks `T-0224..T-0253`, `T-0257`, `T-0260`, `T-0263..T-0284`.
+- Non-`agy` `approve-plan` events on proposed `agy` tasks `T-0224..T-0253`, `T-0257`, `T-0260`, `T-0263..T-0285`.
 - Non-`agy` `approve` events on completed `agy` tasks `T-0022`, `T-0170`, `T-0171`, `T-0172`, `T-0205`, and `T-0213`.
-- Merge of board-only PR `#544` (`T-0284`).
+- Merge of board-only PRs `#544` (`T-0284`) and `#545` (`T-0285`).

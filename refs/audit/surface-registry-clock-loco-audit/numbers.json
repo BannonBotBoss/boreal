@@ -1,0 +1,70 @@
+{
+  "auditedAt": "2026-11-20T09:54:41.381Z",
+  "baseUrl": "http://127.0.0.1:5268",
+  "calibrationValid": true,
+  "passed": 0,
+  "total": 5,
+  "meanScore": 0.0058,
+  "errors": [],
+  "recordingBytes": 47638,
+  "labReadoutText": "gait gallop  Fr 9.07  duty 0.30  2.89 Hz  ground  1 sec / sec\nstride 2.42 m  pitch 1.3°  roll 0.0°\nLF φ 0.70 swing\nLH φ 0.25 down\nRF φ 0.85 swing\nRH φ 0.15 down",
+  "dataPanelPlanetExcerpt": "What is running Green is healthy. Yellow needs a look. Red is an error or outside the model. Grey has not been called, or is not active at this time. Time (cycles) 61.90739428829973 cycles = 4.355e+17 seconds = 1.380e+10 years. today Following the game clock. Follow game clock Spawn log spacetime spawned at t=4.355e+17 s, because root. reheating spawned by spacetime at t=1.014e-32 s, because ε=1. ",
+  "groundChronoText": "Chronometer00061218☀10:06sun 48° upArrows or D-pad · LS: scrub time · drag the dial · T / D-pad ↑ / B: close | drive=mode=linger d=11.00m",
+  "checks": [
+    {
+      "id": "rust-surface-roughness-heatcap-and-emergent-tidal",
+      "label": "Rust surface snow-forest z0 collapse, arithmetic log mix, sea-ice z0 & heatcap, unused SNOW_SURF.rs & emergent.rs softening/Roche",
+      "measured": "winter boreal forest (SWE=30.0 mm, snowFrac=1.00) z0=0.0010 m vs summer 1.50 m (1500x collapse); half-snow (10 mm SWE) z0=0.7505 m vs geom mean 0.0387 m (19.38x); Arctic sea ice (ice=0.98) z0=0.0002 m & heatcap=2.09e+8 J/m^2/K; snowRsUsed=false; emergent(n=3000) soft=441.7 km (25.4% R_moon), rocheUsesRp=false, panicUnwrap=true, demoObjs=2",
+      "expected": "snow-covered boreal forest z0~0.8-1.5 m (canopy above snow); geometric mean log-blend (ratio~1.0x); sea ice z0~0.001-0.01 m & heatcap~2-4e6 J/m^2/K; snow sublimation rs->0; emergent soft<=5% R_moon, Roche uses R_p & mean/half-mass radius, NaN-safe sort",
+      "score": 0.0287,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0.0287,
+      "pass": false,
+      "source": "Betts & Ball (1997) JGR 102:28901; Stull (1988); Guest & Davidson (1991) JGR 96:4709; Maykut & Untersteiner (1971); Chandrasekhar (1969)"
+    },
+    {
+      "id": "rust-registry-budyko-friedmann-coriolis-manual-and-drives",
+      "label": "Rust registry Budyko (+515 C), Friedmann rho=rho_c (+68.5%), Coriolis f=2*Omega, dead manual_spawn & drives 12-13 m split / Mach 1.23 teleport",
+      "measured": "Budyko Q=1361 W/m^2 (4x S0/4) & alpha=0.06 => implied T=514.9 C vs reported 16.2 C (err 498.7 C); Friedmann H^2_rhs/H^2=1.685 (+68.5%); Wind f=1.4584e-4 vs 45N 1.0313e-4 (+41.4%); manualSpawnEvaluated=false (health=0, vars=0); 12.5m threat live=1 vs panel=0; 4m fox teleport=+7.00 m in 1 frame (420 m/s = Mach 1.22); hunger 0->100% fox=83.3 s (0.023 h), wolf=166.7 s",
+      "expected": "Budyko Q=S0/4~340.25 W/m^2 & planetary alpha~0.29 (T residual <5 C); Friedmann rho=(rho_m+rho_r)/c^2 (ratio 1.000); Coriolis f=2*Omega*sin(lat); manual_spawn evaluated by uid; live & panel share PROTECT_M; finite-speed fox retreat (<0.2 m/frame); physiological hunger timescale (>=12 h)",
+      "score": 0.0003,
+      "knownMatchScore": 0.9857,
+      "knownMismatchScore": 0.0003,
+      "pass": false,
+      "source": "Stephens et al. (2015) Rev. Geophys. 53:141; Loeb et al. (2018) CERES EBAF; Planck (2018) A&A 641 A6; Lariviere & Pasitschniak-Arts (1996); Mech (1974)"
+    },
+    {
+      "id": "worldclock-hysteresis-loss-observation-rate-settings-and-frame",
+      "label": "worldClock.ts 50-99.8% hysteresis time loss, unwired observationRecord().rate, clampVideo h=0 & unvalidated settings store",
+      "measured": "decel behavioral->immediate: at 10x sim=0+agg=0.500=0.500 (50.0% lost), at 8.1x sim=0+agg=0.00184=0.00184 (99.8% lost); observationRecord().rate=1 when clockRate=1000000 & 1 when clockRate=-100; clampVideo(3000,1)=1920x0; poisoned storage set RENDER.treeDensity=-5",
+      "expected": "simWorldSec + aggregateWorldSec === wDt (1.000) across hysteresis band; observationRecord().rate === clockRate(); clampVideo w,h >= 2; createSettingsStore clamps/validates loaded values",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "GitHub issue #109 continuous scale blend contract; src/core/worldClock.ts:320; src/render/environment.ts:9"
+    },
+    {
+      "id": "wolfbody-teeth-ears-lab-centripetal-spring-and-boundscore",
+      "label": "wolfBody 28/42 teeth, bodyTubes 8.0 cm ears & +4 mm sole, lab 1.0-2.25 g zero-bank turn, spring +19.3% half-life & boundScore/contactScore bugs",
+      "measured": "wolfTeeth=28/42 (-33.3%); shaped ear=8.02 cm (orig 11.79 cm), sole minY=+4.0 mm; lab R=5 m gallop 7 m/s a_c=1.00 g (need 45.0 deg bank, got 0.0 deg) & 10.5 m/s a_c=2.25 g (need 66.0 deg); springTo(1->0, hl=0.1, dt=0.1)=0.5966 (+19.3% vs 0.5000), hl=0 spike v=-48045 rad/s; boundScore curved overtake=-9.68 m vs true +0.30 m (err 9.98 m); contactScoreMultiSplit=false",
+      "expected": "42 canid teeth; adult gray-wolf ear 9-11 cm & sole y=0; centripetal inward bank atan(v^2/(gR)) & speed/radius cap <= 1.0 g; critically damped half-life 0.5000 (+/-1%) & finite hl=0 snap; heading-invariant overtake (err <0.05 m); multi-event contactScore split",
+      "score": 0,
+      "knownMatchScore": 0.9983,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Mech (1974) Mammalian Species 37; Alexander (2002) Principles of Animal Locomotion; Holden (2021) Spring-It-On; Hildebrand (1977); Schmidt (2008)"
+    },
+    {
+      "id": "live-chromium-lab-data-panel-and-ground",
+      "label": "Live headless Chromium WebGL recording & 3 frames (Locomotion Lab 7 m/s circle, Data Panel Budyko/Friedmann/Wind, Ground Chronometer & Drives)",
+      "measured": "errors=0; recording.webm=47638 B; frames=3/3; labBankOk=false (roll=0.0 deg at 1.0 g); dataPanelBudykoOk=false (implied 514.9 C); drivesNoTeleportOk=false (+7.00 m/frame)",
+      "expected": "0 console/page errors; live WebGL video + 3 frames matching scientific & wildlife references (banked wolf turn with 9-11 cm ears, self-consistent Budyko/Friedmann/Coriolis readouts, smooth non-teleporting fox & continuous clock)",
+      "score": 0,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "pass": false,
+      "source": "Live WebGL frame-0..2.png + recording.webm vs reference/ref-0..2.jpg"
+    }
+  ]
+}

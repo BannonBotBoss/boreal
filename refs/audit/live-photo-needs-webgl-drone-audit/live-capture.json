@@ -1,0 +1,600 @@
+{
+  "meta": {
+    "port": 5269,
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "capturedAt": "2026-11-21T16:56:30.818Z",
+    "screencastFrames": 139,
+    "recordingBytes": 2376731
+  },
+  "consoleErrors": [],
+  "pageErrors": [],
+  "part1_photoRewindVideoSeqEdit": {
+    "walkDist": 9.755,
+    "photoInit": {
+      "photoHidden": false,
+      "timeMin": "0",
+      "timeMax": 38,
+      "timeVal": 38,
+      "whenText": "live",
+      "focalAttrMin": "12",
+      "focalAttrVal": "12"
+    },
+    "rewindState": {
+      "when": "−11.5 s",
+      "gridHidden": false,
+      "wolfPos": {
+        "x": 65.40000017243321,
+        "z": -18.60000009049996,
+        "yaw": 2.0541182735010186,
+        "energy": 74.85624039426176,
+        "water": 99.9342776737769,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      }
+    },
+    "wolfRewoundDistFromLive": 9.755,
+    "afterShotNotice": "Photo kept (1 this session). Choose size and export when you leave photo mode.",
+    "afterRewindSeqNotice": "Sequence kept (2 this session). Choose size and export when you leave photo mode.",
+    "whileRecording": {
+      "hasRecordingClass": true,
+      "notice": "Recording 1280×720. Press R to stop.",
+      "canvasW": 1280,
+      "canvasH": 720,
+      "objectFit": "contain"
+    },
+    "afterRecording": {
+      "hasRecordingClass": false,
+      "notice": "Video kept (3 this session). Choose size and export when you leave photo mode.",
+      "canvasW": 1280,
+      "canvasH": 720,
+      "objectFit": ""
+    },
+    "gallerySummary": {
+      "open": true,
+      "heading": "Photo session · 3 capture(s)",
+      "figures": [
+        {
+          "id": "1",
+          "caption": "photo Preview Edit Delete",
+          "checked": true,
+          "hasEdit": true,
+          "hasRevert": false
+        },
+        {
+          "id": "2",
+          "caption": "sequence (2) Preview Edit Delete",
+          "checked": true,
+          "hasEdit": true,
+          "hasRevert": false
+        },
+        {
+          "id": "3",
+          "caption": "video 1280×720 Preview Delete",
+          "checked": true,
+          "hasEdit": false,
+          "hasRevert": false
+        }
+      ]
+    },
+    "zipCheck": {
+      "count": 1,
+      "last": {
+        "name": "boreal_2026-11-21-16-57-30.zip",
+        "type": "application/zip",
+        "size": 4203959
+      },
+      "magic": "504b0304",
+      "notice": "Exported 1 file(s)."
+    },
+    "editInReview": {
+      "photoHidden": false,
+      "hasEditingClass": true
+    },
+    "afterSaveEdit": {
+      "galleryOpen": true,
+      "revertCount": 1
+    },
+    "afterRevert": {
+      "revertCount": 0
+    },
+    "vfGalleryOpen": true,
+    "editFromVfBar": {
+      "bodyHasPhotoModeClass": false,
+      "photoHidden": false,
+      "hasEditingClass": true,
+      "editBarRect": {
+        "x": 14,
+        "y": 652,
+        "width": 165.171875,
+        "height": 54,
+        "top": 652,
+        "right": 179.171875,
+        "bottom": 706,
+        "left": 14
+      },
+      "panelVisible": true,
+      "statusStillVisible": true,
+      "headerStillVisible": true,
+      "notice": "Editing: fly/zoom, change any setting, roll = straighten, aspect = crop. Save or Cancel below.",
+      "worldKeptSimulatingWhileEditing": true,
+      "shaderTimeDeltaDuringEdit": 0.814,
+      "wolfWalkedInsteadOfCameraFly": 2.6
+    },
+    "exitWhileRecordingRace": {
+      "photoHidden": true,
+      "bodyHasPhotoMode": false,
+      "galleryOpen": false,
+      "notice": "Video kept (1 this session). Choose size and export when you leave photo mode."
+    }
+  },
+  "part2_needsThoughtsHaloVCamWolfModes": {
+    "needsInitial": {
+      "statusText": "08:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 8/100 · Water 8% · Rest 8%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+      "connectedGamepads": 0,
+      "player": {
+        "x": 65.40000049603653,
+        "z": -18.60000026033991,
+        "yaw": 8.337303580680604,
+        "energy": 7.9288560015712335,
+        "water": 7.967461031454436,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      }
+    },
+    "hardcodedXboxPromptWithZeroPads": true,
+    "lowEnergyJumpNotice": "",
+    "haloToggle": {
+      "haloBefore": null,
+      "haloAfterOff": {
+        "ls": "0",
+        "notice": "Senses halo off (O)"
+      },
+      "haloAfterOn": {
+        "ls": "1",
+        "notice": "Senses halo on (O)"
+      }
+    },
+    "vClosedPanel": {
+      "notice": "Manual camera settings are locked: earn the exposure badge (Badges tab).",
+      "padMenuOpen": true,
+      "padMenuActiveTab": "Badges"
+    },
+    "vUnlockedBefore": {
+      "padxExists": true,
+      "padxText": "📷 Auto exposure: On · LBRB setting · LTRT adjust · X auto · RS shutter · B done",
+      "rect": {
+        "x": 360,
+        "y": 625.875,
+        "width": 560,
+        "height": 70.125,
+        "top": 625.875,
+        "right": 920,
+        "bottom": 696,
+        "left": 360
+      }
+    },
+    "vUnlockedAfterKeys": {
+      "padxStillPresent": true,
+      "padxText": "📷 Auto exposure: On · LBRB setting · LTRT adjust · X auto · RS shutter · B done",
+      "pauseMenuOpenedBehind": true
+    },
+    "vKeyboardCannotChangeSetting": true,
+    "wolfSprintExhaustion": {
+      "staminaStartLine": "08:11 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 8/100 · Water 8% · Rest 9%",
+      "maxSprintModeSeen": "SPRINT",
+      "staminaEndText": "08:13 · SPRINT · Snow 0.0 cm · Stamina 0/100 · Energy 7/100 · Water 7% · Rest 7%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+      "hardcodedTriggersOnExhausted": false
+    }
+  },
+  "part3_audioHotkeysResizeWebglLoss": {
+    "audioHotkeys": {
+      "volInitial": {},
+      "volAfterCtrlMinusAndCtrlM": {
+        "vol": {
+          "volume.master": 0.8,
+          "volume.music": 0.6,
+          "volume.ambience": 1,
+          "volume.sfx": 1,
+          "volume.voice": 1,
+          "volume.ui": 1,
+          "volume.muted": true,
+          "volume.musicOn": true
+        },
+        "notice": "",
+        "noticeVisible": false
+      },
+      "activeTagInPhotoSelect": "SELECT",
+      "volBeforeSelectKeys": {
+        "volume.master": 0.8,
+        "volume.music": 0.6,
+        "volume.ambience": 1,
+        "volume.sfx": 1,
+        "volume.voice": 1,
+        "volume.ui": 1,
+        "volume.muted": true,
+        "volume.musicOn": true
+      },
+      "volAfterSelectKeys": {
+        "volume.master": 0.7,
+        "volume.music": 0.5,
+        "volume.ambience": 1,
+        "volume.sfx": 1,
+        "volume.voice": 1,
+        "volume.ui": 1,
+        "volume.muted": false,
+        "volume.musicOn": true
+      },
+      "selectKeyHijackedAudio": true
+    },
+    "liveResize": {
+      "layout1280": {
+        "paused": false,
+        "innerW": 1280,
+        "innerH": 720,
+        "canvasW": 640,
+        "canvasH": 360,
+        "clientW": 1280,
+        "clientH": 720,
+        "headerVsStatusPx2": 0,
+        "rects": {
+          "header": {
+            "x": 34,
+            "y": 30,
+            "width": 226.84375,
+            "height": 100,
+            "top": 30,
+            "right": 260.84375,
+            "bottom": 130,
+            "left": 34
+          },
+          "status": {
+            "x": 756.296875,
+            "y": 30,
+            "width": 497.703125,
+            "height": 88.78125,
+            "top": 30,
+            "right": 1254,
+            "bottom": 118.78125,
+            "left": 756.296875
+          },
+          "footer": {
+            "x": 30,
+            "y": 647.203125,
+            "width": 1220,
+            "height": 52.796875,
+            "top": 647.203125,
+            "right": 1250,
+            "bottom": 700,
+            "left": 30
+          }
+        }
+      },
+      "layout640": {
+        "paused": false,
+        "innerW": 640,
+        "innerH": 720,
+        "canvasW": 320,
+        "canvasH": 360,
+        "clientW": 640,
+        "clientH": 720,
+        "headerVsStatusPx2": 0,
+        "rects": {
+          "header": {
+            "x": 18,
+            "y": 18,
+            "width": 181.78125,
+            "height": 67,
+            "top": 18,
+            "right": 199.78125,
+            "bottom": 85,
+            "left": 18
+          },
+          "status": {
+            "x": 221.921875,
+            "y": 18,
+            "width": 404.078125,
+            "height": 70,
+            "top": 18,
+            "right": 626,
+            "bottom": 88,
+            "left": 221.921875
+          },
+          "footer": {
+            "x": 12,
+            "y": 573.203125,
+            "width": 616,
+            "height": 134.796875,
+            "top": 573.203125,
+            "right": 628,
+            "bottom": 708,
+            "left": 12
+          }
+        }
+      },
+      "layout800": {
+        "paused": false,
+        "innerW": 800,
+        "innerH": 600,
+        "canvasW": 400,
+        "canvasH": 300,
+        "clientW": 800,
+        "clientH": 600,
+        "headerVsStatusPx2": 0,
+        "rects": {
+          "header": {
+            "x": 34,
+            "y": 30,
+            "width": 226.84375,
+            "height": 100,
+            "top": 30,
+            "right": 260.84375,
+            "bottom": 130,
+            "left": 34
+          },
+          "status": {
+            "x": 276.296875,
+            "y": 30,
+            "width": 497.703125,
+            "height": 88.78125,
+            "top": 30,
+            "right": 774,
+            "bottom": 118.78125,
+            "left": 276.296875
+          },
+          "footer": {
+            "x": 30,
+            "y": 437.203125,
+            "width": 740,
+            "height": 142.796875,
+            "top": 437.203125,
+            "right": 770,
+            "bottom": 580,
+            "left": 30
+          }
+        }
+      },
+      "layoutRestored": {
+        "paused": false,
+        "innerW": 1280,
+        "innerH": 720,
+        "canvasW": 640,
+        "canvasH": 360,
+        "clientW": 1280,
+        "clientH": 720,
+        "headerVsStatusPx2": 0,
+        "rects": {
+          "header": {
+            "x": 34,
+            "y": 30,
+            "width": 226.84375,
+            "height": 100,
+            "top": 30,
+            "right": 260.84375,
+            "bottom": 130,
+            "left": 34
+          },
+          "status": {
+            "x": 756.296875,
+            "y": 30,
+            "width": 497.703125,
+            "height": 88.78125,
+            "top": 30,
+            "right": 1254,
+            "bottom": 118.78125,
+            "left": 756.296875
+          },
+          "footer": {
+            "x": 30,
+            "y": 647.203125,
+            "width": 1220,
+            "height": 52.796875,
+            "top": 647.203125,
+            "right": 1250,
+            "bottom": 700,
+            "left": 30
+          }
+        }
+      }
+    },
+    "webglContextLoss": {
+      "supported": true,
+      "isContextLost": true,
+      "bodyHasGlLost": true,
+      "noticeText": "Graphics stopped. Your committed events are saved. Reload the page to bring the forest back.",
+      "noticeDisplay": "block",
+      "noticeReloadButtonCount": 0,
+      "rafTicksAfterLoss": 42,
+      "hudStillInteractive": {
+        "pauseClickable": true,
+        "photoClickable": true
+      },
+      "consoleErrorsAfterLossCount": 0,
+      "consoleWarningsAfterLossCount": 0,
+      "sampleWarningsAfterLoss": [],
+      "sampleErrorsAfterLoss": []
+    }
+  },
+  "part4_inpageDroneFlightBand": {
+    "ascentSampleCount": 3,
+    "ascentLastSamples": [
+      {
+        "mode": "band",
+        "flightPhase": "drone",
+        "h": 114,
+        "globeAlt": 114,
+        "fade": 1
+      },
+      {
+        "mode": "band",
+        "flightPhase": "drone",
+        "h": 2100,
+        "globeAlt": 2100,
+        "fade": 0
+      },
+      {
+        "mode": "globe",
+        "flightPhase": "orbit",
+        "h": 2100,
+        "globeAlt": 14016219,
+        "fade": 0
+      }
+    ],
+    "ascentPeakBandH": 2100,
+    "ascentFirstGlobeAlt": 14016219,
+    "ascentSnapFactor": 6674.4,
+    "descentFinalSample": {
+      "mode": "band",
+      "flightPhase": "drone",
+      "h": 400,
+      "globeAlt": 400,
+      "fade": 0,
+      "ready": false,
+      "prompt": "Gliding above the land · WASD fly · drag look · Q/E or Space/Ctrl down/up · Shift fast · G become the wolf · Esc planet. Same fly as photo mode. Speed carries on."
+    },
+    "droneBeforeMove": {
+      "mode": "band",
+      "h": 400.35444614648907,
+      "cam": [
+        62.888138346416426,
+        403.7504251084416,
+        -17.281673305540693
+      ],
+      "airRush": 8.000000000000012,
+      "fogColor": [
+        0.45,
+        0.62,
+        0.9
+      ]
+    },
+    "droneAfterMove": {
+      "mode": "band",
+      "h": 401.43873006784906,
+      "cam": [
+        59.45803505390756,
+        404.3547296935562,
+        -15.481416221789356
+      ],
+      "airRush": 8.000000000000004
+    },
+    "droneMovedXZ": 3.87,
+    "droneClimbedM": 1.08,
+    "embodyTrace": [
+      {
+        "t": 48533,
+        "mode": "band",
+        "phase": "drone",
+        "h": 401,
+        "camY": 404.35
+      },
+      {
+        "t": 48951,
+        "mode": "band",
+        "phase": "drone",
+        "h": 401,
+        "camY": 404.35
+      },
+      {
+        "t": 51414,
+        "mode": "game",
+        "phase": "game",
+        "h": 401,
+        "camY": 4.47
+      },
+      {
+        "t": 51455,
+        "mode": "game",
+        "phase": "game",
+        "h": 401,
+        "camY": 4.47
+      },
+      {
+        "t": 52222,
+        "mode": "game",
+        "phase": "game",
+        "h": 401,
+        "camY": 4.47
+      },
+      {
+        "t": 52254,
+        "mode": "game",
+        "phase": "game",
+        "h": 401,
+        "camY": 4.47
+      },
+      {
+        "t": 52408,
+        "mode": "game",
+        "phase": "game",
+        "h": 401,
+        "camY": 4.47
+      },
+      {
+        "t": 52730,
+        "mode": "game",
+        "phase": "game",
+        "h": 401,
+        "camY": 4.45
+      },
+      {
+        "t": 52790,
+        "mode": "game",
+        "phase": "game",
+        "h": 401,
+        "camY": 4.44
+      },
+      {
+        "t": 53130,
+        "mode": "game",
+        "phase": "game",
+        "h": 401,
+        "camY": 4.36
+      },
+      {
+        "t": 53492,
+        "mode": "game",
+        "phase": "game",
+        "h": 401,
+        "camY": 4.3
+      },
+      {
+        "t": 53836,
+        "mode": "game",
+        "phase": "game",
+        "h": 401,
+        "camY": 4.26
+      },
+      {
+        "t": 54821,
+        "mode": "game",
+        "phase": "game",
+        "h": 401,
+        "camY": 4.29
+      }
+    ],
+    "midnightDrone": {
+      "mode": "band",
+      "flightPhase": "drone",
+      "h": 400,
+      "clock": "01:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+      "fogColorRgb": [
+        0.45,
+        0.62,
+        0.9
+      ],
+      "prompt": "Gliding above the land · WASD fly · drag look · Q/E or Space/Ctrl down/up · Shift fast · G become the wolf · Esc planet. Same fly as photo mode. Speed carries on."
+    },
+    "afterDroneEsc": {
+      "mode": "globe",
+      "flightPhase": "orbit",
+      "globeAltM": 6096,
+      "startMenuOpen": false
+    }
+  }
+}

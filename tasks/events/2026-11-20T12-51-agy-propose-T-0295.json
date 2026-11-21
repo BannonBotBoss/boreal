@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0295",
+  "agent": "agy",
+  "at": "2026-11-20T12:51:00-08:00",
+  "note": "Propose T-0295 from calibrated Rule 11 audit (calibrationValid=true, 0/4 pass >=0.95, meanScore=0.1417) + live production dist/ & /boreal/ preview capture (port 5262, 0 console errors, 73,521 B WebM recording, 3 live PNGs vs 2 references) covering 21.71 MB dist/assets bloat & eager 5.92 MB VR session download on desktop boot, vendor/detect-gpu missing sourcemap/CDN default/RTX 5060 & 4 unwired Rust WASM exports, 23 non-sim view files in sim-home-ceiling.json & dead src/render/fur.ts, and PROJECT-RULES/docs/OpenStax CC BY-NC-SA drift. Evidence: refs/audit/prod-bundle-vendor-wasm-docs-audit/{audit.ts,numbers.json,live-capture.json,recording.webm,frame-0..2.png,reference/ref-0..1.jpg}. Skill: notes/skills/prod-bundle-vendor-wasm-docs-audit.md."
+}

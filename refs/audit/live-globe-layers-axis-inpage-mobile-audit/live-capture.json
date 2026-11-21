@@ -1,0 +1,597 @@
+{
+  "capturedAt": "2026-11-21T10:46:08.662Z",
+  "port": 5268,
+  "base": "http://127.0.0.1:5268",
+  "part1_globeLayersAndHadean": {
+    "globeInit": {
+      "seed": 1400,
+      "altM": 14016219.359999985,
+      "bootSettled": true,
+      "orbitCover": true,
+      "checkboxCount": 11,
+      "checkboxes": [
+        {
+          "layer": "clouds",
+          "checked": true,
+          "disabled": false,
+          "label": "Clouds"
+        },
+        {
+          "layer": "sunlight",
+          "checked": true,
+          "disabled": false,
+          "label": "Sunlight"
+        },
+        {
+          "layer": "atmosphere",
+          "checked": true,
+          "disabled": false,
+          "label": "Atmosphere"
+        },
+        {
+          "layer": "aurora",
+          "checked": true,
+          "disabled": false,
+          "label": "Aurora"
+        },
+        {
+          "layer": "snowIce",
+          "checked": true,
+          "disabled": false,
+          "label": "Snow / ice"
+        },
+        {
+          "layer": "vegetation",
+          "checked": true,
+          "disabled": false,
+          "label": "Vegetation"
+        },
+        {
+          "layer": "ocean",
+          "checked": true,
+          "disabled": false,
+          "label": "Ocean"
+        },
+        {
+          "layer": "fieldLines",
+          "checked": false,
+          "disabled": false,
+          "label": "Field lines"
+        },
+        {
+          "layer": "plates",
+          "checked": false,
+          "disabled": false,
+          "label": "Plates"
+        },
+        {
+          "layer": "venus",
+          "checked": true,
+          "disabled": false,
+          "label": "Venus"
+        },
+        {
+          "layer": "airglow",
+          "checked": true,
+          "disabled": false,
+          "label": "Airglow (OI 557.7)"
+        }
+      ],
+      "layerBox": {
+        "left": 1138,
+        "top": 8,
+        "right": 1272,
+        "bottom": 253
+      },
+      "camBox": {
+        "left": 1036,
+        "top": 680,
+        "right": 1272,
+        "bottom": 712
+      }
+    },
+    "beforeWhiteFrac": 0,
+    "layerTests": {
+      "clouds": {
+        "found": true,
+        "focusedBefore": true,
+        "sameDomNodeAfterClick": false,
+        "activeTagAfterClick": "BODY",
+        "activeLayerAfterClick": null,
+        "checkedAfter": false,
+        "diff": {
+          "changedPx": 0,
+          "totalPx": 14400,
+          "fracChanged": 0,
+          "meanAbsDiff": 0
+        },
+        "preWhiteFrac": 0,
+        "postWhiteFrac": 0
+      },
+      "vegetation": {
+        "found": true,
+        "focusedBefore": true,
+        "sameDomNodeAfterClick": false,
+        "activeTagAfterClick": "BODY",
+        "activeLayerAfterClick": null,
+        "checkedAfter": false,
+        "diff": {
+          "changedPx": 0,
+          "totalPx": 14400,
+          "fracChanged": 0,
+          "meanAbsDiff": 0
+        },
+        "preWhiteFrac": 0,
+        "postWhiteFrac": 0
+      },
+      "ocean": {
+        "found": true,
+        "focusedBefore": true,
+        "sameDomNodeAfterClick": false,
+        "activeTagAfterClick": "BODY",
+        "activeLayerAfterClick": null,
+        "checkedAfter": false,
+        "diff": {
+          "changedPx": 0,
+          "totalPx": 14400,
+          "fracChanged": 0,
+          "meanAbsDiff": 0
+        },
+        "preWhiteFrac": 0,
+        "postWhiteFrac": 0
+      },
+      "venus": {
+        "found": true,
+        "focusedBefore": true,
+        "sameDomNodeAfterClick": false,
+        "activeTagAfterClick": "BODY",
+        "activeLayerAfterClick": null,
+        "checkedAfter": false,
+        "diff": {
+          "changedPx": 0,
+          "totalPx": 14400,
+          "fracChanged": 0,
+          "meanAbsDiff": 0
+        },
+        "preWhiteFrac": 0,
+        "postWhiteFrac": 0
+      },
+      "sunlight": {
+        "found": true,
+        "focusedBefore": true,
+        "sameDomNodeAfterClick": false,
+        "activeTagAfterClick": "BODY",
+        "activeLayerAfterClick": null,
+        "checkedAfter": false,
+        "diff": {
+          "changedPx": 0,
+          "totalPx": 14400,
+          "fracChanged": 0,
+          "meanAbsDiff": 0
+        },
+        "preWhiteFrac": 0,
+        "postWhiteFrac": 0
+      }
+    },
+    "hadeanState": {
+      "checkboxes": [
+        {
+          "layer": "clouds",
+          "checked": true,
+          "disabled": true,
+          "label": "Clouds (not yet formed)"
+        },
+        {
+          "layer": "sunlight",
+          "checked": true,
+          "disabled": false,
+          "label": "Sunlight"
+        },
+        {
+          "layer": "atmosphere",
+          "checked": true,
+          "disabled": false,
+          "label": "Atmosphere"
+        },
+        {
+          "layer": "aurora",
+          "checked": true,
+          "disabled": true,
+          "label": "Aurora (not yet formed)"
+        },
+        {
+          "layer": "snowIce",
+          "checked": true,
+          "disabled": true,
+          "label": "Snow / ice (not yet formed)"
+        },
+        {
+          "layer": "vegetation",
+          "checked": true,
+          "disabled": true,
+          "label": "Vegetation (not yet formed)"
+        },
+        {
+          "layer": "ocean",
+          "checked": true,
+          "disabled": true,
+          "label": "Ocean (not yet formed)"
+        },
+        {
+          "layer": "fieldLines",
+          "checked": false,
+          "disabled": true,
+          "label": "Field lines (not yet formed)"
+        },
+        {
+          "layer": "plates",
+          "checked": false,
+          "disabled": true,
+          "label": "Plates (not yet formed)"
+        },
+        {
+          "layer": "venus",
+          "checked": true,
+          "disabled": false,
+          "label": "Venus"
+        },
+        {
+          "layer": "airglow",
+          "checked": true,
+          "disabled": false,
+          "label": "Airglow (OI 557.7)"
+        }
+      ],
+      "altM": 14016219.359999985
+    },
+    "hadeanPixels": {
+      "discTotal": 0,
+      "discWhite": 0,
+      "whiteFrac": 0,
+      "meanLum": 0
+    },
+    "recordingBytes": 370162,
+    "hadeanCompositorAnalysis": {
+      "litPx": 54830,
+      "whiteCloudPx": 21318,
+      "whiteCloudFrac": 0.3888,
+      "blueOceanPx": 8359,
+      "blueOceanFrac": 0.1525,
+      "meanLum": 0.5709
+    },
+    "compositorBaseDisc": {
+      "litPx": 54483,
+      "whiteCloudPx": 21182,
+      "whiteCloudFrac": 0.3888,
+      "blueOceanPx": 8163,
+      "blueOceanFrac": 0.1498,
+      "meanLum": 0.5702
+    },
+    "compositorDiffs": {
+      "clouds": {
+        "diff": {
+          "changedPx": 14935,
+          "totalPx": 78400,
+          "fracChanged": 0.1905,
+          "meanAbsDiff": 2.4333
+        },
+        "offDisc": {
+          "litPx": 54384,
+          "whiteCloudPx": 21019,
+          "whiteCloudFrac": 0.3865,
+          "blueOceanPx": 8222,
+          "blueOceanFrac": 0.1512,
+          "meanLum": 0.5693
+        }
+      },
+      "vegetation": {
+        "diff": {
+          "changedPx": 14935,
+          "totalPx": 78400,
+          "fracChanged": 0.1905,
+          "meanAbsDiff": 2.4333
+        },
+        "offDisc": {
+          "litPx": 54384,
+          "whiteCloudPx": 21019,
+          "whiteCloudFrac": 0.3865,
+          "blueOceanPx": 8222,
+          "blueOceanFrac": 0.1512,
+          "meanLum": 0.5693
+        }
+      },
+      "ocean": {
+        "diff": {
+          "changedPx": 14935,
+          "totalPx": 78400,
+          "fracChanged": 0.1905,
+          "meanAbsDiff": 2.4333
+        },
+        "offDisc": {
+          "litPx": 54384,
+          "whiteCloudPx": 21019,
+          "whiteCloudFrac": 0.3865,
+          "blueOceanPx": 8222,
+          "blueOceanFrac": 0.1512,
+          "meanLum": 0.5693
+        }
+      },
+      "venus": {
+        "diff": {
+          "changedPx": 14935,
+          "totalPx": 78400,
+          "fracChanged": 0.1905,
+          "meanAbsDiff": 2.4333
+        },
+        "offDisc": {
+          "litPx": 54384,
+          "whiteCloudPx": 21019,
+          "whiteCloudFrac": 0.3865,
+          "blueOceanPx": 8222,
+          "blueOceanFrac": 0.1512,
+          "meanLum": 0.5693
+        }
+      },
+      "sunlight": {
+        "diff": {
+          "changedPx": 54472,
+          "totalPx": 78400,
+          "fracChanged": 0.6948,
+          "meanAbsDiff": 78.6709
+        },
+        "offDisc": {
+          "litPx": 42812,
+          "whiteCloudPx": 18,
+          "whiteCloudFrac": 0.0004,
+          "blueOceanPx": 21121,
+          "blueOceanFrac": 0.4933,
+          "meanLum": 0.137
+        }
+      }
+    }
+  },
+  "part2_axisCutawayAndParcels": {
+    "axisInitial": {
+      "uiPresent": true,
+      "uiDisplay": "block",
+      "preText": "û  lat 90.00°  lon 0.00°\nr  0.0 km   depth 6356.83 km\n   above sea -6356.83 km, above mean R -6371.01 km\nlayer inner core\nρ 13088.500 kg/m³   T 6300.0000 K\nP 3.64e+11 Pa   g 0.000 m/s² (PREM)"
+    },
+    "axisAfterDblClick": {
+      "preText": "û  lat 49.77°  lon 65.54°\nr  0.0 km   depth 6366.05 km\n   above sea -6365.68 km, above mean R -6371.01 km\nlayer inner core\nρ 13088.500 kg/m³   T 6300.0000 K\nP 3.64e+11 Pa   g 0.000 m/s² (PREM)",
+      "cameraSubLatDeg": 49.77,
+      "cameraSubLonDeg": 65.54
+    },
+    "axisAfterButtons": {
+      "preText": "û  lat 49.77°  lon 65.54°\nr  0.0 km   depth 6366.05 km\n   above sea -6365.68 km, above mean R -6371.01 km\nlayer inner core\nρ 13088.500 kg/m³   T 6300.0000 K\nP 3.64e+11 Pa   g 0.000 m/s² (PREM)\n  sim day 227 3.6 h UTC  q 8.29 g/kg  cloud 1.00 τ 12.0\nRT  TSI 1361.7  μ☉ 0.539  surface lake α 0.060\n  in 733.4  refl atm 442.5 surf 3.4  abs atm 136.5 surf 151.0 W/m²  glint BRF 0.000\nbodies [relaxed PREM Earth]: 1 object (FoF b 0.2 + unbinding)\n  M 5.9732e+24 kg  2000 p trusted\n  COM offset 112.1 km  L_z 5.896e+33  layers 5\nparcels [5563 relaxed SPH parcels, 39.5 h settled]\n  M 5.9722e+24 kg (-0.00 %)  COM 1.9e+4 m\n  R_vol 6532.1 km (2.53 %)\n  J2 7.878e-4 (-27.23 %)  1/f 328.2 (real 298.257)  C/MR² 0.3161 (real 0.3307)\n  g eq 9.299 pole 9.358 m/s² (real 9.7803 / 9.8322)\n  emerged: core-mantle 3541 km (PREM 3480)  inner core 3117 km (PREM 1221.5)  centre 5650 K 375 GPa",
+      "uiRect": {
+        "left": 12,
+        "top": 426,
+        "right": 513,
+        "bottom": 708,
+        "width": 501,
+        "height": 282
+      }
+    },
+    "axisAfterCloseAndR": {
+      "displayAfterCloseAndR": "none",
+      "stillInDomAfterDispose": true
+    }
+  },
+  "part3_inpageGlobeAndCameraHijack": {
+    "playerStart": {
+      "x": 65.40000055971136,
+      "z": -18.60000029375908,
+      "yaw": 14.62048888786019
+    },
+    "playerBeforeAscend": {
+      "x": 63.845556843426614,
+      "z": -13.506600459180573,
+      "yaw": 0.2725256197800654
+    },
+    "onInpageGlobe": {
+      "mode": "globe",
+      "flightPhase": "orbit",
+      "globeLayersElExists": false,
+      "flightPromptText": "Looking straight down. Double-click a point to drop there. Drag orbits. Wheel zooms. H flies home. G drops on the centre. F fades down. A click does not drop.",
+      "altM": 14016219.359999985
+    },
+    "menuOverGlobeBeforeG": {
+      "menuVisible": true,
+      "fallStateBeforeG": null,
+      "altBeforeG": 14016219.359999985
+    },
+    "menuOverGlobeAfterG": {
+      "menuStillVisible": true,
+      "fallStateAfterG": null,
+      "altAfterG": 14016219.359999985,
+      "modeAfterG": "globe"
+    },
+    "reachedBand": false,
+    "inDroneState": {
+      "mode": "globe",
+      "flightPhase": "orbit",
+      "height": 2100,
+      "flightPromptText": "Looking straight down. Double-click a point to drop there. Drag orbits. Wheel zooms. H flies home. G drops on the centre. F fades down. A click does not drop.",
+      "cameraPanelVisible": true
+    },
+    "camBodyHiddenInitial": true,
+    "camBodyHiddenAfterUpperC": true,
+    "controlsCHijack": {
+      "capturingBeforeC": true,
+      "camHiddenBeforeC": true,
+      "capturingAfterC": true,
+      "camHiddenAfterC": true,
+      "howlRowText": "HowlH—"
+    },
+    "cStealthCameraCollision": {
+      "beforeC": {
+        "camBodyHidden": true,
+        "statusText": "08:06 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs"
+      },
+      "afterC": {
+        "camBodyHidden": false,
+        "camPanelHeight": 266,
+        "statusText": "08:07 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs"
+      }
+    },
+    "inpageEscapeAndWheelLeak": {
+      "afterFirstEsc": {
+        "menuVisible": true,
+        "menuHeading": "Boreal",
+        "flightPromptVisible": true
+      },
+      "afterSecondEsc": {
+        "menuStillTrappedVisible": true,
+        "altBeforeWheel": 14016219.359999985
+      },
+      "afterWheelAndClose": {
+        "altAfterWheelBehindMenu": 14016219.359999985
+      },
+      "altDropMetersFromWheelBehindMenu": 0
+    }
+  },
+  "part4_mobileResponsive": {
+    "mobileHud": {
+      "viewport": {
+        "w": 548,
+        "h": 1186
+      },
+      "header": {
+        "left": 18,
+        "top": 18,
+        "right": 200,
+        "bottom": 85,
+        "width": 182,
+        "height": 67
+      },
+      "status": {
+        "left": 0,
+        "top": 18,
+        "right": 376,
+        "bottom": 106,
+        "width": 376,
+        "height": 88
+      },
+      "dataBtn": null,
+      "senses": {
+        "left": 10,
+        "top": 135,
+        "right": 210,
+        "bottom": 260,
+        "width": 200,
+        "height": 125
+      },
+      "footer": {
+        "left": 12,
+        "top": 657,
+        "right": 378,
+        "bottom": 832,
+        "width": 366,
+        "height": 175
+      },
+      "cameraPanel": {
+        "left": 320,
+        "top": 1145,
+        "right": 540,
+        "bottom": 1178,
+        "width": 220,
+        "height": 33
+      },
+      "interaction": {
+        "left": 358,
+        "top": 105,
+        "right": 548,
+        "bottom": 166,
+        "width": 190,
+        "height": 61
+      },
+      "touchControlsCount": 0,
+      "overlaps": {
+        "headerVsStatus": 12194,
+        "headerVsDataBtn": 0,
+        "footerVsCameraPanel": 0,
+        "sensesVsStatus": 0,
+        "sensesVsInteraction": 0
+      }
+    },
+    "mobilePhoto": {
+      "photoHidden": false,
+      "photoBar": {
+        "left": 14,
+        "top": 780,
+        "right": 90,
+        "bottom": 830,
+        "width": 76,
+        "height": 50,
+        "clientWidth": 76,
+        "scrollWidth": 535,
+        "clippedRightPx": 0,
+        "clippedLeftPx": 0,
+        "internalOverflowPx": 459
+      },
+      "photoPanel": {
+        "left": 108,
+        "top": 50,
+        "right": 378,
+        "bottom": 830,
+        "width": 270,
+        "height": 780,
+        "clientWidth": 270,
+        "scrollWidth": 270,
+        "clippedRightPx": 0,
+        "clippedLeftPx": 0,
+        "internalOverflowPx": 0
+      },
+      "photoHints": {
+        "left": -491,
+        "top": 12,
+        "right": 881,
+        "bottom": 40,
+        "width": 1372,
+        "height": 28,
+        "clientWidth": 1372,
+        "scrollWidth": 1372,
+        "clippedRightPx": 0,
+        "clippedLeftPx": 491,
+        "internalOverflowPx": 0
+      },
+      "cameraPanel": {
+        "left": 653,
+        "top": 1866,
+        "right": 873,
+        "bottom": 1899,
+        "width": 220,
+        "height": 33,
+        "clientWidth": 220,
+        "scrollWidth": 220,
+        "clippedRightPx": 0,
+        "clippedLeftPx": 0,
+        "internalOverflowPx": 0
+      }
+    },
+    "mobileControls": {
+      "ctlFound": true,
+      "ctlWidth": 698,
+      "ctlRight": 725,
+      "ctlOverflowViewportPx": 0,
+      "panelScrollWidth": 698,
+      "panelClientWidth": 374,
+      "panelHorizontalOverflowPx": 324,
+      "panelRect": {
+        "left": 27,
+        "right": 402,
+        "width": 374
+      }
+    },
+    "mobileInspector": {
+      "hidden": true,
+      "width": 0,
+      "right": 0,
+      "viewportFraction": 0
+    }
+  },
+  "consoleErrors": [],
+  "pageErrors": [],
+  "extraConsoleErrors": [],
+  "extraPageErrors": []
+}

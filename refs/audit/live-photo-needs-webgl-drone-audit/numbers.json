@@ -1,0 +1,146 @@
+{
+  "task": "T-0303",
+  "auditedAt": "2026-11-21T17:04:44.152Z",
+  "liveCaptureMeta": {
+    "port": 5269,
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "capturedAt": "2026-11-21T16:56:30.818Z",
+    "screencastFrames": 139,
+    "recordingBytes": 2376731
+  },
+  "consoleErrorsCount": 0,
+  "pageErrorsCount": 0,
+  "calibrationValid": true,
+  "passCount": 0,
+  "totalChecks": 4,
+  "meanScore": 0,
+  "checks": [
+    {
+      "id": "photo-rewind-sources-focal-default-exit-record-race-and-vfbar-edit",
+      "passThreshold": 0.95,
+      "score": 0,
+      "pass": false,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "calibrationOk": true,
+      "metrics": {
+        "vfBarGalleryEditFreezesWorldAndMovesCamera": false,
+        "exitPhotoModeAwaitsActiveMediaRecorderBeforeGallery": false,
+        "rewindSnapshotSourcesIncludePupsAndFox": false,
+        "focalLengthDefaultWithinSliderRange": false,
+        "liveEditFromVfBarBodyHasPhotoMode": false,
+        "liveEditFromVfBarShaderTimeDelta": 0.814,
+        "liveEditFromVfBarWolfWalkedM": 2.6,
+        "liveExitWhileRecordingGalleryOpen": false,
+        "liveExitWhileRecordingNotice": "Video kept (1 this session). Choose size and export when you leave photo mode.",
+        "liveFocalAttrMin": "12",
+        "liveFocalAttrVal": "12",
+        "liveWolfRewoundDistM": 9.755,
+        "liveZipExportBytes": 4203959,
+        "liveZipMagicHex": "504b0304"
+      }
+    },
+    {
+      "id": "v-camera-mode-keyboard-support-desktop-hud-prompts-and-energy-feedback",
+      "passThreshold": 0.95,
+      "score": 0,
+      "pass": false,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "calibrationOk": true,
+      "metrics": {
+        "vKeyDoesNotHijackDesktopIntoPadMenuWhenLocked": false,
+        "vCameraModeSupportsKeyboardNavigationAndEscape": false,
+        "statusHudShowsKeyboardBindingsWhenNoGamepadConnected": false,
+        "lowEnergyJumpRejectionShowsFeedback": false,
+        "liveConnectedGamepads": 0,
+        "liveStatusTextSample": "RT run · LT stealth · LB focus · Q lock",
+        "liveVClosedPanelPadMenuOpen": true,
+        "liveVUnlockedPadxText": "📷 Auto exposure: On · LBRB setting · LTRT adjust · X auto · RS shutter · B done",
+        "liveVUnlockedPauseOpenedBehind": true,
+        "liveMaxSprintModeSeen": "SPRINT",
+        "liveLowEnergyJumpNotice": ""
+      }
+    },
+    {
+      "id": "audio-hotkey-guards-and-webgl-context-loss-recovery",
+      "passThreshold": 0.95,
+      "score": 0,
+      "pass": false,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "calibrationOk": true,
+      "metrics": {
+        "audioHotkeysIgnoreBrowserCtrlMetaAltShortcuts": false,
+        "audioHotkeysIgnoreFocusedSelectAndTextarea": false,
+        "webglContextLossProvidesReloadButtonStopsRafAndDisablesHud": false,
+        "audioVolumeHotkeysProvideVisualFeedback": false,
+        "liveVolumeAfterCtrlMinusAndCtrlM": {
+          "volume.master": 0.8,
+          "volume.music": 0.6,
+          "volume.ambience": 1,
+          "volume.sfx": 1,
+          "volume.voice": 1,
+          "volume.ui": 1,
+          "volume.muted": true,
+          "volume.musicOn": true
+        },
+        "liveActiveTagInPhotoSelect": "SELECT",
+        "liveSelectKeyHijackedAudio": true,
+        "liveWebglReloadButtonCount": 0,
+        "liveWebglRafTicksAfterLoss": 42,
+        "liveWebglHudStillInteractive": {
+          "pauseClickable": true,
+          "photoClickable": true
+        },
+        "liveResize1280Canvas": "640x360",
+        "liveResize640Canvas": "320x360"
+      }
+    },
+    {
+      "id": "inpage-drone-band-ascent-embody-day-canopy-and-midnight-fog-whiteout",
+      "passThreshold": 0.95,
+      "score": 0,
+      "pass": false,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "calibrationOk": true,
+      "metrics": {
+        "shiftGAscentHasNoThousandfoldSnap": false,
+        "gEmbodyUsesSmoothHandoverBlendInsteadOf1FrameTeleport": false,
+        "midnightDroneFogFollowsNightSkyInsteadOfHardcodedMiddayBlue": false,
+        "midnightDroneFrameIsDarkNotClippedWhiteout": false,
+        "daytime400mDroneShowsConiferGreenCanopyVsBrownTiles": false,
+        "liveAscentPeakBandHM": 2100,
+        "liveAscentFirstGlobeAltM": 14016219,
+        "liveAscentSnapFactor": 6674.4,
+        "liveEmbodyMaxSingleFrameDropM": 399.88,
+        "liveDroneMovedXZ": 3.87,
+        "liveDroneClimbedM": 1.08,
+        "liveMidnightFogColorRgb": [
+          0.45,
+          0.62,
+          0.9
+        ],
+        "liveMidnightFrameMeanLum": 0.9558,
+        "liveMidnightFrameClippedWhiteFrac": 0.8436,
+        "liveMidnightFrameMeanRgb": [
+          0.946,
+          0.964,
+          0.9
+        ],
+        "liveDay400mFrameMeanLum": 0.4292,
+        "liveDay400mFrameMeanRgb": [
+          0.549,
+          0.413,
+          0.24
+        ],
+        "liveDay400mGreenDominantFrac": 0.0028,
+        "liveAfterDroneEscGlobeAltM": 6096
+      }
+    }
+  ]
+}

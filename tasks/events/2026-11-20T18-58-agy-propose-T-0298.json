@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0298",
+  "agent": "agy",
+  "at": "2026-11-20T18:58:00-08:00",
+  "note": "Proposed T-0298 from live headless Microsoft Edge audit (port 5265, 0 console/page errors, recording.webm + 5 frames vs 2 matched natural references, calibrated Rule 11 audit.ts -> numbers.json: calibrationValid=true, 0/4 pass, meanScore=0.0000): (1) carried snowshoe hare buried -1.8457 m underground below wolf paws on staged terrain (hare.ts:387 omits heightAt) and rotated in 'XYZ' instead of 'YXZ' (71.68 deg roll, 0.2033 m nape detachment), plus hardcoded Pinned notice; (2) Pause->More broken round-trips (Appearance 0% canvas redraw byte-identical 379,478 B, Planet view leaves menu open trapping frozen ground behind empty modal, Photo mode/Inspector steal focus onto fading orphan Back button); (3) 0/56 pushable forest-floor rocks under disjoint placeRockSeed/pushContact inequalities, 0.00000184 g (0.00018%) herb micro-regrowth after 1.5 s re-enabling full +1 herb spam-gather while claiming 'Its removal is remembered.', and revision++ rebuilding all loaded chunks per E press; (4) Chronometer omits calendar date on midnight rollover, freezes diurnal weather across 12 h scrub (-0.17 C), and wipes held arrow keys via clearInput(), while #help-binds contradicts P key and Photo Gallery keeps body.photo-mode active."
+}

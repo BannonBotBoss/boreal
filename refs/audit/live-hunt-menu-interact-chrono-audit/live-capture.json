@@ -1,0 +1,230 @@
+{
+  "port": 5265,
+  "startedAt": "2026-11-21T02:50:31.881Z",
+  "recordingBytes": 15693,
+  "part1_huntingCarry": {
+    "held": true,
+    "hareId": 2,
+    "player": {
+      "x": 74.42872363622841,
+      "z": -51.02205331938156,
+      "yaw": 1.2,
+      "energy": 73.31088390491887,
+      "water": 99.91344235312026,
+      "mode": "walk",
+      "handle": "4294967296",
+      "embodied": "4294967296",
+      "species": "wolf"
+    },
+    "wolfPos": {
+      "x": 74.42872363445362,
+      "y": 2.4021822150198795,
+      "z": -51.022053320071564,
+      "ry": 1.2
+    },
+    "harePos": {
+      "x": 73.66744713187347,
+      "y": 0.556467933608364,
+      "z": -51.293775233694944
+    },
+    "hareRot": {
+      "x": 1.1525719972156674,
+      "y": 1.2,
+      "z": 0,
+      "order": "XYZ"
+    },
+    "verticalDeltaY": -1.8457,
+    "status": "12:06 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 73/100 · Water 100% · Rest 100% · HOLDING\nHolding a hare · X eat · B release\n0 remembered · 0 friends · 0 herbs",
+    "notice": "Pinned. X eats, B releases."
+  },
+  "part2_pauseMenuMore": {
+    "sliderEditResult": {
+      "totalRanges": 11,
+      "edited": [
+        {
+          "before": "1",
+          "after": "1",
+          "max": "1"
+        },
+        {
+          "before": "0.8",
+          "after": "1",
+          "max": "1"
+        },
+        {
+          "before": "0.2",
+          "after": "1",
+          "max": "1"
+        },
+        {
+          "before": "0",
+          "after": "1",
+          "max": "1"
+        },
+        {
+          "before": "1",
+          "after": "1.6",
+          "max": "1.6"
+        },
+        {
+          "before": "1",
+          "after": "1.35",
+          "max": "1.35"
+        }
+      ],
+      "genomeStored": "{\"player:wolf\":[{\"param\":\"size\",\"old\":1,\"new\":1.6,\"time\":1795229499436,\"op\":\"set\",\"group\":0},{\"param\":\"length\",\"old\":1,\"new\":1.35,\"time\":1795229499451,\"op\":\"set\",\"group\":1}]}"
+    },
+    "beforeScreenshotBytes": 379478,
+    "afterScreenshotBytes": 379478,
+    "appearanceBytesIdentical": true,
+    "planetFromMoreState": {
+      "menuHidden": false,
+      "menuClasses": "pause",
+      "panelText": "Planet view (Shift+G)\nBack",
+      "bodyClasses": "on-globe",
+      "url": "http://127.0.0.1:5265/?nomenu=1&noprobe=1&rec=1&stages=1&trees=v2&tier=4&hour=12",
+      "notice": ""
+    },
+    "photoFromMoreState": {
+      "clicked": true,
+      "activeTag": "BUTTON",
+      "activeText": "Back",
+      "activeInsideMenu": true,
+      "orphanPanelText": "Photo mode (P)\nBack",
+      "photoHidden": false
+    }
+  },
+  "part3_worldInteractions": {
+    "helpBindsText": "Xbox: LS: up/down moves forward/backward, left/right steers the wolf; camera follows behind. RS: look around and tilt. RT runs, LT enters stealth; RT then LT sprints for 1.5 seconds; LT then RT enters super stealth. Release both to choose a new combination. Hold LB to focus the nearest object close enough ahead (it glows); moving forward then steers toward it. Hold RB and keep a prey inside the aim cone to lock it; X then steers the leap onto that lock. X jump, A interact, D-pad ↑ hour, hold D-pad ← to rewind the dial, hold D-pad → to go forward, LS click pause or play, — menu, B close this panel. Keyboard: WASD: up/down moves forward/backward, left/right steers the wolf; camera follows behind. Arrows: look around and tilt. Shift runs, C enters stealth; Shift then C sprints for 1.5 seconds; C then Shift enters super stealth. Release both to choose a new combination. Hold F to focus the nearest object close enough ahead (it glows); moving forward then steers toward it. Hold Q and keep a prey inside the aim cone to lock it; Space then steers the leap onto that lock. Space jump, E interact, T hour, hold , to rewind the dial, hold . to go forward, ; pause or play, Esc menu, P photo mode (free camera, rewind, capture). Rebind any of these under Esc → Controls.",
+    "afterPKey": {
+      "photoHidden": true,
+      "bodyClasses": "",
+      "notice": ""
+    },
+    "herbAndRockProbe": {
+      "nearestPlant": {
+        "key": "1:0:26",
+        "x": 69.2129910364747,
+        "z": 26.648152405396104,
+        "d": 45.40852580421896
+      },
+      "plantCount": 2,
+      "forestFloorRocksTotal": 56,
+      "forestFloorRocksPushable": 0,
+      "allRocksTotal": 506,
+      "allRocksPushable": 194
+    },
+    "herbGatherResult": {
+      "hp": {
+        "key": "1:0:26",
+        "x": 69.2129910364747,
+        "z": 26.648152405396104,
+        "d": 45.40852580421896
+      },
+      "beforeGather": {
+        "target": "Practice herb",
+        "act": "E / click · gather",
+        "status": "12:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs"
+      },
+      "afterGather1": {
+        "target": "Practice herb",
+        "act": "E / click · gather",
+        "notice": "Herb gathered. Its removal is remembered.",
+        "status": "12:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n1 remembered · 0 friends · 1 herbs",
+        "savedEvents": {
+          "schemaVersion": 1,
+          "generatorVersion": 1,
+          "worldSeed": 1400,
+          "records": {
+            "1:0:26": {
+              "entity": {
+                "key": "1:0:26",
+                "kind": "plant",
+                "seed": 2957603675,
+                "generatorVersion": 1,
+                "x": 69.2129910364747,
+                "z": 26.648152405396104,
+                "rotation": 6.2538871629999955,
+                "scale": 1.163521299965214
+              },
+              "playerInteracted": true,
+              "relationship": null,
+              "removed": false,
+              "lastAction": "gather",
+              "interactions": 1
+            }
+          },
+          "inventory": {
+            "herb": 1
+          },
+          "bonds": {}
+        }
+      },
+      "afterGather2": {
+        "target": "Practice herb",
+        "act": "E / click · gather",
+        "notice": "Herb gathered. Its removal is remembered.",
+        "status": "12:06 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n1 remembered · 0 friends · 1 herbs",
+        "savedEvents": {
+          "schemaVersion": 1,
+          "generatorVersion": 1,
+          "worldSeed": 1400,
+          "records": {
+            "1:0:26": {
+              "entity": {
+                "key": "1:0:26",
+                "kind": "plant",
+                "seed": 2957603675,
+                "generatorVersion": 1,
+                "x": 69.2129910364747,
+                "z": 26.648152405396104,
+                "rotation": 6.2538871629999955,
+                "scale": 1.163521299965214
+              },
+              "playerInteracted": true,
+              "relationship": null,
+              "removed": false,
+              "lastAction": "gather",
+              "interactions": 1
+            }
+          },
+          "inventory": {
+            "herb": 1
+          },
+          "bonds": {}
+        }
+      }
+    }
+  },
+  "part4_chronoAndPhoto": {
+    "beforeChrono": {
+      "day": 227,
+      "hour": 12.09,
+      "weatherHour": 12.09,
+      "tC": 23.96,
+      "status": "12:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+    },
+    "chronoDuringScrub": {
+      "chronoVisible": true,
+      "chronoText": "Chronometer\n00\n06\n12\n18\n☀\n12:06\nsun 54° up\n\nArrows or D-pad · LS: scrub time · drag the dial · T / D-pad ↑ / B: close",
+      "day": 227,
+      "hour": 12.1,
+      "weatherHour": 12.1,
+      "tC": 23.95,
+      "status": "12:06 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+    },
+    "photoModeState": {
+      "photoHidden": false,
+      "sliderMax": "35",
+      "when": "−16.6 s",
+      "bodyHasPhotoMode": true
+    },
+    "galleryReviewState": {
+      "galleryOpen": true,
+      "bodyStillHasPhotoMode": true,
+      "photoHidden": true
+    }
+  },
+  "consoleErrors": [],
+  "pageErrors": []
+}

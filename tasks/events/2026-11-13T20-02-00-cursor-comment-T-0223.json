@@ -1,0 +1,7 @@
+{
+  "type": "comment",
+  "task": "T-0223",
+  "agent": "cursor",
+  "at": "2026-11-13T20:02:00-08:00",
+  "note": "Rule 13 renumber. This ocean scorecard was filed as T-0222 on cursor/ocean-scorecard-423d. T-0222 is the prairie-aerial note on cursor/prairie-aerial-027e (PR #448). Next free id across branches is T-0223. The old id was T-0222. The scorecard is still a draft: the check does not pass, and the 12 km view did not finish. Propose, approve-plan, claim, complete, and a skill file wait until that check is ready. This comment is not an approval."
+}

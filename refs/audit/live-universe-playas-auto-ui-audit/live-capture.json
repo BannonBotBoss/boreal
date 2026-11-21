@@ -1,0 +1,553 @@
+{
+  "port": 5266,
+  "capturedAt": "2026-11-21T08:56:53.867Z",
+  "consoleErrors": [],
+  "pageErrors": [],
+  "part1_generateUniverse": {
+    "startMenuButtons": [
+      {
+        "text": "Continue",
+        "disabled": false
+      },
+      {
+        "text": "Generate universe",
+        "disabled": false
+      },
+      {
+        "text": "Universe options…",
+        "disabled": false
+      },
+      {
+        "text": "Controls",
+        "disabled": false
+      },
+      {
+        "text": "Music",
+        "disabled": false
+      },
+      {
+        "text": "Graphics",
+        "disabled": false
+      },
+      {
+        "text": "Board ↗",
+        "disabled": false
+      },
+      {
+        "text": "Quit",
+        "disabled": false
+      }
+    ],
+    "universeOptionsUi": {
+      "heading": "Universe seed",
+      "note": "Same seed → same universe. Leave blank mint by pressing New seed.",
+      "seedValue": "2754441972",
+      "buttons": [
+        "New seed",
+        "Generate",
+        "Forest only (legacy)…",
+        "Back"
+      ]
+    },
+    "cineWaitState": {
+      "url": "?start=sphere&stages=1&trees=v2&noprobe=1&tier=4",
+      "cineExists": true,
+      "promptText": "Click or press any key to begin.",
+      "universeSeedStored": null
+    },
+    "cineActiveState": {
+      "elapsed": 4.316699999999997,
+      "hasCosmosSphereCanvas": true,
+      "subText": "In the beginning…",
+      "bodyClasses": "cine-run"
+    },
+    "afterSkipState": {
+      "cineStillInDom": false,
+      "cosmosSphereStillInDom": false,
+      "bodyClasses": "on-globe",
+      "eventsAfterSkip": {
+        "schemaVersion": 1,
+        "generatorVersion": 1,
+        "worldSeed": 1400,
+        "records": {},
+        "inventory": {
+          "herb": 0
+        },
+        "bonds": {},
+        "introComplete": true,
+        "resume": {
+          "mode": "globe",
+          "lat": 90,
+          "lon": 82.7298426464438,
+          "alt": 23572732.56,
+          "x": 27.889363033221986,
+          "z": -2.1413189615559234,
+          "yaw": 3.919774471771606
+        }
+      }
+    },
+    "globeMenuOpen": {
+      "menuHidden": false,
+      "menuHeading": "Boreal"
+    },
+    "secondGenerateState": {
+      "url": "?start=sphere&stages=1&trees=v2&noprobe=1&tier=4",
+      "cineShownOnSecondGenerate": false,
+      "bodyClasses": "",
+      "eventsStored": {
+        "schemaVersion": 1,
+        "generatorVersion": 1,
+        "worldSeed": 1400,
+        "records": {},
+        "inventory": {
+          "herb": 0
+        },
+        "bonds": {},
+        "introComplete": true,
+        "resume": {
+          "mode": "game",
+          "x": 69.50000074648256,
+          "z": 70.40000066132572,
+          "yaw": -2.2957792468540803
+        }
+      },
+      "universeSeedStored": null,
+      "menuHidden": true
+    },
+    "legacySeedBefore": "1587008242",
+    "legacySeedAfterReload": {
+      "shownStagedSeedInput": "1587008242",
+      "storedLegacySeed": "424242",
+      "storedUniverseSeed": null
+    }
+  },
+  "part2_playAs": {
+    "ready": true,
+    "initialWolf": {
+      "player": {
+        "x": 65.40000041214869,
+        "z": -18.600000216312257,
+        "yaw": 8.337303580680604,
+        "energy": 74.94207745260667,
+        "water": 99.97349274470989,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      },
+      "status": "12:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+      "sensesSummary": "Grey wolf senses",
+      "actText": "Approach an individual"
+    },
+    "playerPanelOptions": [
+      {
+        "text": "Grey wolf",
+        "value": "wolf",
+        "checked": true,
+        "disabled": false
+      },
+      {
+        "text": "White-tailed deer",
+        "value": "deer",
+        "checked": false,
+        "disabled": false
+      },
+      {
+        "text": "Grizzly bear (not in the living store)",
+        "value": "bear",
+        "checked": false,
+        "disabled": true
+      },
+      {
+        "text": "Snowshoe hare",
+        "value": "hare",
+        "checked": false,
+        "disabled": false
+      }
+    ],
+    "asDeer": {
+      "player": {
+        "x": 30.0000000291282,
+        "z": 19.999999984712378,
+        "yaw": 8.337303580680604,
+        "energy": 74.99181529221616,
+        "water": 99.96975051828939,
+        "mode": "walk",
+        "handle": "4294967299",
+        "embodied": "4294967299",
+        "species": "deer"
+      },
+      "storedPlayable": "deer",
+      "status": "12:06 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+      "sensesSummary": "White-tailed deer senses",
+      "actText": "Approach an individual"
+    },
+    "asHareBeforeAuto": {
+      "player": {
+        "x": 49.185539915623124,
+        "z": 0.4274616276233528,
+        "yaw": 8.337303580680604,
+        "energy": 74.968460374223,
+        "water": 99.94354532953926,
+        "mode": "walk",
+        "handle": "4294967298",
+        "embodied": "4294967298",
+        "species": "hare"
+      },
+      "storedPlayable": "hare",
+      "status": "12:06 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+      "sensesSummary": "Snowshoe hare senses",
+      "actText": "Approach an individual"
+    },
+    "asHareDuringAuto": {
+      "player": {
+        "x": 51.88811621684158,
+        "z": 0.42599786220883445,
+        "yaw": 11.355237714253672,
+        "energy": 74.88930285422781,
+        "water": 99.87776857072427,
+        "mode": "walk",
+        "handle": "4294967298",
+        "embodied": "4294967298",
+        "species": "hare"
+      },
+      "autoBtnText": "Autonomous: On",
+      "status": "AUTONOMOUS · 12:07 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100% · following hare hare:6 (following hare hare:6)\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+      "sensesSummary": "Snowshoe hare senses"
+    }
+  },
+  "recordingBytes": 116365,
+  "part3_autonomousWolf": {
+    "autoStart": {
+      "player": {
+        "x": 65.400000419339,
+        "z": -18.60000022008582,
+        "yaw": 8.337303580680604,
+        "energy": 74.94081826679377,
+        "water": 99.97291835601217,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      },
+      "status": "12:06 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+      "haresCount": 5
+    },
+    "samples": [
+      {
+        "t": 38784,
+        "player": {
+          "x": 64.90689705163169,
+          "z": -17.056870651736595,
+          "yaw": 5.973892745174224,
+          "energy": 74.9143753647229,
+          "water": 99.96082261699186,
+          "mode": "walk",
+          "handle": "4294967296",
+          "embodied": "4294967296",
+          "species": "wolf"
+        },
+        "status": "12:07 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs"
+      },
+      {
+        "t": 39491,
+        "player": {
+          "x": 65.28154021329567,
+          "z": -18.4932772814701,
+          "yaw": 14.953822221193523,
+          "energy": 75.44062733716257,
+          "water": 99.95831558665952,
+          "mode": "walk",
+          "handle": "4294967296",
+          "embodied": "4294967296",
+          "species": "wolf"
+        },
+        "status": "AUTONOMOUS · 12:07 · WALK · Snow 0.0 cm · Stamina 99/100 · Energy 75/100 · Water 100% · Rest 100% · following hare hare:6 (following hare hare:6)\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs"
+      },
+      {
+        "t": 40205,
+        "player": {
+          "x": 65.20451953773284,
+          "z": -18.35366908364544,
+          "yaw": 15.287155554526855,
+          "energy": 75.96687930960223,
+          "water": 99.95580855632718,
+          "mode": "walk",
+          "handle": "4294967296",
+          "embodied": "4294967296",
+          "species": "wolf"
+        },
+        "status": "AUTONOMOUS · 12:07 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 76/100 · Water 100% · Rest 100% · waiting: the way is closed (stones:1:-1:35)\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs"
+      },
+      {
+        "t": 40930,
+        "player": {
+          "x": 65.20451953773284,
+          "z": -18.35366908364544,
+          "yaw": 15.287155554526855,
+          "energy": 76.56130175216344,
+          "water": 99.95408080089112,
+          "mode": "walk",
+          "handle": "4294967296",
+          "embodied": "4294967296",
+          "species": "wolf"
+        },
+        "status": "AUTONOMOUS · 12:07 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 77/100 · Water 100% · Rest 100% · waiting: the way is closed (stones:1:-1:35)\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs"
+      },
+      {
+        "t": 41747,
+        "player": {
+          "x": 65.20451953773284,
+          "z": -18.35366908364544,
+          "yaw": 15.287155554526855,
+          "energy": 77.75014663728587,
+          "water": 99.95062529001899,
+          "mode": "walk",
+          "handle": "4294967296",
+          "embodied": "4294967296",
+          "species": "wolf"
+        },
+        "status": "AUTONOMOUS · 12:08 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 78/100 · Water 100% · Rest 100% · waiting: the way is closed (stones:1:-1:35)\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs"
+      },
+      {
+        "t": 42886,
+        "player": {
+          "x": 65.20451953773284,
+          "z": -18.35366908364544,
+          "yaw": 15.287155554526855,
+          "energy": 78.34456907984708,
+          "water": 99.94889753458293,
+          "mode": "walk",
+          "handle": "4294967296",
+          "embodied": "4294967296",
+          "species": "wolf"
+        },
+        "status": "AUTONOMOUS · 12:08 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 78/100 · Water 100% · Rest 100% · waiting: the way is closed (stones:1:-1:35)\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs"
+      }
+    ],
+    "thirstySamples": [
+      {
+        "player": {
+          "x": 63.03273332431448,
+          "z": -18.99502725415413,
+          "yaw": 1.4054493450270127,
+          "energy": 80.8284443752325,
+          "water": 14.95728988467723,
+          "mode": "run",
+          "handle": "4294967296",
+          "embodied": "4294967296",
+          "species": "wolf"
+        },
+        "status": "AUTONOMOUS · 12:06 · RUN · Snow 0.0 cm · Stamina 98/100 · Energy 81/100 · Water 15% · Rest 100% · drink (water 15 % < 85 %)\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs"
+      },
+      {
+        "player": {
+          "x": 58.954058767605055,
+          "z": -18.048481375059932,
+          "yaw": 2.1922139637412084,
+          "energy": 80.79675204474444,
+          "water": 14.942801954710418,
+          "mode": "run",
+          "handle": "4294967296",
+          "embodied": "4294967296",
+          "species": "wolf"
+        },
+        "status": "AUTONOMOUS · 12:06 · RUN · Snow 0.0 cm · Stamina 95/100 · Energy 81/100 · Water 15% · Rest 100% · drink (water 15 % < 85 %)\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs"
+      },
+      {
+        "player": {
+          "x": 59.5990815617538,
+          "z": -18.510350807698888,
+          "yaw": 5.333806617331009,
+          "energy": 80.7856292367305,
+          "water": 14.937717239858044,
+          "mode": "run",
+          "handle": "4294967296",
+          "embodied": "4294967296",
+          "species": "wolf"
+        },
+        "status": "AUTONOMOUS · 12:07 · RUN · Snow 0.0 cm · Stamina 90/100 · Energy 81/100 · Water 15% · Rest 100% · drink (water 15 % < 85 %)\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs"
+      },
+      {
+        "player": {
+          "x": 60.40243651524054,
+          "z": -19.433946161569402,
+          "yaw": 1.405449345027012,
+          "energy": 80.77759217065463,
+          "water": 14.934043150617763,
+          "mode": "run",
+          "handle": "4294967296",
+          "embodied": "4294967296",
+          "species": "wolf"
+        },
+        "status": "AUTONOMOUS · 12:07 · RUN · Snow 0.0 cm · Stamina 89/100 · Energy 81/100 · Water 15% · Rest 100% · drink (water 15 % < 85 %)\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs"
+      },
+      {
+        "player": {
+          "x": 58.03516938707399,
+          "z": -19.828973178243146,
+          "yaw": 1.4054493450270114,
+          "energy": 80.74825756139288,
+          "water": 14.920633036623505,
+          "mode": "run",
+          "handle": "4294967296",
+          "embodied": "4294967296",
+          "species": "wolf"
+        },
+        "status": "AUTONOMOUS · 12:07 · RUN · Snow 0.0 cm · Stamina 87/100 · Energy 81/100 · Water 15% · Rest 100% · drink (water 15 % < 85 %)\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs"
+      },
+      {
+        "player": {
+          "x": 53.563664811648295,
+          "z": -20.575135320849107,
+          "yaw": 1.4054493450270096,
+          "energy": 80.69284774389845,
+          "water": 14.895302079415673,
+          "mode": "run",
+          "handle": "4294967296",
+          "embodied": "4294967296",
+          "species": "wolf"
+        },
+        "status": "AUTONOMOUS · 12:07 · RUN · Snow 0.0 cm · Stamina 84/100 · Energy 81/100 · Water 15% · Rest 100% · drink (water 15 % < 85 %)\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs"
+      }
+    ]
+  },
+  "part4_dataControlsGraphics": {
+    "dataOpenState": {
+      "hidden": false,
+      "cycleValue": "61.90739428829973",
+      "textLen": 17412,
+      "headerSnippet": "What is running\n\nGreen is healthy. Yellow needs a look. Red is an error or outside the model. Grey has not been called, or is not active at this time.\n\nTime (cycles)\n61.90739428829973 cycles = 4.355e+17 seconds = 1.380e+10 years. today\nFollowing the game clock.\nFollow game clock\nSpawn log\nspacetime spawned at t=4.355e+17 s, because root.\nreheating spawned by spacetime at t=1.014e-32 s, because ε=1.\nplanet spawned by ",
+      "cards": [
+        {
+          "engine": "spacetime",
+          "status": "healthy",
+          "calls": "This game session has called it 1 times. Last call 0.0 ms."
+        },
+        {
+          "engine": "reheating",
+          "status": "healthy",
+          "calls": "This game session has called it 1 times. Last call 0.0 ms."
+        },
+        {
+          "engine": "planet",
+          "status": "healthy",
+          "calls": "This game session has called it 11 times. Last call 0.0 ms."
+        },
+        {
+          "engine": "climate",
+          "status": "healthy",
+          "calls": "This game session has called it 3 times. Last call 0.0 ms."
+        },
+        {
+          "engine": "solar",
+          "status": "healthy",
+          "calls": "This game session has called it 3 times. Last call 0.0 ms."
+        },
+        {
+          "engine": "energy",
+          "status": "healthy",
+          "calls": "This game session has called it 11 times. Last call 0.0 ms."
+        },
+        {
+          "engine": "wind",
+          "status": "healthy",
+          "calls": "This game session has called it 11 times. Last call 0.0 ms."
+        },
+        {
+          "engine": "hydro",
+          "status": "healthy",
+          "calls": "This game session has called it 11 times. Last call 0.0 ms."
+        },
+        {
+          "engine": "clouds",
+          "status": "healthy",
+          "calls": "This game session has called it 11 times. Last call 0.0 ms."
+        },
+        {
+          "engine": "hunger",
+          "status": "healthy",
+          "calls": "This game session has called it 1 times. Last call 0.0 ms."
+        },
+        {
+          "engine": "senses",
+          "status": "healthy",
+          "calls": "This game session has called it 1 times. Last call 0.0 ms."
+        },
+        {
+          "engine": "prey",
+          "status": "healthy",
+          "calls": "This game session has called it 1 times. Last call 0.0 ms."
+        },
+        {
+          "engine": "danger",
+          "status": "healthy",
+          "calls": "This game session has called it 1 times. Last call 0.0 ms."
+        },
+        {
+          "engine": "protect",
+          "status": "healthy",
+          "calls": "This game session has called it 1 times. Last call 0.0 ms."
+        }
+      ],
+      "katexNodes": 68
+    },
+    "earlyUniverseState": {
+      "cycleValue": "1",
+      "cosmosSpherePresent": true,
+      "cosmosGpuText": "GPU ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver). Max texture 8192. Float targets yes. MSAA samples 4.",
+      "readoutSnippet": "What is running\n\nGreen is healthy. Yellow needs a look. Red is an error or outside the model. Grey has not been called, or is not active at this time.\n\nTime (cycles)\n1 cycles = 5.390e-44 seconds = 1.708e-51 years. Planck\nManual time. The engines stay here until you follow the game clock.\nFollow game clock\nSpawn log\nspacetime spawned at t=4.355e+17 s, because"
+    },
+    "afterFollowClock": {
+      "cycleValue": "61.90739428829973",
+      "cosmosSpherePresent": false
+    },
+    "capturingBeforeU": {
+      "capturing": true,
+      "dataPanelHiddenBeforeU": true
+    },
+    "afterPressUInRebind": {
+      "capturingAfterU": true,
+      "dataPanelHiddenAfterU": false,
+      "howlKeysText": "H"
+    },
+    "graphicsUiBefore": {
+      "heading": "Graphics",
+      "probeText": "Probe: safe maximum Ultra. Now: Manual, Very low.",
+      "topQualityValue": "4",
+      "settingsQualityLabels": [
+        {
+          "text": "Adaptive quality (Auto keeps the target frame rate)",
+          "val": true
+        },
+        {
+          "text": "Target frame rate306072 (Quest)90 (Quest)120",
+          "val": "60"
+        },
+        {
+          "text": "Quality tier (Manual; in Auto: highest allowed)UltraHighMediumLowVery lowMinimum",
+          "val": "Ultra"
+        }
+      ]
+    },
+    "graphicsUiAfterUltra": {
+      "topQualityValue": "0",
+      "warnText": "",
+      "settingsAutoChecked": true,
+      "storedRenderSettings": "{\"lod.terrain\":\"Normal\",\"lod.trees\":\"Normal\",\"lod.rocks\":\"Normal\",\"lod.props\":\"Normal\",\"lod.animals\":\"Unlimited\",\"world.stagedTerrain.v2\":true,\"world.standMap\":true,\"world.treeDensity\":1,\"animals.deer\":true,\"animals.deerCount\":1,\"animals.hares\":true,\"animals.hareCount\":5,\"animals.birds\":true,\"feel.haptics\":true,\"feel.intensity\":0.6,\"feel.gameplay\":true,\"feel.ui\":true,\"feel.editor\":true,\"feel.sound\":true,\"interest.near\":60,\"interest.mid\":100,\"quality.auto\":true,\"quality.target\":\"60\",\"quality.tier\":\"Ultra\",\"quality.resScale\":2,\"quality.shadows\":\"3 cascades\",\"quality.ssao\":\"Full\",\"weather.on\":true,\"weather.quality\":\"Normal (8×8)\",\"animals.birdRate\":1}"
+    },
+    "graphicsUiReenter": {
+      "probeTextAfterReenter": "Probe: safe maximum Ultra. Now: Manual, Ultra.",
+      "topQualityOptionsAfterReenter": [
+        "Auto (up to Ultra)",
+        "Ultra",
+        "High",
+        "Medium",
+        "Low",
+        "Very low",
+        "Minimum"
+      ],
+      "settingsAutoCheckedAfterReenter": true
+    }
+  }
+}

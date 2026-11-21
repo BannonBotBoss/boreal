@@ -1,0 +1,585 @@
+{
+  "capturedAt": "2026-11-21T00:51:21.199Z",
+  "base": "http://127.0.0.1:5263",
+  "0-play-deer": {
+    "query": "?nomenu=1&seed=1400&noprobe=1&stages=1&trees=v2&rec=1&play=deer",
+    "elapsedMs": 33511,
+    "errorCount": 0,
+    "errors": [],
+    "warningCount": 0,
+    "state": {
+      "viewport": {
+        "w": 1280,
+        "h": 720
+      },
+      "sensesSummary": "White-tailed deer senses",
+      "statusText": "08:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+      "targetText": "Explore",
+      "actionText": "Approach an individual",
+      "bodyClasses": [],
+      "playerProbe": {
+        "x": 24.35386302470286,
+        "z": 22.00874749551306,
+        "yaw": 0.7577558413256827,
+        "energy": 74.84974724880344,
+        "water": 99.93129687439601,
+        "mode": "walk",
+        "handle": "4294967299",
+        "embodied": "4294967299",
+        "species": "deer"
+      },
+      "haresCount": 5,
+      "boxes": {
+        "brand": null,
+        "senses": {
+          "x": 24,
+          "y": 180,
+          "w": 248,
+          "h": 188,
+          "right": 272,
+          "bottom": 368
+        },
+        "sensesPanel": {
+          "x": 24,
+          "y": 214,
+          "w": 248,
+          "h": 154,
+          "right": 272,
+          "bottom": 368
+        },
+        "compass": {
+          "x": 35,
+          "y": 253,
+          "w": 76,
+          "h": 76,
+          "right": 111,
+          "bottom": 329
+        },
+        "stream": {
+          "x": 119,
+          "y": 225,
+          "w": 142,
+          "h": 132,
+          "right": 261,
+          "bottom": 357
+        },
+        "status": {
+          "x": 756,
+          "y": 30,
+          "w": 498,
+          "h": 89,
+          "right": 1254,
+          "bottom": 119
+        },
+        "interaction": {
+          "x": 451,
+          "y": 156,
+          "w": 190,
+          "h": 65,
+          "right": 641,
+          "bottom": 221
+        },
+        "controls": {
+          "x": 30,
+          "y": 647,
+          "w": 353,
+          "h": 53,
+          "right": 383,
+          "bottom": 700
+        },
+        "buttons": null,
+        "dataBtn": null,
+        "photoBar": null
+      },
+      "overlaps": [],
+      "compassBefore": {
+        "left": "30px",
+        "top": "4px",
+        "width": "6.14062px"
+      }
+    },
+    "extra": {
+      "recordingBytes": 73882
+    },
+    "shotPath": "C:\\Users\\0\\.gemini\\antigravity-cli\\brain\\857df05d-b44e-41fd-8192-fbd4924ac089\\scratch\\t0296-capture\\frame-0-play-deer.png"
+  },
+  "1-play-hare": {
+    "query": "?nomenu=1&seed=1400&noprobe=1&stages=1&trees=v2&rec=1&play=hare",
+    "elapsedMs": 24080,
+    "errorCount": 0,
+    "errors": [],
+    "warningCount": 0,
+    "state": {
+      "viewport": {
+        "w": 1280,
+        "h": 720
+      },
+      "sensesSummary": "Snowshoe hare senses",
+      "statusText": "08:04 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+      "targetText": "Explore",
+      "actionText": "Approach an individual",
+      "bodyClasses": [],
+      "playerProbe": {
+        "x": 50.00000132300273,
+        "z": -6.943653850273375e-7,
+        "yaw": 2.0541182735010186,
+        "energy": 74.92439099982023,
+        "water": 99.93723084320418,
+        "mode": "walk",
+        "handle": "4294967298",
+        "embodied": "4294967298",
+        "species": "hare"
+      },
+      "haresCount": 5,
+      "boxes": {
+        "brand": null,
+        "senses": {
+          "x": 24,
+          "y": 180,
+          "w": 248,
+          "h": 188,
+          "right": 272,
+          "bottom": 368
+        },
+        "sensesPanel": {
+          "x": 24,
+          "y": 214,
+          "w": 248,
+          "h": 154,
+          "right": 272,
+          "bottom": 368
+        },
+        "compass": {
+          "x": 35,
+          "y": 253,
+          "w": 76,
+          "h": 76,
+          "right": 111,
+          "bottom": 329
+        },
+        "stream": {
+          "x": 119,
+          "y": 225,
+          "w": 142,
+          "h": 132,
+          "right": 261,
+          "bottom": 357
+        },
+        "status": {
+          "x": 756,
+          "y": 30,
+          "w": 498,
+          "h": 89,
+          "right": 1254,
+          "bottom": 119
+        },
+        "interaction": {
+          "x": 879,
+          "y": 18,
+          "w": 190,
+          "h": 65,
+          "right": 1069,
+          "bottom": 83
+        },
+        "controls": {
+          "x": 30,
+          "y": 647,
+          "w": 353,
+          "h": 53,
+          "right": 383,
+          "bottom": 700
+        },
+        "buttons": null,
+        "dataBtn": null,
+        "photoBar": null
+      },
+      "overlaps": [
+        {
+          "a": "status",
+          "b": "interaction",
+          "areaPx": 10070
+        }
+      ],
+      "compassBefore": {
+        "left": "30px",
+        "top": "4px",
+        "width": "6.14062px"
+      }
+    },
+    "extra": null,
+    "shotPath": "C:\\Users\\0\\.gemini\\antigravity-cli\\brain\\857df05d-b44e-41fd-8192-fbd4924ac089\\scratch\\t0296-capture\\frame-1-play-hare.png"
+  },
+  "2-winter-snow-noon": {
+    "query": "?nomenu=1&seed=1400&noprobe=1&stages=1&trees=v2&rec=1&day=15&hour=12",
+    "elapsedMs": 26979,
+    "errorCount": 0,
+    "errors": [],
+    "warningCount": 0,
+    "state": {
+      "viewport": {
+        "w": 1280,
+        "h": 720
+      },
+      "sensesSummary": "Grey wolf senses",
+      "statusText": "12:04 · WALK · Snow 34.4 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+      "targetText": "Explore",
+      "actionText": "Approach an individual",
+      "bodyClasses": [],
+      "playerProbe": {
+        "x": 65.39999982689693,
+        "z": -18.59999990914854,
+        "yaw": 8.337303580680604,
+        "energy": 74.92885600157123,
+        "water": 99.97191294228622,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      },
+      "haresCount": 5,
+      "boxes": {
+        "brand": null,
+        "senses": {
+          "x": 24,
+          "y": 180,
+          "w": 248,
+          "h": 188,
+          "right": 272,
+          "bottom": 368
+        },
+        "sensesPanel": {
+          "x": 24,
+          "y": 214,
+          "w": 248,
+          "h": 154,
+          "right": 272,
+          "bottom": 368
+        },
+        "compass": {
+          "x": 35,
+          "y": 253,
+          "w": 76,
+          "h": 76,
+          "right": 111,
+          "bottom": 329
+        },
+        "stream": {
+          "x": 119,
+          "y": 225,
+          "w": 142,
+          "h": 132,
+          "right": 261,
+          "bottom": 357
+        },
+        "status": {
+          "x": 750,
+          "y": 30,
+          "w": 504,
+          "h": 89,
+          "right": 1254,
+          "bottom": 119
+        },
+        "interaction": {
+          "x": 756,
+          "y": 51,
+          "w": 190,
+          "h": 65,
+          "right": 946,
+          "bottom": 116
+        },
+        "controls": {
+          "x": 30,
+          "y": 647,
+          "w": 353,
+          "h": 53,
+          "right": 383,
+          "bottom": 700
+        },
+        "buttons": null,
+        "dataBtn": null,
+        "photoBar": null
+      },
+      "overlaps": [
+        {
+          "a": "status",
+          "b": "interaction",
+          "areaPx": 12350
+        }
+      ],
+      "compassBefore": {
+        "left": "30px",
+        "top": "4px",
+        "width": "6.14062px"
+      }
+    },
+    "extra": null,
+    "shotPath": "C:\\Users\\0\\.gemini\\antigravity-cli\\brain\\857df05d-b44e-41fd-8192-fbd4924ac089\\scratch\\t0296-capture\\frame-2-winter-snow-noon.png"
+  },
+  "3-midnight-night-sky": {
+    "query": "?nomenu=1&seed=1400&noprobe=1&stages=1&trees=v2&rec=1&day=227&hour=0",
+    "elapsedMs": 27056,
+    "errorCount": 0,
+    "errors": [],
+    "warningCount": 0,
+    "state": {
+      "viewport": {
+        "w": 1280,
+        "h": 720
+      },
+      "sensesSummary": "Grey wolf senses",
+      "statusText": "00:04 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+      "targetText": "Explore",
+      "actionText": "Approach an individual",
+      "bodyClasses": [
+        "night"
+      ],
+      "playerProbe": {
+        "x": 65.40000048303843,
+        "z": -18.600000253518136,
+        "yaw": 8.337303580680604,
+        "energy": 74.93095464459273,
+        "water": 99.96842386536645,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      },
+      "haresCount": 5,
+      "boxes": {
+        "brand": null,
+        "senses": {
+          "x": 24,
+          "y": 180,
+          "w": 248,
+          "h": 188,
+          "right": 272,
+          "bottom": 368
+        },
+        "sensesPanel": {
+          "x": 24,
+          "y": 214,
+          "w": 248,
+          "h": 154,
+          "right": 272,
+          "bottom": 368
+        },
+        "compass": {
+          "x": 35,
+          "y": 253,
+          "w": 76,
+          "h": 76,
+          "right": 111,
+          "bottom": 329
+        },
+        "stream": {
+          "x": 119,
+          "y": 225,
+          "w": 142,
+          "h": 132,
+          "right": 261,
+          "bottom": 357
+        },
+        "status": {
+          "x": 756,
+          "y": 30,
+          "w": 498,
+          "h": 89,
+          "right": 1254,
+          "bottom": 119
+        },
+        "interaction": {
+          "x": 756,
+          "y": 51,
+          "w": 190,
+          "h": 65,
+          "right": 946,
+          "bottom": 116
+        },
+        "controls": {
+          "x": 30,
+          "y": 647,
+          "w": 353,
+          "h": 53,
+          "right": 383,
+          "bottom": 700
+        },
+        "buttons": null,
+        "dataBtn": null,
+        "photoBar": null
+      },
+      "overlaps": [
+        {
+          "a": "status",
+          "b": "interaction",
+          "areaPx": 12350
+        }
+      ],
+      "compassBefore": {
+        "left": "30px",
+        "top": "4px",
+        "width": "6.14062px"
+      }
+    },
+    "extra": null,
+    "shotPath": "C:\\Users\\0\\.gemini\\antigravity-cli\\brain\\857df05d-b44e-41fd-8192-fbd4924ac089\\scratch\\t0296-capture\\frame-3-midnight-night-sky.png"
+  },
+  "4-mobile-senses-and-ui": {
+    "query": "?nomenu=1&seed=1400&noprobe=1&stages=1&trees=v2&rec=1",
+    "elapsedMs": 30772,
+    "errorCount": 0,
+    "errors": [],
+    "warningCount": 0,
+    "state": {
+      "viewport": {
+        "w": 640,
+        "h": 720
+      },
+      "sensesSummary": "Grey wolf senses",
+      "statusText": "08:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 76/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+      "targetText": "Explore",
+      "actionText": "Approach an individual",
+      "bodyClasses": [],
+      "playerProbe": {
+        "x": 65.4000005445428,
+        "z": -18.60000028579822,
+        "yaw": 14.62048888786019,
+        "energy": 75.64671651975603,
+        "water": 99.94620956923228,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      },
+      "haresCount": 5,
+      "boxes": {
+        "brand": null,
+        "senses": {
+          "x": 10,
+          "y": 135,
+          "w": 200,
+          "h": 125,
+          "right": 210,
+          "bottom": 260
+        },
+        "sensesPanel": {
+          "x": 10,
+          "y": 166,
+          "w": 200,
+          "h": 94,
+          "right": 210,
+          "bottom": 260
+        },
+        "compass": {
+          "x": 20,
+          "y": 176,
+          "w": 66,
+          "h": 66,
+          "right": 86,
+          "bottom": 242
+        },
+        "stream": null,
+        "status": {
+          "x": 222,
+          "y": 18,
+          "w": 404,
+          "h": 70,
+          "right": 626,
+          "bottom": 88
+        },
+        "interaction": {
+          "x": 436,
+          "y": 56,
+          "w": 190,
+          "h": 61,
+          "right": 626,
+          "bottom": 117
+        },
+        "controls": {
+          "x": 12,
+          "y": 573,
+          "w": 616,
+          "h": 53,
+          "right": 628,
+          "bottom": 626
+        },
+        "buttons": null,
+        "dataBtn": null,
+        "photoBar": null
+      },
+      "overlaps": [
+        {
+          "a": "status",
+          "b": "interaction",
+          "areaPx": 6080
+        }
+      ],
+      "compassBefore": {
+        "left": "25px",
+        "top": "4px",
+        "width": "5.20312px"
+      }
+    },
+    "extra": {
+      "beforeHome": {
+        "x": 65.40000049677488,
+        "z": -18.60000026072776,
+        "yaw": 8.337303580680604,
+        "energy": 74.92885600157123,
+        "water": 99.9674579403791,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      },
+      "autoText": "Autonomous: On",
+      "afterHome": {
+        "x": 65.40000051800679,
+        "z": -18.600000271871085,
+        "yaw": 14.62048888786019,
+        "energy": 75.65091380579902,
+        "water": 99.94812674068571,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      },
+      "autoAfterHome": "Autonomous: Off",
+      "pauseInfo": {
+        "buttons": [
+          "Approach an individual",
+          "Menu",
+          "Enter VR",
+          "Autonomous: Off",
+          "Resume",
+          "Photo (P)",
+          "Return to start",
+          "Sound on",
+          "Export events",
+          "Library / controls",
+          "Back to the land",
+          "Follow game clock",
+          "Spawn engine",
+          "Reset all inputs",
+          "View early universe",
+          "Test this computer",
+          "Capture 4K",
+          "Data (U)",
+          "▲",
+          "▼",
+          "Camera",
+          "◉ Photo",
+          "Gallery",
+          "Resume",
+          "Controls",
+          "Save",
+          "Music",
+          "Graphics",
+          "More",
+          "Quit to menu"
+        ],
+        "bodyClasses": []
+      }
+    },
+    "shotPath": "C:\\Users\\0\\.gemini\\antigravity-cli\\brain\\857df05d-b44e-41fd-8192-fbd4924ac089\\scratch\\t0296-capture\\frame-4-mobile-senses-and-ui.png"
+  }
+}

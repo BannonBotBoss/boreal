@@ -1,0 +1,125 @@
+{
+  "capturedAt": "2026-11-20T20:48:50.931Z",
+  "forest": {
+    "elapsedMs": 9056,
+    "errorCount": 0,
+    "errors": [],
+    "warningCount": 0,
+    "totalRequests": 267,
+    "totalBytes": 2943115,
+    "jsBytes": 2892347,
+    "sessionChunkFetched": null,
+    "http404s": [],
+    "topRequests": [
+      {
+        "path": "/assets/session-zmBZrAFV.js",
+        "status": 200,
+        "bytes": 5917698,
+        "contentType": "application/javascript; charset=utf-8"
+      },
+      {
+        "path": "/assets/world-MnTTYnOz.js",
+        "status": 200,
+        "bytes": 973822,
+        "contentType": "application/javascript; charset=utf-8"
+      },
+      {
+        "path": "/models/animals/gray-wolf.glb",
+        "status": 200,
+        "bytes": 902148,
+        "contentType": "model/gltf-binary"
+      },
+      {
+        "path": "/models/animals/snowshoe-hare.glb",
+        "status": 200,
+        "bytes": 898544,
+        "contentType": "model/gltf-binary"
+      },
+      {
+        "path": "/assets/main-DGXiuC-_.js",
+        "status": 200,
+        "bytes": 879139,
+        "contentType": "application/javascript; charset=utf-8"
+      },
+      {
+        "path": "/models/animals/woodland-caribou.glb",
+        "status": 200,
+        "bytes": 496232,
+        "contentType": "model/gltf-binary"
+      },
+      {
+        "path": "/models/animals/red-fox.glb",
+        "status": 200,
+        "bytes": 481704,
+        "contentType": "model/gltf-binary"
+      },
+      {
+        "path": "/wasm/boreal_sim.wasm",
+        "status": 200,
+        "bytes": 418875,
+        "contentType": "application/wasm"
+      },
+      {
+        "path": "/loading/cards/mixedwood.webp",
+        "status": 200,
+        "bytes": 368614,
+        "contentType": "image/webp"
+      },
+      {
+        "path": "/assets/layerPanel-CWpUVxGA.js",
+        "status": 200,
+        "bytes": 317982,
+        "contentType": "application/javascript; charset=utf-8"
+      },
+      {
+        "path": "/loading/cards/old-growth.webp",
+        "status": 200,
+        "bytes": 238040,
+        "contentType": "image/webp"
+      },
+      {
+        "path": "/loading/cards/lake-dawn.webp",
+        "status": 200,
+        "bytes": 237690,
+        "contentType": "image/webp"
+      }
+    ],
+    "extra": {
+      "recordingBytes": 73521,
+      "panelInfo": {
+        "katexNodes": 68,
+        "hasDataPanelEl": true,
+        "loadingVisible": false,
+        "visibleTextSnippet": "PROCEDURAL WORLD / 01\nBoreal\n\nA landscape made from instructions.\n\n08:06 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs\nExplore\nApproach an individual\nW / S move · A / D steer · Shift run · C stealth · F focus · Q lock · X eat held · B release · Space jump · E interact · T hour · hold , rewind · hold . forward · ; pause time · Controls: Esc → Controls\nMenu\nEnter VR\nAutonomous: Off\nPause\nPhoto (P)\nReturn to start\nSound on\nExport events\nLibrary / controls\nWhat is running\n\nGreen is healthy. Yellow needs a look. Red is an error or outside the model. Grey has not been called, or is not active at this time.\n\nTime (cycles)\n61.90739428829973 cycles = 4.355e+17 seconds = 1.380e+10 years. today\nFollowing the game clock.\nFollow game clock\nSpawn log\nspacetime spawned at t=4.355e+17 s, because root.\nreheating spawned by spacetime at t=1.014e-32 s, because ε=1.\nplanet spawned by spacetime at t=4.355e+17 s, because the Earth has formed.\nclimate spawned by planet at t=4.355e+17 s, because the planet grid exists.\nsolar spawned by planet at t=4.355e+17 s, because the planet grid exists.\nenergy"
+      }
+    }
+  },
+  "pagesGlobe": {
+    "elapsedMs": 8051,
+    "errorCount": 0,
+    "errors": [],
+    "totalRequests": 23,
+    "totalBytes": 4666421,
+    "jsBytes": 3280881,
+    "sessionChunkFetched": null,
+    "http404s": [],
+    "extra": {
+      "dom": {
+        "title": "Boreal · Script laboratory",
+        "hasCanvas": true,
+        "loadingInDom": true,
+        "loadingVisible": false
+      }
+    }
+  },
+  "pagesForest": {
+    "elapsedMs": 7048,
+    "errorCount": 0,
+    "errors": [],
+    "totalRequests": 20,
+    "totalBytes": 2943591,
+    "jsBytes": 2892389,
+    "sessionChunkFetched": null,
+    "http404s": []
+  }
+}

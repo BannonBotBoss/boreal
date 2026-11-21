@@ -1,0 +1,845 @@
+{
+  "baseUrl": "http://127.0.0.1:5264",
+  "capturedAt": "2026-11-21T01:46:04.196Z",
+  "consoleErrors": [],
+  "pageErrors": {
+    "multibiome": [],
+    "autoplay": [],
+    "dial-save": []
+  },
+  "recordingBytes": 69692,
+  "0-sahara-ground-landing": {
+    "lat": 23.5,
+    "lon": 10,
+    "beforeState": {
+      "ok": true,
+      "mode": "band",
+      "player": {
+        "x": 0,
+        "z": 0,
+        "yaw": 0
+      },
+      "land": [
+        0,
+        2.5,
+        0
+      ]
+    },
+    "midBand": {
+      "status": "12:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+      "prompt": "Gliding above the land · WASD fly · drag look · Q/E or Space/Ctrl down/up · Shift fast · G become the wolf · Esc planet. Same fly as photo mode. Speed carries on.",
+      "target": "Explore",
+      "act": "E / click · drink",
+      "loading": false,
+      "menuOpen": false,
+      "bodyClasses": [
+        "on-globe"
+      ],
+      "player": {
+        "x": 0,
+        "z": 0,
+        "yaw": 0,
+        "energy": 74.96558225444744,
+        "water": 99.98233264616795,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      },
+      "hareCount": 5,
+      "sceneInfo": {
+        "mode": "band",
+        "height": 35,
+        "fade": 0.25,
+        "groundAtPlayer": 2.5,
+        "camPos": [
+          0,
+          37.5,
+          0
+        ],
+        "meshes": 532,
+        "visibleMeshes": 499,
+        "chunkGroups": 9,
+        "instancedCount": 4097,
+        "fog": {
+          "color": [
+            0.45,
+            0.62,
+            0.9
+          ],
+          "near": 235,
+          "far": 515
+        },
+        "namedAnimals": [
+          "pup:0",
+          "pup:1",
+          "pup:2",
+          "pup:3",
+          "pup:4",
+          "hare",
+          "hare",
+          "hare",
+          "hare",
+          "hare"
+        ]
+      }
+    },
+    "embodied": true,
+    "afterState": {
+      "status": "12:07 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+      "prompt": "",
+      "target": "Explore",
+      "act": "E / click · drink",
+      "loading": false,
+      "menuOpen": false,
+      "bodyClasses": [],
+      "player": {
+        "x": 12.420770195240232,
+        "z": -3.532512637601005,
+        "yaw": 4.989476519759484,
+        "energy": 74.93431247342713,
+        "water": 99.96800581373189,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      },
+      "hareCount": 5,
+      "sceneInfo": {
+        "mode": "game",
+        "height": 35,
+        "fade": 0.75,
+        "groundAtPlayer": 2.49,
+        "camPos": [
+          8.14,
+          4.04,
+          -2.32
+        ],
+        "meshes": 640,
+        "visibleMeshes": 606,
+        "chunkGroups": 14,
+        "instancedCount": 25,
+        "fog": {
+          "color": [
+            0.644,
+            0.723,
+            0.807
+          ],
+          "near": 201.6,
+          "far": 481.6
+        },
+        "namedAnimals": [
+          "pup:0",
+          "pup:1",
+          "pup:2",
+          "pup:3",
+          "pup:4",
+          "hare",
+          "hare",
+          "hare",
+          "hare",
+          "hare"
+        ]
+      }
+    }
+  },
+  "1-greenland-ice-landing": {
+    "lat": 72.5,
+    "lon": -40,
+    "beforeState": {
+      "ok": true,
+      "mode": "band",
+      "player": {
+        "x": 0,
+        "z": 0,
+        "yaw": 0
+      },
+      "land": [
+        0,
+        2.5,
+        0
+      ]
+    },
+    "midBand": {
+      "status": "12:08 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+      "prompt": "Gliding above the land · WASD fly · drag look · Q/E or Space/Ctrl down/up · Shift fast · G become the wolf · Esc planet. Same fly as photo mode. Speed carries on.",
+      "target": "Explore",
+      "act": "E / click · drink",
+      "loading": false,
+      "menuOpen": false,
+      "bodyClasses": [
+        "on-globe"
+      ],
+      "player": {
+        "x": 0,
+        "z": 0,
+        "yaw": 0,
+        "energy": 74.92612776564329,
+        "water": 99.96402858204013,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      },
+      "hareCount": 5,
+      "sceneInfo": {
+        "mode": "band",
+        "height": 35,
+        "fade": 0.5,
+        "groundAtPlayer": 2.5,
+        "camPos": [
+          0,
+          37.5,
+          0
+        ],
+        "meshes": 630,
+        "visibleMeshes": 593,
+        "chunkGroups": 16,
+        "instancedCount": 516,
+        "fog": {
+          "color": [
+            0.45,
+            0.62,
+            0.9
+          ],
+          "near": 235,
+          "far": 515
+        },
+        "namedAnimals": [
+          "pup:0",
+          "pup:1",
+          "pup:2",
+          "pup:3",
+          "pup:4",
+          "hare",
+          "hare",
+          "hare",
+          "hare",
+          "hare"
+        ]
+      }
+    },
+    "embodied": true,
+    "afterState": {
+      "status": "12:08 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+      "prompt": "",
+      "target": "Explore",
+      "act": "E / click · drink",
+      "loading": false,
+      "menuOpen": false,
+      "bodyClasses": [],
+      "player": {
+        "x": 5.085013301407056,
+        "z": -1.4461964489507522,
+        "yaw": 4.989476519759484,
+        "energy": 74.91332604321215,
+        "water": 99.95603288398884,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      },
+      "hareCount": 5,
+      "sceneInfo": {
+        "mode": "game",
+        "height": 35,
+        "fade": 0.75,
+        "groundAtPlayer": 2.506,
+        "camPos": [
+          0.85,
+          4.06,
+          -0.24
+        ],
+        "meshes": 760,
+        "visibleMeshes": 724,
+        "chunkGroups": 16,
+        "instancedCount": 29,
+        "fog": {
+          "color": [
+            0.644,
+            0.723,
+            0.807
+          ],
+          "near": 201.6,
+          "far": 481.6
+        },
+        "namedAnimals": [
+          "pup:0",
+          "pup:1",
+          "pup:2",
+          "pup:3",
+          "pup:4",
+          "hare",
+          "hare",
+          "hare",
+          "hare",
+          "hare"
+        ]
+      }
+    }
+  },
+  "2-pacific-ocean-landing": {
+    "lat": 0,
+    "lon": -140,
+    "beforeState": {
+      "ok": true,
+      "mode": "band",
+      "player": {
+        "x": 0,
+        "z": 0,
+        "yaw": 0
+      },
+      "land": [
+        0,
+        -0.2,
+        0
+      ]
+    },
+    "midBand": {
+      "status": "12:09 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+      "prompt": "Gliding above the land · WASD fly · drag look · Q/E or Space/Ctrl down/up · Shift fast · G become the wolf · Esc planet. Same fly as photo mode. Speed carries on.",
+      "target": "Explore",
+      "act": "E / click · drink",
+      "loading": false,
+      "menuOpen": false,
+      "bodyClasses": [
+        "on-globe"
+      ],
+      "player": {
+        "x": 0,
+        "z": 0,
+        "yaw": 0,
+        "energy": 74.90514133542831,
+        "water": 99.95094020026409,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      },
+      "hareCount": 5,
+      "sceneInfo": {
+        "mode": "band",
+        "height": 35,
+        "fade": 0.525,
+        "groundAtPlayer": -0.2,
+        "camPos": [
+          0,
+          34.8,
+          0
+        ],
+        "meshes": 420,
+        "visibleMeshes": 375,
+        "chunkGroups": 16,
+        "instancedCount": 0,
+        "fog": {
+          "color": [
+            0.45,
+            0.62,
+            0.9
+          ],
+          "near": 235,
+          "far": 515
+        },
+        "namedAnimals": [
+          "pup:0",
+          "pup:1",
+          "pup:2",
+          "pup:3",
+          "pup:4",
+          "hare",
+          "hare",
+          "hare",
+          "hare",
+          "hare"
+        ]
+      }
+    },
+    "embodied": true,
+    "afterState": {
+      "status": "12:10 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+      "prompt": "",
+      "target": "Explore",
+      "act": "E / click · drink",
+      "loading": false,
+      "menuOpen": false,
+      "bodyClasses": [],
+      "player": {
+        "x": 4.918291553819939,
+        "z": -1.3987801719359734,
+        "yaw": 4.989476519759484,
+        "energy": 74.89275934160148,
+        "water": 99.94318079141134,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      },
+      "hareCount": 5,
+      "sceneInfo": {
+        "mode": "game",
+        "height": 35,
+        "fade": 0.775,
+        "groundAtPlayer": -0.2,
+        "camPos": [
+          0.65,
+          1.35,
+          -0.18
+        ],
+        "meshes": 360,
+        "visibleMeshes": 324,
+        "chunkGroups": 16,
+        "instancedCount": 12,
+        "fog": {
+          "color": [
+            0.644,
+            0.723,
+            0.807
+          ],
+          "near": 201.6,
+          "far": 481.6
+        },
+        "namedAnimals": [
+          "pup:0",
+          "pup:1",
+          "pup:2",
+          "pup:3",
+          "pup:4",
+          "hare",
+          "hare",
+          "hare",
+          "hare",
+          "hare"
+        ]
+      }
+    }
+  },
+  "3-autoplay-visit": {
+    "elapsedS": 57.8,
+    "done": false,
+    "finalLog": {
+      "done": false,
+      "started": true,
+      "log": [
+        "AUTOPLAY step 1: waiting through loading t=0.0s"
+      ],
+      "sessionRaw": "{\"scenario\":\"matthew\",\"phase\":\"boot\",\"step\":1,\"t0\":1795225622045,\"phaseAt\":1795225622045,\"inLoad\":true}"
+    },
+    "consoleAutoplayCount": 1,
+    "autoplayLogs": [
+      {
+        "t": 1795225622047,
+        "text": "AUTOPLAY step 1: waiting through loading t=0.0s"
+      }
+    ],
+    "milestones": [
+      {
+        "elapsedS": 0.1,
+        "done": false,
+        "log": [],
+        "loading": true,
+        "loadingText": "BorealStarting…",
+        "cine": false,
+        "menuVisible": false,
+        "mode": null,
+        "status": "",
+        "prompt": "",
+        "bodyClasses": [],
+        "logCount": 0
+      },
+      {
+        "elapsedS": 14.8,
+        "done": false,
+        "log": [
+          "AUTOPLAY step 1: waiting through loading t=0.0s"
+        ],
+        "loading": true,
+        "loadingText": "BorealTrembling aspen regrows after fire or cutting mainly from root suckers, so a whole aspen stand is often one genetic clone that leafs out and turns gold together.Source: Perala 1990, Populus tremuloides, in Silvics of North America vol. 2 (USDA Agric. Handb. 654)Generating the land around you…",
+        "cine": false,
+        "menuVisible": false,
+        "mode": "game",
+        "status": "08:02 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+        "prompt": "",
+        "bodyClasses": [],
+        "logCount": 1
+      },
+      {
+        "elapsedS": 19.4,
+        "done": false,
+        "log": [
+          "AUTOPLAY step 1: waiting through loading t=0.0s"
+        ],
+        "loading": true,
+        "loadingText": "BorealPaper birch bark is rich in betulin, a white waxy compound that makes it waterproof and rot resistant; it was used for canoes, containers and roofing across the boreal forest.Source: Safford, Bjorkbom & Zasada 1990, Betula papyrifera, in Silvics of North America vol. 2Generating the land around you…",
+        "cine": false,
+        "menuVisible": false,
+        "mode": "game",
+        "status": "08:03 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+        "prompt": "",
+        "bodyClasses": [],
+        "logCount": 1
+      },
+      {
+        "elapsedS": 23.9,
+        "done": false,
+        "log": [
+          "AUTOPLAY step 1: waiting through loading t=0.0s"
+        ],
+        "loading": true,
+        "loadingText": "BorealLake of the Woods, at Kenora, has more than 14,500 islands and about 105,000 km of shoreline; it drains north through the Winnipeg River to Hudson Bay.Source: Lake of the Woods Water Sustainability Foundation, State of the Basin Report (2014)Measuring your graphics hardware…",
+        "cine": false,
+        "menuVisible": false,
+        "mode": "game",
+        "status": "08:04 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+        "prompt": "",
+        "bodyClasses": [],
+        "logCount": 1
+      },
+      {
+        "elapsedS": 30.1,
+        "done": false,
+        "log": [
+          "AUTOPLAY step 1: waiting through loading t=0.0s"
+        ],
+        "loading": true,
+        "loadingText": "BorealBeaver dams turn streams into ponds that drown the trees behind them; when a pond is abandoned and the dam breaks, it drains into a sedge 'beaver meadow' that can last for decades.Source: Naiman, Johnston & Kelley 1988, BioScience 38(11):753Measuring your graphics hardware…",
+        "cine": false,
+        "menuVisible": false,
+        "mode": "game",
+        "status": "08:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+        "prompt": "",
+        "bodyClasses": [],
+        "logCount": 1
+      },
+      {
+        "elapsedS": 36.4,
+        "done": false,
+        "log": [
+          "AUTOPLAY step 1: waiting through loading t=0.0s"
+        ],
+        "loading": true,
+        "loadingText": "BorealBeaver dams turn streams into ponds that drown the trees behind them; when a pond is abandoned and the dam breaks, it drains into a sedge 'beaver meadow' that can last for decades.Source: Naiman, Johnston & Kelley 1988, BioScience 38(11):753Measuring your graphics hardware…",
+        "cine": false,
+        "menuVisible": false,
+        "mode": "game",
+        "status": "08:07 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+        "prompt": "",
+        "bodyClasses": [],
+        "logCount": 1
+      },
+      {
+        "elapsedS": 40.9,
+        "done": false,
+        "log": [
+          "AUTOPLAY step 1: waiting through loading t=0.0s"
+        ],
+        "loading": true,
+        "loadingText": "BorealJack pine cones are sealed with resin that melts at about 50 °C, so a fire opens them and reseeds the burn. That is why jack pine dominates dry, sandy and rocky Shield sites that burn often.Source: Rudolph & Laidly 1990, Pinus banksiana, in Silvics of North America vol. 1Measuring your graphics hardware…",
+        "cine": false,
+        "menuVisible": false,
+        "mode": "game",
+        "status": "08:07 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+        "prompt": "",
+        "bodyClasses": [],
+        "logCount": 1
+      },
+      {
+        "elapsedS": 45.8,
+        "done": false,
+        "log": [
+          "AUTOPLAY step 1: waiting through loading t=0.0s"
+        ],
+        "loading": true,
+        "loadingText": "BorealIn summer, moose wade into ponds to eat aquatic plants, which are richer in sodium than land browse; this helps them meet a mineral need that woody twigs cannot.Source: Belovsky & Jordan 1981, Journal of Mammalogy 62(3):613Measuring your graphics hardware…",
+        "cine": false,
+        "menuVisible": false,
+        "mode": "game",
+        "status": "08:08 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+        "prompt": "",
+        "bodyClasses": [],
+        "logCount": 1
+      },
+      {
+        "elapsedS": 51.9,
+        "done": false,
+        "log": [
+          "AUTOPLAY step 1: waiting through loading t=0.0s"
+        ],
+        "loading": true,
+        "loadingText": "BorealIn summer, moose wade into ponds to eat aquatic plants, which are richer in sodium than land browse; this helps them meet a mineral need that woody twigs cannot.Source: Belovsky & Jordan 1981, Journal of Mammalogy 62(3):613Ready",
+        "cine": false,
+        "menuVisible": false,
+        "mode": "game",
+        "status": "08:10 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+        "prompt": "",
+        "bodyClasses": [],
+        "logCount": 1
+      }
+    ]
+  },
+  "4-time-dial-save-continue": {
+    "initial": {
+      "status": "08:04 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+      "prompt": "",
+      "target": "Explore",
+      "act": "Approach an individual",
+      "loading": false,
+      "menuOpen": false,
+      "bodyClasses": [],
+      "player": {
+        "x": 65.40000043996714,
+        "z": -18.600000230912578,
+        "yaw": 8.337303580680604,
+        "energy": 74.93767030226152,
+        "water": 99.97148767363761,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      },
+      "hareCount": 5,
+      "sceneInfo": {
+        "mode": "game",
+        "height": 0,
+        "fade": 0,
+        "groundAtPlayer": 3.75,
+        "camPos": [
+          69.3,
+          5.3,
+          -20.64
+        ],
+        "meshes": 505,
+        "visibleMeshes": 484,
+        "chunkGroups": 13,
+        "instancedCount": 823,
+        "fog": {
+          "color": [
+            0.644,
+            0.723,
+            0.807
+          ],
+          "near": 201.6,
+          "far": 481.6
+        },
+        "namedAnimals": [
+          "pup:0",
+          "pup:1",
+          "pup:2",
+          "pup:3",
+          "pup:4",
+          "hare",
+          "hare",
+          "hare",
+          "hare",
+          "hare"
+        ]
+      }
+    },
+    "afterWalk": {
+      "status": "08:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+      "prompt": "",
+      "target": "Explore",
+      "act": "Approach an individual",
+      "loading": false,
+      "menuOpen": false,
+      "bodyClasses": [],
+      "player": {
+        "x": 59.52667490813497,
+        "z": -19.332529783340615,
+        "yaw": 4.785511622837984,
+        "energy": 74.89423767869671,
+        "water": 99.95163827031206,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      },
+      "hareCount": 5,
+      "sceneInfo": {
+        "mode": "game",
+        "height": 0,
+        "fade": 0,
+        "groundAtPlayer": 3.015,
+        "camPos": [
+          55.14,
+          4.56,
+          -19.01
+        ],
+        "meshes": 507,
+        "visibleMeshes": 485,
+        "chunkGroups": 13,
+        "instancedCount": 821,
+        "fog": {
+          "color": [
+            0.644,
+            0.723,
+            0.807
+          ],
+          "near": 201.6,
+          "far": 481.6
+        },
+        "namedAnimals": [
+          "pup:0",
+          "pup:1",
+          "pup:2",
+          "pup:3",
+          "pup:4",
+          "hare",
+          "hare",
+          "hare",
+          "hare",
+          "hare"
+        ]
+      }
+    },
+    "beforeDialFwdStatus": "08:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+    "afterDialFwdStatus": "08:06 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+    "afterPauseToggleStatus": "08:06 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+    "afterPauseWaitStatus": "PAUSED · 08:06 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+    "afterDialRewindStatus": "08:06 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+    "pauseButtons": [
+      {
+        "text": "Resume",
+        "disabled": false
+      },
+      {
+        "text": "Controls",
+        "disabled": false
+      },
+      {
+        "text": "Save",
+        "disabled": false
+      },
+      {
+        "text": "Music",
+        "disabled": false
+      },
+      {
+        "text": "Graphics",
+        "disabled": false
+      },
+      {
+        "text": "More",
+        "disabled": false
+      },
+      {
+        "text": "Quit to menu",
+        "disabled": false
+      }
+    ],
+    "savedNote": "Saved 6:48:35 PM",
+    "savedStorageKeys": [
+      "boreal.clock.v1",
+      "boreal.deltas.v1",
+      "boreal.events.v1",
+      "boreal.ground.v1",
+      "boreal.needs.v1",
+      "boreal.player.born",
+      "boreal.render.v1",
+      "boreal.weather.v1"
+    ],
+    "savedClock": "{\"worldSec\":30.94886659695667,\"wallMs\":1795225715976,\"rate\":-1.0000000017708452,\"dial\":-0.01,\"exp\":-1.0000000007690684,\"expVel\":1.085454589007311e-8,\"parked\":null,\"curve\":2}",
+    "savedDay": null,
+    "savedEvents": {
+      "schemaVersion": 1,
+      "generatorVersion": 1,
+      "worldSeed": 1400,
+      "records": {},
+      "inventory": {
+        "herb": 0
+      },
+      "bonds": {}
+    },
+    "startMenuButtons": [
+      {
+        "text": "Continue",
+        "disabled": false
+      },
+      {
+        "text": "Generate universe",
+        "disabled": false
+      },
+      {
+        "text": "Universe options…",
+        "disabled": false
+      },
+      {
+        "text": "Controls",
+        "disabled": false
+      },
+      {
+        "text": "Music",
+        "disabled": false
+      },
+      {
+        "text": "Graphics",
+        "disabled": false
+      },
+      {
+        "text": "Board ↗",
+        "disabled": false
+      },
+      {
+        "text": "Quit",
+        "disabled": false
+      }
+    ],
+    "continueEnabled": true,
+    "afterContinue": {
+      "status": "08:01 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%RT run · LT stealth · LB focus · Q lock0 remembered · 0 friends · 0 herbs",
+      "prompt": "",
+      "target": "Explore",
+      "act": "Approach an individual",
+      "loading": false,
+      "menuOpen": false,
+      "bodyClasses": [],
+      "player": {
+        "x": 65.4,
+        "z": -18.6,
+        "yaw": 2.0541182735010186,
+        "energy": 74.85772129012265,
+        "water": 99.93496438236907,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      },
+      "hareCount": 5,
+      "sceneInfo": {
+        "mode": "game",
+        "height": 0,
+        "fade": 0,
+        "groundAtPlayer": 3.75,
+        "camPos": [
+          69.3,
+          5.3,
+          -20.64
+        ],
+        "meshes": 476,
+        "visibleMeshes": 456,
+        "chunkGroups": 13,
+        "instancedCount": 821,
+        "fog": {
+          "color": [
+            0.644,
+            0.723,
+            0.807
+          ],
+          "near": 201.6,
+          "far": 481.6
+        },
+        "namedAnimals": [
+          "pup:0",
+          "pup:1",
+          "pup:2",
+          "pup:3",
+          "pup:4",
+          "hare",
+          "hare",
+          "hare",
+          "hare",
+          "hare"
+        ]
+      }
+    }
+  }
+}

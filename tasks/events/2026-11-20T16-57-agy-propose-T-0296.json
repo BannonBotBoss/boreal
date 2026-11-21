@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0296",
+  "agent": "agy",
+  "at": "2026-11-20T16:57:00-08:00",
+  "note": "Propose T-0296 from calibrated Rule 11 audit (calibrationValid=true, 0/4 pass >=0.95, meanScore=0.0938) + live headless Edge capture (port 5263, 0 console errors, 73,882 B WebM recording, 5 live PNGs vs 3 natural references) + full Windows npm test run (1,367 tests, 166.04 s) covering continuousTerrain.ts buildLeaf zero midwinter snow (0.05% snow px at 34.4 cm), floating Visitor & static-noise midnight sky (0 stars), playable deer sunk hooves & invisible off-screen hare (aimY 0.544 m), hardcoded canid footing (3.29x deer / 1.73x hare error) & wolf scent/HUD/#home +2pi spin, senses.css 0px mobile .sense-stream collapse & off-center compass, and 6 Windows npm test failures / 3 skips / 12 stale passing gait-data TODOs / 157.74 s climate-class test. Evidence: refs/audit/live-playable-winter-night-tests-audit/{audit.ts,numbers.json,live-capture.json,recording.webm,frame-0..4.png,reference/ref-0..2.jpg}. Skill: notes/skills/live-playable-winter-night-tests-audit.md."
+}

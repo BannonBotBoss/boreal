@@ -1,0 +1,913 @@
+{
+  "meta": {
+    "port": 5269,
+    "capturedAt": "2026-11-21T11:47:11.416Z",
+    "screencastFrames": 73
+  },
+  "part1_dataPanelAndCosmosSphere": {
+    "loadedMain": true,
+    "initial": {
+      "open": true,
+      "panelZ": "70",
+      "panelRect": {
+        "x": 632,
+        "y": 8,
+        "w": 640,
+        "h": 662
+      },
+      "cycleVal": "61.90739428829973",
+      "cardCount": 14,
+      "cardSummaries": [
+        {
+          "engine": "spacetime",
+          "status": "healthy",
+          "dotColor": "rgb(61, 214, 140)",
+          "varCount": 20,
+          "sampleVars": [
+            "scale factor a: 1 ",
+            "Hubble rate: 2.184e-18 1/s",
+            "e-folds: 60.743 ",
+            "radiation density: 6.979e-14 J/m³"
+          ],
+          "inputCount": 15,
+          "inputKeys": [
+            "G",
+            "c",
+            "hbar",
+            "k_B",
+            "Lambda",
+            "k",
+            "H0",
+            "omega_m",
+            "omega_lambda",
+            "omega_r",
+            "inflaton_mass",
+            "phi0",
+            "phi_dot0",
+            "Gamma_inflation",
+            "T_cmb"
+          ]
+        },
+        {
+          "engine": "reheating",
+          "status": "healthy",
+          "dotColor": "rgb(61, 214, 140)",
+          "varCount": 43,
+          "sampleVars": [
+            "scale factor a: 1 ",
+            "Hubble rate: 2.184e-18 1/s",
+            "inflaton density: 0 J/m³",
+            "radiation density: 6.979e-14 J/m³"
+          ],
+          "inputCount": 21,
+          "inputKeys": [
+            "Gamma_phi",
+            "g_star",
+            "qcd_transition",
+            "qcd_MeV",
+            "mass_photon",
+            "mass_gluon",
+            "mass_W",
+            "mass_Z",
+            "mass_Higgs",
+            "mass_up",
+            "mass_down",
+            "mass_charm",
+            "mass_strange",
+            "mass_top",
+            "mass_bottom",
+            "mass_electron",
+            "mass_muon",
+            "mass_tau",
+            "mass_nu_e",
+            "mass_nu_mu",
+            "mass_nu_tau"
+          ]
+        },
+        {
+          "engine": "planet",
+          "status": "healthy",
+          "dotColor": "rgb(61, 214, 140)",
+          "varCount": 5,
+          "sampleVars": [
+            "rows: 8 ",
+            "columns: 16 ",
+            "day of year: 341.02 ",
+            "hour: 0.477 h"
+          ],
+          "inputCount": 8,
+          "inputKeys": [
+            "nlat",
+            "nlon",
+            "solar_constant",
+            "obliquity_deg",
+            "lapse_rate",
+            "humidity_seed",
+            "water_albedo",
+            "snow_albedo"
+          ]
+        },
+        {
+          "engine": "climate",
+          "status": "healthy",
+          "dotColor": "rgb(61, 214, 140)",
+          "varCount": 3,
+          "sampleVars": [
+            "surface temperature: 16.176 °C (min -21.316, mean 16.176, max 32.037, 128 cells)",
+            "air temperature: 16.111 °C (min -20.374, mean 16.111, max 30.254, 128 cells)",
+            "humidity: 0.011 kg/kg (min 5.843e-4, mean 0.011, max 0.021, 128 cells)"
+          ],
+          "inputCount": 8,
+          "inputKeys": [
+            "nlat",
+            "nlon",
+            "solar_constant",
+            "obliquity_deg",
+            "lapse_rate",
+            "humidity_seed",
+            "water_albedo",
+            "snow_albedo"
+          ]
+        },
+        {
+          "engine": "solar",
+          "status": "healthy",
+          "dotColor": "rgb(61, 214, 140)",
+          "varCount": 3,
+          "sampleVars": [
+            "top-of-atmosphere sun: 350.175 W/m² (min 0, mean 350.175, max 1372.953, 128 cells)",
+            "shortwave down: 189.502 W/m² (min 0, mean 189.502, max 1020.02, 128 cells)",
+            "absorbed: 172.087 W/m² (min 0, mean 172.087, max 918.018, 128 cells)"
+          ],
+          "inputCount": 8,
+          "inputKeys": [
+            "nlat",
+            "nlon",
+            "solar_constant",
+            "obliquity_deg",
+            "lapse_rate",
+            "humidity_seed",
+            "water_albedo",
+            "snow_albedo"
+          ]
+        },
+        {
+          "engine": "energy",
+          "status": "healthy",
+          "dotColor": "rgb(61, 214, 140)",
+          "varCount": 3,
+          "sampleVars": [
+            "surface temperature: 16.176 °C (min -21.316, mean 16.176, max 32.037, 128 cells)",
+            "evaporation: 3.506 mm/day (min 0, mean 3.506, max 21.253, 128 cells)",
+            "outgoing longwave: 237.111 W/m² (min 158.8, mean 237.111, max 270.223, 128 cells)"
+          ],
+          "inputCount": 8,
+          "inputKeys": [
+            "nlat",
+            "nlon",
+            "solar_constant",
+            "obliquity_deg",
+            "lapse_rate",
+            "humidity_seed",
+            "water_albedo",
+            "snow_albedo"
+          ]
+        },
+        {
+          "engine": "wind",
+          "status": "healthy",
+          "dotColor": "rgb(61, 214, 140)",
+          "varCount": 3,
+          "sampleVars": [
+            "east wind: 0.022 m/s (min -11.866, mean 0.022, max 9.069, 128 cells)",
+            "north wind: 0 m/s (min -12.122, mean 0, max 12.122, 128 cells)",
+            "pressure: 99555.598 Pa (min 97293.387, mean 99555.598, max 1.013e+5, 128 cells)"
+          ],
+          "inputCount": 8,
+          "inputKeys": [
+            "nlat",
+            "nlon",
+            "solar_constant",
+            "obliquity_deg",
+            "lapse_rate",
+            "humidity_seed",
+            "water_albedo",
+            "snow_albedo"
+          ]
+        },
+        {
+          "engine": "hydro",
+          "status": "healthy",
+          "dotColor": "rgb(61, 214, 140)",
+          "varCount": 3,
+          "sampleVars": [
+            "rain: 0.37 mm/day (min 0, mean 0.37, max 2.412, 128 cells)",
+            "snow water: 1.637 mm (min 0, mean 1.637, max 30.558, 128 cells)",
+            "soil water: 37.287 mm (min 0, mean 37.287, max 75, 128 cells)"
+          ],
+          "inputCount": 8,
+          "inputKeys": [
+            "nlat",
+            "nlon",
+            "solar_constant",
+            "obliquity_deg",
+            "lapse_rate",
+            "humidity_seed",
+            "water_albedo",
+            "snow_albedo"
+          ]
+        },
+        {
+          "engine": "clouds",
+          "status": "healthy",
+          "dotColor": "rgb(61, 214, 140)",
+          "varCount": 2,
+          "sampleVars": [
+            "cloud fraction: 0.473  (min 0, mean 0.473, max 1, 128 cells)",
+            "optical depth: 5.671  (min 0, mean 5.671, max 12, 128 cells)"
+          ],
+          "inputCount": 8,
+          "inputKeys": [
+            "nlat",
+            "nlon",
+            "solar_constant",
+            "obliquity_deg",
+            "lapse_rate",
+            "humidity_seed",
+            "water_albedo",
+            "snow_albedo"
+          ]
+        },
+        {
+          "engine": "hunger",
+          "status": "healthy",
+          "dotColor": "rgb(61, 214, 140)",
+          "varCount": 3,
+          "sampleVars": [
+            "hunger: 0.751 ",
+            "fox rate: 0.012 1/s",
+            "wolf rate: 0.006 1/s"
+          ],
+          "inputCount": 20,
+          "inputKeys": [
+            "nlat",
+            "nlon",
+            "solar_constant",
+            "obliquity_deg",
+            "lapse_rate",
+            "humidity_seed",
+            "water_albedo",
+            "snow_albedo",
+            "hunger",
+            "fox_x",
+            "fox_z",
+            "fox_yaw",
+            "mama_x",
+            "mama_z",
+            "mama_yaw",
+            "pup_x",
+            "pup_z",
+            "yip",
+            "protect",
+            "drive_dt"
+          ]
+        },
+        {
+          "engine": "senses",
+          "status": "healthy",
+          "dotColor": "rgb(61, 214, 140)",
+          "varCount": 4,
+          "sampleVars": [
+            "scent: 0.802 ",
+            "smell: 40 m",
+            "sight: 16 m",
+            "hearing: 20 m"
+          ],
+          "inputCount": 8,
+          "inputKeys": [
+            "nlat",
+            "nlon",
+            "solar_constant",
+            "obliquity_deg",
+            "lapse_rate",
+            "humidity_seed",
+            "water_albedo",
+            "snow_albedo"
+          ]
+        },
+        {
+          "engine": "prey",
+          "status": "healthy",
+          "dotColor": "rgb(61, 214, 140)",
+          "varCount": 2,
+          "sampleVars": [
+            "pup effort: 0.25 ",
+            "mama effort: 1.000e+6 "
+          ],
+          "inputCount": 8,
+          "inputKeys": [
+            "nlat",
+            "nlon",
+            "solar_constant",
+            "obliquity_deg",
+            "lapse_rate",
+            "humidity_seed",
+            "water_albedo",
+            "snow_albedo"
+          ]
+        },
+        {
+          "engine": "danger",
+          "status": "healthy",
+          "dotColor": "rgb(61, 214, 140)",
+          "varCount": 4,
+          "sampleVars": [
+            "danger: 0.287 ",
+            "approach: 1.506 ",
+            "threat: 1 ",
+            "mode: 1 "
+          ],
+          "inputCount": 8,
+          "inputKeys": [
+            "nlat",
+            "nlon",
+            "solar_constant",
+            "obliquity_deg",
+            "lapse_rate",
+            "humidity_seed",
+            "water_albedo",
+            "snow_albedo"
+          ]
+        },
+        {
+          "engine": "protect",
+          "status": "healthy",
+          "dotColor": "rgb(61, 214, 140)",
+          "varCount": 1,
+          "sampleVars": [
+            "protect: 0.011 "
+          ],
+          "inputCount": 8,
+          "inputKeys": [
+            "nlat",
+            "nlon",
+            "solar_constant",
+            "obliquity_deg",
+            "lapse_rate",
+            "humidity_seed",
+            "water_albedo",
+            "snow_albedo"
+          ]
+        }
+      ],
+      "totalParamInputs": 144,
+      "uniqueParamKeys": 56,
+      "duplicatedKeyCount": 8,
+      "duplicatedKeysSample": [
+        [
+          "nlat",
+          12
+        ],
+        [
+          "nlon",
+          12
+        ],
+        [
+          "solar_constant",
+          12
+        ],
+        [
+          "obliquity_deg",
+          12
+        ],
+        [
+          "lapse_rate",
+          12
+        ],
+        [
+          "humidity_seed",
+          12
+        ],
+        [
+          "water_albedo",
+          12
+        ],
+        [
+          "snow_albedo",
+          12
+        ]
+      ],
+      "drivesText": [
+        {
+          "id": "hunger",
+          "text": "H = 0.848. Fox rate 0.012/s, wolf rate 0.006/s. Fox diet: carnivore."
+        },
+        {
+          "id": "effort",
+          "text": "Pup effort 0.250. Mother effort 1.45e+12."
+        },
+        {
+          "id": "scent",
+          "text": "S = 0.718. Smell 40 m, sight 16 m, hearing 20 m (30 m while a pup yips)."
+        },
+        {
+          "id": "danger",
+          "text": "D = 0.173. Approach A = 1.522."
+        },
+        {
+          "id": "protect",
+          "text": "P = 0.000. The threat has not committed her yet."
+        },
+        {
+          "id": "mode",
+          "text": "Fox is in watch."
+        }
+      ],
+      "notInRustCount": 22,
+      "plots": [
+        {
+          "w": 520,
+          "h": 180,
+          "nonZeroPx": 3840
+        },
+        {
+          "w": 520,
+          "h": 180,
+          "nonZeroPx": 5444
+        }
+      ]
+    },
+    "escapeWithDataOpen": {
+      "dataPanelStillOpen": true,
+      "pauseMenuOpenedBehind": true,
+      "pauseMenuHeading": "Paused",
+      "dataPanelZ": 70,
+      "menuZ": 40
+    },
+    "earlyUniverse": {
+      "sphereMounted": true,
+      "sphereCanvasW": 1280,
+      "sphereCanvasH": 720,
+      "tierText": "Tier: not tested yet",
+      "fpsText": "1429 fps, this frame 0.7 ms",
+      "lockSelectValue": "high",
+      "targetInputValue": "33.3",
+      "cycleVal": "1",
+      "capture4kResult": {
+        "w": 3840,
+        "h": 2160,
+        "dataUrlLen": 4345874
+      }
+    },
+    "afterFollowClock": {
+      "sphereRemoved": true,
+      "staleTierText": "Tier: not tested yet",
+      "staleFpsText": "1250 fps, this frame 0.8 ms",
+      "lockSelectStillShows": "high",
+      "cycleVal": "61.90739428829973"
+    }
+  },
+  "part2_viewfinderCameraAndGallery": {
+    "camPanelInitial": {
+      "badgeStorage": null,
+      "ledgerStorage": null,
+      "controls": [
+        {
+          "text": "Auto exposure 🔒",
+          "locked": true,
+          "disabled": true,
+          "type": "checkbox",
+          "value": "on"
+        },
+        {
+          "text": "Comp EV 🔒0.0",
+          "locked": true,
+          "disabled": true,
+          "type": "range",
+          "value": "0"
+        },
+        {
+          "text": "Aperture f/ 🔒8.0",
+          "locked": true,
+          "disabled": true,
+          "type": "range",
+          "value": "8"
+        },
+        {
+          "text": "Shutter 🔒1/125",
+          "locked": true,
+          "disabled": true,
+          "type": "range",
+          "value": "-7"
+        },
+        {
+          "text": "ISO 🔒100",
+          "locked": true,
+          "disabled": true,
+          "type": "range",
+          "value": "100"
+        },
+        {
+          "text": "ND stops 🔒0.0",
+          "locked": true,
+          "disabled": true,
+          "type": "range",
+          "value": "0"
+        },
+        {
+          "text": "Focal mm50",
+          "locked": false,
+          "disabled": false,
+          "type": "range",
+          "value": "50"
+        },
+        {
+          "text": "Adapt speed x1",
+          "locked": false,
+          "disabled": false,
+          "type": "range",
+          "value": "1"
+        },
+        {
+          "text": "Filter 🔒Visible (no filter)Red channelGreen channelBlue channelLuminance (photopic)H-alpha 656.3 nmUV 160-170 nm (absorbed by O2/O3 above ~50 km)EUV 17-30 nm (absorbed in the thermosphere)X-ray 0.1-0.8 nm (absorbed above ~70 km)",
+          "locked": true,
+          "disabled": true,
+          "type": "select",
+          "value": "visible"
+        }
+      ],
+      "lockedCount": 7,
+      "totalControls": 9,
+      "readout": "game  EV100 15.0 auto\nP photo  Shift+P photo+EXR  G gallery  ` debug HUD"
+    },
+    "focalSliderDiff35vs400mm": {
+      "sameSize": true,
+      "mad": 13.1584,
+      "diffPx": 643488,
+      "diffFrac": 0.6982
+    },
+    "afterShiftP": {
+      "idbPhotoCount": 0,
+      "photosMeta": []
+    },
+    "afterButtonShot": {
+      "idbPhotoCount": 1,
+      "photosMeta": [
+        {
+          "id": 1,
+          "pngBytes": 192252,
+          "hasExr": false,
+          "focalMm": 400
+        }
+      ]
+    },
+    "galleryAudit": {
+      "figureCount": 1,
+      "initialChecked": [
+        false
+      ],
+      "noticeAfterDefaultExport": "Exported 0 file(s).",
+      "dlAfterDefaultExport": [],
+      "selectedResolution": "4K",
+      "selectedAspect": "16:9",
+      "selectedFormat": "jpeg",
+      "dlAfterJpeg4kExport": [
+        {
+          "download": "boreal_shot_1.png",
+          "href": "blob:http://127.0.0.1:5269/d42eb459-f643-47a8-a6fa-d90532c27fe1"
+        }
+      ],
+      "createdDuringExport": [
+        {
+          "url": "blob:http://127.0.0.1:5269/d42eb459-f643-47a8-a6fa-d90532c27fe1",
+          "type": "image/png",
+          "size": 192252
+        }
+      ],
+      "previewObjectUrlsCreated": 2,
+      "previewObjectUrlsRevoked": 0
+    }
+  },
+  "part3_saveExportAndCorruptStorage": {
+    "healthyExportEvents": {
+      "downloads": [
+        {
+          "download": "boreal-events.json",
+          "href": "blob:http://127.0.0.1:5269/4edeff75-b3b2-4238-a884-15ed9ac93c50"
+        }
+      ],
+      "exportedKeys": [
+        "schemaVersion",
+        "generatorVersion",
+        "worldSeed",
+        "records",
+        "inventory",
+        "bonds"
+      ],
+      "recordCount": 0,
+      "eventCount": null,
+      "samplePayload": {
+        "schemaVersion": 1,
+        "generatorVersion": 1,
+        "worldSeed": 1400,
+        "records": {},
+        "inventory": {
+          "herb": 0
+        },
+        "bonds": {}
+      }
+    },
+    "corruptEventsBoot": {
+      "bootCorruptNotice": {
+        "visible": false,
+        "text": "Save unavailable: SyntaxError: Expected property name or '}' in JSON at position 1 (line 1 column 2). Interactions are disabled to protect it.",
+        "actDisabled": true
+      },
+      "after6sCorrupt": {
+        "noticeStillVisible": false,
+        "text": "Save unavailable: SyntaxError: Expected property name or '}' in JSON at position 1 (line 1 column 2). Interactions are disabled to protect it."
+      },
+      "pauseSaveWhenBlocked": {
+        "pauseButtons": [
+          "Resume",
+          "Controls",
+          "Save",
+          "Music",
+          "Graphics",
+          "More",
+          "Quit to menu"
+        ],
+        "hasRecoverOrResetButton": false,
+        "pauseNoteAfterClickingSave": [
+          "Saved 4:48:44 AM"
+        ],
+        "rawEventsStorageStillCorrupt": true
+      },
+      "consoleErrors": [],
+      "pageErrors": []
+    },
+    "corruptAllStoresAndNullBadges": {
+      "loadedWithin15s": false,
+      "state": {
+        "loadingStillStuck": true,
+        "cameraPanelMounted": false,
+        "statusText": "3D unavailable. Open this page in a browser with WebGL2 enabled."
+      },
+      "errors": [
+        "boot TypeError: Cannot use 'in' operator to search for 'camera.exposure' in null\n    at hasBadge (http://127.0.0.1:5269/src/core/badges.ts:38:36)\n    at canUse (http://127.0.0.1:5269/src/core/badges.ts:39:41)\n    at mountCameraPanel (http://127.0.0.1:5269/src/ui/cameraPanel.ts:17:17)\n    at mountViewfinder (http://127.0.0.1:5269/src/camera/gameCamera.ts:129:17)\n    at buildScene (http://127.0.0.1:5269/src/render/buildScene.ts:85:3)\n    at http://127.0.0.1:5269/src/main.ts:177:10"
+      ]
+    }
+  },
+  "part4_standaloneInteractiveTools": {
+    "gamepadHtml": {
+      "canvasStats": {
+        "width": 575,
+        "height": 404,
+        "nonBlackFrac": 0.9818,
+        "meanLum": 0.122
+      },
+      "beforeClick": {
+        "activeTab": "Game",
+        "focusedRow": "moveForward",
+        "tabCount": 7,
+        "rowCount": 23,
+        "liveText": "No controller yet: press any button on it (browsers hide pads until then). Keyboard: arrows, Enter, Esc, [ ], H, R."
+      },
+      "afterMouseClick": {
+        "activeTab": "Game",
+        "focusedRow": "moveForward"
+      },
+      "mouseClickChangedTab": false,
+      "mouseClickChangedRow": false,
+      "captureModal": "Press the button or combination for Move forward (hold together, let go to confirm).  · Esc / 8 s cancels",
+      "afterKeyRebind": {
+        "msg": "Move forward ← K",
+        "modal": "",
+        "focusedRowKeyCol": "K",
+        "focusedRowPadCol": "LS ↑"
+      },
+      "errors": []
+    },
+    "planetLayersHtml": {
+      "title": "ready",
+      "statusText": "",
+      "optionCount": 35,
+      "tsInfo": "surface temperature: -61.13 … 31.28 °C · day 172 · rust/wasm · 180×90 cells",
+      "sampleLayers": {
+        "land": "land fraction: 0.000 … 1.000 0..1 · day 172 · rust/wasm · 180×90 cells",
+        "elev": "height above sea level: 0.000 … 7884 m · day 172 · rust/wasm · 180×90 cells",
+        "ts": "surface temperature: -61.13 … 31.28 °C · day 172 · rust/wasm · 180×90 cells",
+        "tair": "air temperature: -61.13 … 31.28 °C · day 172 · rust/wasm · 180×90 cells",
+        "soil": "soil moisture: 0.000 … 75.00 mm · day 172 · rust/wasm · 180×90 cells",
+        "snow": "snow water equivalent: 0.000 … 30.00 mm w.e. · day 172 · rust/wasm · 180×90 cells",
+        "q": "specific humidity: 0.00001912 … 0.02142 kg/kg · day 172 · rust/wasm · 180×90 cells",
+        "cloud": "cloud fraction: 0.000 … 0.5967 0..1 · day 172 · rust/wasm · 180×90 cells"
+      },
+      "canvasW": 180,
+      "canvasH": 90,
+      "errors": []
+    },
+    "deepTimeHtml": {
+      "milestoneCount": 10,
+      "milestones": [
+        {
+          "id": "earth",
+          "yrAttr": "-4540000000",
+          "card": "4.54 Gyr ago · Before the Earth No globe: the Sun is alone with a disc of dust and rock still falling together. Sun 71.6 % of today · 974 W/m² · zero-greenhouse temperature n/a (no planet) · embodiable: none nearest milestone: Earth forms"
+        },
+        {
+          "id": "life",
+          "yrAttr": "-3700000000",
+          "card": "3.70 Gyr ago · The microbial world Living seas only: you are a microscopic cell chasing chemical nutrients and avoiding harsh water. Sun 75.5 % of today · 1028 W/m² · zero-greenhouse temperature 236.8 K · embodiable: microbe nearest milestone: Microbial life (Isua stromatolites)"
+        },
+        {
+          "id": "dynamo",
+          "yrAttr": "-3500000000",
+          "card": "3.50 Gyr ago · The microbial world Living seas only: you are a microscopic cell chasing chemical nutrients and avoiding harsh water. Sun 76.5 % of today · 1042 W/m² · zero-greenhouse temperature 237.6 K · embodiable: microbe nearest milestone: Geodynamo running (oldest palaeomagnetic record)"
+        },
+        {
+          "id": "oxygen",
+          "yrAttr": "-2400000000",
+          "card": "2.40 Gyr ago · The microbial world Living seas only: you are a microscopic cell chasing chemical nutrients and avoiding harsh water. Sun 82.6 % of today · 1125 W/m² · zero-greenhouse temperature 242.2 K · embodiable: microbe nearest milestone: Great Oxidation Event"
+        },
+        {
+          "id": "innercore",
+          "yrAttr": "-1000000000",
+          "card": "1.00 Gyr ago · The microbial world Living seas only: you are a microscopic cell chasing chemical nutrients and avoiding harsh water. Sun 92.0 % of today · 1251 W/m² · zero-greenhouse temperature 248.8 K · embodiable: microbe nearest milestone: Inner core starts to freeze [DISPUTED 0.5-1.5 Ga]"
+        },
+        {
+          "id": "animals",
+          "yrAttr": "-538800000",
+          "card": "539 Myr ago · Living Earth Oceans, forests and animals: any creature can be embodied. Sun 95.5 % of today · 1300 W/m² · zero-greenhouse temperature 251.1 K · embodiable: animal nearest milestone: Cambrian: animals with shells and eyes"
+        },
+        {
+          "id": "kpg",
+          "yrAttr": "-66043000",
+          "card": "66.0 Myr ago · Living Earth Oceans, forests and animals: any creature can be embodied. Sun 99.4 % of today · 1353 W/m² · zero-greenhouse temperature 253.7 K · embodiable: animal nearest milestone: Non-bird dinosaurs end (K-Pg)"
+        },
+        {
+          "id": "brunhes",
+          "yrAttr": "-773000",
+          "card": "773 kyr ago · Living Earth Oceans, forests and animals: any creature can be embodied. Sun 100.0 % of today · 1361 W/m² · zero-greenhouse temperature 254.0 K · embodiable: animal nearest milestone: Last magnetic reversal (Brunhes-Matuyama)"
+        },
+        {
+          "id": "sapiens",
+          "yrAttr": "-315000",
+          "card": "315 kyr ago · Living Earth Oceans, forests and animals: any creature can be embodied. Sun 100.0 % of today · 1361 W/m² · zero-greenhouse temperature 254.0 K · embodiable: animal nearest milestone: Earliest Homo sapiens (Jebel Irhoud)"
+        },
+        {
+          "id": "now",
+          "yrAttr": "0",
+          "card": "now · Living Earth Oceans, forests and animals: any creature can be embodied. Sun 100.0 % of today · 1361 W/m² · zero-greenhouse temperature 254.0 K · embodiable: animal nearest milestone: Now"
+        }
+      ],
+      "errors": []
+    },
+    "locomotionLabHtml": {
+      "title": "ready",
+      "canvasCount": 2,
+      "controlCount": 14,
+      "bodyText": "Locomotion lab · terrain flat\nspeed  1.2 m/s\ngait \nauto\nwalk\ntrot\npace\ncanter\ngallop\nhalf-bound\ngallop-lagomorph\npronk\n LOD \nnear\nmid\n pause pounce\nshow body legs foot markers IK targets raw (no springs)\ncoat darken  1\nstreakSpacing  0.015\nstreakWidth  0.0035\nstreakJitter  0.6\ngait walk  Fr 0.27  du",
+      "screenshotStats": {
+        "width": 1280,
+        "height": 720,
+        "nonBlackFrac": 1,
+        "meanLum": 0.6106
+      },
+      "errors": []
+    },
+    "treeViewerHtml": {
+      "ready": true,
+      "hud": "Black spruce (Picea mariana), procedural Weber-Penn\nfront: ages 15, 35, 70, 120 yr (left to right) x seeds 1, 2, 3\nback: age 90 seed 7 as near | mid | far crown | impostor\nnear build 6.3 ms/tree (mean)",
+      "stats": {
+        "ages": [
+          15,
+          35,
+          70,
+          120
+        ],
+        "seeds": [
+          1,
+          2,
+          3
+        ],
+        "buildMs": [
+          32.1,
+          2,
+          2.3,
+          5,
+          3.2,
+          3.1,
+          4.7,
+          3.9,
+          3.2,
+          3.7,
+          4.7,
+          8.1
+        ],
+        "buildMsMean": 6.3,
+        "heights": [
+          3.3,
+          3.5,
+          3.2,
+          6.9,
+          7.4,
+          6.7,
+          11.7,
+          12.4,
+          11.3,
+          14.9,
+          15.8,
+          14.4
+        ],
+        "dbh": [
+          2.9,
+          3.2,
+          2.8,
+          6.8,
+          7.3,
+          6.6,
+          12.4,
+          13.4,
+          11.9,
+          17.1,
+          18.9,
+          16.3
+        ],
+        "stems": [
+          138,
+          154,
+          150,
+          286,
+          300,
+          306,
+          575,
+          758,
+          640,
+          878,
+          1029,
+          949
+        ],
+        "nearTris": [
+          2164,
+          2392,
+          2412,
+          4448,
+          4940,
+          4976,
+          8416,
+          10360,
+          9660,
+          11672,
+          13680,
+          12908
+        ],
+        "midTris": [
+          376,
+          388,
+          408,
+          900,
+          952,
+          1024,
+          1536,
+          1856,
+          1784,
+          2132,
+          2540,
+          2444
+        ],
+        "lod90": {
+          "near": 13736,
+          "mid": 2484,
+          "crown": 38,
+          "impostor": 2,
+          "buildMs": 5.7,
+          "height": 13.4,
+          "dbh": 14.9
+        }
+      },
+      "screenshotStats": {
+        "width": 1280,
+        "height": 720,
+        "nonBlackFrac": 0.9849,
+        "meanLum": 0.3715
+      },
+      "errors": []
+    },
+    "padMenuHtml": {
+      "title": "Boreal · Pad menu harness",
+      "bodyText": "Pad menu harness: Menu = pad menu, View = controls help, Y = camera mode (hold: filter wheel), RS click = shutter.\nCamera\nAuto exposure 🔒\nComp EV 🔒\n0.0\nAperture f/ 🔒\n8.0\nShutter 🔒\n1/125\nISO 🔒\n100\nND stops 🔒\n0.0\nFocal mm\n50\nAdapt speed x\n1\nFilter 🔒\nVisible (no filter)\nRed channel\nGreen channel",
+      "buttonCount": 3,
+      "menuOpen": true,
+      "screenshotStats": {
+        "width": 1280,
+        "height": 720,
+        "nonBlackFrac": 0.9905,
+        "meanLum": 0.1058
+      },
+      "errors": []
+    }
+  },
+  "consoleErrors": [],
+  "pageErrors": []
+}

@@ -1,0 +1,116 @@
+{
+  "task": "T-0302",
+  "auditedAt": "2026-11-21T11:52:03.384Z",
+  "repo": "C:\\dev\\boreal-agy-t0302",
+  "calibrationValid": true,
+  "passCount": 0,
+  "totalChecks": 4,
+  "meanScore": 0,
+  "checks": [
+    {
+      "id": "data-panel-param-duplication-drives-escape-and-sphere-state",
+      "passThreshold": 0.95,
+      "score": 0,
+      "pass": false,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "calibrationOk": true,
+      "metrics": {
+        "noPlanetParamDuplicationAcrossCards": false,
+        "drivesSectionMatchesRustPreyEngine": false,
+        "escapeClosesDataPanelInsteadOfPauseBehind": false,
+        "sphereAppliesPendingTierLockAndTarget": false,
+        "followClockClearsStaleSphereFpsAndTier": false,
+        "expansionAndReheatingPlotsHaveAxisScales": false,
+        "liveTotalParamInputs": 144,
+        "liveUniqueParamKeys": 56,
+        "liveDuplicatedKeyCount": 8,
+        "liveDuplicateCopiesPerPlanetKey": 12,
+        "liveRustMamaEffort": 1000000,
+        "liveDrivesMamaEffort": null,
+        "liveMamaEffortDiscrepancyFactor": null,
+        "liveDataPanelZ": 70,
+        "livePauseMenuZ": 40,
+        "liveSphereWidthWhenLockedHigh": 1280,
+        "liveStaleFpsAfterFollowClock": "1250 fps, this frame 0.8 ms"
+      }
+    },
+    {
+      "id": "viewfinder-badge-deadlock-shiftp-exr-and-gallery-export",
+      "passThreshold": 0.95,
+      "score": 0,
+      "pass": false,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "calibrationOk": true,
+      "metrics": {
+        "gameplayCallsEarnCreditsOrMountsBadgesUi": false,
+        "shiftPCapturesExrInGameView": false,
+        "viewfinderShotsDefaultSelectedOrZeroExportGuarded": false,
+        "galleryHonorsExportOptionsForViewfinderShots": false,
+        "gallerySelectsStyledReadableContrast": false,
+        "galleryPreviewRevokesObjectUrls": false,
+        "liveCameraPanelLockedControls": 7,
+        "liveCameraPanelTotalControls": 9,
+        "externalEarnCallSitesInSrc": 0,
+        "externalBadgePanelMountsInSrc": 0,
+        "liveFocal35vs400mmMad": 13.1584,
+        "liveShiftPPhotoCount": 0,
+        "liveGalleryInitialChecked": [
+          false
+        ],
+        "liveGalleryDefaultExportNotice": "Exported 0 file(s).",
+        "liveGallery4kJpegExportFilename": "boreal_shot_1.png",
+        "liveGallery4kJpegExportMime": "image/png",
+        "liveGalleryPreviewUrlsCreated": 2,
+        "liveGalleryPreviewUrlsRevoked": 0
+      }
+    },
+    {
+      "id": "corrupt-localstorage-boot-crash-blocked-save-and-export",
+      "passThreshold": 0.95,
+      "score": 0,
+      "pass": false,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "calibrationOk": true,
+      "metrics": {
+        "nullBadgesDoesNotCrashGameBoot": false,
+        "corruptSaveNoticePersistsPastLoading": false,
+        "pauseSaveDoesNotLieWhenSaveBlocked": false,
+        "corruptSaveOffersRecoveryAction": false,
+        "liveNullBadgesLoaded": false,
+        "liveNullBadgesStatusText": "3D unavailable. Open this page in a browser with WebGL2 enabled.",
+        "liveNullBadgesErrorCount": 1,
+        "liveCorruptNoticeVisibleAfterLoad": false,
+        "liveCorruptPauseSaveNote": "Saved 4:48:44 AM",
+        "liveCorruptRawEventsStillDamaged": true,
+        "liveCorruptHasRecoveryButton": false,
+        "liveHealthyExportRecordCount": 0
+      }
+    },
+    {
+      "id": "standalone-tools-mouse-contrast-colorbar-and-deeptime",
+      "passThreshold": 0.95,
+      "score": 0,
+      "pass": false,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "calibrationOk": true,
+      "metrics": {
+        "gamepadSettingsSupportsMouseTabAndRowClicks": false,
+        "locomotionLabSelectsAndButtonsStyledReadable": false,
+        "planetLayersHasColorbarLegendAndGraticule": false,
+        "deepTimeEarthMilestoneAndCambrianTextAccurate": false,
+        "liveGamepadMouseChangedTab": false,
+        "liveGamepadMouseChangedRow": false,
+        "livePlanetLayersTsInfo": "surface temperature: -61.13 … 31.28 °C · day 172 · rust/wasm · 180×90 cells",
+        "livePlanetLayersTairInfo": "air temperature: -61.13 … 31.28 °C · day 172 · rust/wasm · 180×90 cells",
+        "liveDeepTimeEarthCard": "4.54 Gyr ago · Before the Earth No globe: the Sun is alone with a disc of dust and rock still falling together. Sun 71.6 % of today · 974 W/m² · zero-greenhouse temperature n/a (no planet) · embodiable: none nearest milestone: Earth forms",
+        "liveDeepTimeCambrianCard": "539 Myr ago · Living Earth Oceans, forests and animals: any creature can be embodied. Sun 95.5 % of today · 1300 W/m² · zero-greenhouse temperature 251.1 K · embodiable: animal nearest milestone: Cambrian: animals with shells and eyes",
+        "liveTreeViewerReady": true,
+        "livePadMenuErrors": 0
+      }
+    }
+  ]
+}

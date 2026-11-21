@@ -1,0 +1,160 @@
+{
+  "task": "T-0297",
+  "repo": "C:\\dev\\boreal-agy-t0297",
+  "generatedAt": "2026-11-21T01:52:45.782Z",
+  "consoleErrors": 0,
+  "calibrationValid": true,
+  "passCount": 0,
+  "totalChecks": 4,
+  "meanScore": 0,
+  "checks": [
+    {
+      "id": "remote-multibiome-ground-landings",
+      "passThreshold": 0.95,
+      "score": 0,
+      "pass": false,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "calibrationOk": true,
+      "metrics": {
+        "saharaNoGreenGrassOrDrink": false,
+        "saharaNoBorealPupsOrHares": false,
+        "greenlandShowsWhiteIceNotGreenMeadow": false,
+        "greenlandNoKenoraLakeDrinkOrHares": false,
+        "pacificNoFloatingSkyGrassWall": false,
+        "pacificNoSaltwaterDrinkOrOceanMammals": false,
+        "grassClearsTilesOnRemoteLanding": false,
+        "waterExcludesRemoteKenoraLakesAndOcean": false,
+        "saharaGround": {
+          "samples": 232064,
+          "meanLum": 0.4287,
+          "snowFrac": 0.0003,
+          "greenDomFrac": 0.9525,
+          "grassDarkGreenFrac": 0.3279,
+          "ochreSandFrac": 0.3694,
+          "skyBlueFrac": 0.0006
+        },
+        "saharaAct": "E / click · drink",
+        "saharaPups": 5,
+        "saharaHares": 5,
+        "greenlandGround": {
+          "samples": 232064,
+          "meanLum": 0.3013,
+          "snowFrac": 0,
+          "greenDomFrac": 0.9472,
+          "grassDarkGreenFrac": 0.847,
+          "ochreSandFrac": 0.0071,
+          "skyBlueFrac": 0.0059
+        },
+        "greenlandSnowCm": 0,
+        "greenlandAct": "E / click · drink",
+        "greenlandHares": 5,
+        "pacificUpperSky": {
+          "samples": 181951,
+          "meanLum": 0.4766,
+          "snowFrac": 0.2974,
+          "greenDomFrac": 0.7933,
+          "grassDarkGreenFrac": 0.5961,
+          "ochreSandFrac": 0,
+          "skyBlueFrac": 0.0922
+        },
+        "pacificAct": "E / click · drink",
+        "pacificPups": 5,
+        "pacificHares": 5,
+        "inpagePlaceInvalidatesView": false,
+        "recordingBytes": 69692
+      }
+    },
+    {
+      "id": "live-autoplay-boot-and-prewarm-hang",
+      "passThreshold": 0.95,
+      "score": 0,
+      "pass": false,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "calibrationOk": true,
+      "metrics": {
+        "loadingClearsWithin45s": false,
+        "autoplayAdvancesPastStep1": false,
+        "autoplayCompletesCleanly": false,
+        "prewarmDoesNotRunAfterReady100": false,
+        "stuckTimerCoversLoadingHang": false,
+        "autoplayUsesRealControlsAndCopy": false,
+        "startViewPreservesJourneyOnAutoplay": false,
+        "elapsedS": 57.8,
+        "done": false,
+        "stepCount": 1,
+        "lastStep": "AUTOPLAY step 1: waiting through loading t=0.0s",
+        "stuckAtReadyElapsedS": 51.9,
+        "stillLoadingAtEnd": true,
+        "prewarmRunsAfterStartupReady": true,
+        "stuckDisabledDuringLoading": true,
+        "clicksNonInteractiveTarget": true,
+        "hasApproachTypo": true,
+        "startViewHandlesAutoplay": false
+      }
+    },
+    {
+      "id": "ground-time-dial-detent-and-rate-hud",
+      "passThreshold": 0.95,
+      "score": 0,
+      "pass": false,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "calibrationOk": true,
+      "metrics": {
+        "continuousHoldLeavesRewindDetent": false,
+        "liveRewindHoldMovedPast1x": false,
+        "statusHudDisplaysActiveRateOrRewind": false,
+        "pausedSaveDoesNotCreditOfflineSec": false,
+        "rewindSaveDoesNotCreditForwardOfflineSec": false,
+        "simulated2p2sHoldDial": -0.01,
+        "simulated2p2sHoldRate": -1,
+        "expectedDialWithoutDetentTrap": -0.186,
+        "liveSavedDial": -0.01,
+        "liveSavedRate": -1,
+        "liveBeforeDialFwd": "08:05 · WALK · Snow ",
+        "liveAfterDialFwd": "08:06 · WALK · Snow ",
+        "liveAfterDialRewind": "08:06 · WALK · Snow ",
+        "liveContinueStatusPrefix": "08:01 · WALK · Snow ",
+        "loadedPausedOfflineSec": 60,
+        "loadedRewindOfflineSec": 60,
+        "statusShowsRateOrRewind": false
+      }
+    },
+    {
+      "id": "save-reload-continue-persistence",
+      "passThreshold": 0.95,
+      "score": 0,
+      "pass": false,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "calibrationOk": true,
+      "metrics": {
+        "saveWritesResumeWithoutBigBangGate": false,
+        "continueRestoresSavedPositionWithin0p5m": false,
+        "continueRestoresSavedHeadingWithin10deg": false,
+        "resumePersistsRemoteLandingSite": false,
+        "continueDoesNotSilentlyRewindClock": false,
+        "beforeSavePos": [
+          59.53,
+          -19.33
+        ],
+        "afterContinuePos": [
+          65.4,
+          -18.6
+        ],
+        "posDriftM": 5.919,
+        "beforeSaveYawRad": 4.7855,
+        "afterContinueYawRad": 2.0541,
+        "yawDriftRad": 2.7314,
+        "yawDriftDeg": 156.5,
+        "savedNote": "Saved 6:48:35 PM",
+        "continueEnabled": true,
+        "savedEventsHasResume": false,
+        "captureResumeGatedOnBigBang": true,
+        "resumePersistsRemoteSite": false
+      }
+    }
+  ]
+}

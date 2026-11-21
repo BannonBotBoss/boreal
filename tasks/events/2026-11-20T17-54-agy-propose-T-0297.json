@@ -1,0 +1,7 @@
+{
+  "type": "propose",
+  "task": "T-0297",
+  "agent": "agy",
+  "at": "2026-11-20T17:54:00-08:00",
+  "note": "Propose T-0297 from calibrated Rule 11 audit (calibrationValid=true, 0/4 pass >=0.95, meanScore=0.0000) + live headless Edge capture (port 5264, 0 console errors, 69,692 B WebM recording, 5 live PNGs vs 3 documentary natural references) covering: (1) remote multi-biome ground landings (Sahara 23.5N 10E, Greenland Ice 72.5N -40W, Pacific Ocean 0N -140W) leaking cached grass +2.7 m into the Pacific sky (59.61% dark-green sky wall), projecting Kenora staged lakes/wading ripples & E/click drink into dry Sahara/Greenland & saltwater Pacific, 0.00% snow/ice (84.70% green meadow) on Greenland Ice Sheet, and boreal pups/hares/grass everywhere; (2) live ?autoplay=1 hanging >57.8 s on #loading Ready behind inpage.prewarm() with startView dropping stages=1&trees=v2 and stuck(run) disabled during loading; (3) ground Time Dial continuous 2.2 s rewind hold locked forever at -1.000x detent (-0.01 vs expected -0.186), silent rewind on #status (08:06->08:01), and loadClock() crediting +60 s forward offlineSec when paused/rewinding; and (4) Esc->Save->Reload->Continue losing 5.919 m / 156.5 deg (captureResume bails on !hasSeenBigBang) and omitting remote SITE coords. Evidence: refs/audit/live-multibiome-autoplay-dial-save-audit/{audit.ts,numbers.json,live-capture.json,recording.webm,frame-0..4.png,reference/ref-0..2.jpg}. Skill: notes/skills/live-multibiome-autoplay-dial-save-audit.md."
+}

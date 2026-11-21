@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Boreal Universe</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <style>
+    html, body { margin: 0; height: 100%; background: #05070c; color: #e8e4d4; overflow: hidden; font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; }
+    #world { display: block; width: 100vw; height: 100vh; }
+    #hud { position: fixed; inset: auto 1.25rem 1.25rem 1.25rem; display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: end; pointer-events: none; z-index: 5; }
+    #hud > * { pointer-events: auto; }
+    #readout { min-width: min(420px, 86vw); background: linear-gradient(160deg, #0c121acc, #070a10d9); border: 1px solid #2a354866; padding: 0.85rem 1rem; font: 12px/1.55 ui-monospace, "Cascadia Mono", Consolas, monospace; color: #c9d2c0; }
+    #readout strong { color: #f0e6c8; font-weight: 600; }
+    #controls { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    #controls { z-index: 6; }
+    #controls button, #menu-btn {
+      font: 14px/1.2 "Iowan Old Style", Palatino, Georgia, serif;
+      background: #121820f2; color: #e8e4d4; border: 1px solid #3a4658;
+      padding: 0.7rem 1.1rem; cursor: pointer; min-width: 4.5rem; min-height: 2.5rem;
+    }
+    #controls button[aria-pressed="true"] { border-color: #c4a35a; color: #f3e6c0; }
+    #brand {
+      position: fixed; top: 1.4rem; left: 1.5rem; z-index: 5; pointer-events: none;
+      text-shadow: 0 1px 18px #000a;
+    }
+    #brand .name { font-size: clamp(2rem, 5vw, 3.4rem); letter-spacing: -0.04em; margin: 0; font-weight: 400; }
+    #brand .tag { margin: 0.2rem 0 0; font: 12px/1.4 ui-sans-serif, system-ui, sans-serif; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.72; }
+    #boot { position: fixed; inset: 0; z-index: 30; display: grid; place-items: end start; background: radial-gradient(120% 80% at 70% 20%, #1a2436 0%, #05070c 55%); transition: opacity 0.8s; }
+    #boot.fade { opacity: 0; pointer-events: none; }
+    #boot .box { margin: 0 0 8vh 6vw; max-width: min(28rem, 86vw); }
+    #boot h1 { font-weight: 400; font-size: 2.4rem; margin: 0 0 0.4rem; letter-spacing: -0.03em; }
+    #boot p { margin: 0; font: 14px/1.5 ui-sans-serif, system-ui, sans-serif; opacity: 0.8; }
+  </style>
+</head>
+<body>
+  <div id="boot" role="status"><div class="box"><h1>Boreal Universe</h1><p>Starting the time engine…</p></div></div>
+  <div id="brand"><p class="name">Boreal Universe</p><p class="tag">Time first · expanding space</p></div>
+  <canvas id="world" aria-label="Expanding universe view"></canvas>
+  <div id="hud">
+    <div id="readout" aria-live="polite"></div>
+    <div id="controls">
+      <button type="button" id="play-btn">Play</button>
+      <button type="button" id="axes-btn" aria-pressed="true">Axes</button>
+      <button type="button" id="menu-btn">Menu</button>
+    </div>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

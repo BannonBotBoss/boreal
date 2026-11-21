@@ -1,0 +1,959 @@
+{
+  "capturedAt": "2026-11-21T09:55:06.512Z",
+  "port": 5267,
+  "consoleErrors": [],
+  "pageErrors": [],
+  "recordingBytes": 128286,
+  "part1_musicAudioControls": {
+    "beforeM": {
+      "soundBtnText": "Sound on",
+      "volStoreRaw": null
+    },
+    "afterM": {
+      "soundBtnText": "Sound on",
+      "volStore": {
+        "volume.master": 0.8,
+        "volume.music": 0.7,
+        "volume.ambience": 1,
+        "volume.sfx": 1,
+        "volume.voice": 1,
+        "volume.ui": 1,
+        "volume.muted": true,
+        "volume.musicOn": true
+      },
+      "noticeText": ""
+    },
+    "beforeMusicResetUi": {
+      "sliderCount": 6,
+      "checkboxLabels": [
+        "Mute everything (M)",
+        "Music on (N)"
+      ],
+      "bogusRegenLegendPresent": false
+    },
+    "afterMusicReset": {
+      "selectedTrack": "Fingerpicked",
+      "sliderCount": 0,
+      "checkboxLabels": [],
+      "bogusRegenLegendPresent": true,
+      "volStore": {
+        "volume.master": 0.8,
+        "volume.music": 0.7,
+        "volume.ambience": 1,
+        "volume.sfx": 1,
+        "volume.voice": 1,
+        "volume.ui": 1,
+        "volume.muted": false,
+        "volume.musicOn": false
+      },
+      "musicStore": {
+        "music.source": "Fingerpicked",
+        "music.level": 0.35,
+        "music.follow": false,
+        "music.preset": "Gamma 40 Hz",
+        "music.pulse": 40,
+        "music.carrier": 300,
+        "music.shape": "Smooth",
+        "music.bed": "None",
+        "music.bedLevel": 0.25,
+        "music.shuffle": true,
+        "music.crossfade": 4
+      }
+    },
+    "controlsNoteMentionsVFloraView": true
+  },
+  "part2_padMenuAndPhotoMode": {
+    "afterMouseClickDebugRow": {
+      "inspectorActive": true,
+      "padMenuStillOpen": true,
+      "focusText": "Gamepad settings (3D controller, rebinding)›"
+    },
+    "afterEnterDebugHud": {
+      "inspectorActive": false,
+      "padMenuStillOpen": true,
+      "focusedRow": "Debug HUD D-pad ↓›"
+    },
+    "afterPresetPick": {
+      "selectedPresetAfterPick": "None",
+      "storedSaturation": -1
+    },
+    "noticeAfterShot": "Photo kept (1 this session). Choose size and export when you leave photo mode.",
+    "afterGInPhotoMode": {
+      "photoStillVisible": true,
+      "bodyStillPhotoMode": true,
+      "galleryDialogOpen": true,
+      "galleryHeading": "Photo session · 1 capture(s)",
+      "editButtonsCount": 1
+    },
+    "editEscResult": {
+      "enteredEdit": true,
+      "stillEditingAfterEsc": true
+    }
+  },
+  "part3_inspectorAndSenses": {
+    "selectedHeader": "",
+    "focusWipeCheck": {
+      "present": true,
+      "hasControl": false,
+      "headerText": "",
+      "inspectorVisible": true
+    },
+    "sensesState": {
+      "sensesTitle": "Grey wolf senses",
+      "senseBubbles": 8,
+      "senseArrows": 5,
+      "foxPresentInLanding": true,
+      "foxDistM": 19.65,
+      "pupCount": 5,
+      "minPupDistM": 1.18
+    }
+  },
+  "part4_pupsAndDriveTelemetry": {
+    "sampleCount": 16,
+    "uniqueWindowBorealDrivePositions": 1,
+    "uniqueLandingRenderedFoxPositions": 14,
+    "driveVsRenderedFoxDriftM": 21.194,
+    "observedPupActs": [
+      "trot",
+      "tumble",
+      "sniff",
+      "straggle",
+      "sit",
+      "pounce"
+    ],
+    "samples": [
+      {
+        "t": 30552.900000000373,
+        "player": {
+          "x": 63.8654,
+          "z": -17.7946,
+          "yaw": 8.3373
+        },
+        "windowBorealDrive": {
+          "mode": "linger",
+          "protect": 0.132,
+          "hold": false,
+          "foxX": 55.8923,
+          "foxZ": -13.068
+        },
+        "landingShownFox": {
+          "x": 51.9202,
+          "z": -8.4832
+        },
+        "pups": [
+          {
+            "slot": 0,
+            "x": 65.565,
+            "z": -17.677,
+            "act": "trot"
+          },
+          {
+            "slot": 1,
+            "x": 64.893,
+            "z": -19.289,
+            "act": "tumble"
+          },
+          {
+            "slot": 2,
+            "x": 65.359,
+            "z": -18.587,
+            "act": "tumble"
+          },
+          {
+            "slot": 3,
+            "x": 65.44,
+            "z": -19.162,
+            "act": "tumble"
+          },
+          {
+            "slot": 4,
+            "x": 65.858,
+            "z": -18.331,
+            "act": "tumble"
+          }
+        ],
+        "statusLine0": "08:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+      },
+      {
+        "t": 30809.299999999814,
+        "player": {
+          "x": 63.8654,
+          "z": -17.7946,
+          "yaw": 8.3373
+        },
+        "windowBorealDrive": {
+          "mode": "linger",
+          "protect": 0.132,
+          "hold": false,
+          "foxX": 55.8923,
+          "foxZ": -13.068
+        },
+        "landingShownFox": {
+          "x": 52.7615,
+          "z": -9.1389
+        },
+        "pups": [
+          {
+            "slot": 0,
+            "x": 65.334,
+            "z": -17.639,
+            "act": "trot"
+          },
+          {
+            "slot": 1,
+            "x": 64.732,
+            "z": -19.142,
+            "act": "trot"
+          },
+          {
+            "slot": 2,
+            "x": 65.23,
+            "z": -18.526,
+            "act": "tumble"
+          },
+          {
+            "slot": 3,
+            "x": 65.29,
+            "z": -19.084,
+            "act": "trot"
+          },
+          {
+            "slot": 4,
+            "x": 65.718,
+            "z": -18.249,
+            "act": "tumble"
+          }
+        ],
+        "statusLine0": "08:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+      },
+      {
+        "t": 31067,
+        "player": {
+          "x": 63.8654,
+          "z": -17.7946,
+          "yaw": 8.3373
+        },
+        "windowBorealDrive": {
+          "mode": "linger",
+          "protect": 0.132,
+          "hold": false,
+          "foxX": 55.8923,
+          "foxZ": -13.068
+        },
+        "landingShownFox": {
+          "x": 53.7079,
+          "z": -9.8767
+        },
+        "pups": [
+          {
+            "slot": 0,
+            "x": 65.074,
+            "z": -17.603,
+            "act": "trot"
+          },
+          {
+            "slot": 1,
+            "x": 64.54,
+            "z": -18.947,
+            "act": "trot"
+          },
+          {
+            "slot": 2,
+            "x": 65.103,
+            "z": -18.441,
+            "act": "tumble"
+          },
+          {
+            "slot": 3,
+            "x": 65.099,
+            "z": -19.002,
+            "act": "trot"
+          },
+          {
+            "slot": 4,
+            "x": 65.607,
+            "z": -18.194,
+            "act": "tumble"
+          }
+        ],
+        "statusLine0": "08:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+      },
+      {
+        "t": 31322.299999999814,
+        "player": {
+          "x": 63.8654,
+          "z": -17.7946,
+          "yaw": 8.3373
+        },
+        "windowBorealDrive": {
+          "mode": "linger",
+          "protect": 0.132,
+          "hold": false,
+          "foxX": 55.8923,
+          "foxZ": -13.068
+        },
+        "landingShownFox": {
+          "x": 58.7248,
+          "z": -8.0696
+        },
+        "pups": [
+          {
+            "slot": 0,
+            "x": 64.959,
+            "z": -17.589,
+            "act": "sniff"
+          },
+          {
+            "slot": 1,
+            "x": 64.375,
+            "z": -18.758,
+            "act": "trot"
+          },
+          {
+            "slot": 2,
+            "x": 64.95,
+            "z": -18.336,
+            "act": "trot"
+          },
+          {
+            "slot": 3,
+            "x": 64.917,
+            "z": -18.904,
+            "act": "trot"
+          },
+          {
+            "slot": 4,
+            "x": 65.492,
+            "z": -18.172,
+            "act": "tumble"
+          }
+        ],
+        "statusLine0": "08:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+      },
+      {
+        "t": 31579.10000000056,
+        "player": {
+          "x": 63.8654,
+          "z": -17.7946,
+          "yaw": 8.3373
+        },
+        "windowBorealDrive": {
+          "mode": "linger",
+          "protect": 0.132,
+          "hold": false,
+          "foxX": 55.8923,
+          "foxZ": -13.068
+        },
+        "landingShownFox": {
+          "x": 58.7248,
+          "z": -8.0696
+        },
+        "pups": [
+          {
+            "slot": 0,
+            "x": 64.959,
+            "z": -17.589,
+            "act": "sniff"
+          },
+          {
+            "slot": 1,
+            "x": 64.375,
+            "z": -18.758,
+            "act": "trot"
+          },
+          {
+            "slot": 2,
+            "x": 64.95,
+            "z": -18.336,
+            "act": "trot"
+          },
+          {
+            "slot": 3,
+            "x": 64.917,
+            "z": -18.904,
+            "act": "trot"
+          },
+          {
+            "slot": 4,
+            "x": 65.492,
+            "z": -18.172,
+            "act": "tumble"
+          }
+        ],
+        "statusLine0": "08:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+      },
+      {
+        "t": 31891.299999999814,
+        "player": {
+          "x": 63.8654,
+          "z": -17.7946,
+          "yaw": 8.3373
+        },
+        "windowBorealDrive": {
+          "mode": "linger",
+          "protect": 0.132,
+          "hold": false,
+          "foxX": 55.8923,
+          "foxZ": -13.068
+        },
+        "landingShownFox": {
+          "x": 59.154,
+          "z": -7.8547
+        },
+        "pups": [
+          {
+            "slot": 0,
+            "x": 64.848,
+            "z": -17.588,
+            "act": "sniff"
+          },
+          {
+            "slot": 1,
+            "x": 64.128,
+            "z": -18.764,
+            "act": "trot"
+          },
+          {
+            "slot": 2,
+            "x": 64.781,
+            "z": -18.204,
+            "act": "trot"
+          },
+          {
+            "slot": 3,
+            "x": 64.689,
+            "z": -18.758,
+            "act": "sniff"
+          },
+          {
+            "slot": 4,
+            "x": 65.338,
+            "z": -18.137,
+            "act": "straggle"
+          }
+        ],
+        "statusLine0": "08:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+      },
+      {
+        "t": 32147.400000000373,
+        "player": {
+          "x": 63.8654,
+          "z": -17.7946,
+          "yaw": 8.3373
+        },
+        "windowBorealDrive": {
+          "mode": "linger",
+          "protect": 0.132,
+          "hold": false,
+          "foxX": 55.8923,
+          "foxZ": -13.068
+        },
+        "landingShownFox": {
+          "x": 59.3233,
+          "z": -7.7761
+        },
+        "pups": [
+          {
+            "slot": 0,
+            "x": 64.848,
+            "z": -17.585,
+            "act": "sniff"
+          },
+          {
+            "slot": 1,
+            "x": 64.082,
+            "z": -18.775,
+            "act": "sniff"
+          },
+          {
+            "slot": 2,
+            "x": 64.779,
+            "z": -18.207,
+            "act": "trot"
+          },
+          {
+            "slot": 3,
+            "x": 64.642,
+            "z": -18.751,
+            "act": "sniff"
+          },
+          {
+            "slot": 4,
+            "x": 65.335,
+            "z": -18.125,
+            "act": "straggle"
+          }
+        ],
+        "statusLine0": "08:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+      },
+      {
+        "t": 32411.799999999814,
+        "player": {
+          "x": 63.8654,
+          "z": -17.7946,
+          "yaw": 8.3373
+        },
+        "windowBorealDrive": {
+          "mode": "linger",
+          "protect": 0.132,
+          "hold": false,
+          "foxX": 55.8923,
+          "foxZ": -13.068
+        },
+        "landingShownFox": {
+          "x": 59.5184,
+          "z": -7.6899
+        },
+        "pups": [
+          {
+            "slot": 0,
+            "x": 64.847,
+            "z": -17.58,
+            "act": "sit"
+          },
+          {
+            "slot": 1,
+            "x": 64.05,
+            "z": -18.782,
+            "act": "sniff"
+          },
+          {
+            "slot": 2,
+            "x": 64.774,
+            "z": -18.219,
+            "act": "trot"
+          },
+          {
+            "slot": 3,
+            "x": 64.61,
+            "z": -18.756,
+            "act": "sniff"
+          },
+          {
+            "slot": 4,
+            "x": 65.325,
+            "z": -18.111,
+            "act": "straggle"
+          }
+        ],
+        "statusLine0": "08:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+      },
+      {
+        "t": 32672.799999999814,
+        "player": {
+          "x": 63.8654,
+          "z": -17.7946,
+          "yaw": 8.3373
+        },
+        "windowBorealDrive": {
+          "mode": "linger",
+          "protect": 0.132,
+          "hold": false,
+          "foxX": 55.8923,
+          "foxZ": -13.068
+        },
+        "landingShownFox": {
+          "x": 59.7152,
+          "z": -7.6075
+        },
+        "pups": [
+          {
+            "slot": 0,
+            "x": 64.845,
+            "z": -17.573,
+            "act": "sit"
+          },
+          {
+            "slot": 1,
+            "x": 64.024,
+            "z": -18.786,
+            "act": "sniff"
+          },
+          {
+            "slot": 2,
+            "x": 64.765,
+            "z": -18.238,
+            "act": "trot"
+          },
+          {
+            "slot": 3,
+            "x": 64.585,
+            "z": -18.769,
+            "act": "sniff"
+          },
+          {
+            "slot": 4,
+            "x": 65.307,
+            "z": -18.092,
+            "act": "straggle"
+          }
+        ],
+        "statusLine0": "08:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+      },
+      {
+        "t": 34368.90000000037,
+        "player": {
+          "x": 62.8872,
+          "z": -15.015,
+          "yaw": 2.8032
+        },
+        "windowBorealDrive": {
+          "mode": "linger",
+          "protect": 0.132,
+          "hold": false,
+          "foxX": 55.8923,
+          "foxZ": -13.068
+        },
+        "landingShownFox": {
+          "x": 57.6245,
+          "z": -0.0607
+        },
+        "pups": [
+          {
+            "slot": 0,
+            "x": 64.568,
+            "z": -17.56,
+            "act": "pounce"
+          },
+          {
+            "slot": 1,
+            "x": 63.956,
+            "z": -18.89,
+            "act": "sit"
+          },
+          {
+            "slot": 2,
+            "x": 64.491,
+            "z": -18.344,
+            "act": "sit"
+          },
+          {
+            "slot": 3,
+            "x": 63.815,
+            "z": -18.243,
+            "act": "pounce"
+          },
+          {
+            "slot": 4,
+            "x": 64.961,
+            "z": -18.038,
+            "act": "straggle"
+          }
+        ],
+        "statusLine0": "08:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+      },
+      {
+        "t": 34634.299999999814,
+        "player": {
+          "x": 62.6239,
+          "z": -14.2667,
+          "yaw": 2.8032
+        },
+        "windowBorealDrive": {
+          "mode": "linger",
+          "protect": 0.132,
+          "hold": false,
+          "foxX": 55.8923,
+          "foxZ": -13.068
+        },
+        "landingShownFox": {
+          "x": 56.9274,
+          "z": 1.9202
+        },
+        "pups": [
+          {
+            "slot": 0,
+            "x": 64.448,
+            "z": -17.479,
+            "act": "tumble"
+          },
+          {
+            "slot": 1,
+            "x": 63.913,
+            "z": -18.724,
+            "act": "pounce"
+          },
+          {
+            "slot": 2,
+            "x": 64.46,
+            "z": -18.327,
+            "act": "sit"
+          },
+          {
+            "slot": 3,
+            "x": 63.681,
+            "z": -18.014,
+            "act": "pounce"
+          },
+          {
+            "slot": 4,
+            "x": 64.918,
+            "z": -18.002,
+            "act": "sit"
+          }
+        ],
+        "statusLine0": "08:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+      },
+      {
+        "t": 34987.5,
+        "player": {
+          "x": 62.6371,
+          "z": -14.3044,
+          "yaw": 5.9448
+        },
+        "windowBorealDrive": {
+          "mode": "linger",
+          "protect": 0.132,
+          "hold": false,
+          "foxX": 55.8923,
+          "foxZ": -13.068
+        },
+        "landingShownFox": {
+          "x": 55.7323,
+          "z": 5.3161
+        },
+        "pups": [
+          {
+            "slot": 0,
+            "x": 61.335,
+            "z": -13.584,
+            "act": "tumble"
+          },
+          {
+            "slot": 1,
+            "x": 63.164,
+            "z": -14.986,
+            "act": "pounce"
+          },
+          {
+            "slot": 2,
+            "x": 62.676,
+            "z": -15.263,
+            "act": "sit"
+          },
+          {
+            "slot": 3,
+            "x": 62.936,
+            "z": -12.211,
+            "act": "tumble"
+          },
+          {
+            "slot": 4,
+            "x": 63.586,
+            "z": -14.615,
+            "act": "sit"
+          }
+        ],
+        "statusLine0": "08:06 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+      },
+      {
+        "t": 35245.10000000056,
+        "player": {
+          "x": 62.8385,
+          "z": -14.8767,
+          "yaw": 5.9448
+        },
+        "windowBorealDrive": {
+          "mode": "linger",
+          "protect": 0.132,
+          "hold": false,
+          "foxX": 55.8923,
+          "foxZ": -13.068
+        },
+        "landingShownFox": {
+          "x": 55.0352,
+          "z": 7.297
+        },
+        "pups": [
+          {
+            "slot": 0,
+            "x": 61.343,
+            "z": -13.627,
+            "act": "tumble"
+          },
+          {
+            "slot": 1,
+            "x": 63.302,
+            "z": -15.061,
+            "act": "pounce"
+          },
+          {
+            "slot": 2,
+            "x": 62.675,
+            "z": -15.308,
+            "act": "sit"
+          },
+          {
+            "slot": 3,
+            "x": 62.95,
+            "z": -12.253,
+            "act": "tumble"
+          },
+          {
+            "slot": 4,
+            "x": 63.604,
+            "z": -14.588,
+            "act": "sit"
+          }
+        ],
+        "statusLine0": "08:06 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+      },
+      {
+        "t": 35512.40000000037,
+        "player": {
+          "x": 63.0112,
+          "z": -15.3672,
+          "yaw": 5.9448
+        },
+        "windowBorealDrive": {
+          "mode": "linger",
+          "protect": 0.132,
+          "hold": false,
+          "foxX": 55.8923,
+          "foxZ": -13.068
+        },
+        "landingShownFox": {
+          "x": 54.4377,
+          "z": 8.9949
+        },
+        "pups": [
+          {
+            "slot": 0,
+            "x": 61.359,
+            "z": -13.698,
+            "act": "tumble"
+          },
+          {
+            "slot": 1,
+            "x": 63.865,
+            "z": -14.926,
+            "act": "pounce"
+          },
+          {
+            "slot": 2,
+            "x": 62.456,
+            "z": -15.805,
+            "act": "sit"
+          },
+          {
+            "slot": 3,
+            "x": 62.97,
+            "z": -12.322,
+            "act": "tumble"
+          },
+          {
+            "slot": 4,
+            "x": 63.738,
+            "z": -14.379,
+            "act": "sit"
+          }
+        ],
+        "statusLine0": "08:06 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+      },
+      {
+        "t": 35814.799999999814,
+        "player": {
+          "x": 63.4139,
+          "z": -16.5117,
+          "yaw": 5.9448
+        },
+        "windowBorealDrive": {
+          "mode": "linger",
+          "protect": 0.132,
+          "hold": false,
+          "foxX": 55.8923,
+          "foxZ": -13.068
+        },
+        "landingShownFox": {
+          "x": 54.7541,
+          "z": 8.0957
+        },
+        "pups": [
+          {
+            "slot": 0,
+            "x": 61.458,
+            "z": -14.058,
+            "act": "trot"
+          },
+          {
+            "slot": 1,
+            "x": 63.812,
+            "z": -14.761,
+            "act": "tumble"
+          },
+          {
+            "slot": 2,
+            "x": 62.007,
+            "z": -15.38,
+            "act": "pounce"
+          },
+          {
+            "slot": 3,
+            "x": 63.009,
+            "z": -12.502,
+            "act": "tumble"
+          },
+          {
+            "slot": 4,
+            "x": 63.308,
+            "z": -14.407,
+            "act": "pounce"
+          }
+        ],
+        "statusLine0": "08:06 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+      },
+      {
+        "t": 36076.10000000056,
+        "player": {
+          "x": 63.4139,
+          "z": -16.5117,
+          "yaw": 5.9448
+        },
+        "windowBorealDrive": {
+          "mode": "linger",
+          "protect": 0.132,
+          "hold": false,
+          "foxX": 55.8923,
+          "foxZ": -13.068
+        },
+        "landingShownFox": {
+          "x": 54.7541,
+          "z": 8.0957
+        },
+        "pups": [
+          {
+            "slot": 0,
+            "x": 61.458,
+            "z": -14.058,
+            "act": "trot"
+          },
+          {
+            "slot": 1,
+            "x": 63.812,
+            "z": -14.761,
+            "act": "tumble"
+          },
+          {
+            "slot": 2,
+            "x": 62.007,
+            "z": -15.38,
+            "act": "pounce"
+          },
+          {
+            "slot": 3,
+            "x": 63.009,
+            "z": -12.502,
+            "act": "tumble"
+          },
+          {
+            "slot": 4,
+            "x": 63.308,
+            "z": -14.407,
+            "act": "pounce"
+          }
+        ],
+        "statusLine0": "08:06 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%"
+      }
+    ]
+  }
+}

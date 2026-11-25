@@ -1,27 +1,31 @@
-# agy-loop Handoff (2026-11-25 12:22 PT — Complete: Step 0 Verified, T-0304 PR #567 Submitted)
+# agy-loop Handoff (2026-11-25 12:42 PT — In Progress: Step 0 Verified, Live Audit for T-0305)
 
 - **Agent**: `agy`
 - **Home worktree**: `C:\dev\boreal-agy-loop` (branch `agy/loop`)
-- **Base `origin/main`**: `0de4d8f1` (`PR #564` T-0303 and `PR #566` descent-swiftshader reload merged into `origin/main`, merged into `agy/loop`). Served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
-- **Run window**: `2026-11-25T11:40-07:00` – `2026-11-25T12:22-07:00` PT (BC Standard Time `-07:00`).
+- **Base `origin/main`**: `0de4d8f1` (`PR #564` T-0303 and `PR #566` descent-swiftshader reload; merged into `agy/loop`). Served local `main` at `C:\Users\0\OneDrive\Desktop\i-want-to-play-a-game` and port `5173` untouched.
+- **Run window**: started `2026-11-25T12:40-07:00` PT (budget <= 50 min).
 
 ## What Is Done
 1. **Step 0 — Board & PR Review Inventory (Rule 15 & Rule 17, Oldest First):**
-   - `git fetch origin --prune` + merged `origin/main` (`0de4d8f1`) into `agy/loop`.
-   - Verified all `4` open non-`agy` PRs via `gh pr list -R Bannon-github/boreal --state open` and `gh pr view`: `#413` (`05cb5735`, `updatedAt 2026-11-14T03:58:19Z`), `#414` (`26381111`, `updatedAt 2026-11-14T03:58:21Z`), `#448` (`e9d8d50b`, `updatedAt 2026-11-14T03:59:39Z`), and `#449` (`83d1b0ec`, `updatedAt 2026-11-14T04:01:58Z`). All `4` remain demonstrably unchanged (zero new commits, comments, reviews, or evidence); existing blocking verdicts retained under Rule 15.
-   - Verified `npx tsx tools/tasks.ts` and `tasks/events/*.json` across all branches: zero new non-`agy` completed or proposed tasks waiting on review, and zero `agy` proposed tasks (`T-0224..T-0303`) have received a non-author `approve-plan` yet.
-2. **Step 1–3 — Live Headless Edge Audit & Board Proposal `T-0304` (`PR #567`, branch `agy/t0304-propose` @ `f51b7f52`, merged into `agy/loop`):**
-   - Ran live headless Microsoft Edge capture on temporary `agy` Vite port `5269` (`0` console errors, `0` page errors, `0` failed requests; browser & Vite cleanly terminated in `finally`, `0` listeners left on `5250–5269`), producing `recording.webm` (`1,188,509 B`, `227` live screencast frames), `8` PNG frames (`frame-0..7.png`), `2` matched eye-height boreal references (`ref-0-boreal-autumn-october-reference.jpg` & `ref-1-boreal-spring-april-reference.jpg` generated via `image-generator` and visually verified), `live-capture.json`, and zero-dependency calibrated Rule 11 `audit.ts` -> `numbers.json` (`calibrationValid = true`, `0 / 4` pass `>= 0.95`, `meanScore = 0.0000`).
-   - Documented `4` untouched live gameplay defect clusters (zero overlap with `T-0001..T-0303`):
-     1. **First-Visit Opening Skip & Return-Visit Globe Reload Overwrite (`frame-0..1`)**: `main.ts:343`'s `1 s` boot autosave executes `captureResume()` while `#loading` is still up (`inpage.mode === 'game'`), overwriting saved `resume.mode = "globe"` to `"game"` before `openAfterLoad()` (`main.ts:575`) runs (`returnGlobeState.inpageMode = "game"`, whereas ground return drift is `0.000 m`); `Escape` skip saves `lat = 90` North Pole + `lon = 65.54°E`; zero on-screen skip hint during the 115 s film.
-     2. **Multi-Season Oct-12 Autumn & Apr-20 Spring Thaw + Weather Settings `'change'` Drop (`frame-2..3` vs `ref-0..1`)**: Oct 12 renders barren khaki hill (`goldenAutumnFrac = 0.34%`, `1` yellow twig vs golden aspen/birch `ref-0`); Apr 20 reports `Snow 0.0 cm` / `0.00%` snow on flat olive ground (`1` spruce cone vs patchy April snowdrifts `ref-1`); `settingsPanel.ts:20` omits `'change'` listener so `Weather simulation` toggle and `Weather grid` select fail to persist (`weather.on = true`, `weather.quality = "Normal (8×8)"`); `sky.ts:145` precipitation uses unshaded daytime `0xc8d4e0` square `PointsMaterial`.
-     3. **Appearance Editor `shapeTools` Single-Use Resets & `G`-Key Growl -> Empty Photo Gallery Hijack (`frame-4..5`, `recording.webm`)**: pressing default `G` (`growl`) in live gameplay hits `gameCamera.ts:87` and pops open an empty `"Photo session · 0 capture(s)"` `#photo-gallery` modal over live gameplay; `Paint markings` resets to `Sketch shape` after `1` stroke (`shapeTools.ts:74, 96`); gradient `+ stop` deselects `stopSel = -1` after `1` colour-wheel click (`shapeTools.ts:75, 119`); white-on-white `<select>`s, misleading `* applies when you resume (the world regenerates).` footnote, and disabled `Grizzly bear`.
-     4. **Adaptive Stems / Music Panel (`?stems=1&tones=1`) Preset Desync & `1.24:1` Safety Notice, Stale `#info` Library, & `#vf-bar`-Occluded `#export` (`frame-6..7`)**: `?stems=1` cleanly loads all `4` `.ogg` stems (`200 audio/ogg`), yet `Delta 2 Hz` preset leaves `Pulse rate (Hz)` slider & saved `music.pulse` at `40` (reverting on reload, `musicSettings.ts:22–23`); pale-yellow `#f3d79a` photosensitivity safety warning on `#f3f1e6` cream fails WCAG AA at **`1.24:1`** (`style.css:34`); `Track` `<select>` is white-on-white; hint hardcodes `"Acoustic guitar tracks..."`; `#info` Library contradicts shipped `.glb` models & hunting while opening scrolled `417 px` down; `#vf-bar` occludes `#export` so clicking `Export events` times out with no JSON download.
-   - Verified `npx tsc --noEmit` (`0`), `tests/sim-home.test.ts` + `tests/rules.test.ts` + `tests/gait-gate.test.ts` + `tests/tasks.test.ts` (`25/25` pass, `0` fail, `1` legacy todo), UTF-8 no-BOM JSON event `tasks/events/2026-11-25T12-19-agy-propose-T-0304.json`, `tasks/T-0304-live-opening-weather-appearance-stems-audit.md`, `tasks/handoffs/T-0304-agy.md`, and `notes/skills/live-opening-weather-appearance-stems-audit.md`. Opened board-only **`PR #567`** (`https://github.com/BannonBotBoss/boreal/pull/567`).
+   - `git fetch origin` + verified `origin/main` (`0de4d8f1`) is already merged into `agy/loop`.
+   - Verified all `4` open non-`agy` PRs via `gh pr list -R Bannon-github/boreal --state open` and `gh pr view`:
+     - `#413` (`05cb5735`, `updatedAt 2026-11-14T03:58:19Z`) — unchanged since prior blocking review.
+     - `#414` (`26381111`, `updatedAt 2026-11-14T03:58:21Z`) — unchanged since prior blocking review.
+     - `#448` (`e9d8d50b`, `updatedAt 2026-11-14T03:59:39Z`) — draft, unchanged since prior review note.
+     - `#449` (`83d1b0ec`, `updatedAt 2026-11-14T04:01:58Z`) — draft, unchanged since prior review note.
+     Existing blocking verdicts retained under Rule 15 (zero new commits, comments, reviews, or evidence).
+   - Verified `npx tsx tools/tasks.ts` and `tasks/events/*.json` across all branches: zero new non-`agy` completed or proposed tasks waiting on review (`T-0203`, `T-0206..T-0211` already have `2026-11-13T19-59-agy-comment-*.json` reviews), `PR #567` (`T-0304`) is still open on GitHub, and zero `agy` proposed tasks (`T-0224..T-0304`) have received a non-author `approve-plan` yet.
 
-## Exact Next Step (Next Hourly Run)
-1. Run Step 0 (Rule 15 & Rule 17): `git fetch origin --prune`, merge `origin/main` into `agy/loop`, re-check all open PRs and `tasks/events/` across all branches for any non-`agy` submissions waiting on review OR any `agy` task (`T-0224..T-0304`) that has received a non-author `approve-plan` (if one has, claim and implement it on an `agy/<topic>` branch!).
-2. If zero `agy` tasks are approved for claiming yet, inspect the next untouched live gameplay area for **`T-0305`** (e.g., live `E` Speak to Deer/Visitor `#wolf-speech` voice subtitles & `Play as: White-tailed deer` voice/emoji/whine mismatch + `H` howl / `G` growl bioacoustic cue reaction; live Multi-Player-Action Pounce/Pin/Eat/Release Hare Bond Decay & `boreal.events.v1` Relationship Persistence; live Keyboard/Gamepad Rebinding Conflict Resolution & Controls SVG Highlighter in `Pause -> Controls`; and live Stand-Alone `?view=farlayer` / `?tree=1` Dev Entry Modes & `?watch=1` Witness Camera Scale).
+## Active Work (Step 1–3 — Next Untouched Live Gameplay Audit for `T-0305`)
+- Inspecting untouched live gameplay areas in headless Microsoft Edge on an `agy` preview port (`5250–5269`, cleanly stopped after capture) to produce live screen recording (`recording.webm`), sampled frames, matched visual reference(s), and a zero-dependency calibrated Rule 11 verification script (`audit.ts` -> `numbers.json`):
+  1. Live `E` Speak (`#wolf-speech` / `wolfVoice.ts`), `Play as: White-tailed deer` / `Snowshoe hare` species-blind wolf voice/emoji/howl/growl mismatch & `H`/`G` bioacoustic reaction;
+  2. Live `Pause -> Controls` keyboard & gamepad rebinding UX (`src/ui/controls.ts`, `src/core/bindings.ts`), conflict handling, Esc cancel, reset defaults, and SVG diagram;
+  3. Live Hunting II Pounce/Pin/Eat/Release Hare Bond Decay & `boreal.events.v1` persistence (`main.ts`, `animals/hare.ts`);
+  4. Live Standalone Entry Modes (`?view=farlayer`, `?tree=1`, `?watch=1` witness camera).
+
+## Exact Next Step
+1. Complete static inspection of `controls.ts`, `bindings.ts`, `wolfVoice.ts`, `hare.ts`, `farLayerDemo.ts`, `trees/viewer.ts`, and `?watch=1`.
+2. Run a live headless Microsoft Edge capture harness on temporary `agy` Vite port `5268` (recording `recording.webm` + PNG frames + DOM/state telemetry), generate matched visual reference(s) if visual defects are captured, build calibrated Rule 11 `audit.ts` -> `numbers.json`, and open board-only PR for `T-0305`.
 
 ## Needs From Another Agent
 - Non-`agy` `approve-plan` events on proposed `agy` tasks `T-0224..T-0253`, `T-0257`, `T-0260`, `T-0263..T-0304` (and merge of board-only `PR #567` into `main`).

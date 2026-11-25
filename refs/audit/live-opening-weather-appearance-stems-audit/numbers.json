@@ -1,0 +1,148 @@
+{
+  "taskId": "T-0304",
+  "baseCommit": "0de4d8f1",
+  "auditScript": "refs/audit/live-opening-weather-appearance-stems-audit/audit.ts",
+  "captureMeta": {
+    "port": 5269,
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "capturedAt": "2026-11-25T19:09:03.368Z",
+    "screencastFrames": 227,
+    "recordingBytes": 1188509
+  },
+  "consoleErrors": 0,
+  "pageErrors": 0,
+  "failedRequests": 0,
+  "calibrationValid": true,
+  "passCount": 0,
+  "totalChecks": 4,
+  "meanScore": 0,
+  "checks": [
+    {
+      "id": "live-opening-skip-and-return-globe-persistence",
+      "passThreshold": 0.95,
+      "score": 0,
+      "pass": false,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "calibrationOk": true,
+      "metrics": {
+        "returnReloadRestoresGlobeMode": false,
+        "skipDoesNotSaveNorthPoleLat90": false,
+        "openingDisplaysSkipHint": false,
+        "autosaveGuardedDuringBootLoading": false,
+        "firstLoadMs": 25381,
+        "afterSkipMode": "globe",
+        "afterSkipSavedLat": 90,
+        "afterSkipSavedLon": 65.53577344372239,
+        "returnGlobeModeActual": "game",
+        "returnGlobeOverwrittenResumeMode": "game",
+        "returnGroundDriftM": 0,
+        "openingElapsedAtFrame1": 6.166600000000002
+      }
+    },
+    {
+      "id": "live-multiseason-phenology-weather-settings-and-precip",
+      "passThreshold": 0.95,
+      "score": 0,
+      "pass": false,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "calibrationOk": true,
+      "metrics": {
+        "autumnHasGoldenDeciduousCanopy": false,
+        "springThawShowsPatchySnowAndCanopy": false,
+        "weatherSettingsPersistOnChangeEvent": false,
+        "settingsPanelListensToChangeEvents": false,
+        "precipPointsShadedForNight": false,
+        "frame2AutumnStats": {
+          "width": 1280,
+          "height": 720,
+          "meanRgb": [
+            0.5468,
+            0.5087,
+            0.3542
+          ],
+          "meanLum": 0.5057,
+          "goldenAutumnFrac": 0.0034,
+          "lowerSnowFrac": 0,
+          "darkConiferFrac": 0.0695
+        },
+        "frame3SpringStats": {
+          "width": 1280,
+          "height": 720,
+          "meanRgb": [
+            0.381,
+            0.4171,
+            0.352
+          ],
+          "meanLum": 0.4047,
+          "goldenAutumnFrac": 0,
+          "lowerSnowFrac": 0,
+          "darkConiferFrac": 0.7326
+        },
+        "springHudSnowCm": 0,
+        "savedWeatherOnAfterToggleOff": true,
+        "savedWeatherQualityAfterSelectHigh": "Normal (8×8)"
+      }
+    },
+    {
+      "id": "live-appearance-shapetools-and-g-growl-gallery-hijack",
+      "passThreshold": 0.95,
+      "score": 0,
+      "pass": false,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "calibrationOk": true,
+      "metrics": {
+        "paintMarkingsPersistsAcrossStrokes": false,
+        "gradientStopStaysSelectedAcrossEdits": false,
+        "growlKeyDoesNotHijackIntoPhotoGallery": false,
+        "grizzlyBearAvailableInPlayAs": false,
+        "appearanceOmitsFalseWorldRegenLegend": false,
+        "silhouetteDots": 446,
+        "toolResetToSketchAfterOnePaintStroke": true,
+        "gradientStopDeselectedAfterCommit": true,
+        "grizzlyBearLabel": "Grizzly bear (not in the living store)",
+        "presetSaved": true,
+        "growlOpenedEmptyGalleryModalInFrame5": true,
+        "paintResetSourceLine": true,
+        "stopResetSourceLine": true
+      }
+    },
+    {
+      "id": "live-music-preset-contrast-library-and-export",
+      "passThreshold": 0.95,
+      "score": 0,
+      "pass": false,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "calibrationOk": true,
+      "metrics": {
+        "pulsePresetSyncsSliderAndStore": false,
+        "safetyWarningMeetsWcagAA": false,
+        "musicHintReflectsActiveSource": false,
+        "libraryDialogReflectsCurrentGame": false,
+        "exportEventsButtonTriggersDownload": false,
+        "stemsHttp200Count": 4,
+        "stemsLiveWeights": {
+          "night": 0,
+          "day": 1,
+          "weather": 0,
+          "tension": 0
+        },
+        "presetChosen": "Delta 2 Hz",
+        "sliderValueAfterPreset": "40",
+        "storedPulseAfterPreset": 40,
+        "safetyNoticeContrastRatio": 1.24,
+        "libraryScrollHeight": 1099,
+        "libraryClientHeight": 682,
+        "exportClickError": "TimeoutError: page.waitForEvent: Timeout 4000ms exceeded while waiting for event \"download\"\n=========================== logs ===========================\nwaiting for event \"download\"\n============================================================",
+        "musicSettingsHasPresetPulseOrderBug": true,
+        "indexHasStaleNoModelsClaim": true
+      }
+    }
+  ]
+}

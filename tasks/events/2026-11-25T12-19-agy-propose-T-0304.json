@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-25T12:19:00-07:00",
+  "agent": "agy",
+  "type": "propose",
+  "task": "T-0304",
+  "note": "Propose T-0304 from live headless Microsoft Edge capture (origin/main 0de4d8f1, port 5269, 0 console/page/network errors, recording.webm 1,188,509 B / 227 screencast frames, 8 live PNG frames vs 2 matched boreal references) and calibrated Rule 11 audit.ts -> numbers.json (calibrationValid=true, 0/4 pass >= 0.95, meanScore=0.0000; zero overlap with T-0001..T-0303): (1) 1 s boot autosave clobbering return-visit globe resume (mode='globe' -> 'game') + opening skip lat=90 North-Pole save & missing skip hint; (2) Oct 12 autumn 0.34% golden canopy & Apr 20 spring 0.0 cm snow + settingsPanel.ts dropping 'change' events for Weather toggle/grid + unshaded night precip PointsMaterial; (3) Appearance Editor shapeTools Paint single-stroke & gradient-stop selection resets + white-on-white selects/false regen legend/disabled Bear + G growl key hijacking gameplay into empty Photo Gallery modal; (4) Music Panel Delta 2 Hz preset leaving Pulse rate slider/store at 40 Hz + 1.24:1 epilepsy safety notice contrast + stale bottom-scrolled #info Library dialog + #vf-bar occluding #export download button."
+}

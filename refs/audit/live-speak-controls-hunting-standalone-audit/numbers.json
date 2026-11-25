@@ -1,0 +1,151 @@
+{
+  "taskId": "T-0305",
+  "baseCommit": "0de4d8f1",
+  "auditScript": "refs/audit/live-speak-controls-hunting-standalone-audit/audit.ts",
+  "captureMeta": {
+    "capturedAt": "2026-11-25T21:54:36.110Z",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "port": 5268,
+    "browser": "Microsoft Edge (headless, SwiftShader)",
+    "baseCommit": "0de4d8f1",
+    "screencastFrames": 93,
+    "recordingBytes": 446470
+  },
+  "consoleErrors": 0,
+  "pageErrors": 0,
+  "failedRequests": 0,
+  "calibrationValid": true,
+  "passCount": 0,
+  "totalChecks": 4,
+  "meanScore": 0,
+  "checks": [
+    {
+      "id": "live-speak-species-bioacoustics-and-howl-growl",
+      "passThreshold": 0.95,
+      "score": 0,
+      "pass": false,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "calibrationOk": true,
+      "metrics": {
+        "deerSpeakDoesNotShowWolfEmoji": false,
+        "speakPassesDeerPostureToVoice": false,
+        "howlGrowlGatedBySpeciesAndSpatial": false,
+        "wolfHowlAlertsNearbyHaresOrSenses": false,
+        "deerStatusOmitsPredatorLockHint": false,
+        "deerSpecies": "deer",
+        "deerSpeakTarget": "Woodland deer",
+        "deerSpeakBubbleText": "🐺 “Hi. Don't worry, I just want to say hello.”",
+        "wolfHowlAlertedHareCount": 0,
+        "wolfHowlTotalHares": 5,
+        "wolfVoiceHardcodesWolfEmoji": true,
+        "speakHardcodesWolfWhine": true
+      }
+    },
+    {
+      "id": "live-controls-rebinding-capture-conflict-and-layout",
+      "passThreshold": 0.95,
+      "score": 0,
+      "pass": false,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "calibrationOk": true,
+      "metrics": {
+        "backButtonDoesNotOverlapFooter": false,
+        "fastKeyTapNotDroppedByRafPoll": false,
+        "shiftedSymbolReleaseDoesNotHangCapture": false,
+        "conflictOffersSwapAssignAction": false,
+        "controlsGroupedByContextWithUnbind": false,
+        "footnoteMatchesRebindableCameraModeKey": false,
+        "rowCount": 87,
+        "listScrollHeight": 3231,
+        "listClientHeight": 499,
+        "backFooterOverlapPx2": 48320,
+        "fastTapDroppedStillCapturing": true,
+        "shiftedReleaseCapText": "Now press the input for “Growl”: Shift + !  (let go to confirm · Esc cancels)",
+        "clashText": "⚠ E is on Interact and Howl. Keep it on:InteractHowl",
+        "clashButtons": [
+          "Interact",
+          "Howl"
+        ],
+        "cameraModeRowText": "Camera adjust mode (tap) / filter wheel (hold)VY"
+      }
+    },
+    {
+      "id": "live-hunting-bond-commit-clock-and-reload-persistence",
+      "passThreshold": 0.95,
+      "score": 0,
+      "pass": false,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "calibrationOk": true,
+      "metrics": {
+        "releasePreyCommitsBondImmediately": false,
+        "reloadedBondStrengthNeverExceedsOne": false,
+        "reloadedHaresRestoreFriendBondInSim": false,
+        "eatPreyMatchesCaughtStaminaPolicy": false,
+        "playableHareOmitsPredatorLockAimLine": false,
+        "pinnedHareId": 2,
+        "bondAtSec": 11.999999999999968,
+        "bondsImmediateAfterB": 0,
+        "bondsAfterAutosave": 1,
+        "clockAfterReloadSec": 6.666666666666653,
+        "effectiveStrengthAfterReload": 1.0301,
+        "simFriendHaresAfterReload": 0,
+        "eatNotice": "Ate the hare. +49 energy, +18 water. Gut contents left on the ground.",
+        "statusAfterReload": "14:04 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n1 remembered · 2 friends · 0 herbs"
+      }
+    },
+    {
+      "id": "live-standalone-farlayer-tree-viewer-and-watch-witness",
+      "passThreshold": 0.95,
+      "score": 0,
+      "pass": false,
+      "knownMatchScore": 1,
+      "knownMismatchScore": 0,
+      "calibrationOk": true,
+      "metrics": {
+        "farlayerRendersGlobeAndLogsStats": false,
+        "farlayerRespectsUniverseSeed": false,
+        "treeLodImpostorMatchesNearSilhouette": false,
+        "treeViewerOffersSpeciesControls": false,
+        "watchWitnessShowsMovingAnimalAndPreservesScale": false,
+        "farlayerFlatGreyVoidFrac": 0.7005,
+        "farlayerLogCount": 0,
+        "farlayerLeakedElements": [
+          {
+            "tag": "DIV",
+            "id": "descent-cover",
+            "cls": "",
+            "text": ""
+          }
+        ],
+        "treeLodMetrics": {
+          "widthsPx": {
+            "near": 122,
+            "mid": 94,
+            "crown": 110,
+            "impostor": 157
+          },
+          "filledPixels": {
+            "near": 13675,
+            "mid": 9372,
+            "crown": 11788,
+            "impostor": 20836
+          },
+          "impostorToNearFillRatio": 1.52,
+          "impostorToNearWidthRatio": 1.29
+        },
+        "treeOneHeroBoxFillFrac": 0.4001,
+        "treeViewerControlsCount": 0,
+        "watchDisplacementOver3sM": 0,
+        "watchEmbodiedHandle": null,
+        "watchHasDedicatedUi": false,
+        "watchAutonomousText": "Autonomous: Off"
+      }
+    }
+  ]
+}

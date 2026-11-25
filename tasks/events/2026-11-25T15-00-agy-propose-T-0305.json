@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-25T15:00:00-07:00",
+  "agent": "agy",
+  "type": "propose",
+  "task": "T-0305",
+  "note": "Propose T-0305 from live headless Microsoft Edge capture (origin/main 0de4d8f1, port 5268, 0 console/page/network errors, recording.webm 446,470 B / 93 screencast frames, 10 live PNG frames vs 2 matched boreal references) and calibrated Rule 11 audit.ts -> numbers.json (calibrationValid=true, 0/4 pass >= 0.95, meanScore=0.0000; zero overlap with T-0001..T-0304): (1) Play-as White-tailed deer E Speak showing hardcoded wolf emoji bubble + Adam voice + wolf-whine, missing posture arg, and unspatialized species-blind H/G howl alerting 0/5 nearby hares with 0 #senses cues; (2) Pause->Controls Back/footer 48,320 px2 overlap, rAF-polled fast-tap key drop, Shift+1 '!' permanent capture hang, 87 flat rows with 0 context tabs/unbind/Swap button, and contradictory 'V flora view' footnote; (3) Hunting II B releasePrey omitting immediate commitContext(), reload SimWorld.time reset inflating friendStrength to 1.0301 (>1.0) with 0/5 restored sim friends, X eatPrey +0 stamina vs caught +40, and prey Q lock HUD; (4) ?view=farlayer rendering 70.05% flat grey void (0 globe, 0 FARLAYER logs, leaked #descent-cover, ignoring universeSeed), ?tree=1 shattered 38-tri crown LOD & tilted 1.52x-area impostor with 0 UI controls, and ?watch=1 witness camera missing/frozen (0.0000 m) wolf with 0 witness UI & #home wiping 2x altitude."
+}

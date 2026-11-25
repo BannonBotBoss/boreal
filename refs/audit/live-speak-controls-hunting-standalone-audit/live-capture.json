@@ -1,0 +1,654 @@
+{
+  "meta": {
+    "capturedAt": "2026-11-25T21:54:36.110Z",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "port": 5268,
+    "browser": "Microsoft Edge (headless, SwiftShader)",
+    "baseCommit": "0de4d8f1",
+    "screencastFrames": 93,
+    "recordingBytes": 446470
+  },
+  "scenario1_speakAndBioacoustics": {
+    "loadMs": 21651,
+    "initial": {
+      "player": {
+        "x": 66.99999969367653,
+        "z": 29.000000839177,
+        "yaw": -0.35,
+        "energy": 74.9624342899152,
+        "water": 99.98071198638105,
+        "mode": "walk",
+        "handle": "4294967299",
+        "embodied": "4294967299",
+        "species": "deer"
+      },
+      "statusText": "14:04 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+      "targetText": "Woodland deer",
+      "actText": "E / click · speak",
+      "actDisabled": false
+    },
+    "speakFound": {
+      "at": [
+        67.2,
+        29
+      ],
+      "act": "E / click · speak",
+      "tgt": "Woodland deer",
+      "player": {
+        "x": 67.2,
+        "z": 29,
+        "yaw": 0,
+        "energy": 74.9624342899152,
+        "water": 99.98071198638105,
+        "mode": "walk",
+        "handle": "4294967299",
+        "embodied": "4294967299",
+        "species": "deer"
+      }
+    },
+    "afterSpeak": {
+      "bubbleExists": true,
+      "bubbleText": "🐺 “Hi. Don't worry, I just want to say hello.”",
+      "bubbleOpacity": "1",
+      "bubbleHasWolfEmoji": true,
+      "noticeText": "Relationship remembered in the events context.",
+      "statusText": "14:04 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n1 remembered · 1 friends · 0 herbs",
+      "metSaved": [
+        "1:0:34"
+      ],
+      "eventsRecordCount": 1
+    },
+    "howlReactionDeer": {
+      "before": {
+        "hares": [
+          {
+            "id": 2,
+            "x": 69.27944162537904,
+            "z": 3.604915627346927,
+            "state": "hop",
+            "linked": 3,
+            "knows": false
+          },
+          {
+            "id": 3,
+            "x": 84.81553410779307,
+            "z": 13.605937799315976,
+            "state": "nibble",
+            "linked": 2,
+            "knows": false
+          },
+          {
+            "id": 4,
+            "x": 73.15689005471158,
+            "z": 1.4071719732806052,
+            "state": "nibble",
+            "linked": 3,
+            "knows": false
+          },
+          {
+            "id": 5,
+            "x": 57.03722460463655,
+            "z": 2.0379687368288293,
+            "state": "nibble",
+            "linked": 2,
+            "knows": false
+          },
+          {
+            "id": 6,
+            "x": 88.62571620830559,
+            "z": 35.57007559025047,
+            "state": "hop",
+            "linked": 0,
+            "knows": false
+          }
+        ],
+        "senses": ""
+      },
+      "after": {
+        "hares": [
+          {
+            "id": 2,
+            "x": 67.65972285039905,
+            "z": 3.86203639659065,
+            "state": "nibble",
+            "linked": 3,
+            "knows": false
+          },
+          {
+            "id": 3,
+            "x": 84.81553410779307,
+            "z": 13.605937799315976,
+            "state": "nibble",
+            "linked": 3,
+            "knows": false
+          },
+          {
+            "id": 4,
+            "x": 74.51356998826206,
+            "z": 1.3122006202215888,
+            "state": "nibble",
+            "linked": 3,
+            "knows": false
+          },
+          {
+            "id": 5,
+            "x": 57.03722460463655,
+            "z": 2.0379687368288293,
+            "state": "nibble",
+            "linked": 2,
+            "knows": false
+          },
+          {
+            "id": 6,
+            "x": 88.4986922611676,
+            "z": 34.86136908057708,
+            "state": "nibble",
+            "linked": 1,
+            "knows": false
+          }
+        ],
+        "senses": ""
+      }
+    },
+    "wolfHowlReaction": {
+      "before": {
+        "hares": [
+          {
+            "id": 2,
+            "x": 67.71894733215669,
+            "z": -44.001356215974916,
+            "state": "nibble",
+            "linked": 3,
+            "knows": false
+          },
+          {
+            "id": 3,
+            "x": 83.15622276934397,
+            "z": -33.845462263519906,
+            "state": "hop",
+            "linked": 2,
+            "knows": false
+          },
+          {
+            "id": 4,
+            "x": 71.55689042551411,
+            "z": -46.19282863176709,
+            "state": "nibble",
+            "linked": 3,
+            "knows": false
+          },
+          {
+            "id": 5,
+            "x": 56.008966670581046,
+            "z": -45.93015064529525,
+            "state": "hop",
+            "linked": 2,
+            "knows": false
+          },
+          {
+            "id": 6,
+            "x": 87.1527405262461,
+            "z": -11.32121850512395,
+            "state": "nibble",
+            "linked": 0,
+            "knows": false
+          }
+        ],
+        "senses": ""
+      },
+      "after": {
+        "hares": [
+          {
+            "id": 2,
+            "x": 67.44240998033084,
+            "z": -43.95745754805525,
+            "state": "hop",
+            "linked": 3,
+            "knows": false
+          },
+          {
+            "id": 3,
+            "x": 83.2155344785956,
+            "z": -33.99406280573176,
+            "state": "nibble",
+            "linked": 2,
+            "knows": false
+          },
+          {
+            "id": 4,
+            "x": 71.55689042551411,
+            "z": -46.19282863176709,
+            "state": "hop",
+            "linked": 3,
+            "knows": false
+          },
+          {
+            "id": 5,
+            "x": 55.43722497543908,
+            "z": -45.56203186821895,
+            "state": "nibble",
+            "linked": 2,
+            "knows": false
+          },
+          {
+            "id": 6,
+            "x": 86.98337526339546,
+            "z": -12.266160518021847,
+            "state": "hop",
+            "linked": 0,
+            "knows": false
+          }
+        ],
+        "senses": ""
+      }
+    }
+  },
+  "scenario2_controlsRebinding": {
+    "initial": {
+      "screenVisible": true,
+      "panelBg": "rgba(0, 0, 0, 0)",
+      "liveColor": "rgb(243, 215, 154)",
+      "liveBg": "rgba(0, 0, 0, 0)",
+      "liveText": "No controller seen yet: press a button on it. Keys show here too.",
+      "noteColor": "rgb(243, 215, 154)",
+      "noteText": "Pick an action, then press the button, stick direction or combination you want (hold them together, then let go). Esc or 8 s idle cancels. Fixed keys: menus (d-pad / stick, A, B · arrows, Enter, Esc), photo mode keys, M mute, [ ] volume, N / - = music, V flora view, O senses halo. The in-game dial (hold comma or d-pad left to rewind, hold period or d-pad right to go forward, semicolon or left-stick click pauses or plays) is under Game and can be rebound.",
+      "rowCount": 87,
+      "headCount": 1,
+      "contextTabCount": 0,
+      "unbindButtonCount": 0,
+      "cameraModeRowText": "Camera adjust mode (tap) / filter wheel (hold)VY",
+      "padRect": {
+        "x": 89.59375,
+        "y": 120.40625,
+        "width": 430,
+        "height": 290.25,
+        "top": 120.40625,
+        "right": 519.59375,
+        "bottom": 410.65625,
+        "left": 89.59375
+      },
+      "listScrollHeight": 3231,
+      "listClientHeight": 499
+    },
+    "capShown": {
+      "capturingClass": true,
+      "capHidden": false,
+      "capText": "Now press the input for “Howl” …  (let go to confirm · Esc cancels)"
+    },
+    "afterEsc": {
+      "screenStillOpen": true,
+      "capturingClass": false,
+      "capHidden": true
+    },
+    "afterConflict": {
+      "stillCapturing": false,
+      "msgText": "Howl ← E",
+      "msgColor": "rgb(201, 240, 184)",
+      "clashText": "⚠ E is on Interact and Howl. Keep it on:InteractHowl",
+      "clashColor": "rgb(255, 208, 168)",
+      "clashButtons": [
+        "Interact",
+        "Howl"
+      ],
+      "hasSwapButton": false,
+      "howlRowClashClass": true,
+      "howlRowText": "⚠ HowlE—",
+      "savedBindings": "{\"howl\":{\"keys\":[\"k:e\"],\"pad\":[]}}"
+    },
+    "afterShiftedRelease": {
+      "stillCapturingStuck": true,
+      "capText": "Now press the input for “Growl”: Shift + !  (let go to confirm · Esc cancels)",
+      "savedBindings": null
+    },
+    "afterReset": {
+      "savedBindingsAfterReset": "{}",
+      "clashCountAfterReset": 0
+    },
+    "overlap": {
+      "backRect": {
+        "x": 89.59375,
+        "y": 641.84375,
+        "width": 1180,
+        "height": 47,
+        "top": 641.84375,
+        "right": 1269.59375,
+        "bottom": 688.84375,
+        "left": 89.59375
+      },
+      "footerRect": {
+        "x": 30,
+        "y": 647.203125,
+        "width": 1220,
+        "height": 52.796875,
+        "top": 647.203125,
+        "right": 1250,
+        "bottom": 700,
+        "left": 30
+      },
+      "deviceRect": {
+        "x": 30,
+        "y": 647.203125,
+        "width": 341.9375,
+        "height": 52.796875,
+        "top": 647.203125,
+        "right": 371.9375,
+        "bottom": 700,
+        "left": 30
+      },
+      "noteRect": {
+        "x": 89.59375,
+        "y": 523.84375,
+        "width": 430,
+        "height": 96,
+        "top": 523.84375,
+        "right": 519.59375,
+        "bottom": 619.84375,
+        "left": 89.59375
+      },
+      "backFooterOverlapPx2": 48320,
+      "noteDeviceOverlapPx2": 0
+    },
+    "fastTapDropped": {
+      "stillCapturingAfterFastTap": true,
+      "howlRowText": "HowlH—",
+      "savedBindings": null
+    }
+  },
+  "scenario3_huntingBondPersistence": {
+    "loadMs": 21534,
+    "pinResult": {
+      "pinned": true,
+      "id": 2,
+      "x": 67.41981098033084,
+      "z": -44.76545749009726,
+      "clock": 9.966666666666642
+    },
+    "whileHeld": {
+      "heldId": 2,
+      "noticeText": "Pinned. X eats, B releases.",
+      "statusText": "14:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100% · HOLDING\nHolding a hare · X eat · B release\n1 remembered · 1 friends · 0 herbs",
+      "clock": 10.833333333333306
+    },
+    "immediateAfterRelease": {
+      "heldAfterB": null,
+      "noticeText": "Released. It treats you as a friend until the memory fades.",
+      "statusText": "14:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n1 remembered · 2 friends · 0 herbs",
+      "clock": 12.266666666666634,
+      "bondsImmediateInLocalStorage": {},
+      "simFriendHares": [
+        {
+          "id": 2,
+          "friendOf": 1,
+          "friendAt": 11.999999999999968
+        }
+      ]
+    },
+    "afterAutosave": {
+      "clock": 13.699999999999962,
+      "bondsAfterAutosave": {
+        "hare:2": {
+          "at": 11.999999999999968,
+          "tau": 180,
+          "species": "hare"
+        }
+      },
+      "statusText": "14:06 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n1 remembered · 2 friends · 0 herbs"
+    },
+    "afterReload": {
+      "clockAfterReload": 6.666666666666653,
+      "savedBonds": {
+        "hare:2": {
+          "at": 11.999999999999968,
+          "tau": 180,
+          "species": "hare"
+        }
+      },
+      "effectiveStrengthAfterReload": 1.0300729547932959,
+      "statusText": "14:04 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n1 remembered · 2 friends · 0 herbs",
+      "hareCount": 5,
+      "simFriendHaresAfterReload": 0
+    },
+    "eatResult": {
+      "beforeEat": {
+        "status": "14:04 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100% · HOLDING\nHolding a hare · X eat · B release\n1 remembered · 2 friends · 0 herbs",
+        "player": {
+          "x": 64.35238044101109,
+          "z": -40.9518774044204,
+          "yaw": 0,
+          "energy": 74.75895852555747,
+          "water": 99.87629889926582,
+          "mode": "walk",
+          "handle": "4294967296",
+          "embodied": "4294967296",
+          "species": "wolf"
+        }
+      },
+      "afterEat": {
+        "status": "14:04 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 100/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n1 remembered · 2 friends · 0 herbs",
+        "notice": "Ate the hare. +49 energy, +18 water. Gut contents left on the ground.",
+        "player": {
+          "x": 64.35238044101109,
+          "z": -40.951877327015865,
+          "yaw": 0,
+          "energy": 99.9974816283742,
+          "water": 99.998708179691,
+          "mode": "walk",
+          "handle": "4294967296",
+          "embodied": "4294967296",
+          "species": "wolf"
+        }
+      }
+    },
+    "harePressX": {
+      "notice": "",
+      "status": "14:03 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n1 remembered · 2 friends · 0 herbs",
+      "player": {
+        "x": 50.000001025901334,
+        "z": -5.384344796989212e-7,
+        "yaw": 2.0541182735010186,
+        "energy": 74.9545771025536,
+        "water": 99.95445537010276,
+        "mode": "walk",
+        "handle": "4294967298",
+        "embodied": "4294967298",
+        "species": "hare"
+      }
+    }
+  },
+  "scenario4_standaloneModes": {
+    "farlayer": {
+      "hasHandle": true,
+      "visibleExtraElements": [
+        {
+          "tag": "DIV",
+          "id": "descent-cover",
+          "cls": "",
+          "text": ""
+        }
+      ],
+      "canvasSize": {
+        "w": 1280,
+        "h": 720
+      },
+      "logs": []
+    },
+    "treeSheet": {
+      "ready": true,
+      "hud": "Black spruce (Picea mariana), procedural Weber-Penn\nfront: ages 15, 35, 70, 120 yr (left to right) x seeds 1, 2, 3\nback: age 90 seed 7 as near | mid | far crown | impostor\nnear build 8.5 ms/tree (mean)",
+      "stats": {
+        "ages": [
+          15,
+          35,
+          70,
+          120
+        ],
+        "seeds": [
+          1,
+          2,
+          3
+        ],
+        "buildMs": [
+          35.7,
+          3.1,
+          3,
+          5.6,
+          8.1,
+          4.8,
+          7.2,
+          6.1,
+          5.5,
+          6.2,
+          7.2,
+          9.2
+        ],
+        "buildMsMean": 8.5,
+        "heights": [
+          3.3,
+          3.5,
+          3.2,
+          6.9,
+          7.4,
+          6.7,
+          11.7,
+          12.4,
+          11.3,
+          14.9,
+          15.8,
+          14.4
+        ],
+        "dbh": [
+          2.9,
+          3.2,
+          2.8,
+          6.8,
+          7.3,
+          6.6,
+          12.4,
+          13.4,
+          11.9,
+          17.1,
+          18.9,
+          16.3
+        ],
+        "stems": [
+          138,
+          154,
+          150,
+          286,
+          300,
+          306,
+          575,
+          758,
+          640,
+          878,
+          1029,
+          949
+        ],
+        "nearTris": [
+          2164,
+          2392,
+          2412,
+          4448,
+          4940,
+          4976,
+          8416,
+          10360,
+          9660,
+          11672,
+          13680,
+          12908
+        ],
+        "midTris": [
+          376,
+          388,
+          408,
+          900,
+          952,
+          1024,
+          1536,
+          1856,
+          1784,
+          2132,
+          2540,
+          2444
+        ],
+        "lod90": {
+          "near": 13736,
+          "mid": 2484,
+          "crown": 38,
+          "impostor": 2,
+          "buildMs": 4.2,
+          "height": 13.4,
+          "dbh": 14.9
+        }
+      },
+      "controlsCount": 0
+    },
+    "treeOne": {
+      "ready": true,
+      "hud": "black spruce, age 90 yr, seed 7: 13.4 m, DBH 14.9 cm, 13736 tris",
+      "stats": {
+        "height": 13.449051936142833,
+        "dbh": 14.883026816601237,
+        "buildMs": 34,
+        "tris": {
+          "near": 13736,
+          "mid": 2484,
+          "crown": 38
+        },
+        "stems": 1030,
+        "cards": 1648
+      }
+    },
+    "treeLod": {
+      "ready": true,
+      "hud": "age 90 seed 7, 13.4 m: near 13736 | mid 2484 | crown 38 | impostor 2 triangles",
+      "stats": {
+        "near": 13736,
+        "mid": 2484,
+        "crown": 38,
+        "impostor": 2,
+        "buildMs": 37.299999999813735,
+        "height": 13.449051936142833
+      }
+    },
+    "watch": {
+      "t0": {
+        "player": {
+          "x": 65.40000032867047,
+          "z": -18.600000172499534,
+          "yaw": 8.337303580680604,
+          "energy": 74.91302397072795,
+          "water": 99.93312706579795,
+          "mode": "walk",
+          "handle": "4294967296",
+          "embodied": null,
+          "species": "wolf"
+        },
+        "status": "14:04 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n1 remembered · 2 friends · 0 herbs",
+        "autonomousText": "Autonomous: Off",
+        "hasDedicatedWitnessUi": false
+      },
+      "t3": {
+        "player": {
+          "x": 65.40000052753481,
+          "z": -18.600000276871608,
+          "yaw": 8.337303580680604,
+          "energy": 74.88448242563558,
+          "water": 99.91848568342996,
+          "mode": "walk",
+          "handle": "4294967296",
+          "embodied": null,
+          "species": "wolf"
+        }
+      },
+      "displacementOver3sM": 0
+    }
+  },
+  "consoleErrors": [],
+  "pageErrors": [],
+  "failedRequests": []
+}

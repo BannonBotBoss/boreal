@@ -1,0 +1,391 @@
+{
+  "meta": {
+    "port": 5269,
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "capturedAt": "2026-11-25T19:09:03.368Z",
+    "screencastFrames": 227,
+    "recordingBytes": 1188509
+  },
+  "consoleErrors": [],
+  "pageErrors": [],
+  "failedRequests": [],
+  "scenario1_openingAndReturn": {
+    "firstLoadMs": 25381,
+    "waitState": {
+      "urlSearch": "?start=sphere&stages=1&trees=v2&noprobe=1&rec=1",
+      "bodyHasCineRun": true,
+      "cineExists": true,
+      "promptText": "Click or press any key to begin.",
+      "visibleLeakedNames": [],
+      "leakedDetails": {
+        "vfBar": null,
+        "timeHud": null
+      },
+      "hasSeenBigBangBefore": false
+    },
+    "activeState": {
+      "elapsed": 6.166600000000002,
+      "cycle": 1.2684112348132643,
+      "subtitle": "It was called…",
+      "titleVisible": false,
+      "bootNoteVisible": false,
+      "cineCanvasCount": 2,
+      "openingSkipHintPresent": false
+    },
+    "afterSkip": {
+      "cineStillExists": false,
+      "bodyHasCineRun": false,
+      "inpageMode": "globe",
+      "globeAltM": 23572732.56,
+      "hasSeenBigBangAfterSkip": true,
+      "resumeAfterSkip": {
+        "mode": "globe",
+        "lat": 90,
+        "lon": 65.53577344372239,
+        "alt": 23572732.56,
+        "x": 64.8135523709014,
+        "z": -16.764755583929773,
+        "yaw": 2.8323000916363323
+      },
+      "globeHudText": null
+    },
+    "returnGlobeLoadMs": 22211,
+    "returnGlobeState": {
+      "cineExists": false,
+      "inpageMode": "game",
+      "globeAltM": null,
+      "resumeAfterGlobeReturn": {
+        "mode": "game",
+        "x": 64.1776427369975,
+        "z": -17.674282489198326,
+        "yaw": 5.360559411915599
+      },
+      "warmStampSet": false
+    },
+    "beforeWalk": {
+      "x": 65.4000002865135,
+      "z": -18.600000150373912,
+      "yaw": 8.337303580680604,
+      "energy": 74.85393444570377,
+      "water": 99.93456141102938,
+      "mode": "walk",
+      "handle": "4294967296",
+      "embodied": "4294967296",
+      "species": "wolf"
+    },
+    "savedGround": {
+      "playerBeforeReload": {
+        "x": 64.33759112160843,
+        "z": -18.042404806484548,
+        "yaw": 8.337303580680604,
+        "energy": 74.83360246505458,
+        "water": 99.92526137242153,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      },
+      "resumeInStorage": {
+        "mode": "game",
+        "x": 64.33759112160843,
+        "z": -18.042404806484548,
+        "yaw": 8.337303580680604
+      }
+    },
+    "returnGameLoadMs": 22263,
+    "returnGameState": {
+      "cineExistsOnReturn": false,
+      "inpageMode": "game",
+      "startMenuOpen": false,
+      "playerAfterReturn": {
+        "x": 64.33759141048756,
+        "z": -18.042404958100004,
+        "yaw": 14.62048888786019,
+        "energy": 74.79456770485473,
+        "water": 99.90740296171097,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      },
+      "resumeAfterReturn": {
+        "mode": "game",
+        "x": 64.33759141048756,
+        "z": -18.042404958100004,
+        "yaw": 14.62048888786019
+      }
+    },
+    "returnGroundDriftM": 0
+  },
+  "scenario2_seasonsWeatherPrecip": {
+    "autumnState": {
+      "status": "14:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+      "player": {
+        "x": 64.16825603328863,
+        "z": -14.745351156775412,
+        "yaw": 5.973892745266392,
+        "energy": 74.9202515651831,
+        "water": 99.96851598250373,
+        "mode": "walk",
+        "handle": "4294967296",
+        "embodied": "4294967296",
+        "species": "wolf"
+      },
+      "interactionRect": {
+        "x": 505.5625,
+        "y": 65.765625,
+        "width": 190,
+        "height": 65,
+        "top": 65.765625,
+        "right": 695.5625,
+        "bottom": 130.765625,
+        "left": 505.5625
+      },
+      "statusRect": {
+        "x": 756.296875,
+        "y": 30,
+        "width": 497.703125,
+        "height": 88.78125,
+        "top": 30,
+        "right": 1254,
+        "bottom": 118.78125,
+        "left": 756.296875
+      }
+    },
+    "springBefore": {
+      "status": "14:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+      "snowCm": 0
+    },
+    "weatherUi": {
+      "before": {
+        "toggleChecked": true,
+        "gridVal": "Normal (8×8)",
+        "gridOptions": [
+          "Low (6×6)",
+          "Normal (8×8)",
+          "High (12×12)"
+        ]
+      },
+      "afterToggle": false,
+      "afterGrid": "High (12×12)"
+    },
+    "springAfterWeatherOff": {
+      "status": "14:05 · WALK · Snow 0.0 cm · Stamina 100/100 · Energy 75/100 · Water 100% · Rest 100%\nRT run · LT stealth · LB focus · Q lock\n0 remembered · 0 friends · 0 herbs",
+      "savedRender": {
+        "lod.terrain": "Normal",
+        "lod.trees": "Normal",
+        "lod.rocks": "Normal",
+        "lod.props": "Normal",
+        "lod.animals": "Unlimited",
+        "world.stagedTerrain.v2": true,
+        "world.standMap": true,
+        "world.treeDensity": 1,
+        "animals.deer": true,
+        "animals.deerCount": 1,
+        "animals.hares": true,
+        "animals.hareCount": 5,
+        "animals.birds": true,
+        "feel.haptics": true,
+        "feel.intensity": 0.6,
+        "feel.gameplay": true,
+        "feel.ui": true,
+        "feel.editor": true,
+        "feel.sound": true,
+        "interest.near": 60,
+        "interest.mid": 100,
+        "quality.auto": true,
+        "quality.target": "60",
+        "quality.tier": "Ultra",
+        "quality.resScale": 2,
+        "quality.shadows": "3 cascades",
+        "quality.ssao": "Full",
+        "weather.on": true,
+        "weather.quality": "Normal (8×8)",
+        "animals.birdRate": 1
+      }
+    }
+  },
+  "scenario3_appearanceShapeToolsAndSpeak": {
+    "appearanceInitial": {
+      "heading": "Appearance: player:wolf",
+      "silhouetteDots": 446,
+      "selects": [
+        {
+          "text": "gradient: length",
+          "color": "rgb(240, 240, 240)",
+          "bg": "rgb(0, 0, 0)"
+        },
+        {
+          "text": "Load preset…",
+          "color": "rgb(240, 240, 240)",
+          "bg": "rgb(0, 0, 0)"
+        }
+      ],
+      "historyCountInit": 1
+    },
+    "afterFirstPaint": {
+      "historyCount": 2,
+      "lastHistory": "paint coat: {\"mode\":\"length\",\"stops\" → {\"mode\":\"length\",\"stops\"  12:13:11 PM"
+    },
+    "afterSecondStroke": {
+      "toolResetToSketchAfterOnePaintStroke": true,
+      "historyCountAfterSecondStroke": 2
+    },
+    "gradientStopDeselectedAfterCommit": true,
+    "afterPreset": {
+      "presetOptions": [
+        "Load preset…",
+        "TestWolf"
+      ],
+      "presetSaved": true
+    },
+    "playerPanelInfo": [
+      {
+        "text": "Grey wolf",
+        "disabled": false,
+        "checked": true
+      },
+      {
+        "text": "White-tailed deer",
+        "disabled": false,
+        "checked": false
+      },
+      {
+        "text": "Grizzly bear (not in the living store)",
+        "disabled": true,
+        "checked": false
+      },
+      {
+        "text": "Snowshoe hare",
+        "disabled": false,
+        "checked": false
+      }
+    ],
+    "afterHowlGrowl": {
+      "notice": "",
+      "sensesTitle": "White-tailed deer senses◉"
+    },
+    "spokeResult": {
+      "foundSpeakTarget": false
+    }
+  },
+  "scenario4_stemsMusicLibraryExport": {
+    "musicPanelCheck": {
+      "trackOptions": [
+        "Fingerpicked",
+        "Open tuning",
+        "Campfire",
+        "Built-in ambient",
+        "Isochronic tones",
+        "Binaural beats",
+        "Playlist",
+        "Adaptive stems",
+        "Off"
+      ],
+      "hasAdaptiveStems": true,
+      "selectStyles": [
+        {
+          "value": "Fingerpicked",
+          "color": "rgb(240, 240, 240)",
+          "bg": "rgb(0, 0, 0)"
+        },
+        {
+          "value": "Gamma 40 Hz",
+          "color": "rgb(240, 240, 240)",
+          "bg": "rgb(0, 0, 0)"
+        },
+        {
+          "value": "Smooth",
+          "color": "rgb(240, 240, 240)",
+          "bg": "rgb(0, 0, 0)"
+        },
+        {
+          "value": "None",
+          "color": "rgb(240, 240, 240)",
+          "bg": "rgb(0, 0, 0)"
+        }
+      ],
+      "notes": [
+        "Safety: rhythmic pulsing tones (isochronic tones, binaural beats) can trigger photosensitive or audio-sensitive conditions, such as some forms of epilepsy. Stop if you feel unwell, and keep the volume moderate. Binaural beats need headphones.",
+        "",
+        "",
+        "Acoustic guitar tracks (ElevenLabs Music). The track repeats with a crossfade; gameplay sounds duck it. N toggles music, - / = changes music volume."
+      ]
+    },
+    "stemResponses": [
+      {
+        "url": "/music/guitar-fingerpicked.mp3",
+        "status": 206,
+        "type": "audio/mpeg"
+      },
+      {
+        "url": "/music/stems/boreal-weather.ogg",
+        "status": 200,
+        "type": "audio/ogg"
+      },
+      {
+        "url": "/music/stems/boreal-night.ogg",
+        "status": 200,
+        "type": "audio/ogg"
+      },
+      {
+        "url": "/music/stems/boreal-day.ogg",
+        "status": 200,
+        "type": "audio/ogg"
+      },
+      {
+        "url": "/music/stems/boreal-tension.ogg",
+        "status": 200,
+        "type": "audio/ogg"
+      }
+    ],
+    "stemsRunning": {
+      "stemsState": {
+        "cur": {
+          "night": 0,
+          "day": 1,
+          "weather": 0,
+          "tension": 0
+        },
+        "threatState": {
+          "on": false,
+          "since": -1000000000
+        },
+        "threat": 0
+      }
+    },
+    "tonesPresetSync": {
+      "beforeSlider": "40",
+      "beforeOut": "40",
+      "afterSlider": "40",
+      "afterOut": "40",
+      "sliderOutOfSyncWithPreset": true,
+      "storedPreset": "Delta 2 Hz",
+      "storedPulse": 40,
+      "hintStillSaysGuitarOnly": true
+    },
+    "libraryInfo": {
+      "hasLibraryBtn": true,
+      "dialogOpen": true,
+      "textLength": 2577,
+      "text": "The script libraryEverything visible is generated geometry. No stored 3D model files.buildScene.ts assembles the view. geometry.ts builds shapes. world.ts generates temporary individuals. events.ts remembers interactions.Move near the deer or the visitor and choose speak. This is a fictional capability demonstration, not a claim about animal language or a specific culture. Gathering the orange plant records its removal. Face a stone of 22 cm or less and bring your snout close: A / E / click activates move. Six contact sectors determine its rolling direction; the new position is remembered. Stones range from 6 to 50 cm, with smaller sizes more common.Xbox: LS: up/down moves forward/backward, left/right steers the wolf; camera follows behind. RS: look around and tilt. RT runs, LT enters stealth; RT then LT sprints for 1.5 seconds; LT then RT enters super stealth. Release both to choose a new combination. Hold LB to focus the nearest object close enough ahead (it glows); moving forward then steers toward it. Hold RB and keep a prey inside the aim cone to lock it; X then steers the leap onto that lock. X jump, A interact, D-pad ↑ hour, hold D-pad ← to rewind the dial, hold D-pad → to go forward, LS click pause or play, — menu, B close this panel. Keyboard: WASD: up/down moves forward/backward, left/right steers the wolf; camera follows behind. Arrows: look around and tilt. Shift runs, C enters stealth; Shift then C sprints for 1.5 seconds; C then Shift enters super stealth. Release both to choose a new combination. Hold F to focus the nearest object close enough ahead (it glows); moving forward then steers toward it. Hold Q and keep a prey inside the aim cone to lock it; Space then steers the leap onto that lock. Space jump, E interact, T hour, hold , to rewind the dial, hold . to go forward, ; pause or play, Esc menu, P photo mode (free camera, rewind, capture). Rebind any of these under Esc → Controls. Mouse: hold left or right button on the landscape and drag horizontally to orbit or vertically to tilt; manual zoom is disabled. Click the action button to interact. Tab and Enter operate menus. This is a terrain and interaction laboratory; collision, hunting, trading and construction are not implemented.Unvisited chunks are not held in memory. Only interacted-with individuals are saved. The terrain is an illustrative river basin, not a historical map or full hydrology simulation.Wolf pup yips, whimpers, huffs and calls are ElevenLabs Sound Effects, mono clips played from each pup. The prompts are listed with the files.Back to the land",
+      "scrollHeight": 1099,
+      "clientHeight": 682,
+      "rect": {
+        "w": 520,
+        "h": 682,
+        "top": 19,
+        "bottom": 701
+      },
+      "bg": "rgb(243, 241, 230)",
+      "color": "rgb(38, 61, 50)"
+    },
+    "exportInfo": {
+      "clicked": true,
+      "error": "TimeoutError: page.waitForEvent: Timeout 4000ms exceeded while waiting for event \"download\"\n=========================== logs ===========================\nwaiting for event \"download\"\n============================================================"
+    }
+  }
+}
